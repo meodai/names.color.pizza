@@ -205,16 +205,32 @@ async function picturesWith(hex, terms, count = 12) {
     .slice(0, count);
 }
 
-const picturesHTML = (pictures, hex) =>
-  pictures
-    .map(
-      (p) => `<a class="archive__item" href="${escapeHTML(p.link)}" target="_blank" rel="noopener">
-        <img src="${escapeHTML(p.image)}" alt="" loading="lazy" style="aspect-ratio:${p.ratio.toFixed(3)}" />
-        <span class="archive__title">${escapeHTML(p.title)}</span>
-        <span class="archive__where">${Math.round(p.share * 100)}% close to ${hex}</span>
-      </a>`
-    )
+// The pictures peek in at the page's edges, left and right in turn,
+// scattered down its length, each its own size and tilt; hovering one
+// brings it in, straight, with its caption.
+const peeksHTML = (pictures, hex) => {
+  const perSide = Math.ceil(pictures.length / 2);
+  return pictures
+    .map((p, i) => {
+      const side = i % 2 ? "right" : "left";
+      const k = Math.floor(i / 2);
+      const vars = [
+        `--w:${between(11, 16).toFixed(1)}rem`,
+        `--rot:${between(-9, 9).toFixed(1)}deg`,
+      ].join(";");
+      // the link holds still and takes the hover; the print inside it moves
+      return `<a class="peek peek--${side}" data-k="${(k + 0.5) / perSide + between(-0.03, 0.03)}" href="${escapeHTML(p.link)}" target="_blank" rel="noopener" style="${vars}">
+        <span class="peek__print">
+          <img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.title)}" loading="lazy" style="aspect-ratio:${p.ratio.toFixed(3)}" />
+          <span class="peek__caption"><span>
+            <span class="peek__title">${escapeHTML(p.title)}</span>
+            <span class="peek__where">${Math.round(p.share * 100)}% close to ${hex}, on Wikimedia Commons</span>
+          </span></span>
+        </span>
+      </a>`;
+    })
     .join("");
+};
 
 /* —— Wikipedia: the name, and the words inside it —— */
 
@@ -753,33 +769,43 @@ const sensesHTML = (word) =>
 function indexHTML(words, entries) {
   const wordFor = new Map(words.map((w) => [w.term.toLowerCase(), w]));
   const placed = new Set();
+  // a block: its heading; under it the dictionary's definitions, if any;
+  // then, stepped in further, the article: its picture beside its opening
+  const block = (title, term, word, image, article) => `<article class="wiki-index__row">
+      <h3${term ? ` data-term="${escapeHTML(term)}"` : ""}><span>${escapeHTML(title)}</span></h3>
+      ${word ? `<div class="wiki-index__words">${sensesHTML(word)}</div>` : ""}
+      ${
+        article
+          ? `<div class="wiki-index__body">
+        ${
+          image
+            ? `<img class="wiki-index__picture" src="${escapeHTML(image)}" alt="" loading="lazy" style="--tilt:${between(-4, 4).toFixed(1)}deg;--nudge:${between(-0.6, 0.6).toFixed(2)}rem" />`
+            : ""
+        }
+        <div class="wiki-index__text">${article}</div>
+      </div>`
+          : ""
+      }
+    </article>`;
   const rows = entries.map((e) => {
     const word = wordFor.get(baseTitle(e.title));
     const mine = word && !placed.has(word) ? word : null;
     if (mine) placed.add(mine);
     const opening = e.blocks.find((b) => b.text) || e.blocks[0];
-    return `<article class="wiki-index__row">
-        <div class="wiki-index__head">
-          <h3${mine ? ` data-term="${escapeHTML(mine.term)}"` : ""}><span>${escapeHTML(e.title)}</span></h3>
-          ${mine ? `<div class="wiki-index__words">${sensesHTML(mine)}</div>` : ""}
-          ${e.image ? `<img class="wiki-index__picture" src="${escapeHTML(e.image)}" alt="" loading="lazy" />` : ""}
-        </div>
-        <div class="wiki-index__text">
-          ${opening ? blocksHTML([opening]) : ""}
-          ${e.link ? `<a href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>` : ""}
-        </div>
-      </article>`;
+    return block(
+      e.title,
+      mine?.term,
+      mine,
+      e.image,
+      (opening ? blocksHTML([opening]) : "") +
+        (e.link ? `<a href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>` : "")
+    );
   });
   for (const word of words) {
     if (placed.has(word)) continue;
-    rows.push(`<article class="wiki-index__row">
-        <div class="wiki-index__head">
-          <h3 data-term="${escapeHTML(word.term)}"><span>${escapeHTML(capital(word.term))}</span></h3>
-        </div>
-        <div class="wiki-index__text wiki-index__words">${sensesHTML(word)}</div>
-      </article>`);
+    rows.push(block(capital(word.term), word.term, word, null, ""));
   }
-  // no heading: each row's links say where it comes from
+  // no heading: each block's links say where it comes from
   return rows.length ? `<div class="wiki-index">${rows.join("")}</div>` : "";
 }
 
@@ -825,6 +851,48 @@ function alternate() {
   [...page.root.querySelectorAll("[data-slide]")]
     .filter((el) => !el.hidden)
     .forEach((el, i) => el.classList.toggle("slide--invert", i % 2 === 0));
+}
+
+// Where the edge pictures go down the page: spread evenly over what's left
+// once the hero and the Wikipedia slide (with its hanging pile) are taken
+// out, each side on its own. Run again whenever the page's height changes.
+function placePeeks() {
+  const peeks = [...page.peeks.children];
+  if (!peeks.length) return;
+  const main = page.peeks.parentElement;
+  const top = main.getBoundingClientRect().top;
+  const span = (el) => {
+    const r = el.getBoundingClientRect();
+    return [r.top - top, r.bottom - top];
+  };
+  // a picture is placed by its top: the tallest one sets how far above a
+  // place to keep clear of has to stay free
+  const tallest = Math.max(...peeks.map((el) => el.firstElementChild.offsetHeight));
+  const hero = page.root.querySelector(".color-hero");
+  let free = [[span(hero)[1] * 0.75, main.offsetHeight - tallest - 40]];
+  if (!page.meaningSlide.hidden) {
+    const [a, b] = span(page.meaningSlide);
+    const gap = [a - tallest - 40, b + 260]; // and the pile hanging into the next slide
+    free = free.flatMap(([s, e]) =>
+      [
+        [s, Math.min(e, gap[0])],
+        [Math.max(s, gap[1]), e],
+      ].filter(([x, y]) => y - x > 40)
+    );
+  }
+  const total = free.reduce((n, [s, e]) => n + e - s, 0);
+  if (total <= 0) return;
+  for (const el of peeks) {
+    // a share of the free length, walked through the free stretches
+    let d = Math.min(0.999, Math.max(0, +el.dataset.k)) * total;
+    for (const [s, e] of free) {
+      if (d <= e - s) {
+        el.style.setProperty("--top", `${Math.round(s + d)}px`);
+        break;
+      }
+      d -= e - s;
+    }
+  }
 }
 
 // The pictures hang into the slide after theirs, each a different amount:
@@ -916,8 +984,7 @@ async function render(hex) {
   page.dictionary.replaceChildren();
   page.wiki.replaceChildren();
   page.wordsSlide.hidden = true;
-  page.photosSlide.hidden = true;
-  page.photos.replaceChildren();
+  page.peeks.replaceChildren();
   page.meaningSlide.hidden = true;
   page.meaningSlide.classList.remove("has-pile");
   alternate();
@@ -1059,14 +1126,8 @@ async function showPictures(hex, title, terms) {
   const searched = [...new Set(terms.filter(Boolean))];
   const pictures = await picturesWith(hex, searched);
   if (current?.hex !== hex || !pictures.length) return;
-  page.photosTitle.textContent = `${title}, in pictures.`;
-  page.photosNote.innerHTML =
-    `Pictures from <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a> ` +
-    `that searching for ${searched.map((t) => `“${escapeHTML(t)}”`).join(" and ")} found, ` +
-    `ranked by how much of each is close to ${hex}.`;
-  page.photos.innerHTML = picturesHTML(pictures, hex);
-  page.photosSlide.hidden = false;
-  alternate();
+  page.peeks.innerHTML = peeksHTML(pictures, hex);
+  placePeeks();
 }
 
 // The color comes after the hash: color/#5c3a8e
@@ -1104,10 +1165,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     dictionary: q("[data-dictionary]"),
     wiki: q("[data-wiki]"),
     meaningSlide: q("[data-meaning-slide]"),
-    photos: q("[data-photos]"),
-    photosSlide: q("[data-photos-slide]"),
-    photosTitle: q("[data-photos-title]"),
-    photosNote: q("[data-photos-note]"),
+    peeks: q("[data-peeks]"),
     meaningTitle: q("[data-meaning-title]"),
     pageLink: q("[data-page-link]"),
     outro: q("[data-outro]"),
@@ -1168,6 +1226,15 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     else if (!embedded) location.replace(siteURL());
   };
   window.addEventListener("hashchange", show, { signal });
+  // the page grows as its parts come in: the edge pictures follow
+  let placing = 0;
+  const grows = new ResizeObserver(() => {
+    cancelAnimationFrame(placing);
+    placing = requestAnimationFrame(placePeeks);
+  });
+  grows.observe(page.peeks.parentElement);
+  signal?.addEventListener("abort", () => grows.disconnect());
+
   window.addEventListener(
     "resize",
     () => {
