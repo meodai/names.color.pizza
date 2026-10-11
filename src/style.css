@@ -25,6 +25,7 @@
   --text-xs: clamp(0.72rem, 0.68rem + 0.2vw, 0.82rem); /* labels, captions */
   --text-base: clamp(1rem, 0.94rem + 0.3vw, 1.18rem); /* body */
   --text-lg: clamp(1.4rem, 1.1rem + 1.4vw, 2.1rem); /* lead lines */
+  --lead-inset: var(--text-lg); /* what follows a headline steps in this far */
   --text-xl: clamp(2.2rem, 1.4rem + 3.6vw, 4rem); /* section statements */
   --text-2xl: clamp(3rem, 1.4rem + 7.2vw, 7rem); /* hero */
   --text-mega: clamp(4.5rem, 1rem + 15vw, 13rem); /* the count, the wall */
@@ -151,7 +152,7 @@ a:hover {
   letter-spacing: -0.01em;
   max-width: 30ch;
   margin: 0;
-  margin-inline-start: 1em;
+  margin-inline-start: var(--lead-inset);
   text-wrap: balance;
 }
 
@@ -525,6 +526,43 @@ a:hover {
   outline: none;
   color: var(--bg);
   background: var(--fg);
+}
+
+/* under "Share it.", what the list is, stepped in like the hero's intro */
+.color-page .footer .footer__about {
+  max-width: 34ch;
+}
+
+/* the color page ends in its color: where to get the list,
+   set in whichever of black or white reads best on the color */
+.colophon {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-m) var(--space-l);
+  padding: var(--space-m) var(--gutter);
+  color: var(--fill-ink, #fff);
+  background: var(--fill, var(--ink));
+}
+
+.colophon__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-m);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+}
+
+.colophon a {
+  color: inherit;
+}
+
+.colophon__color {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  font-feature-settings: "tnum" 1;
 }
 
 /* ——————————————————————————————————————————————
@@ -1274,7 +1312,6 @@ a:hover {
 
 .color-fill__ink {
   max-width: 34ch;
-  margin-inline-start: 0;
   font-weight: 400; /* hairline type fades on mid-tone colors */
 }
 
@@ -1289,6 +1326,12 @@ a:hover {
 .color-specs dd {
   margin: var(--space-2xs) 0 0;
   max-width: 30ch;
+}
+
+/* under the headline, the values step in as far as the hero's intro; what
+   they're made of stays at the edge */
+.color-fill .color-specs--formats {
+  margin-inline-start: var(--lead-inset);
 }
 
 /* the formats size to their values and wrap whole, never mid-value */
@@ -1335,6 +1378,10 @@ a:hover {
 
 .color-about:empty {
   display: none;
+}
+
+[data-words-slide] .color-about {
+  margin-inline-start: var(--lead-inset);
 }
 
 .color-about p {
@@ -2600,7 +2647,7 @@ html.is-arriving {
 }
 
 .wall__intro,
-.wall__models,
+.wall__dock,
 .wall__zoom {
   z-index: 2;
 }
@@ -3013,7 +3060,7 @@ html:has(body > .color-page),
    each part off past its own edge of the screen, and comes back from there */
 .wall__bar,
 .wall__corner,
-.wall__models,
+.wall__dock,
 .wall__zoom {
   transition:
     opacity 0.35s ease,
@@ -3025,7 +3072,7 @@ html:has(body > .color-page),
   transition-delay: 50ms;
 }
 
-.wall:not(.is-opening) .wall__models {
+.wall:not(.is-opening) .wall__dock {
   transition-delay: 100ms;
 }
 
@@ -3037,7 +3084,7 @@ html:has(body > .color-page),
   translate: 0 -110%;
 }
 
-.wall.is-opening .wall__models {
+.wall.is-opening .wall__dock {
   translate: 0 calc(100% + var(--space-s));
 }
 
@@ -3051,7 +3098,7 @@ html:has(body > .color-page),
 
 @media (prefers-reduced-motion: reduce) {
   .wall.is-opening .wall__bar,
-  .wall.is-opening .wall__models,
+  .wall.is-opening .wall__dock,
   .wall.is-opening .wall__zoom,
   .wall.is-opening .wall__corner {
     translate: none;
@@ -3061,7 +3108,7 @@ html:has(body > .color-page),
 .wall.is-opening .wall__bar,
 .wall.is-opening .wall__corner,
 .wall.is-opening .wall__intro,
-.wall.is-opening .wall__models,
+.wall.is-opening .wall__dock,
 .wall.is-opening .wall__zoom {
   opacity: 0;
   pointer-events: none;
@@ -3150,16 +3197,45 @@ html:has(body > .color-page),
 }
 
 /* the color model: one pill, the chosen model filled */
-.wall__models {
+/* the dock: the model picker, centered, with the lists button right of it
+   (outside the centering, so the picker stays in the middle) */
+.wall__dock {
   position: absolute;
   inset: auto auto var(--space-s) 50%;
-  z-index: 2;
+  transform: translateX(-50%);
+}
+
+.wall__models {
+  position: relative;
   display: flex;
   gap: 0.2rem;
   padding: 0.25rem;
   border-radius: 999px;
   background: var(--paper);
-  transform: translateX(-50%);
+}
+
+.wall__pick-list {
+  position: absolute;
+  inset-block: 0;
+  left: calc(100% + 0.4rem);
+  display: flex;
+  align-items: center;
+}
+
+.wall__pick-list svg {
+  display: block;
+  inline-size: 1.1rem;
+  margin: auto;
+}
+
+.wall__pick-list > button {
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--paper);
+  cursor: pointer;
 }
 
 .wall__models button {
@@ -3232,10 +3308,10 @@ html:has(body > .color-page),
   line-height: 1;
 }
 
-/* the lists: a menu opening to the left of its button */
+/* the lists: a menu opening above its button */
 .wall__lists {
   position: absolute;
-  inset: 0 calc(100% + 0.6rem) auto auto;
+  inset: auto auto calc(100% + 0.6rem) 0;
   display: grid;
   gap: 0.2rem;
   min-inline-size: 13rem;
@@ -3250,11 +3326,11 @@ html:has(body > .color-page),
 }
 
 /* empty until the script fills it: not a stray white dot meanwhile */
-.wall__models:empty {
+.wall__dock:has(.wall__models:empty) {
   display: none;
 }
 
-.wall__zoom .wall__lists button {
+.wall__lists button {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -3274,14 +3350,14 @@ html:has(body > .color-page),
   cursor: pointer;
 }
 
-.wall__zoom .wall__lists button small {
+.wall__lists button small {
   font-size: inherit;
   font-weight: var(--weight-body);
 }
 
-.wall__zoom .wall__lists button:hover,
-.wall__zoom .wall__lists button:focus-visible,
-.wall__zoom .wall__lists button[aria-checked="true"] {
+.wall__lists button:hover,
+.wall__lists button:focus-visible,
+.wall__lists button[aria-checked="true"] {
   color: var(--paper);
   background: var(--ink);
 }
@@ -3293,7 +3369,7 @@ html:has(body > .color-page),
   gap: 0.2rem;
 }
 
-.wall__zoom .wall__list button {
+.wall__list button {
   flex: 1;
 }
 
@@ -3318,7 +3394,7 @@ html:has(body > .color-page),
   background: var(--ink);
 }
 
-.wall__zoom .wall__lists button:focus-visible {
+.wall__lists button:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 2px var(--ink);
 }
@@ -3372,8 +3448,11 @@ html:has(body > .color-page),
     inset: auto 1rem 1rem auto;
   }
 
-  /* under the bar, clear of the intro card */
-  .wall__models {
+  /* under the bar, clear of the intro card; the lists open downwards */
+  .wall__dock {
     inset-block: 7rem auto;
+  }
+  .wall__lists {
+    inset: calc(100% + 0.6rem) 0 auto auto;
   }
 }

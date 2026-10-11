@@ -13,7 +13,7 @@
   its place on the color page.
 */
 
-import { getList, LISTS, normalizeHex, colorURL, siteURL, hexToRgb, rgbToOklab, cardPlace, UNNAMED } from "./names.js";
+import { getList, LISTS, normalizeHex, colorURL, siteURL, hexToRgb, rgbToOklab, cardPlace, UNNAMED, showVersion } from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 
 /* —— the space, in world units (a card is 1 wide) —— */
@@ -365,6 +365,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
 
 export async function initWall(root) {
   const q = (s) => root.querySelector(s);
+  showVersion(root);
   const canvas = q("[data-canvas]");
   const labels = q("[data-labels]");
   const mark = q("[data-mark]");

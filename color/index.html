@@ -91,10 +91,12 @@
       <!-- 6 · Use it -->
       <footer class="slide footer" data-slide>
         <p class="display" data-outro>Share it.</p>
+        <p class="lead footer__about">
+          Color Names is an open list of names for colors, each one given by a
+          person. Free to use, under the MIT license.
+        </p>
         <nav class="footer__nav" aria-label="Project links">
           <a href="../">Color Names</a>
-          <a href="https://github.com/meodai/color-names">GitHub</a>
-          <a href="https://api.color.pizza">API</a>
           <!-- this page's own address, and a way to pass it on -->
           <span class="footer__share">
             <a data-page-link href="./"></a>
@@ -103,6 +105,17 @@
             </button>
           </span>
         </nav>
+      </footer>
+
+      <!-- and under it, the page ends in the color itself -->
+      <footer class="colophon" data-colophon>
+        <nav class="colophon__nav" aria-label="The list">
+          <a href="https://github.com/meodai/color-names">GitHub<span data-version></span></a>
+          <a href="https://www.npmjs.com/package/color-name-list">npm</a>
+          <a href="https://api.color.pizza">API</a>
+          <a href="https://github.com/meodai/color-names/blob/main/LICENSE">License</a>
+        </nav>
+        <p class="colophon__color" data-colophon-color></p>
       </footer>
       <!-- pictures with the color in them (Wikimedia Commons), peeking in at
            the page's edges -->

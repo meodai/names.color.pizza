@@ -20,6 +20,7 @@ import {
   getList,
   siteURL,
   cardPlace,
+  showVersion,
 } from "./names.js";
 
 const toLab = converter("lab");
@@ -869,7 +870,9 @@ function placePeeks() {
   // place to keep clear of has to stay free
   const tallest = Math.max(...peeks.map((el) => el.firstElementChild.offsetHeight));
   const hero = page.root.querySelector(".color-hero");
-  let free = [[span(hero)[1] * 0.75, main.offsetHeight - tallest - 40]];
+  // down to the footers, which stay clear
+  const end = span(page.root.querySelector(".footer") || main)[0];
+  let free = [[span(hero)[1] * 0.75, end - tallest - 40]];
   if (!page.meaningSlide.hidden) {
     const [a, b] = span(page.meaningSlide);
     const gap = [a - tallest - 40, b + 260]; // and the pile hanging into the next slide
@@ -974,6 +977,8 @@ async function render(hex) {
   page.formats.innerHTML = formatsHTML(hex);
   page.fillHex.textContent = hex;
   page.fill.style.setProperty("--fill", hex);
+  page.colophon.style.setProperty("--fill", hex);
+  page.colophonColor.textContent = hex;
   // the scrollbar in the color (the page's own, or the layer's over the wall)
   (page.embedded ? page.root : document.documentElement).style.setProperty("--page-color", hex);
   page.ink.textContent = "";
@@ -1049,6 +1054,7 @@ async function render(hex) {
   // the color slide is set in whichever of black or white reads best on it
   const ink = lore.bestContrast === "white" ? "#fff" : "#000";
   page.fill.style.setProperty("--fill-ink", ink);
+  page.colophon.style.setProperty("--fill-ink", ink);
   page.ink.textContent = `Set in ${lore.bestContrast}, because ${lore.bestContrast} reads best on it.`;
   const print = lore.percentageWords("cmyk");
   const light = lore.temperatureWords;
@@ -1143,6 +1149,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   page.embedded = embedded;
 
   const q = (s) => root.querySelector(s);
+  showVersion(root);
   Object.assign(page, {
     card: q("[data-card]"),
     place: q("[data-place]"),
@@ -1153,6 +1160,8 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     stats: q("[data-stats]"),
     formats: q("[data-formats]"),
     fill: q("[data-fill]"),
+    colophon: q("[data-colophon]"),
+    colophonColor: q("[data-colophon-color]"),
     fillHex: q("[data-fill-hex]"),
     ink: q("[data-ink]"),
     mix: q("[data-mix]"),

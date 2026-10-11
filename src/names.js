@@ -9,6 +9,20 @@ import { loadList } from "./api.js";
 // The site's root, wherever a page sits: each page says how far up it is
 // (<html data-root="../">), so links work in development, in a build and
 // under a subpath.
+// The list's latest release on npm, written into each [data-version]
+// ("GitHub v14.51.0"); asked for once per page, and if npm can't be
+// reached the links just say GitHub
+let release;
+export function showVersion(root = document) {
+  release ??= fetch("https://registry.npmjs.org/color-name-list/latest")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((p) => p?.version ?? null)
+    .catch(() => null);
+  release.then((v) => {
+    if (v) root.querySelectorAll("[data-version]").forEach((el) => (el.textContent = ` v${v}`));
+  });
+}
+
 export const siteURL = (path = "") =>
   new URL(path, new URL(document.documentElement.dataset.root || "./", location.href)).href;
 export const colorURL = (hex) => siteURL(`color/#${hex.replace("#", "")}`);
