@@ -27,6 +27,40 @@ export const siteURL = (path = "") =>
   new URL(path, new URL(document.documentElement.dataset.root || "./", location.href)).href;
 export const colorURL = (hex) => siteURL(`color/#${hex.replace("#", "")}`);
 
+// A named color also has a page of its own, at color/<slug>/ (built from
+// the list, for search engines and sharing): "Red-Handed" → red-handed.
+// Two names that come out the same ("Rose", "Rosé") leave the plain one to
+// the name with the fewest letters changed; the other, like any slug that
+// reads as a hex (Façade → facade), gets its hex added: rose-f7c9d4.
+export const baseSlug = (name) =>
+  name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "color";
+
+const changed = (name, slug) => [...name.toLowerCase()].filter((ch) => !slug.includes(ch)).length;
+
+export function slugsOf(items) {
+  const groups = new Map();
+  for (const it of items) {
+    const base = baseSlug(it.name);
+    if (!groups.has(base)) groups.set(base, []);
+    groups.get(base).push(it);
+  }
+  const slugs = new Map();
+  for (const [base, group] of groups) {
+    group.sort((a, b) => changed(a.name, base) - changed(b.name, base) || (a.name < b.name ? -1 : 1));
+    group.forEach((it, k) => {
+      const plain = k === 0 && !/^[0-9a-f]{6}$/.test(base);
+      slugs.set(it.name, plain ? base : `${base}-${it.hex.replace("#", "")}`);
+    });
+  }
+  return slugs;
+}
+
 // Where the color page's card lands on its hero: center + x·32vw, y·30vh,
 // a little tilted, and on the right, clear of where even a long name wraps.
 // The wall picks it too, to fly a card there before opening its page.

@@ -1990,9 +1990,11 @@ a:hover {
 
 /* portrait: the card above the title instead of beside it */
 @media (max-width: 760px), (orientation: portrait) {
+  /* the text starts under the card, however short the screen: the card's
+     middle, half its (tilted) height, then room to breathe */
   .color-hero {
     justify-content: flex-end;
-    padding-top: calc(var(--space-l) + 60vw);
+    padding-top: calc(var(--space-l) + 30vw + min(52vw, 18rem) * 0.8 + var(--space-l));
   }
   .color-hero__card {
     top: calc(var(--space-l) + 30vw);
@@ -3020,7 +3022,20 @@ html:has(body > .color-page),
 }
 
 /* the intro: what you're looking at, once */
+.wall__intro[hidden] {
+  display: none;
+}
+
+/* comes in from its edge, like the rest of the interface */
+@keyframes wall-intro-in {
+  from {
+    opacity: 0;
+    translate: -1.5rem 0;
+  }
+}
+
 .wall__intro {
+  animation: wall-intro-in 0.55s cubic-bezier(0.3, 0.7, 0, 1) both;
   padding: var(--space-s);
   border-radius: 1rem;
   color: var(--ink);
@@ -3221,6 +3236,11 @@ html:has(body > .color-page),
 /* the color model: one pill, the chosen model filled */
 /* the dock: the model picker, centered, with the lists button right of it
    (outside the centering, so the picker stays in the middle) */
+/* with its menu open, over the buttons beside it */
+.wall__dock:has([data-list-menu]:not([hidden])) {
+  z-index: 4;
+}
+
 .wall__dock {
   position: absolute;
   inset: auto auto var(--space-s) 50%;
@@ -3460,21 +3480,36 @@ html:has(body > .color-page),
     left: 1rem;
   }
 
-  /* clear of the buttons on the right */
-  .wall__corner {
-    inset: auto 4.5rem 1rem 1rem;
-    max-inline-size: none;
+  /* the tabs and the lists button, one row in the bottom right corner;
+     the round buttons above them, the intro and messages to their left */
+  .wall__dock {
+    inset: auto 1rem 1rem auto;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transform: none;
+  }
+
+  .wall__pick-list {
+    position: static;
+  }
+
+  .wall__lists {
+    inset: auto 0 calc(100% + 0.6rem) auto;
   }
 
   .wall__zoom {
-    inset: auto 1rem 1rem auto;
+    inset: auto 1rem calc(1rem + 2.6rem + 0.4rem) auto;
   }
 
-  /* under the bar, clear of the intro card; the lists open downwards */
-  .wall__dock {
-    inset-block: 7rem auto;
+  .wall__corner {
+    inset: auto 4.5rem calc(1rem + 2.6rem + 0.6rem) 1rem;
+    max-inline-size: none;
   }
-  .wall__lists {
-    inset: calc(100% + 0.6rem) 0 auto auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall__intro {
+    animation: none;
   }
 }

@@ -21,7 +21,9 @@ import {
   siteURL,
   cardPlace,
   showVersion,
+  slugsOf,
 } from "./names.js";
+import { lookupName, isWhole, baseTitle } from "./lookup.js";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -233,332 +235,6 @@ const peeksHTML = (pictures, hex) => {
     .join("");
 };
 
-/* —— Wikipedia: the name, and the words inside it —— */
-
-const SMALL = ["the", "a", "in", "of", "an", "on"];
-
-// "Venus Slipper Orchid" -> the full name, its runs of words, single words,
-// without possessives; single words also as "Word (color)"
-// color words and modifiers: their articles are the most general
-const COMMON = ["light", "dark", "pale", "deep", "bright", "soft", "pastel", "medium", "dull", "vivid",
-  "red", "orange", "yellow", "green", "blue", "purple", "violet", "pink", "brown", "black", "white",
-  "grey", "gray", "cyan", "magenta", "teal", "gold", "silver", "beige", "tan"];
-
-// "Shōshin" → "Shoshin", "Crème" → "Creme"
-const withoutAccents = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-function nameVariants(name) {
-  const words = name.split(" ");
-  const out = new Set([name]);
-  for (let i = words.length; i >= 2; i--) {
-    for (let j = 1; j <= i - 2; j++) out.add(words.slice(j, i).join(" "));
-  }
-  for (let k = words.length - 1; k >= 2; k--) out.add(words.slice(0, k).join(" "));
-  words.forEach((w) => out.add(w));
-  const kept = [...out].filter((v) => {
-    const low = v.toLowerCase();
-    return !SMALL.includes(low) && !SMALL.some((s) => low.startsWith(s + " ") || low.endsWith(" " + s));
-  });
-  // each without its accents too, right after it: Wikipedia has
-  // "Shoshin", not "Shōshin"
-  const spelled = kept.flatMap((v) => (withoutAccents(v) !== v ? [v, withoutAccents(v)] : [v]));
-  // the distinctive words first; plain color words and modifiers ("Light",
-  // "Yellow") have the most general articles, so they come last
-  const plainWord = (v) => COMMON.includes(v.toLowerCase());
-  const ordered = [...spelled.filter((v) => !plainWord(v)), ...spelled.filter(plainWord)];
-  const extra = [];
-  for (const v of ordered) {
-    if (/['’]s$/.test(v)) extra.push(v.slice(0, -2));
-    if (!/\s/.test(v)) extra.push(`${v} (color)`);
-  }
-  return [...new Set([...ordered, ...extra])];
-}
-
-const wikiCache = new Map();
-function wikiSummary(title) {
-  if (!wikiCache.has(title)) {
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
-      title.replace(/ /g, "_")
-    )}?redirect=true`;
-    wikiCache.set(
-      title,
-      fetch(url)
-        .then((res) => (res.ok ? res.json() : null))
-        .catch(() => null)
-    );
-  }
-  return wikiCache.get(title);
-}
-
-// Titles like "Black Mesa (video game)": plain "Black Mesa" is only a
-// disambiguation page, so the specific articles have to be searched for.
-async function wikiTitlesFor(name) {
-  const url = new URL("https://en.wikipedia.org/w/api.php");
-  Object.entries({
-    action: "query",
-    format: "json",
-    origin: "*",
-    generator: "prefixsearch",
-    gpssearch: name,
-    gpslimit: "10",
-    prop: "pageprops",
-    ppprop: "disambiguation",
-    redirects: "1",
-  }).forEach(([k, v]) => url.searchParams.set(k, v));
-  try {
-    const res = await fetch(url);
-    const pages = Object.values((await res.json()).query?.pages || {});
-    const exactish = new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( \\(.+\\))?$`, "i");
-    return pages
-      .filter((p) => exactish.test(p.title) && !p.pageprops?.disambiguation)
-      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-      .map((p) => p.title)
-      .slice(0, 3);
-  } catch {
-    return [];
-  }
-}
-
-// The images inside the articles we show, as the old color pages did.
-// SVGs and maps are skipped: they're mostly icons, flags and white space.
-const mediaCache = new Map();
-function wikiMedia(title) {
-  if (!mediaCache.has(title)) {
-    const url = `https://en.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(
-      title.replace(/ /g, "_")
-    )}?redirect=true`;
-    mediaCache.set(
-      title,
-      fetch(url)
-        .then((res) => (res.ok ? res.json() : null))
-        .catch(() => null)
-    );
-  }
-  return mediaCache.get(title);
-}
-
-// a Wikimedia file's name, from a thumbnail URL or a media-list title, to
-// tell when two are the same picture
-// the file a picture's address is of, whatever size or tracking query
-// (?utm_source=…) it's asked for with
-const fileOf = (url) => {
-  const s = url.replace(/[?#].*$/, "");
-  return decodeURIComponent(s.match(/\/([^/]+\.\w{3,4})\/\d+px-[^/]*$/)?.[1] || s.split("/").pop() || s)
-    .replace(/^File:/, "")
-    .replace(/ /g, "_")
-    .toLowerCase();
-};
-
-async function wikiImages(titles, limit = 8, skip = []) {
-  const lists = await Promise.all(titles.map(wikiMedia));
-  const seen = new Set(skip.map(fileOf));
-  const images = [];
-  for (const list of lists) {
-    for (const item of list?.items || []) {
-      if (item.type !== "image" || !item.srcset?.length) continue;
-      if (/\.svg$/i.test(item.title) || seen.has(fileOf(item.title))) continue;
-      // maps, locators, logos and flags are mostly white space at this size
-      if (/map|locat|logo|flag|icon|diagram|chart/i.test(item.title)) continue;
-      seen.add(fileOf(item.title));
-      images.push({
-        srcset: item.srcset.map((s) => `https:${s.src} ${s.scale}`).join(", "),
-        src: `https:${item.srcset[0].src}`,
-        alt: item.caption?.text || "",
-        link: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title)}`,
-      });
-    }
-  }
-  return images.slice(0, limit);
-}
-
-// When the name itself is a disambiguation page ("Voodoo or Vodou may refer
-// to: …"), its editors list the main meanings first: take those, in order.
-async function wikiMeanings(title, limit = 2) {
-  try {
-    const res = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title.replace(/ /g, "_"))}`
-    );
-    if (!res.ok) return [];
-    const doc = new DOMParser().parseFromString(await res.text(), "text/html");
-    const titles = [];
-    for (const li of doc.querySelectorAll("li")) {
-      const href = li.querySelector('a[rel="mw:WikiLink"]')?.getAttribute("href") || "";
-      const target = decodeURIComponent(href.replace(/^\.\//, "").split("#")[0]).replace(/_/g, " ");
-      if (!target || target.includes(":")) continue; // Wikipedia:, Help: …
-      if (!titles.includes(target)) titles.push(target);
-      if (titles.length >= limit) break;
-    }
-    return titles;
-  } catch {
-    return [];
-  }
-}
-
-// Wikipedia's near-match search: titles that match ignoring case and
-// punctuation ("Deep-Fried" finds Deep-fried, a redirect to Deep frying).
-// Full-text search would be too loose: it gives "Lingering Storm" typhoons.
-async function wikiSearch(query, limit = 2, what = "nearmatch") {
-  const url = new URL("https://en.wikipedia.org/w/api.php");
-  Object.entries({
-    action: "query",
-    format: "json",
-    origin: "*",
-    list: "search",
-    srwhat: what,
-    srsearch: query,
-    srlimit: String(limit),
-  }).forEach(([k, v]) => url.searchParams.set(k, v));
-  try {
-    const res = await fetch(url);
-    return ((await res.json()).query?.search || []).map((r) => r.title);
-  } catch {
-    return [];
-  }
-}
-
-// titles are case-sensitive after the first letter, and the list writes
-// names in Title Case: "Deep Fried" isn't an article, "Deep fried" is
-const sentenceCase = (t) => t[0] + t.slice(1).toLowerCase();
-
-async function wikiEntries(name) {
-  const sentence = sentenceCase(name);
-  const [full, asSentence] = await Promise.all([
-    wikiSummary(name),
-    sentence !== name ? wikiSummary(sentence) : null,
-  ]);
-  const ambiguous = [full, asSentence].find((p) => p?.type === "disambiguation");
-  const found = [full, asSentence].some((p) => p && p.type !== "disambiguation" && p.extract);
-  const [meanings, specific, searched] = await Promise.all([
-    ambiguous ? wikiMeanings(ambiguous.title || name) : [],
-    wikiTitlesFor(name),
-    found || ambiguous ? [] : wikiSearch(name),
-  ]);
-  // the name's main meanings, its "Name (…)" articles, the name itself
-  // (as written, then in sentence case), what search finds, then its parts
-  const titles = [
-    ...new Set([
-      ...meanings,
-      ...specific.slice(0, 2),
-      name,
-      sentence,
-      ...searched,
-      // the name's parts, multi-word ones also in sentence case
-      ...nameVariants(name).flatMap((v) => (/\s/.test(v) ? [v, sentenceCase(v)] : [v])),
-    ]),
-  ];
-  const pages = await Promise.all(titles.map(wikiSummary));
-
-  // A word of the name that's ambiguous on its own ("Bianchi may refer
-  // to…") is looked up with the rest of the name: of what a full-text search
-  // for the whole name finds, an article on that word itself, "Bianchi
-  // (company)". Only those: the search alone is too loose to trust.
-  const ambiguousWords = titles.filter(
-    (t, k) => !/\s/.test(t) && pages[k]?.type === "disambiguation" && name.includes(t)
-  );
-  if (ambiguousWords.length) {
-    const hits = await wikiSearch(name, 6, "text");
-    const meant = hits.filter((h) => ambiguousWords.some((w) => h.startsWith(`${w} (`))).slice(0, 2);
-    const extra = await Promise.all(meant.map(wikiSummary));
-    // after the name's own articles, before the words' generic ones
-    const own = titles.findIndex((t) => t === sentence) + 1;
-    pages.splice(Math.max(own, 1), 0, ...extra);
-  }
-
-  const seen = new Set();
-  return pages
-    .filter((p) => p && p.type !== "disambiguation" && p.extract)
-    .filter((p) => {
-      const id = p.wikibase_item || p.title;
-      if (seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    })
-    .slice(0, 4)
-    .map((p) => ({
-      title: p.title,
-      blocks: summaryBlocks(p.extract_html || `<p>${escapeHTML(p.extract)}</p>`),
-      image: p.thumbnail?.source,
-      link: p.content_urls?.desktop?.page,
-    }));
-}
-
-/* —— Wiktionary: what the words of the name mean —— */
-
-const dictCache = new Map();
-function wiktionary(term) {
-  if (!dictCache.has(term)) {
-    dictCache.set(
-      term,
-      fetch(
-        `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(term.replace(/ /g, "_"))}`
-      )
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => (data?.en?.length ? { term, senses: data.en } : null))
-        .catch(() => null)
-    );
-  }
-  return dictCache.get(term);
-}
-
-// definitions arrive as HTML; keep their text
-const plain = (html) => new DOMParser().parseFromString(html, "text/html").body.textContent.trim();
-
-// The name as a whole first ("Black Mesa", "red-handed"); failing that,
-// its words. A sense with no plain definition left is dropped.
-async function dictionaryEntries(name) {
-  const whole = [name, name.toLowerCase(), name.toLowerCase().replace(/ /g, "-")];
-  for (const term of [...new Set(whole)]) {
-    const hit = await wiktionary(term);
-    if (hit) return [shapeEntry(hit, true)].filter(Boolean);
-  }
-  const words = [...new Set(name.toLowerCase().replace(/['’]s\b/g, "").split(/[\s-]+/))]
-    .filter((w) => w.length > 2 && !SMALL.includes(w))
-    .slice(0, 3);
-  const hits = await Promise.all(words.map(wiktionary));
-  return hits.map((h) => h && shapeEntry(h)).filter(Boolean);
-}
-
-function shapeEntry({ term, senses }, whole = false) {
-  const parts = senses
-    .map((sense) => ({
-      part: sense.partOfSpeech,
-      definitions: sense.definitions.map((d) => plain(d.definition)).filter(Boolean).slice(0, 2),
-    }))
-    .filter((p) => p.definitions.length)
-    .slice(0, 2);
-  if (!parts.length) return null;
-  return {
-    term,
-    whole,
-    parts,
-    link: `https://en.wiktionary.org/wiki/${encodeURIComponent(term.replace(/ /g, "_"))}`,
-  };
-}
-
-// A pronunciation from the term's page, if it has one: the first recording
-// in the English section, in a format this browser can play.
-async function pronunciation(term) {
-  try {
-    const res = await fetch(
-      `https://en.wiktionary.org/api/rest_v1/page/html/${encodeURIComponent(term.replace(/ /g, "_"))}`
-    );
-    if (!res.ok) return null;
-    const doc = new DOMParser().parseFromString(await res.text(), "text/html");
-    const english = doc.getElementById("English")?.closest("section");
-    const probe = document.createElement("audio");
-    for (const source of english?.querySelectorAll("audio source") || []) {
-      const type = source.getAttribute("type") || "";
-      if (type && probe.canPlayType(type)) {
-        const src = source.getAttribute("src");
-        return src.startsWith("//") ? `https:${src}` : src;
-      }
-    }
-  } catch {
-    // no recording, then
-  }
-  return null;
-}
-
 // a small play button next to a headword; plays once, stops on a second click
 function playButton(term, src) {
   const btn = document.createElement("button");
@@ -583,18 +259,15 @@ function playButton(term, src) {
 
 // Each entry's play button goes next to its word's heading (in the index,
 // see indexHTML); given a title, a whole-name entry has that as heading.
-async function addPronunciations(root, entries, isCurrent, title) {
-  await Promise.all(
-    entries.map(async (e) => {
-      const src = await pronunciation(e.term);
-      const head = title && isWhole(entries) ? title : root.querySelector(`[data-term="${CSS.escape(e.term)}"]`);
-      if (src && isCurrent()) head?.append(playButton(e.term, src));
-    })
-  );
+// (sounds: each term's recordings; the first this browser can play)
+function addPronunciations(root, entries, sounds, title) {
+  const probe = document.createElement("audio");
+  for (const e of entries) {
+    const src = (sounds[e.term] || []).find((s) => s.type && probe.canPlayType(s.type))?.src;
+    const head = title && isWhole(entries) ? title : root.querySelector(`[data-term="${CSS.escape(e.term)}"]`);
+    if (src) head?.append(playButton(e.term, src));
+  }
 }
-
-// one entry for the whole name, rather than one per word
-const isWhole = (entries) => entries.length === 1 && entries[0].whole;
 
 // The whole name in the dictionary ("red-handed"): one entry, big, like a
 // dictionary page, under the slide's title (the name). Single words go into
@@ -603,22 +276,6 @@ const dictionaryHTML = (entries) =>
   `<div class="dictionary dictionary--whole">` +
   entries.map((e) => `<article class="dictionary__entry">${sensesHTML(e)}</article>`).join("") +
   `</div>`;
-
-// A summary's paragraphs and list items, as plain text: keeps the breaks of
-// the HTML version without putting Wikipedia's markup into the page.
-function summaryBlocks(html) {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const blocks = [];
-  doc.body.querySelectorAll("p, ul").forEach((el) => {
-    if (el.tagName === "P") {
-      const text = el.textContent.trim();
-      if (text) blocks.push({ text });
-    } else {
-      blocks.push({ items: [...el.querySelectorAll("li")].map((li) => li.textContent.trim()) });
-    }
-  });
-  return blocks;
-}
 
 const blocksHTML = (blocks) =>
   blocks
@@ -630,6 +287,39 @@ const blocksHTML = (blocks) =>
     .join("");
 
 /* —— the page —— */
+
+// each named color's own address on the site (see slugsOf)
+const slugMaps = new WeakMap();
+function slugFor(data, name) {
+  if (!slugMaps.has(data)) slugMaps.set(data, slugsOf(data.items));
+  return slugMaps.get(data).get(name);
+}
+
+// A named color's own page (color/<slug>/, written by the build) carries
+// the nightly copy of what Wikipedia and Wiktionary say about the name:
+// read from this page when it is that page, otherwise fetched from it
+const COPY = /<script type="application\/json" id="color-data">([\s\S]*?)<\/script>/;
+const builtPage = (() => {
+  try {
+    return JSON.parse(document.getElementById("color-data")?.textContent || "null");
+  } catch {
+    return null;
+  }
+})();
+
+async function savedLookup(name, slug) {
+  if (builtPage?.name === name) return builtPage.looked;
+  if (!slug) return null;
+  try {
+    const res = await fetch(siteURL(`color/${slug}/`));
+    if (!res.ok) return null;
+    const json = (await res.text()).match(COPY)?.[1];
+    const copy = json && JSON.parse(json);
+    return copy?.name === name ? copy.looked : null;
+  } catch {
+    return null;
+  }
+}
 
 const page = {}; // elements, filled in by initDetailPage
 let current = null;
@@ -759,7 +449,6 @@ function revealNeighbors() {
 // article of its own shares its row: the word, its play button and its
 // definitions on the left, the article on the right. A word without one
 // gets a row of its own, its definitions where an article's text would be.
-const baseTitle = (t) => t.replace(/\s*\(.*\)$/, "").toLowerCase();
 const capital = (t) => t[0].toUpperCase() + t.slice(1);
 
 const sensesHTML = (word) =>
@@ -1104,9 +793,11 @@ async function render(hex) {
   revealNeighbors();
   page.wordsSlide.hidden = !page.words.innerHTML.trim();
 
-  // the page's own address, to share
-  page.pageLink.href = location.href;
-  page.pageLink.textContent = `${location.host}${location.pathname}${location.hash}`;
+  // the page's own address, to share: a named color's own page once the
+  // site is built (in development there are none)
+  const own = exact && import.meta.env.PROD ? new URL(siteURL(`color/${slugFor(data, current.name)}/`)) : location;
+  page.pageLink.href = own.href;
+  page.pageLink.textContent = `${own.host}${own.pathname}${own.hash}`;
   page.outro.textContent = unnamed ? "Nobody named it yet." : "Share it.";
   alternate();
 
@@ -1118,10 +809,9 @@ async function render(hex) {
   );
 
   if (!current.name) return;
-  const [definitions, entries] = await Promise.all([
-    dictionaryEntries(current.name),
-    wikiEntries(current.name),
-  ]);
+  // the nightly copy when there is one, otherwise Wikipedia itself
+  const looked = (exact && (await savedLookup(current.name, slugFor(data, current.name)))) || (await lookupName(current.name));
+  const { definitions, entries, images, sounds } = looked;
   if (current?.hex !== hex || (!definitions.length && !entries.length)) return;
   page.meaningTitle.textContent = current.name;
   // Words join the index of articles, each in its article's row. The whole
@@ -1131,22 +821,10 @@ async function render(hex) {
     isWhole(definitions) && !entries.some((e) => baseTitle(e.title) === definitions[0].term.toLowerCase());
   page.dictionary.innerHTML = whole ? dictionaryHTML(definitions) : "";
   page.wiki.innerHTML = indexHTML(whole ? [] : definitions, entries);
-  addPronunciations(
-    whole ? page.dictionary : page.wiki,
-    definitions,
-    () => current?.hex === hex,
-    whole ? page.meaningTitle : null
-  );
+  addPronunciations(whole ? page.dictionary : page.wiki, definitions, sounds, whole ? page.meaningTitle : null);
   page.meaningSlide.hidden = false;
   alternate();
-  if (!entries.length) return;
-
-  const images = await wikiImages(
-    entries.map((e) => e.title),
-    8,
-    entries.map((e) => e.image).filter(Boolean)
-  );
-  if (current?.hex !== hex || !images.length) return;
+  if (!images.length) return;
   page.wiki.insertAdjacentHTML("beforeend", imagesHTML(images));
   page.meaningSlide.classList.add("has-pile");
   pileGap();
@@ -1212,7 +890,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   // the browser's own sharing where there is one; otherwise the link is
   // copied, and says so for a moment
   q("[data-share]").addEventListener("click", async () => {
-    const url = location.href;
+    const url = page.pageLink.href;
     if (navigator.share) {
       try {
         await navigator.share({ title: document.title, url });
@@ -1259,7 +937,8 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   );
 
   const show = () => {
-    const hex = hexFromHash();
+    // color/#hex, or a named color's own page
+    const hex = hexFromHash() || (!embedded && builtPage?.hex) || null;
     if (hex) render(hex);
     else if (!embedded) location.replace(siteURL());
   };

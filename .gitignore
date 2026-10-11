@@ -5,3 +5,5 @@ dist
 
 # generated from the git history (scripts/added.mjs)
 public/added.json
+.data/
+.data-fill.log

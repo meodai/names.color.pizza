@@ -11,9 +11,12 @@
     "dev": "vite",
     "prebuild": "node scripts/added.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postbuild": "node scripts/pages.mjs",
+    "collect": "node scripts/collect.mjs"
   },
   "devDependencies": {
+    "linkedom": "^0.18.12",
     "vite": "^8.1.1"
   },
   "dependencies": {

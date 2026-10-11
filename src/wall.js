@@ -376,9 +376,11 @@ export async function initWall(root) {
   const results = q("[data-results]");
   const intro = q("[data-intro]");
 
-  // the intro card, once dismissed, stays dismissed
+  // the intro card, once dismissed, stays dismissed; otherwise it comes in
+  // once the names (and so its count) are there, not before
+  let introWanted = true;
   try {
-    if (localStorage.getItem("wall-intro-seen")) intro.hidden = true;
+    introWanted = !localStorage.getItem("wall-intro-seen");
   } catch {}
   q("[data-intro-close]").addEventListener("click", () => {
     intro.hidden = true;
@@ -405,6 +407,7 @@ export async function initWall(root) {
       el.textContent = n.toLocaleString("en-US");
     });
   showCount();
+  if (introWanted) intro.hidden = false;
 
   // each name where the chosen model puts its color; every model's
   // positions are worked out once, the first time it's shown
