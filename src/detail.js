@@ -1,0 +1,1180 @@
+/*
+  Color page — the universal view of one color, at color/#<hex>.
+
+  Linked from anywhere on the site (the hero cards, the name map, the
+  examples). Laid out like the Color Parrot companion's color pages: the
+  story on the side, the animated card on its own. It shows the color's name
+  on the list (exact, closest, or none yet), a few words of color lore, and
+  what Wikipedia knows about the name and its parts, with pictures. Chrome
+  stays black and white; the card carries the color.
+*/
+
+import { converter, formatHex, wcagLuminance } from "culori";
+import ColorDescription from "color-description";
+import {
+  UNNAMED,
+  hexToRgb,
+  rgbToOklab,
+  oklchString,
+  normalizeHex,
+  getList,
+  siteURL,
+  cardPlace,
+} from "./names.js";
+
+const toLab = converter("lab");
+const toRgb = converter("rgb");
+const toHsl = converter("hsl");
+
+const escapeHTML = (s) =>
+  String(s).replace(
+    /[&<>"]/g,
+    (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])
+  );
+
+const pct = (v) => `${Math.round(v * 100)}%`;
+const round = (v) => Math.round(v);
+
+// the color written out in other models, listed in the story column
+const FORMATS = {
+  hex: { label: "Hex", fn: (c) => c },
+  rgb: {
+    label: "RGB",
+    fn: (c) => {
+      const { r, g, b } = toRgb(c);
+      return `${round(r * 255)} ${round(g * 255)} ${round(b * 255)}`;
+    },
+  },
+  hsl: {
+    label: "HSL",
+    fn: (c) => {
+      const { h = 0, s, l } = toHsl(c);
+      return `${round(h || 0)}° ${pct(s)} ${pct(l)}`;
+    },
+  },
+  oklch: {
+    label: "OKLCH",
+    fn: (c) => oklchString(...rgbToOklab(hexToRgb(c))).replace(/^oklch\(|\)$/g, ""),
+  },
+  lab: {
+    label: "LAB",
+    fn: (c) => {
+      const { l, a, b } = toLab(c);
+      return `${round(l)} ${round(a)} ${round(b)}`;
+    },
+  },
+  cmyk: {
+    label: "CMYK",
+    fn: (c) => {
+      const { r, g, b } = toRgb(c);
+      const k = 1 - Math.max(r, g, b);
+      if (k === 1) return "0% 0% 0% 100%";
+      return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k]
+        .map(pct)
+        .join(" ");
+    },
+  },
+};
+
+// the card's shade stack: the color, nudged lighter or darker in LAB
+function shade(hex, amount) {
+  const lab = toLab(hex);
+  return formatHex({ ...lab, l: Math.max(0, Math.min(100, lab.l + amount)) });
+}
+
+/* —— the name: exact, closest, or none yet —— */
+
+function closestAny(data, hex) {
+  const [L, a, b] = rgbToOklab(hexToRgb(hex));
+  let best = null;
+  let bd = Infinity;
+  for (const it of data.items) {
+    const d = (it.L - L) ** 2 + (it.a - a) ** 2 + (it.b - b) ** 2;
+    if (d < bd) {
+      bd = d;
+      best = it;
+    }
+  }
+  return { item: best, distance: Math.sqrt(bd) };
+}
+
+// The nearest names to a color, closest first, without the color itself.
+function neighbors(data, hex, count = 12) {
+  const [L, a, b] = rgbToOklab(hexToRgb(hex));
+  return data.items
+    .filter((it) => it.hex !== hex)
+    .map((it) => ({ it, d: (it.L - L) ** 2 + (it.a - a) ** 2 + (it.b - b) ** 2 }))
+    .sort((x, y) => x.d - y.d)
+    .slice(0, count)
+    .map(({ it }) => it);
+}
+
+/* —— Wikimedia Commons: pictures picked by how much of them is the color —— */
+
+// Commons can't search by color, so the page does: it searches Commons for
+// the color's name and its noun, draws each candidate small, and keeps the
+// pictures with the largest share of pixels near the color in OKLab.
+// Commons thumbnails allow cross-origin reading, so this needs no key.
+const NEAR = 0.05; // OKLab distance that still counts as "this color"
+const SAMPLE = 40; // candidates are measured at 40×40 pixels
+
+async function commonsSearch(term, limit = 40) {
+  const url = new URL("https://commons.wikimedia.org/w/api.php");
+  Object.entries({
+    action: "query",
+    format: "json",
+    origin: "*",
+    generator: "search",
+    gsrnamespace: "6", // File:
+    // photographs only: JPEGs leave out most flags, diagrams and swatches
+    gsrsearch: `${term} filemime:image/jpeg`,
+    gsrlimit: String(limit),
+    prop: "imageinfo",
+    iiprop: "url|size",
+    iiurlwidth: "400",
+  }).forEach(([k, v]) => url.searchParams.set(k, v));
+  try {
+    const res = await fetch(url);
+    const pages = Object.values((await res.json()).query?.pages || {});
+    return pages
+      .map((p) => ({ title: p.title, info: p.imageinfo?.[0] }))
+      .filter((p) => p.info?.thumburl)
+      .map(({ title, info }) => ({
+        title: title.replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, ""),
+        image: info.thumburl,
+        ratio: info.width / info.height,
+        link: info.descriptionurl,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+// the share of a picture's pixels within NEAR of the color (0–1)
+function shareOf(img, target) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = SAMPLE;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, SAMPLE, SAMPLE);
+  const { data } = ctx.getImageData(0, 0, SAMPLE, SAMPLE);
+  const limit = NEAR * NEAR;
+  let near = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const [L, a, b] = rgbToOklab([data[i], data[i + 1], data[i + 2]]);
+    if ((L - target[0]) ** 2 + (a - target[1]) ** 2 + (b - target[2]) ** 2 < limit) near++;
+  }
+  return near / (SAMPLE * SAMPLE);
+}
+
+function measure(candidate, target) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        resolve({ ...candidate, share: shareOf(img, target) });
+      } catch {
+        resolve(null); // the image turned out not to be readable
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = candidate.image;
+  });
+}
+
+// measure a few at a time, so dozens of images don't all load at once
+async function measureAll(candidates, target, parallel = 8) {
+  const results = [];
+  let next = 0;
+  const worker = async () => {
+    while (next < candidates.length) results.push(await measure(candidates[next++], target));
+  };
+  await Promise.all(Array.from({ length: parallel }, worker));
+  return results.filter(Boolean);
+}
+
+async function picturesWith(hex, terms, count = 12) {
+  const lists = await Promise.all(terms.map((t) => commonsSearch(t)));
+  const seen = new Set();
+  const candidates = lists.flat().filter((c) => !seen.has(c.link) && seen.add(c.link));
+  const measured = await measureAll(candidates, rgbToOklab(hexToRgb(hex)));
+  return measured
+    // at least a noticeable patch of it, but not a flat swatch of it
+    .filter((p) => p.share >= 0.04 && p.share <= 0.85)
+    .sort((a, b) => b.share - a.share)
+    .slice(0, count);
+}
+
+const picturesHTML = (pictures, hex) =>
+  pictures
+    .map(
+      (p) => `<a class="archive__item" href="${escapeHTML(p.link)}" target="_blank" rel="noopener">
+        <img src="${escapeHTML(p.image)}" alt="" loading="lazy" style="aspect-ratio:${p.ratio.toFixed(3)}" />
+        <span class="archive__title">${escapeHTML(p.title)}</span>
+        <span class="archive__where">${Math.round(p.share * 100)}% close to ${hex}</span>
+      </a>`
+    )
+    .join("");
+
+/* —— Wikipedia: the name, and the words inside it —— */
+
+const SMALL = ["the", "a", "in", "of", "an", "on"];
+
+// "Venus Slipper Orchid" -> the full name, its runs of words, single words,
+// without possessives; single words also as "Word (color)"
+// color words and modifiers: their articles are the most general
+const COMMON = ["light", "dark", "pale", "deep", "bright", "soft", "pastel", "medium", "dull", "vivid",
+  "red", "orange", "yellow", "green", "blue", "purple", "violet", "pink", "brown", "black", "white",
+  "grey", "gray", "cyan", "magenta", "teal", "gold", "silver", "beige", "tan"];
+
+// "Shōshin" → "Shoshin", "Crème" → "Creme"
+const withoutAccents = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+function nameVariants(name) {
+  const words = name.split(" ");
+  const out = new Set([name]);
+  for (let i = words.length; i >= 2; i--) {
+    for (let j = 1; j <= i - 2; j++) out.add(words.slice(j, i).join(" "));
+  }
+  for (let k = words.length - 1; k >= 2; k--) out.add(words.slice(0, k).join(" "));
+  words.forEach((w) => out.add(w));
+  const kept = [...out].filter((v) => {
+    const low = v.toLowerCase();
+    return !SMALL.includes(low) && !SMALL.some((s) => low.startsWith(s + " ") || low.endsWith(" " + s));
+  });
+  // each without its accents too, right after it: Wikipedia has
+  // "Shoshin", not "Shōshin"
+  const spelled = kept.flatMap((v) => (withoutAccents(v) !== v ? [v, withoutAccents(v)] : [v]));
+  // the distinctive words first; plain color words and modifiers ("Light",
+  // "Yellow") have the most general articles, so they come last
+  const plainWord = (v) => COMMON.includes(v.toLowerCase());
+  const ordered = [...spelled.filter((v) => !plainWord(v)), ...spelled.filter(plainWord)];
+  const extra = [];
+  for (const v of ordered) {
+    if (/['’]s$/.test(v)) extra.push(v.slice(0, -2));
+    if (!/\s/.test(v)) extra.push(`${v} (color)`);
+  }
+  return [...new Set([...ordered, ...extra])];
+}
+
+const wikiCache = new Map();
+function wikiSummary(title) {
+  if (!wikiCache.has(title)) {
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+      title.replace(/ /g, "_")
+    )}?redirect=true`;
+    wikiCache.set(
+      title,
+      fetch(url)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null)
+    );
+  }
+  return wikiCache.get(title);
+}
+
+// Titles like "Black Mesa (video game)": plain "Black Mesa" is only a
+// disambiguation page, so the specific articles have to be searched for.
+async function wikiTitlesFor(name) {
+  const url = new URL("https://en.wikipedia.org/w/api.php");
+  Object.entries({
+    action: "query",
+    format: "json",
+    origin: "*",
+    generator: "prefixsearch",
+    gpssearch: name,
+    gpslimit: "10",
+    prop: "pageprops",
+    ppprop: "disambiguation",
+    redirects: "1",
+  }).forEach(([k, v]) => url.searchParams.set(k, v));
+  try {
+    const res = await fetch(url);
+    const pages = Object.values((await res.json()).query?.pages || {});
+    const exactish = new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( \\(.+\\))?$`, "i");
+    return pages
+      .filter((p) => exactish.test(p.title) && !p.pageprops?.disambiguation)
+      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+      .map((p) => p.title)
+      .slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
+// The images inside the articles we show, as the old color pages did.
+// SVGs and maps are skipped: they're mostly icons, flags and white space.
+const mediaCache = new Map();
+function wikiMedia(title) {
+  if (!mediaCache.has(title)) {
+    const url = `https://en.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(
+      title.replace(/ /g, "_")
+    )}?redirect=true`;
+    mediaCache.set(
+      title,
+      fetch(url)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null)
+    );
+  }
+  return mediaCache.get(title);
+}
+
+// a Wikimedia file's name, from a thumbnail URL or a media-list title, to
+// tell when two are the same picture
+const fileOf = (s) =>
+  decodeURIComponent(s.match(/\/([^/]+\.\w{3,4})\/\d+px-[^/]*$/)?.[1] || s.split("/").pop() || s)
+    .replace(/^File:/, "")
+    .replace(/ /g, "_")
+    .toLowerCase();
+
+async function wikiImages(titles, limit = 8, skip = []) {
+  const lists = await Promise.all(titles.map(wikiMedia));
+  const seen = new Set(skip.map(fileOf));
+  const images = [];
+  for (const list of lists) {
+    for (const item of list?.items || []) {
+      if (item.type !== "image" || !item.srcset?.length) continue;
+      if (/\.svg$/i.test(item.title) || seen.has(fileOf(item.title))) continue;
+      // maps, locators, logos and flags are mostly white space at this size
+      if (/map|locat|logo|flag|icon|diagram|chart/i.test(item.title)) continue;
+      seen.add(fileOf(item.title));
+      images.push({
+        srcset: item.srcset.map((s) => `https:${s.src} ${s.scale}`).join(", "),
+        src: `https:${item.srcset[0].src}`,
+        alt: item.caption?.text || "",
+        link: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title)}`,
+      });
+    }
+  }
+  return images.slice(0, limit);
+}
+
+// When the name itself is a disambiguation page ("Voodoo or Vodou may refer
+// to: …"), its editors list the main meanings first: take those, in order.
+async function wikiMeanings(title, limit = 2) {
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title.replace(/ /g, "_"))}`
+    );
+    if (!res.ok) return [];
+    const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+    const titles = [];
+    for (const li of doc.querySelectorAll("li")) {
+      const href = li.querySelector('a[rel="mw:WikiLink"]')?.getAttribute("href") || "";
+      const target = decodeURIComponent(href.replace(/^\.\//, "").split("#")[0]).replace(/_/g, " ");
+      if (!target || target.includes(":")) continue; // Wikipedia:, Help: …
+      if (!titles.includes(target)) titles.push(target);
+      if (titles.length >= limit) break;
+    }
+    return titles;
+  } catch {
+    return [];
+  }
+}
+
+// Wikipedia's near-match search: titles that match ignoring case and
+// punctuation ("Deep-Fried" finds Deep-fried, a redirect to Deep frying).
+// Full-text search would be too loose: it gives "Lingering Storm" typhoons.
+async function wikiSearch(query, limit = 2, what = "nearmatch") {
+  const url = new URL("https://en.wikipedia.org/w/api.php");
+  Object.entries({
+    action: "query",
+    format: "json",
+    origin: "*",
+    list: "search",
+    srwhat: what,
+    srsearch: query,
+    srlimit: String(limit),
+  }).forEach(([k, v]) => url.searchParams.set(k, v));
+  try {
+    const res = await fetch(url);
+    return ((await res.json()).query?.search || []).map((r) => r.title);
+  } catch {
+    return [];
+  }
+}
+
+// titles are case-sensitive after the first letter, and the list writes
+// names in Title Case: "Deep Fried" isn't an article, "Deep fried" is
+const sentenceCase = (t) => t[0] + t.slice(1).toLowerCase();
+
+async function wikiEntries(name) {
+  const sentence = sentenceCase(name);
+  const [full, asSentence] = await Promise.all([
+    wikiSummary(name),
+    sentence !== name ? wikiSummary(sentence) : null,
+  ]);
+  const ambiguous = [full, asSentence].find((p) => p?.type === "disambiguation");
+  const found = [full, asSentence].some((p) => p && p.type !== "disambiguation" && p.extract);
+  const [meanings, specific, searched] = await Promise.all([
+    ambiguous ? wikiMeanings(ambiguous.title || name) : [],
+    wikiTitlesFor(name),
+    found || ambiguous ? [] : wikiSearch(name),
+  ]);
+  // the name's main meanings, its "Name (…)" articles, the name itself
+  // (as written, then in sentence case), what search finds, then its parts
+  const titles = [
+    ...new Set([
+      ...meanings,
+      ...specific.slice(0, 2),
+      name,
+      sentence,
+      ...searched,
+      // the name's parts, multi-word ones also in sentence case
+      ...nameVariants(name).flatMap((v) => (/\s/.test(v) ? [v, sentenceCase(v)] : [v])),
+    ]),
+  ];
+  const pages = await Promise.all(titles.map(wikiSummary));
+
+  // A word of the name that's ambiguous on its own ("Bianchi may refer
+  // to…") is looked up with the rest of the name: of what a full-text search
+  // for the whole name finds, an article on that word itself, "Bianchi
+  // (company)". Only those: the search alone is too loose to trust.
+  const ambiguousWords = titles.filter(
+    (t, k) => !/\s/.test(t) && pages[k]?.type === "disambiguation" && name.includes(t)
+  );
+  if (ambiguousWords.length) {
+    const hits = await wikiSearch(name, 6, "text");
+    const meant = hits.filter((h) => ambiguousWords.some((w) => h.startsWith(`${w} (`))).slice(0, 2);
+    const extra = await Promise.all(meant.map(wikiSummary));
+    // after the name's own articles, before the words' generic ones
+    const own = titles.findIndex((t) => t === sentence) + 1;
+    pages.splice(Math.max(own, 1), 0, ...extra);
+  }
+
+  const seen = new Set();
+  return pages
+    .filter((p) => p && p.type !== "disambiguation" && p.extract)
+    .filter((p) => {
+      const id = p.wikibase_item || p.title;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    })
+    .slice(0, 4)
+    .map((p) => ({
+      title: p.title,
+      blocks: summaryBlocks(p.extract_html || `<p>${escapeHTML(p.extract)}</p>`),
+      image: p.thumbnail?.source,
+      link: p.content_urls?.desktop?.page,
+    }));
+}
+
+/* —— Wiktionary: what the words of the name mean —— */
+
+const dictCache = new Map();
+function wiktionary(term) {
+  if (!dictCache.has(term)) {
+    dictCache.set(
+      term,
+      fetch(
+        `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(term.replace(/ /g, "_"))}`
+      )
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => (data?.en?.length ? { term, senses: data.en } : null))
+        .catch(() => null)
+    );
+  }
+  return dictCache.get(term);
+}
+
+// definitions arrive as HTML; keep their text
+const plain = (html) => new DOMParser().parseFromString(html, "text/html").body.textContent.trim();
+
+// The name as a whole first ("Black Mesa", "red-handed"); failing that,
+// its words. A sense with no plain definition left is dropped.
+async function dictionaryEntries(name) {
+  const whole = [name, name.toLowerCase(), name.toLowerCase().replace(/ /g, "-")];
+  for (const term of [...new Set(whole)]) {
+    const hit = await wiktionary(term);
+    if (hit) return [shapeEntry(hit, true)].filter(Boolean);
+  }
+  const words = [...new Set(name.toLowerCase().replace(/['’]s\b/g, "").split(/[\s-]+/))]
+    .filter((w) => w.length > 2 && !SMALL.includes(w))
+    .slice(0, 3);
+  const hits = await Promise.all(words.map(wiktionary));
+  return hits.map((h) => h && shapeEntry(h)).filter(Boolean);
+}
+
+function shapeEntry({ term, senses }, whole = false) {
+  const parts = senses
+    .map((sense) => ({
+      part: sense.partOfSpeech,
+      definitions: sense.definitions.map((d) => plain(d.definition)).filter(Boolean).slice(0, 2),
+    }))
+    .filter((p) => p.definitions.length)
+    .slice(0, 2);
+  if (!parts.length) return null;
+  return {
+    term,
+    whole,
+    parts,
+    link: `https://en.wiktionary.org/wiki/${encodeURIComponent(term.replace(/ /g, "_"))}`,
+  };
+}
+
+// A pronunciation from the term's page, if it has one: the first recording
+// in the English section, in a format this browser can play.
+async function pronunciation(term) {
+  try {
+    const res = await fetch(
+      `https://en.wiktionary.org/api/rest_v1/page/html/${encodeURIComponent(term.replace(/ /g, "_"))}`
+    );
+    if (!res.ok) return null;
+    const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+    const english = doc.getElementById("English")?.closest("section");
+    const probe = document.createElement("audio");
+    for (const source of english?.querySelectorAll("audio source") || []) {
+      const type = source.getAttribute("type") || "";
+      if (type && probe.canPlayType(type)) {
+        const src = source.getAttribute("src");
+        return src.startsWith("//") ? `https:${src}` : src;
+      }
+    }
+  } catch {
+    // no recording, then
+  }
+  return null;
+}
+
+// a small play button next to a headword; plays once, stops on a second click
+function playButton(term, src) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "play";
+  btn.setAttribute("aria-label", `Play how “${term}” sounds`);
+  const audio = new Audio(src);
+  const set = (playing) => btn.classList.toggle("play--playing", playing);
+  btn.addEventListener("click", () => {
+    if (audio.paused) {
+      audio.currentTime = 0;
+      audio.play().catch(() => set(false));
+    } else {
+      audio.pause();
+    }
+  });
+  audio.addEventListener("play", () => set(true));
+  audio.addEventListener("pause", () => set(false));
+  audio.addEventListener("ended", () => set(false));
+  return btn;
+}
+
+// Each entry's play button goes next to its word's heading (in the index,
+// see indexHTML); given a title, a whole-name entry has that as heading.
+async function addPronunciations(root, entries, isCurrent, title) {
+  await Promise.all(
+    entries.map(async (e) => {
+      const src = await pronunciation(e.term);
+      const head = title && isWhole(entries) ? title : root.querySelector(`[data-term="${CSS.escape(e.term)}"]`);
+      if (src && isCurrent()) head?.append(playButton(e.term, src));
+    })
+  );
+}
+
+// one entry for the whole name, rather than one per word
+const isWhole = (entries) => entries.length === 1 && entries[0].whole;
+
+// The whole name in the dictionary ("red-handed"): one entry, big, like a
+// dictionary page, under the slide's title (the name). Single words go into
+// the index with the articles instead (indexHTML).
+const dictionaryHTML = (entries) =>
+  `<div class="dictionary dictionary--whole">` +
+  entries.map((e) => `<article class="dictionary__entry">${sensesHTML(e)}</article>`).join("") +
+  `</div>`;
+
+// A summary's paragraphs and list items, as plain text: keeps the breaks of
+// the HTML version without putting Wikipedia's markup into the page.
+function summaryBlocks(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const blocks = [];
+  doc.body.querySelectorAll("p, ul").forEach((el) => {
+    if (el.tagName === "P") {
+      const text = el.textContent.trim();
+      if (text) blocks.push({ text });
+    } else {
+      blocks.push({ items: [...el.querySelectorAll("li")].map((li) => li.textContent.trim()) });
+    }
+  });
+  return blocks;
+}
+
+const blocksHTML = (blocks) =>
+  blocks
+    .map((b) =>
+      b.items
+        ? `<ul>${b.items.map((i) => `<li>${escapeHTML(i)}</li>`).join("")}</ul>`
+        : `<p>${escapeHTML(b.text)}</p>`
+    )
+    .join("");
+
+/* —— the page —— */
+
+const page = {}; // elements, filled in by initDetailPage
+let current = null;
+
+// every other way to write the color (the hex is the slide's headline);
+// each value copies itself on click
+const formatsHTML = (hex) =>
+  Object.entries(FORMATS)
+    .filter(([key]) => key !== "hex")
+    .map(([, f]) => {
+      const value = escapeHTML(f.fn(hex));
+      return `<div><dt class="label">${f.label}</dt>
+        <dd><button type="button" class="color-specs__copy" data-copy="${value}"
+          title="Copy ${f.label}">${value}</button></dd></div>`;
+    })
+    .join("");
+
+// meanings, effects and usage from color-description, laid out like the specs; the
+// dataset is written from a western perspective, so they're offered as
+// associations ("often"), not facts
+function wordsHTML(lore) {
+  return [
+    ["Often means", lore.meanings],
+    ["Can make you", lore.effects],
+    ["Fits", lore.usage],
+  ]
+    .filter(([, words]) => words?.length)
+    .map(([title, words]) => {
+      // a sentence, like the other specs: "nature, earthiness and peace"
+      const w = words.slice(0, 8);
+      const said = w.length > 1 ? `${w.slice(0, -1).join(", ")} and ${w.at(-1)}` : w[0];
+      return `<div>
+        <dt class="label">${title}</dt>
+        <dd>${escapeHTML(said)}</dd>
+      </div>`;
+    })
+    .join("");
+}
+
+// the slide's headline, written from the data: "Red often stands for
+// excitement, energy and passion."
+function wordsTitle(lore) {
+  const [noun] = lore.nouns;
+  const top = lore.meanings.slice(0, 3);
+  if (!noun || !top.length) return "What it can say.";
+  const list = top.length > 1 ? `${top.slice(0, -1).join(", ")} and ${top.at(-1)}` : top[0];
+  return `${noun[0].toUpperCase()}${noun.slice(1)} often stands for ${list}.`;
+}
+
+// Wikipedia as an index: the title on the left, the opening on the right
+// When each name was added (public/added.json, written at build time from
+// the repository's history by scripts/added.mjs): the commit and its date.
+let added = null;
+async function addedOn(name) {
+  added ??= fetch(siteURL("added.json"))
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  const data = await added;
+  const at = data?.names?.[name];
+  if (at == null) return null;
+  const [hash, day, by, github] = data.commits[at];
+  const date = new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  return { hash, date, by, github };
+}
+
+// The card's look, as CSS custom properties: the color and its two shades.
+function cardVars(hex) {
+  const dark = wcagLuminance(hex) < 0.5;
+  return {
+    "--c-color": hex,
+    "--c-shade0": shade(hex, dark ? 25 : -25),
+    "--c-shade1": shade(hex, dark ? 12 : -12),
+  };
+}
+
+const cardStyle = (hex) =>
+  Object.entries(cardVars(hex))
+    .map(([k, v]) => `${k}:${v}`)
+    .join(";");
+
+// The neighbors as small copies of the hero's card, each linking to its page.
+// --anim-appear-delay staggers their entrance, as on the original.
+const neighborsHTML = (items) =>
+  items
+    .map(
+      (it, i) => `<a class="neighbor" href="#${it.hex.slice(1)}" aria-label="${escapeHTML(it.name)}, ${it.hex}">
+        <article class="swatchcard" style="${cardStyle(it.hex)};--anim-appear-delay:${i * 75}ms">
+          <div class="swatchcard__upper">
+            <i class="swatchcard__swatch" aria-hidden="true">
+              <i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i>
+            </i>
+          </div>
+          <div class="swatchcard__label">
+            <div class="swatchcard__info">
+              <span class="swatchcard__row1">${it.hex}</span>
+              <span class="swatchcard__row2">${escapeHTML(it.name)}</span>
+            </div>
+          </div>
+        </article>
+      </a>`
+    )
+    .join("");
+
+// the neighbor cards play their entrance once their slide comes into view
+let neighborWatch = null;
+function revealNeighbors() {
+  neighborWatch?.disconnect();
+  neighborWatch = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      neighborWatch.disconnect();
+      page.neighbors
+        .querySelectorAll(".swatchcard")
+        .forEach((card) => card.classList.add("swatchcard--visible"));
+    },
+    { threshold: 0.2 }
+  );
+  neighborWatch.observe(page.neighbors);
+}
+
+// The name's words and its Wikipedia articles in one index. A word with an
+// article of its own shares its row: the word, its play button and its
+// definitions on the left, the article on the right. A word without one
+// gets a row of its own, its definitions where an article's text would be.
+const baseTitle = (t) => t.replace(/\s*\(.*\)$/, "").toLowerCase();
+const capital = (t) => t[0].toUpperCase() + t.slice(1);
+
+const sensesHTML = (word) =>
+  word.parts
+    .map(
+      (p) => `<p class="label">${escapeHTML(p.part)}</p>
+        <ol class="dictionary__senses">${p.definitions.map((d) => `<li>${escapeHTML(d)}</li>`).join("")}</ol>`
+    )
+    .join("") +
+  `<a class="dictionary__source" href="${escapeHTML(word.link)}" target="_blank" rel="noopener">Wiktionary</a>`;
+
+function indexHTML(words, entries) {
+  const wordFor = new Map(words.map((w) => [w.term.toLowerCase(), w]));
+  const placed = new Set();
+  const rows = entries.map((e) => {
+    const word = wordFor.get(baseTitle(e.title));
+    const mine = word && !placed.has(word) ? word : null;
+    if (mine) placed.add(mine);
+    const opening = e.blocks.find((b) => b.text) || e.blocks[0];
+    return `<article class="wiki-index__row">
+        <div class="wiki-index__head">
+          <h3${mine ? ` data-term="${escapeHTML(mine.term)}"` : ""}><span>${escapeHTML(e.title)}</span></h3>
+          ${mine ? `<div class="wiki-index__words">${sensesHTML(mine)}</div>` : ""}
+          ${e.image ? `<img class="wiki-index__picture" src="${escapeHTML(e.image)}" alt="" loading="lazy" />` : ""}
+        </div>
+        <div class="wiki-index__text">
+          ${opening ? blocksHTML([opening]) : ""}
+          ${e.link ? `<a href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>` : ""}
+        </div>
+      </article>`;
+  });
+  for (const word of words) {
+    if (placed.has(word)) continue;
+    rows.push(`<article class="wiki-index__row">
+        <div class="wiki-index__head">
+          <h3 data-term="${escapeHTML(word.term)}"><span>${escapeHTML(capital(word.term))}</span></h3>
+        </div>
+        <div class="wiki-index__text wiki-index__words">${sensesHTML(word)}</div>
+      </article>`);
+  }
+  // no heading: each row's links say where it comes from
+  return rows.length ? `<div class="wiki-index">${rows.join("")}</div>` : "";
+}
+
+// The pictures from those articles, as a loose pile hanging off the bottom
+// of the slide: each at its own ratio (a set height, its own width), spread
+// along the edge with a little randomness in place, height and tilt.
+const between = (a, b) => a + Math.random() * (b - a);
+const imagesHTML = (images) =>
+  `<div class="picture-pile">` +
+  images
+    .map((img, i) => {
+      const x = ((i + 0.5) / images.length) * 100 + between(-4, 4);
+      const vars = [
+        `--x:${x.toFixed(1)}%`,
+        `--y:${between(-1.5, 1.5).toFixed(2)}rem`,
+        `--h:${between(8.5, 12.5).toFixed(2)}rem`,
+        `--rot:${between(-9, 9).toFixed(1)}deg`,
+        `--z:${Math.floor(between(1, 20))}`,
+      ].join(";");
+      return `<a href="${escapeHTML(img.link)}" target="_blank" rel="noopener" style="${vars}">
+        <img srcset="${escapeHTML(img.srcset)}" src="${escapeHTML(img.src)}"
+          alt="${escapeHTML(img.alt)}" />
+      </a>`;
+    })
+    .join("") +
+  `</div>`;
+
+async function copy(text, btn, done) {
+  try {
+    await navigator.clipboard.writeText(text);
+    const was = btn.textContent;
+    btn.textContent = done;
+    setTimeout(() => (btn.textContent = was), 1500);
+  } catch {
+    // clipboard blocked: the value stays visible to copy by hand
+  }
+}
+
+// Visible slides alternate ink and paper, starting with the ink hero, so a
+// slide that has nothing to show never leaves two of a kind side by side.
+// The full-bleed color slide sits outside the count: it's neither.
+function alternate() {
+  [...page.root.querySelectorAll("[data-slide]")]
+    .filter((el) => !el.hidden)
+    .forEach((el, i) => el.classList.toggle("slide--invert", i % 2 === 0));
+}
+
+// The pictures hang into the slide after theirs, each a different amount:
+// that slide starts below the lowest of them, by the usual slide spacing,
+// so its heading sits like every other slide's.
+function pileGap() {
+  const pile = page.root.querySelector(".picture-pile");
+  const next = page.meaningSlide.nextElementSibling;
+  if (!next) return;
+  if (!pile || !page.meaningSlide.classList.contains("has-pile")) {
+    next.style.removeProperty("--pile-gap");
+    return;
+  }
+  const line = pile.getBoundingClientRect().top;
+  const low = Math.max(0, ...[...pile.children].map((a) => a.getBoundingClientRect().bottom - line));
+  next.style.setProperty("--pile-gap", `${Math.ceil(low)}px`);
+}
+
+// The name, as large as the page sets it, unless a word of it is too long
+// for its column ("Thanksgiving"): then smaller, a step at a time, until
+// every word fits whole. Never broken inside a word.
+function fitTitle() {
+  const el = page.name;
+  el.style.fontSize = "";
+  const fit = () => {
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    for (let k = 0; k < 30 && el.scrollWidth > el.clientWidth + 1; k++) {
+      size *= 0.94;
+      el.style.fontSize = `${size}px`;
+    }
+  };
+  fit();
+  document.fonts?.ready.then(() => {
+    el.style.fontSize = "";
+    fit();
+  });
+}
+
+// Where the card lands on the hero (see cardPlace); a card handed over
+// from the wall brings the place it already flew to.
+function placeCard(place = cardPlace()) {
+  page.place.style.setProperty("--x", place.x.toFixed(3));
+  page.place.style.setProperty("--y", place.y.toFixed(3));
+  page.place.style.setProperty("--r", `${place.r.toFixed(1)}deg`);
+}
+
+async function render(hex) {
+  const { card } = page;
+  (page.embedded ? page.root : window).scrollTo(0, 0);
+
+  // every color starts the card's entrance from its first frame
+  card.classList.add("swatchcard--reset");
+  card.classList.remove("swatchcard--visible");
+  void card.offsetWidth;
+  card.classList.remove("swatchcard--reset");
+  for (const [k, v] of Object.entries(cardVars(hex))) card.style.setProperty(k, v);
+  // Arriving from the wall, the card has already flown to its place there:
+  // it is shown at once, at that very place, so the change of page doesn't
+  // show. The title and text come in after.
+  let handoff = null;
+  try {
+    handoff = JSON.parse(sessionStorage.getItem("card-handoff"));
+    sessionStorage.removeItem("card-handoff");
+  } catch {}
+  const handedOver = handoff?.hex === hex;
+  placeCard(handedOver && handoff.place ? handoff.place : undefined);
+  if (handedOver) {
+    card.classList.add("swatchcard--reset", "swatchcard--visible");
+    document.documentElement.classList.add("is-arriving");
+    requestAnimationFrame(() => requestAnimationFrame(arrived));
+  }
+  current = { hex };
+  page.value.textContent = hex;
+  page.cardName.textContent = handedOver ? handoff.name : "";
+  page.name.textContent = handedOver ? handoff.name : hex;
+  fitTitle();
+  page.intro.replaceChildren();
+  page.stats.replaceChildren();
+  page.formats.innerHTML = formatsHTML(hex);
+  page.fillHex.textContent = hex;
+  page.fill.style.setProperty("--fill", hex);
+  // the scrollbar in the color (the page's own, or the layer's over the wall)
+  (page.embedded ? page.root : document.documentElement).style.setProperty("--page-color", hex);
+  page.ink.textContent = "";
+  page.mix.replaceChildren();
+  page.about.replaceChildren();
+  page.neighbors.replaceChildren();
+  page.neighborsSlide.hidden = true;
+  page.dictionary.replaceChildren();
+  page.wiki.replaceChildren();
+  page.wordsSlide.hidden = true;
+  page.photosSlide.hidden = true;
+  page.photos.replaceChildren();
+  page.meaningSlide.hidden = true;
+  page.meaningSlide.classList.remove("has-pile");
+  alternate();
+  document.title = `${hex} — Color Names`;
+
+  const lore = new ColorDescription(hex);
+  const mix = lore.percentageWords();
+
+  const data = await getList("default");
+  if (current?.hex !== hex) return; // a newer color took over
+  const exact = data.byHex.get(hex);
+  const { item: near, distance } = exact ? { item: exact, distance: 0 } : closestAny(data, hex);
+  const unnamed = !exact && distance > UNNAMED;
+  current.name = exact || !unnamed ? near.name : null;
+  const title = current.name || "No name yet";
+
+  page.cardName.textContent = exact ? exact.name : unnamed ? "No name yet" : `≈ ${near.name}`;
+  page.name.textContent = title;
+  fitTitle();
+  document.title = `${title}: ${hex} — Color Names`;
+
+  // the two lines under the name: what it is, and how it can be described
+  const [noun, alt] = lore.nouns;
+  const adjective = /^(black|white)$/.test(noun) ? "" : lore.descriptiveWords[0]; // no "very dark black"
+  const kind = [adjective, noun].filter(Boolean).join(" ");
+  const article = /^[aeiou]/i.test(kind) ? "an" : "a";
+  const subject = current.name || "This color";
+  // the best-fitting words only: the hero is no place for all eleven
+  const lines = [
+    kind && `${subject} is ${article} ${kind}${alt ? `, close to ${alt}` : ""}.`,
+    `It can be described as ${lore.getDescriptiveList(false, 4)}.`,
+  ].filter(Boolean);
+  page.intro.replaceChildren(
+    ...lines.map((t) => Object.assign(document.createElement("p"), { className: "lead", textContent: t }))
+  );
+
+  // the hex, and how the title relates to it: the name itself, the
+  // nearest name (and its own hex), or none yet
+  const stats = [hex];
+  if (unnamed) stats.push("Not named yet");
+  else if (!exact) stats.push(`Nearest name, ${near.hex}`);
+  page.stats.replaceChildren(
+    ...stats.map((t) => Object.assign(document.createElement("span"), { textContent: t }))
+  );
+  // when the name was added, linking to the commit that did it
+  if (exact) {
+    // and, when someone other than the list's maintainer added it, by whom
+    addedOn(current.name).then((added) => {
+      if (!added || current?.hex !== hex) return;
+      const link = (href, text, title) =>
+        Object.assign(document.createElement("a"), { href, textContent: text, title, target: "_blank", rel: "noopener" });
+      const line = document.createElement("span");
+      line.append(link(`https://github.com/meodai/color-names/commit/${added.hash}`, `Added ${added.date}`, `Commit ${added.hash}`));
+      if (added.by) {
+        line.append(" by ");
+        line.append(added.github ? link(`https://github.com/${added.github}`, added.by, `@${added.github} on GitHub`) : added.by);
+      }
+      page.stats.append(line);
+    });
+  }
+
+  // the color slide is set in whichever of black or white reads best on it
+  const ink = lore.bestContrast === "white" ? "#fff" : "#000";
+  page.fill.style.setProperty("--fill-ink", ink);
+  page.ink.textContent = `Set in ${lore.bestContrast}, because ${lore.bestContrast} reads best on it.`;
+  const print = lore.percentageWords("cmyk");
+  const light = lore.temperatureWords;
+  page.mix.innerHTML = [
+    ["On screen", `${mix[0]} red, ${mix[1]} green and ${mix[2]} blue`],
+    ["In print", `${print[0]} cyan, ${print[1]} magenta, ${print[2]} yellow and ${print[3]} black`],
+    ["As light", `about ${light.value.toLocaleString("en-US")} K, ${light.descriptive.join(", ")}`],
+  ]
+    .map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${escapeHTML(v)}</dd></div>`)
+    .join("");
+
+  // the library's short essays about the color's families
+  page.about.innerHTML = lore.description.map((t) => `<p>${escapeHTML(t)}</p>`).join("");
+  page.wordsTitle.textContent = wordsTitle(lore);
+  page.words.innerHTML = wordsHTML(lore);
+  showPictures(hex, current.name || hex, [current.name, lore.nouns[0]]);
+  page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex));
+  page.neighborsSlide.hidden = false;
+  revealNeighbors();
+  page.wordsSlide.hidden = !page.words.innerHTML.trim();
+
+  // the page's own address, to share
+  page.pageLink.href = location.href;
+  page.pageLink.textContent = `${location.host}${location.pathname}${location.hash}`;
+  page.outro.textContent = unnamed ? "Nobody named it yet." : "Share it.";
+  alternate();
+
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      card.classList.remove("swatchcard--reset");
+      card.classList.add("swatchcard--visible");
+    })
+  );
+
+  if (!current.name) return;
+  const [definitions, entries] = await Promise.all([
+    dictionaryEntries(current.name),
+    wikiEntries(current.name),
+  ]);
+  if (current?.hex !== hex || (!definitions.length && !entries.length)) return;
+  page.meaningTitle.textContent = current.name;
+  // Words join the index of articles, each in its article's row. The whole
+  // name too, when there's an article on it ("Thanksgiving"); without one
+  // it stays an entry of its own, set large under the slide's title.
+  const whole =
+    isWhole(definitions) && !entries.some((e) => baseTitle(e.title) === definitions[0].term.toLowerCase());
+  page.dictionary.innerHTML = whole ? dictionaryHTML(definitions) : "";
+  page.wiki.innerHTML = indexHTML(whole ? [] : definitions, entries);
+  addPronunciations(
+    whole ? page.dictionary : page.wiki,
+    definitions,
+    () => current?.hex === hex,
+    whole ? page.meaningTitle : null
+  );
+  page.meaningSlide.hidden = false;
+  alternate();
+  if (!entries.length) return;
+
+  const images = await wikiImages(
+    entries.map((e) => e.title),
+    8,
+    entries.map((e) => e.image).filter(Boolean)
+  );
+  if (current?.hex !== hex || !images.length) return;
+  page.wiki.insertAdjacentHTML("beforeend", imagesHTML(images));
+  page.meaningSlide.classList.add("has-pile");
+  pileGap();
+  // a tilted picture reaches lower once it has its width: measure again
+  page.wiki.querySelectorAll(".picture-pile img").forEach((img) => img.addEventListener("load", pileGap, { once: true }));
+}
+
+// Pictures from Wikimedia Commons, picked by how much of them is the color;
+// the slide only appears once something close enough came back
+async function showPictures(hex, title, terms) {
+  const searched = [...new Set(terms.filter(Boolean))];
+  const pictures = await picturesWith(hex, searched);
+  if (current?.hex !== hex || !pictures.length) return;
+  page.photosTitle.textContent = `${title}, in pictures.`;
+  page.photosNote.innerHTML =
+    `Pictures from <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a> ` +
+    `that searching for ${searched.map((t) => `“${escapeHTML(t)}”`).join(" and ")} found, ` +
+    `ranked by how much of each is close to ${hex}.`;
+  page.photos.innerHTML = picturesHTML(pictures, hex);
+  page.photosSlide.hidden = false;
+  alternate();
+}
+
+// The color comes after the hash: color/#5c3a8e
+const hexFromHash = () => normalizeHex(location.hash.slice(1));
+
+const arrived = () => document.documentElement.classList.remove("is-arriving");
+
+// The color page, on its own page or embedded in the wall: there it runs
+// inside an element of the wall's document (root), its listeners end with
+// the signal, and closing is the wall's to do (onClose).
+export function initDetailPage(root = document, { embedded = false, signal, onClose } = {}) {
+  page.root = root;
+  page.embedded = embedded;
+
+  const q = (s) => root.querySelector(s);
+  Object.assign(page, {
+    card: q("[data-card]"),
+    place: q("[data-place]"),
+    value: q("[data-value]"),
+    cardName: q("[data-card-name]"),
+    name: q("[data-name]"),
+    intro: q("[data-intro]"),
+    stats: q("[data-stats]"),
+    formats: q("[data-formats]"),
+    fill: q("[data-fill]"),
+    fillHex: q("[data-fill-hex]"),
+    ink: q("[data-ink]"),
+    mix: q("[data-mix]"),
+    about: q("[data-about]"),
+    neighbors: q("[data-neighbors]"),
+    neighborsSlide: q("[data-neighbors-slide]"),
+    words: q("[data-words]"),
+    wordsTitle: q("[data-words-title]"),
+    wordsSlide: q("[data-words-slide]"),
+    dictionary: q("[data-dictionary]"),
+    wiki: q("[data-wiki]"),
+    meaningSlide: q("[data-meaning-slide]"),
+    photos: q("[data-photos]"),
+    photosSlide: q("[data-photos-slide]"),
+    photosTitle: q("[data-photos-title]"),
+    photosNote: q("[data-photos-note]"),
+    meaningTitle: q("[data-meaning-title]"),
+    pageLink: q("[data-page-link]"),
+    outro: q("[data-outro]"),
+  });
+
+  // the browser's own sharing where there is one; otherwise the link is
+  // copied, and says so for a moment
+  q("[data-share]").addEventListener("click", async () => {
+    const url = location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: document.title, url });
+      } catch {} // dismissed
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      const was = page.pageLink.textContent;
+      page.pageLink.textContent = "Link copied";
+      setTimeout(() => (page.pageLink.textContent = was), 1500);
+    } catch {} // clipboard blocked: the address is right there to copy
+  });
+
+  page.formats.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-copy]");
+    if (btn) copy(btn.dataset.copy, btn, "Copied");
+  });
+
+  // close: always to the 3D wall. Embedded in it, the wall closes the page
+  // (onClose); on its own, the link goes there.
+  const close = q("[data-close]");
+  close.addEventListener("click", (e) => {
+    if (onClose) {
+      e.preventDefault();
+      onClose();
+    }
+  });
+  // embedded, every way home (the corner, the footer) is the way out too
+  if (onClose) {
+    root.querySelectorAll('a[href="../"]:not([data-close])').forEach((a) =>
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        onClose();
+      })
+    );
+  }
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key === "Escape") close.click();
+    },
+    { signal }
+  );
+
+  const show = () => {
+    const hex = hexFromHash();
+    if (hex) render(hex);
+    else if (!embedded) location.replace(siteURL());
+  };
+  window.addEventListener("hashchange", show, { signal });
+  window.addEventListener(
+    "resize",
+    () => {
+      if (page.name.textContent) fitTitle();
+      pileGap();
+    },
+    { signal }
+  );
+  show();
+}

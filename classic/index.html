@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en" data-root="../">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Names — 31,912 colors, named by people</title>
+    <meta
+      name="description"
+      content="An open list of 31,912 color names, each one chosen by a person. Free, MIT-licensed, and shown — fittingly — in black and white."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;600;700;850&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!--
+      One top-to-bottom scroll of full-bleed slides.
+      Copy lives here in the HTML; design lives in src/style.css.
+      Slides alternate ink-on-paper / paper-on-ink via .slide--invert.
+
+      Values like the color count (31,912), years running (since 2017),
+      and named fraction (~0.19%) are real and current as of this writing.
+      They are the {{ }} build-time values from docs/contents.md and can be
+      wired to the live dataset / git history later.
+    -->
+    <main>
+      <!-- 1 · Hero ————————————————————————————————————— -->
+      <section class="slide slide--invert hero" id="top">
+        <!-- named color cards fly in and pile up over the title -->
+        <div class="stacks" data-wrap aria-hidden="true"></div>
+        <div class="hero__content">
+          <h1 class="hero__title">Color Names</h1>
+          <p class="lead">31,912 of them. Every one chosen by a human.</p>
+          <p class="hero__stats">
+            <span>31,912 names</span>
+            <span>since 2017</span>
+            <span>MIT licensed</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- 2 · Find a color, or a name — the name map ———— -->
+      <!-- Every color on an OkHSL wheel, each patch owned by its closest
+           name; hatched ground has no name yet. Loads lazily. -->
+      <section
+        class="slide name-map"
+        id="name-map"
+        aria-label="Every color, claimed by its closest name"
+      >
+        <div class="name-map__frame" data-frame>
+          <canvas class="name-map__mosaic" data-mosaic></canvas>
+          <canvas class="name-map__labels" data-labels></canvas>
+          <canvas
+            class="name-map__hit"
+            data-hit
+            tabindex="0"
+            role="application"
+            aria-roledescription="color map"
+            aria-label="Color map. Hue goes around, lightness grows from the center out. Arrow keys move the cursor, Enter picks the color under it, plus and minus zoom, Page Up and Page Down change saturation."
+          ></canvas>
+          <div class="name-map__pin" data-pin hidden></div>
+          <div class="name-map__tip" data-tip hidden></div>
+        </div>
+
+        <div class="name-map__panel" data-panel>
+          <p class="display">Find a Name</p>
+
+          <form class="name-map__find" data-find role="search" autocomplete="off">
+            <input
+              class="name-map__search"
+              type="search"
+              data-find-input
+              placeholder="dawn, or paste a hex"
+              aria-label="Find a name or a hex code"
+              spellcheck="false"
+            />
+            <ul class="name-map__results" data-results></ul>
+          </form>
+
+          <div class="name-map__depth">
+            <label class="label" for="name-map-saturation">Saturation</label>
+            <output class="name-map__value" data-depth-value for="name-map-saturation">50</output>
+            <input
+              id="name-map-saturation"
+              type="range"
+              min="0"
+              max="1000"
+              value="500"
+              data-depth
+            />
+          </div>
+
+          <div class="name-map__tools">
+            <div class="color-space__field">
+              <select data-list aria-label="List">
+                <option value="default">Full list</option>
+                <option value="bestOf">Best of</option>
+                <option value="short">Short names</option>
+              </select>
+            </div>
+            <div class="name-map__zoom" role="group" aria-label="Zoom">
+              <button type="button" data-zoom-in aria-label="Zoom in">+</button>
+              <button type="button" data-zoom-out aria-label="Zoom out">−</button>
+              <button type="button" data-zoom-fit>Fit</button>
+            </div>
+          </div>
+
+          <div class="name-map__status">
+            <p data-readout aria-live="polite">Loading names…</p>
+            <p data-hint></p>
+          </div>
+        </div>
+
+        <!-- the free space the fitted wheel sits in -->
+        <div class="name-map__home" data-home></div>
+      </section>
+
+      <!-- 3 · The scale ——————————————————————————————— -->
+      <section class="slide slide--invert">
+        <p class="figure">0.19%</p>
+        <p class="lead">
+          of all colors have a name so far. The rest are still out there.
+        </p>
+      </section>
+
+      <!-- 4 · All the colors, across color spaces ———————— -->
+      <!-- The one section with color. Picks up where 0.19% left off:
+           the same black void, now filled. three.js loads lazily here. -->
+      <section
+        class="slide slide--invert color-space"
+        id="color-space"
+        aria-label="All 31,912 colors, plotted across color spaces"
+      >
+        <div class="color-space__canvas" data-canvas></div>
+
+        <div class="color-space__head">
+          <p class="color-space__readout" data-readout aria-live="polite">
+            <span class="result">Drag to spin</span>
+          </p>
+        </div>
+
+        <div class="color-space__controls">
+          <div class="color-space__field">
+            <!-- static data in HTML; the module reads .value -->
+            <select data-model aria-label="Color space">
+              <option value="rgb">RGB</option>
+              <option value="hsl">HSL</option>
+              <option value="hsv">HSV</option>
+              <option value="hsi">HSI</option>
+              <option value="hwb">HWB</option>
+              <option value="hcg">HCG</option>
+              <option value="lab">CIELAB</option>
+              <option value="lch">LCh</option>
+              <option value="luv">CIELUV</option>
+              <option value="oklab">OKLab</option>
+              <option value="xyz">CIEXYZ</option>
+              <option value="cat02">CAT02 LMS</option>
+              <option value="jab">Jzazbz</option>
+              <option value="yuv">YUV</option>
+            </select>
+          </div>
+          <div class="color-space__field">
+            <select data-list aria-label="List">
+              <option value="default">Full list</option>
+              <option value="bestOf">Best of</option>
+              <option value="short">Short names</option>
+              <option value="wikipedia">Wikipedia</option>
+              <option value="french">French</option>
+              <option value="spanish">Spanish</option>
+              <option value="japaneseTraditional">Japanese Traditional</option>
+              <option value="chineseTraditional">Chinese Traditional</option>
+              <option value="leCorbusier">Le Corbusier</option>
+              <option value="ral">RAL</option>
+              <option value="sanzoWadaI">Sanzo Wada</option>
+              <option value="werner">Werner's Nomenclature</option>
+              <option value="xkcd">xkcd survey</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 · Nearest named color ——————————————————————— -->
+      <section class="slide slide--dense">
+        <p class="display">Pick any color. Meet its closest name.</p>
+        <!-- static example; becomes interactive later -->
+        <a class="result" href="../color/#6b8e23">
+          <span>#6b8e23</span><span class="result__arrow">→</span
+          ><span>Sap Green</span>
+        </a>
+      </section>
+
+      <!-- 6 · Wall of names — Best Of (signature) ———————— -->
+      <section class="slide slide--invert wall">
+        <div class="wall__rows" aria-label="A selection of color names">
+          <div class="marquee">
+            <div class="marquee__track" aria-hidden="false">
+              <span>Atomic Orange</span><span>Midnight in Tokyo</span
+              ><span>Emerald Ice Palace</span><span>Sacrifice Altar</span
+              ><span>Ms. Pac-Man Kiss</span><span>Quiet Jade</span
+              ><span>King Neptune</span><span>Mustard Musketeers</span
+              ><span>Dark &amp; Stormy</span><span>Paolo Veronese Green</span
+              ><span>Happy Piglets</span><span>Tomato Bisque</span
+              ><span>Fine Pine</span><span>Purple Prose</span>
+              <!-- duplicate for a seamless loop -->
+              <span aria-hidden="true">Atomic Orange</span
+              ><span aria-hidden="true">Midnight in Tokyo</span
+              ><span aria-hidden="true">Emerald Ice Palace</span
+              ><span aria-hidden="true">Sacrifice Altar</span
+              ><span aria-hidden="true">Ms. Pac-Man Kiss</span
+              ><span aria-hidden="true">Quiet Jade</span
+              ><span aria-hidden="true">King Neptune</span
+              ><span aria-hidden="true">Mustard Musketeers</span
+              ><span aria-hidden="true">Dark &amp; Stormy</span
+              ><span aria-hidden="true">Paolo Veronese Green</span
+              ><span aria-hidden="true">Happy Piglets</span
+              ><span aria-hidden="true">Tomato Bisque</span
+              ><span aria-hidden="true">Fine Pine</span
+              ><span aria-hidden="true">Purple Prose</span>
+            </div>
+          </div>
+          <div class="marquee marquee--reverse">
+            <div class="marquee__track" aria-hidden="false">
+              <span>Poison Purple Paradise</span><span>Close but No Cigar</span
+              ><span>Shrimp Toast</span><span>Pumpkin Cat</span
+              ><span>Night Watch</span><span>Sandstorm</span
+              ><span>Cadillac Coupe</span><span>Queen of Hearts</span
+              ><span>Fancy Fuchsia</span><span>Green Mana</span
+              ><span>Classic Movie</span><span>Dark Knight</span
+              ><span>Midori</span><span>Purple Climax</span>
+              <!-- duplicate for a seamless loop -->
+              <span aria-hidden="true">Poison Purple Paradise</span
+              ><span aria-hidden="true">Close but No Cigar</span
+              ><span aria-hidden="true">Shrimp Toast</span
+              ><span aria-hidden="true">Pumpkin Cat</span
+              ><span aria-hidden="true">Night Watch</span
+              ><span aria-hidden="true">Sandstorm</span
+              ><span aria-hidden="true">Cadillac Coupe</span
+              ><span aria-hidden="true">Queen of Hearts</span
+              ><span aria-hidden="true">Fancy Fuchsia</span
+              ><span aria-hidden="true">Green Mana</span
+              ><span aria-hidden="true">Classic Movie</span
+              ><span aria-hidden="true">Dark Knight</span
+              ><span aria-hidden="true">Midori</span
+              ><span aria-hidden="true">Purple Climax</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 · How it's made —————————————————————————————— -->
+      <section class="slide slide--dense">
+        <p class="display">Nine years. Mostly by hand.</p>
+        <ul class="rules">
+          <li>Title Case</li>
+          <li>Original &amp; clear</li>
+          <li>No duplicates</li>
+          <li>No slurs, no brands</li>
+        </ul>
+        <p class="prose">
+          And, said once and gently: we prefer names made by people over names
+          made by machines.
+        </p>
+        <p class="hero__stats">
+          <span>31,912 names</span>
+          <span>9 years</span>
+          <span>hundreds of namers</span>
+        </p>
+      </section>
+
+      <!-- 8 · Use it ——————————————————————————————————— -->
+      <section class="slide slide--invert slide--dense">
+        <p class="display">Free. Open. Drop it in.</p>
+        <p class="code">npm install color-name-list</p>
+        <ul class="formats">
+          <li>JSON</li>
+          <li>CSV</li>
+          <li>YAML</li>
+          <li>TOON</li>
+          <li>UMD</li>
+          <li>XML</li>
+          <li>HTML</li>
+          <li>SCSS</li>
+        </ul>
+        <p class="prose">
+          Or call the API — no limits, self-hostable.<br />
+          <span class="code">api.color.pizza/v1/?values=00f,f00&amp;list=bestOf</span>
+        </p>
+        <p class="prose">Lists: Full · Best Of · Short. License: MIT.</p>
+      </section>
+
+      <!-- 9 · Contribute & support — name a color ————————— -->
+      <!-- Checks a new name the way the repo's tests will, then opens a
+           prefilled GitHub issue. Loads lazily. -->
+      <section class="slide slide--dense submit" id="submit" aria-labelledby="submit-title">
+        <p class="display" id="submit-title">Add a name. Keep it alive.</p>
+
+        <form class="submit__form" data-form autocomplete="off" novalidate>
+          <div class="submit__color">
+            <label class="submit__swatch">
+              <input type="color" data-color aria-label="Pick the color" />
+            </label>
+            <div class="submit__color-fields">
+              <label class="label" for="submit-hex">Color</label>
+              <input
+                class="submit__input submit__hex"
+                id="submit-hex"
+                data-hex
+                spellcheck="false"
+                inputmode="text"
+              />
+              <div class="submit__tools">
+                <button class="submit__tool" type="button" data-blank>
+                  Find an unnamed color
+                </button>
+                <button class="submit__tool" type="button" data-dropper hidden>
+                  Pick from screen
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="submit__name">
+            <label class="label" for="submit-name">Name</label>
+            <input
+              class="submit__input"
+              id="submit-name"
+              data-name
+              placeholder="Kind of Orange"
+              spellcheck="true"
+              required
+            />
+          </div>
+
+          <ul class="submit__checks" data-checks aria-live="polite"></ul>
+
+          <div class="submit__similar" data-similar hidden>
+            <p class="label">Similar names</p>
+            <ul></ul>
+          </div>
+
+          <div class="actions">
+            <button class="btn" type="submit" data-send disabled>
+              Send on GitHub
+            </button>
+            <a class="btn" href="https://github.com/sponsors/meodai">Sponsor</a>
+          </div>
+        </form>
+
+        <p class="prose">
+          A person reads every name. The whole thing runs on about $540 a year,
+          funded by people who care.
+        </p>
+      </section>
+
+      <!-- 10 · Quote — a breath before the tool ——————————— -->
+      <section class="slide slide--invert slide--center">
+        <figure class="quote quote--poster">
+          <p class="quote__text">
+            The names of color function like a thread attached to a frightfully
+            slender needle, capable of stitching together our most delicate
+            emotions and memories.
+          </p>
+          <figcaption class="quote__cite">Kenya Hara, <em>White</em></figcaption>
+        </figure>
+      </section>
+
+      <!-- 11 · Explore — the full searchable list (the app) — -->
+      <!-- Framework-free virtual scroller; three.js-free. Loads lazily.
+           Only ~30 rows live in the DOM at once, out of all 31,912. -->
+      <section class="slide explore" id="explore" aria-label="Search every color name">
+        <p class="display">All of them. Yours to search.</p>
+
+        <div class="explore__bar">
+          <input
+            class="explore__search"
+            type="search"
+            data-search
+            placeholder="Search a name…"
+            aria-label="Search color names"
+            autocomplete="off"
+          />
+          <input
+            class="explore__pick"
+            type="color"
+            data-pick
+            value="#6b8e23"
+            aria-label="Pick a color to find the nearest names"
+          />
+          <button class="explore__reset" type="button" data-reset>Reset</button>
+          <p class="explore__count" data-count aria-live="polite"></p>
+        </div>
+
+        <div class="explore__list" data-list tabindex="0" aria-label="Color names">
+          <div class="explore__sizer" data-sizer></div>
+          <div class="explore__rows" data-rows></div>
+        </div>
+      </section>
+
+      <!-- 12 · Footer ——————————————————————————————————— -->
+      <footer class="slide slide--invert footer">
+        <p class="display">Made by people. Add yours.</p>
+        <nav class="footer__nav" aria-label="Project links">
+          <a href="https://github.com/meodai/color-names">GitHub</a>
+          <a href="https://api.color.pizza">API</a>
+          <a href="https://github.com/sponsors/meodai">Sponsor</a>
+          <a href="https://github.com/meodai/color-names/blob/master/LICENSE">
+            License · MIT
+          </a>
+        </nav>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

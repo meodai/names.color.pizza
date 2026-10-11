@@ -1,0 +1,3257 @@
+/*
+  Color Names microsite — styles.
+
+  Concept: a website about color, shown in no color at all.
+  Only pure black and pure white — no greys, no alpha, no color-mix.
+  Slides alternate ink-on-paper / paper-on-ink down the scroll.
+  Inter does all the talking; personality is weight + scale, not extra faces.
+
+  Every design decision is a token in :root. A small, deliberate set.
+*/
+
+:root {
+  /* —— the only two colours in the project —— */
+  --ink: #000;
+  --paper: #fff;
+
+  /* foreground / background — swapped on inverted slides */
+  --fg: var(--ink);
+  --bg: var(--paper);
+
+  /* —— type —— */
+  --font: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* a handful of sizes, fluid */
+  --text-xs: clamp(0.72rem, 0.68rem + 0.2vw, 0.82rem); /* labels, captions */
+  --text-base: clamp(1rem, 0.94rem + 0.3vw, 1.18rem); /* body */
+  --text-lg: clamp(1.4rem, 1.1rem + 1.4vw, 2.1rem); /* lead lines */
+  --text-xl: clamp(2.2rem, 1.4rem + 3.6vw, 4rem); /* section statements */
+  --text-2xl: clamp(3rem, 1.4rem + 7.2vw, 7rem); /* hero */
+  --text-mega: clamp(4.5rem, 1rem + 15vw, 13rem); /* the count, the wall */
+
+  /* weights */
+  --weight-body: 400;
+  --weight-label: 600;
+  --weight-display: 850;
+
+  /* —— space —— */
+  --space-2xs: 0.5rem;
+  --space-xs: 0.875rem;
+  --space-s: 1.5rem;
+  --space-m: 2.5rem;
+  --space-l: 5rem;
+  --space-xl: 9rem;
+
+  /* —— lines & layout —— */
+  --line: 2px; /* hairlines are full ink — no greys allowed */
+  --gutter: clamp(1.5rem, 6vw, 7rem); /* page side padding */
+  --bar-h: 3.2rem; /* the wall's search field; the logo lines up with it */
+  --measure: 24ch; /* readable line length for prose */
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-weight: var(--weight-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--bg);
+  font-feature-settings: "tnum" 1; /* tabular figures for stats */
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: from-font;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: var(--line) solid var(--fg);
+  outline-offset: 4px;
+}
+
+/* ——————————————————————————————————————————————
+   Slides — each is one full-bleed moment.
+   .slide--invert flips the two colours.
+   —————————————————————————————————————————————— */
+.slide {
+  --bg: var(--paper);
+  --fg: var(--ink);
+  color: var(--fg);
+  background: var(--bg);
+  min-height: 100svh;
+  padding: var(--space-xl) var(--gutter);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-m);
+}
+
+.slide--invert {
+  --bg: var(--ink);
+  --fg: var(--paper);
+}
+
+.slide--dense {
+  gap: var(--space-s);
+}
+
+/* center everything — used for the closing poster quote */
+.slide--center {
+  align-items: center;
+  text-align: center;
+}
+
+/* ——————————————————————————————————————————————
+   Shared type roles
+   —————————————————————————————————————————————— */
+.label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.display {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-display);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.lead {
+  font-size: var(--text-lg);
+  font-weight: 100;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  max-width: 30ch;
+  margin: 0;
+  margin-inline-start: 1em;
+  text-wrap: balance;
+}
+
+.prose {
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.prose + .prose {
+  margin-top: var(--space-s);
+}
+
+/* ——————————————————————————————————————————————
+   Hero
+   —————————————————————————————————————————————— */
+.hero__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-display);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-s);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+}
+
+/* when the name was added: a link to the commit, set like the rest of the
+   line, marked as a link by its underline */
+.hero__stats a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+}
+
+.hero__stats a:hover,
+.hero__stats a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+/* ——————————————————————————————————————————————
+   The big number (count / fraction)
+   —————————————————————————————————————————————— */
+.figure {
+  font-size: var(--text-mega);
+  font-weight: var(--weight-display);
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+  margin: 0;
+}
+
+/* ——————————————————————————————————————————————
+   Quote
+   —————————————————————————————————————————————— */
+.quote {
+  margin: 0;
+}
+
+.quote__text {
+  font-size: var(--text-lg);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  margin: 0;
+
+  font-size: var(--text-lg);
+}
+
+.quote__cite {
+  display: block;
+  margin-top: var(--space-s);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+  font-style: normal;
+}
+
+.quote__cite em {
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* closing quote as a poster: big, centered, a single held breath */
+.quote--poster {
+}
+
+.quote--poster::before {
+  content: "\201C"; /* a big opening quote mark, the only flourish */
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-display);
+  line-height: 0.6;
+  margin-bottom: var(--space-xs);
+}
+
+.quote--poster .quote__text {
+  font-size: var(--text-xl);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: var(--weight-body);
+}
+
+.quote--poster .quote__cite {
+  margin-top: var(--space-m);
+}
+
+/* ——————————————————————————————————————————————
+   Try-it inputs (static for now — wired up later)
+   —————————————————————————————————————————————— */
+.field {
+  display: flex;
+  align-items: stretch;
+  max-width: 30ch;
+  border: var(--line) solid var(--fg);
+}
+
+.field__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--text-lg);
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  padding: var(--space-xs) var(--space-s);
+}
+
+.field__input::placeholder {
+  color: var(--fg);
+  opacity: 1; /* full ink, never a faded grey */
+}
+
+.field__input:focus {
+  outline: 0;
+}
+
+.field:focus-within {
+  outline: var(--line) solid var(--fg);
+  outline-offset: 3px;
+}
+
+.result {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 0;
+}
+
+.result__arrow {
+  font-weight: var(--weight-body);
+  padding-inline: 0.3em;
+}
+
+/* ——————————————————————————————————————————————
+   Rules list (how it's made)
+   —————————————————————————————————————————————— */
+.rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-s);
+  max-width: 40ch;
+}
+
+.rules li {
+  font-size: var(--text-base);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.rules li:not(:last-child)::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border: 1.5px solid var(--fg);
+  border-radius: 50%; /* an empty swatch — the missing colour */
+}
+
+/* ——————————————————————————————————————————————
+   Use it — code + formats
+   —————————————————————————————————————————————— */
+.code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: var(--text-base);
+  border: var(--line) solid var(--fg);
+  padding: var(--space-xs) var(--space-s);
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.formats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  max-width: 40ch;
+}
+
+.formats li {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+  border: var(--line) solid var(--fg);
+  padding: 0.35em 0.7em;
+}
+
+/* ——————————————————————————————————————————————
+   Actions / links
+   —————————————————————————————————————————————— */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+}
+
+.btn {
+  font-size: var(--text-base);
+  font-weight: var(--weight-label);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  border: var(--line) solid var(--fg);
+  padding: var(--space-xs) var(--space-m);
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.btn:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* ——————————————————————————————————————————————
+   Signature: the wall of names (marquee)
+   No swatches — the words are the colours.
+   —————————————————————————————————————————————— */
+.wall {
+  gap: var(--space-l);
+}
+
+.wall__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  margin-inline: calc(var(--gutter) * -1); /* bleed to the edges */
+}
+
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.marquee__track {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-m);
+  padding-right: var(--space-m);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
+  will-change: transform;
+  animation: marquee 48s linear infinite;
+}
+
+.marquee--reverse .marquee__track {
+  animation-direction: reverse;
+}
+
+.marquee__track span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-m);
+}
+
+/* empty-swatch separator between names */
+.marquee__track span::after {
+  content: "";
+  width: 0.55em;
+  height: 0.55em;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  flex: none;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ——————————————————————————————————————————————
+   Footer
+   —————————————————————————————————————————————— */
+.footer {
+  min-height: auto;
+  gap: var(--space-m);
+  padding-block: var(--space-l);
+}
+
+.footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-s) var(--space-m);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+}
+
+/* the page's address, and next to it the share button */
+.footer__share {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  min-inline-size: 0;
+}
+
+.footer__share a {
+  overflow-wrap: anywhere;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.footer__share button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--fg);
+  background: none;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.footer__share button svg {
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
+}
+
+.footer__share button:hover,
+.footer__share button:focus-visible {
+  outline: none;
+  color: var(--bg);
+  background: var(--fg);
+}
+
+/* ——————————————————————————————————————————————
+   Color space — the one section that holds color.
+   The canvas fills the slide; chrome floats over it.
+   —————————————————————————————————————————————— */
+.color-space {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+.color-space__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.color-space__canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.color-space__canvas canvas:active {
+  cursor: grabbing;
+}
+
+.color-space__head {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  right: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  pointer-events: none; /* let drags pass through to the canvas */
+}
+
+.color-space__readout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+  margin: 0;
+  text-shadow: 0 1px 12px var(--ink); /* keep legible over bright points */
+}
+
+.color-space__controls {
+  position: absolute;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+}
+
+.color-space__field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.color-space__field select {
+  appearance: none;
+  font: inherit;
+  font-size: var(--text-base);
+  color: inherit;
+  background: var(--bg);
+  border: var(--line) solid currentColor;
+  border-radius: 0;
+  padding: var(--space-2xs) calc(var(--space-m)) var(--space-2xs) var(--space-xs);
+  cursor: pointer;
+}
+
+.color-space__field select:focus-visible {
+  outline: var(--line) solid currentColor;
+  outline-offset: 3px;
+}
+
+/* caret — a small open ring, echoing the empty-swatch motif */
+.color-space__field::after {
+  content: "";
+  position: absolute;
+  right: var(--space-xs);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.5em;
+  height: 0.5em;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .color-space__controls {
+    left: var(--gutter);
+    flex-direction: column;
+  }
+  .color-space__field select {
+    width: 100%;
+  }
+}
+
+/* ——————————————————————————————————————————————
+   Name map — every color on an OkHSL wheel, each patch owned by its
+   closest name. The canvases fill the slide; the panel floats over them
+   on plain paper, so a zoomed-in wheel slides behind it.
+   —————————————————————————————————————————————— */
+.name-map {
+  position: relative;
+  height: 100svh;
+  min-height: 40rem;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(18rem, 26rem) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "panel home";
+  gap: var(--space-m);
+  padding: var(--space-m) var(--gutter);
+}
+
+.name-map__frame {
+  position: absolute;
+  inset: 0;
+}
+
+.name-map__frame canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.name-map__frame .name-map__mosaic {
+  inset: auto; /* placed over the disc by name-map.js */
+}
+
+.name-map__hit {
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.name-map__hit.is-panning {
+  cursor: grabbing;
+}
+
+.name-map__hit:focus-visible {
+  outline: var(--line) solid var(--fg);
+  outline-offset: calc(-1 * var(--space-2xs));
+}
+
+.name-map__home {
+  grid-area: home;
+}
+
+.name-map__panel {
+  grid-area: panel;
+  align-self: center;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  max-height: 100%;
+  overflow: auto;
+  scrollbar-width: thin;
+  margin-inline: calc(-1 * var(--space-s));
+  padding: var(--space-s);
+  background: var(--bg);
+}
+
+.name-map__panel .display {
+  font-size: clamp(1.8rem, 1.2rem + 1.6vw, 2.8rem);
+}
+
+/* search */
+.name-map__find {
+  position: relative;
+}
+
+.name-map__search {
+  width: 100%;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: var(--line) solid var(--fg);
+  border-radius: 0;
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.name-map__search::placeholder {
+  color: var(--fg);
+  opacity: 1;
+}
+
+.name-map__search:focus-visible {
+  outline: var(--line) solid var(--fg);
+  outline-offset: 3px;
+}
+
+.name-map__results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg);
+  border: var(--line) solid var(--fg);
+  border-top: 0;
+}
+
+.name-map__results:empty {
+  display: none;
+}
+
+.name-map__results button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: var(--fg);
+  background: var(--bg);
+  border: 0;
+  padding: var(--space-2xs) var(--space-xs);
+  cursor: pointer;
+}
+
+.name-map__results button:hover,
+.name-map__results button:focus-visible {
+  outline: none;
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* the filled ring, as in the full list */
+.name-map__dot {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 1px solid currentColor;
+}
+
+.name-map__empty {
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+/* saturation: a plain ink line with a paper thumb */
+.name-map__depth {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  row-gap: var(--space-2xs);
+}
+
+.name-map__value {
+  font-weight: var(--weight-label);
+}
+
+.name-map__value::after {
+  content: "%";
+}
+
+.name-map__depth input {
+  grid-column: 1 / -1;
+  appearance: none;
+  width: 100%;
+  height: 1.9rem;
+  margin: 0;
+  background: linear-gradient(var(--fg), var(--fg)) center / 100% var(--line)
+    no-repeat;
+  border: 0;
+  border-radius: 0;
+  cursor: ew-resize;
+}
+
+.name-map__depth input::-webkit-slider-thumb {
+  appearance: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: var(--bg);
+  border: var(--line) solid var(--fg);
+  border-radius: 50%;
+}
+
+.name-map__depth input::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  background: var(--bg);
+  border: var(--line) solid var(--fg);
+  border-radius: 50%;
+}
+
+.name-map__depth input:focus-visible {
+  outline: var(--line) solid var(--fg);
+  outline-offset: 3px;
+}
+
+/* list picker + zoom */
+.name-map__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-xs);
+}
+
+.name-map__zoom {
+  display: flex;
+}
+
+.name-map__zoom button {
+  min-width: 2.75rem;
+  font: inherit;
+  font-weight: var(--weight-label);
+  color: var(--fg);
+  background: var(--bg);
+  border: var(--line) solid var(--fg);
+  padding: 0 var(--space-xs);
+  cursor: pointer;
+}
+
+.name-map__zoom button + button {
+  border-left: 0;
+}
+
+.name-map__zoom button:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* status: what's on the map, and how to drive it */
+.name-map__status p {
+  margin: 0;
+  max-width: 32ch;
+}
+
+.name-map__status [data-hint] {
+  max-width: none;
+  margin-top: var(--space-2xs);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+}
+
+/* hover tip and the pulse that marks a picked color */
+.name-map__tip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  padding: 0.3em 0.6em;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.name-map__tip small {
+  display: block;
+  font-size: var(--text-xs);
+}
+
+.name-map__pin {
+  position: absolute;
+  z-index: 1;
+  inline-size: 28px;
+  block-size: 28px;
+  margin: -14px 0 0 -14px;
+  border: var(--line) solid var(--paper);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px var(--ink),
+    inset 0 0 0 2px var(--ink);
+  pointer-events: none;
+  animation: name-map-pin 2.4s ease-out forwards;
+}
+
+/* draws the eye to the picked color, then gets out of the label's way */
+@keyframes name-map-pin {
+  0% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+  25%,
+  70% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .name-map__pin {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .name-map {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "panel"
+      "home";
+    gap: var(--space-xs);
+    padding: var(--space-s) var(--gutter);
+  }
+  .name-map__panel {
+    align-self: start;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-s);
+    overflow: visible;
+  }
+  .name-map__status {
+    display: none;
+  }
+  .name-map__results {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+  }
+}
+
+/* ——————————————————————————————————————————————
+   Submit — name a color. Black & white form; the swatch is the only color.
+   —————————————————————————————————————————————— */
+.submit__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  max-width: 40rem;
+}
+
+.submit__color {
+  display: flex;
+  gap: var(--space-s);
+  align-items: stretch;
+}
+
+/* the swatch is the color input: click it to open the picker */
+.submit__swatch {
+  flex: none;
+  inline-size: 7rem;
+  block-size: 7rem;
+  background: var(--swatch);
+  border: var(--line) solid var(--fg);
+  cursor: pointer;
+}
+
+.submit__swatch input {
+  inline-size: 100%;
+  block-size: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.submit__swatch:focus-within {
+  outline: var(--line) solid var(--fg);
+  outline-offset: 3px;
+}
+
+.submit__color-fields,
+.submit__name {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.submit__input {
+  font: inherit;
+  font-size: var(--text-lg);
+  color: var(--fg);
+  background: transparent;
+  border: var(--line) solid var(--fg);
+  border-radius: 0;
+  padding: var(--space-2xs) var(--space-xs);
+  min-width: 0;
+}
+
+.submit__input::placeholder {
+  color: var(--fg);
+  opacity: 1;
+  font-weight: 100;
+}
+
+.submit__input:focus-visible {
+  outline: var(--line) solid var(--fg);
+  outline-offset: 3px;
+}
+
+.submit__hex {
+  font-size: var(--text-base);
+  inline-size: 12ch;
+  font-variant-numeric: tabular-nums;
+}
+
+.submit__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-s);
+}
+
+.submit__tool {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+/* checks: an open ring for fine, a half for "think again", a filled one
+   for "won't get in" — the page's ring motif instead of colored status */
+.submit__checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.submit__checks:empty {
+  display: none;
+}
+
+.submit__check {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: baseline;
+}
+
+.submit__check::before {
+  content: "";
+  flex: none;
+  inline-size: 0.7em;
+  block-size: 0.7em;
+  border: var(--line) solid currentColor;
+  border-radius: 50%;
+  transform: translateY(0.05em);
+}
+
+.submit__check--warn::before {
+  background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+}
+
+.submit__check--stop {
+  font-weight: var(--weight-label);
+}
+
+.submit__check--stop::before {
+  background: currentColor;
+}
+
+/* a check that points at an existing color shows it */
+.submit__check[style]::after {
+  content: "";
+  flex: none;
+  inline-size: 1em;
+  block-size: 1em;
+  margin-inline-start: auto;
+  border-radius: 50%;
+  background: var(--dot);
+  border: 1px solid currentColor;
+  transform: translateY(0.15em);
+}
+
+.submit__similar ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-s);
+  margin: var(--space-2xs) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.submit__similar li {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.submit__similar li::before {
+  content: "";
+  inline-size: 0.8em;
+  block-size: 0.8em;
+  border-radius: 50%;
+  background: var(--dot);
+  border: 1px solid currentColor;
+}
+
+.submit .btn {
+  font: inherit;
+  font-weight: var(--weight-label);
+  color: var(--fg);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.submit .btn:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.submit .btn:disabled {
+  cursor: not-allowed;
+  text-decoration: line-through;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+@media (max-width: 480px) {
+  .submit__color {
+    flex-direction: column;
+  }
+  .submit__swatch {
+    inline-size: 100%;
+    block-size: 5rem;
+  }
+}
+
+/* ——————————————————————————————————————————————
+   Color page — one color, at color/#<hex>, as a scroll of slides like the
+   start page. The hero has the name, and the animated card landing on it
+   like the cards that fall on the start page.
+   —————————————————————————————————————————————— */
+.color-hero {
+  min-height: 100svh;
+}
+
+/* the way out: across from the logo, as tall as it and level with it,
+   and staying put while the page scrolls, like the logo */
+.color-hero__close {
+  position: fixed;
+  z-index: 8;
+  top: calc(var(--space-xs) + (var(--bar-h) - 2.5rem) / 2);
+  right: var(--space-s);
+  display: grid;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--paper);
+}
+
+.color-hero__close svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.color-hero__close:hover,
+.color-hero__close:focus-visible {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+@media (max-width: 40rem) {
+  .color-hero__close {
+    top: var(--space-2xs);
+    right: 1rem;
+  }
+}
+
+/* the card lands where detail.js puts it: center + x·32vw, y·30vh */
+.color-hero__card {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%)
+    translate(calc(var(--x, 0.5) * 32vw), calc(var(--y, 0) * 30vh))
+    rotate(var(--r, 6deg));
+}
+
+.color-hero__card .swatchcard {
+  --card-w: clamp(13rem, 21vw, 24rem);
+  inline-size: var(--card-w);
+  font-size: calc(var(--card-w) * 0.205);
+}
+
+/* the text keeps to the left half, so even a long name wraps before the
+   card's landing zone on the right */
+.color-hero .hero__content {
+  max-width: 52vw;
+}
+
+.color-hero .hero__title {
+  text-wrap: balance;
+  overflow-wrap: normal;
+  hyphens: manual;
+}
+
+.color-hero__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.color-hero .lead {
+  max-width: 34ch;
+}
+
+/* Names are words, not figures: the page-wide tabular figures would set
+   the hyphen in "Red-Handed" as wide as a digit. Values keep them. */
+.color-page,
+.swatchcard__row2 {
+  font-feature-settings: normal;
+}
+
+.swatchcard__row1 {
+  font-feature-settings: "tnum" 1;
+}
+
+/* Slides after the hero only take the room they need: a detail page with
+   a screen of white under three lines reads as unfinished. */
+.color-page .slide--dense {
+  min-height: auto;
+  padding-block: var(--space-l);
+}
+
+/* the one slide in color: the color itself, set in whichever of black or
+   white reads best on it */
+.color-page .color-fill {
+  --bg: var(--fill);
+  --fg: var(--fill-ink, #fff);
+  min-height: 90svh;
+  justify-content: center;
+}
+
+/* the hex as the headline, as big as the start page's "0.19%" */
+.color-fill__hex {
+  font-feature-settings: "tnum" 1;
+  overflow-wrap: anywhere;
+}
+
+.color-fill__ink {
+  max-width: 34ch;
+  margin-inline-start: 0;
+  font-weight: 400; /* hairline type fades on mid-tone colors */
+}
+
+/* the specs: groups set apart by space alone, a label over each value */
+.color-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-s) var(--space-m);
+  margin: var(--space-l) 0 0;
+}
+
+.color-specs dd {
+  margin: var(--space-2xs) 0 0;
+  max-width: 30ch;
+}
+
+/* the formats size to their values and wrap whole, never mid-value */
+.color-specs--formats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-l);
+}
+
+.color-specs--formats dd {
+  white-space: nowrap;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
+  font-feature-settings: "tnum" 1;
+}
+
+.color-specs__copy {
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: copy;
+}
+
+.color-specs__copy:hover {
+  text-decoration: underline;
+  text-decoration-thickness: var(--line);
+  text-underline-offset: 0.15em;
+}
+
+
+/* the library's short essays about the color's families */
+.color-about {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--space-s) var(--space-m);
+  max-width: 72rem;
+  margin-bottom: var(--space-m);
+}
+
+.color-about:empty {
+  display: none;
+}
+
+.color-about p {
+  margin: 0;
+  max-width: 52ch;
+  font-size: calc(var(--text-base) * 1.12);
+  line-height: 1.5;
+}
+
+/* meanings, effects and usage: laid out like the specs, the words in
+   light lead type separated by small rings */
+.color-words__title {
+  max-width: 18ch;
+}
+
+.color-specs--words {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  max-width: 72rem;
+}
+
+/* Slide titles get room to breathe before what they introduce */
+.color-page .slide--dense > .display {
+  margin-bottom: var(--space-m);
+}
+
+/* ——— What the name means ———
+   The dictionary leads, like a dictionary page: the headword big, senses in
+   large light type with big numerals. Wikipedia follows as an index, then
+   the pictures as one strip. */
+.color-dictionary:empty,
+.color-wiki:empty {
+  display: none;
+}
+
+.dictionary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-l) var(--space-m);
+  max-width: 72rem;
+}
+
+.dictionary__entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.dictionary__term {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-display);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.dictionary__senses {
+  counter-reset: sense;
+  margin: 0 0 var(--space-s);
+  padding: 0;
+  list-style: none;
+}
+
+.dictionary__senses li {
+  counter-increment: sense;
+  display: grid;
+  grid-template-columns: 1.6em 1fr;
+  gap: 0.4em;
+}
+
+.dictionary__senses li + li {
+  margin-top: 0.5em;
+}
+
+.dictionary__senses li::before {
+  content: counter(sense);
+  font-weight: var(--weight-display);
+}
+
+.dictionary__source {
+  align-self: flex-start;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+}
+
+/* the whole name is in the dictionary: one entry, set large */
+.dictionary--whole {
+  grid-template-columns: minmax(0, 52rem);
+}
+
+/* the slide is titled with the name; a pronunciation sits right after it */
+.color-meaning__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25em;
+}
+
+.color-meaning__title .play {
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+}
+
+.dictionary--whole .dictionary__senses {
+  font-size: var(--text-lg);
+  font-weight: 300;
+  line-height: 1.25;
+}
+
+.dictionary--whole .dictionary__senses li::before {
+  font-weight: var(--weight-display);
+}
+
+/* play a pronunciation: a ring with a triangle; a square while it plays */
+.play {
+  position: relative;
+  flex: none;
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  padding: 0;
+  color: var(--fg);
+  background: transparent;
+  border: var(--line) solid currentColor;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.play::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: 0;
+  block-size: 0;
+  border-block: 0.3rem solid transparent;
+  border-inline-start: 0.5rem solid currentColor;
+  transform: translateX(0.08rem);
+}
+
+.play--playing::before {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border: 0;
+  background: currentColor;
+  transform: none;
+}
+
+.play:hover {
+  color: var(--bg);
+  background: var(--fg);
+}
+
+/* Wikipedia as an index: rows set apart by space, title left, opening right */
+.color-wiki {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  max-width: 72rem;
+  margin-top: var(--space-l);
+}
+
+.wiki-index__row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-2xs) var(--space-m);
+  padding-block: var(--space-s);
+}
+
+.wiki-index__row h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-display);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* a word's heading and, when the dictionary knows it, its definitions
+   under it, set smaller than the article beside them */
+.wiki-index__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.wiki-index__row h3 .play {
+  margin-left: 0.65em;
+  vertical-align: 0.1em;
+}
+
+.wiki-index__picture {
+  display: block;
+  inline-size: auto;
+  max-inline-size: min(100%, 14rem);
+  max-block-size: 11rem;
+  margin-top: var(--space-2xs);
+  object-fit: contain;
+}
+
+.wiki-index__head .wiki-index__words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  font-size: var(--text-xs);
+}
+
+.wiki-index__words .dictionary__senses {
+  margin-bottom: var(--space-2xs);
+}
+
+.wiki-index__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  max-width: 60ch;
+}
+
+.wiki-index__text p {
+  margin: 0;
+}
+
+.wiki-index__text ul {
+  margin: 0;
+  padding-left: 1.1em;
+}
+
+.wiki-index__text a {
+  align-self: flex-start;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+}
+
+/* The pictures hang off the bottom of the slide like a loose pile of
+   prints: each at its own ratio, placed and tilted by detail.js (--x, --y,
+   --h, --rot, --z), overlapping. Hover straightens one and brings it to the
+   front. The slide sits above the next one so the pile can spill into it. */
+.color-page .has-pile {
+  position: relative;
+  z-index: 2;
+  padding-bottom: 0;
+}
+
+/* The pile is a line at the slide's bottom edge, and each print is centered
+   on it (give or take --y). Room above and below: half the tallest print
+   (12.5rem / 2) plus a spacing step. */
+.picture-pile {
+  --half: 6.5rem;
+  position: relative;
+  height: 0;
+  margin-top: calc(var(--space-l) + var(--half));
+}
+
+/* the slide after the pile starts below its lowest picture (measured by
+   detail.js, --pile-gap) by the usual spacing */
+.color-page .has-pile + .slide {
+  padding-top: calc(var(--space-l) + var(--pile-gap, 8rem));
+}
+
+.picture-pile a {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  z-index: var(--z);
+  height: var(--h);
+  padding: 0.35rem;
+  background: var(--paper);
+  transform: translate(calc(-50% + var(--push, 0rem)), -50%)
+    rotate(calc(var(--rot) + var(--lean, 0deg)));
+  transition: transform 0.45s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.picture-pile img {
+  display: block;
+  block-size: 100%;
+  inline-size: auto;
+  max-inline-size: none;
+}
+
+.picture-pile a:hover,
+.picture-pile a:focus-visible {
+  z-index: 50;
+  transform: translate(-50%, -50%) translateY(-1.25rem) rotate(0deg) scale(1.1);
+}
+
+/* the prints around a lifted one make room: those before it slide left,
+   those after it right, the direct neighbors most, and they lean away */
+.picture-pile a:is(:hover, :focus-visible) ~ a {
+  --push: 1.25rem;
+  --lean: 2deg;
+}
+
+.picture-pile a:is(:hover, :focus-visible) + a {
+  --push: 2.5rem;
+  --lean: 4deg;
+}
+
+.picture-pile a:has(~ a:is(:hover, :focus-visible)) {
+  --push: -1.25rem;
+  --lean: -2deg;
+}
+
+.picture-pile a:has(+ a:is(:hover, :focus-visible)) {
+  --push: -2.5rem;
+  --lean: -4deg;
+}
+
+.picture-pile a:focus-visible {
+  outline: var(--line) solid var(--paper);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picture-pile a {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .wiki-index__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .picture-pile {
+    --half: 4rem;
+  }
+  .picture-pile a {
+    height: calc(var(--h) * 0.6);
+  }
+}
+
+/* Pictures with the color in them: a masonry at their own ratios, each with
+   its title and how much of it is the color; set apart by space alone */
+.color-archive__note {
+  max-width: 52ch;
+  margin-bottom: var(--space-m);
+}
+
+.color-archive__note code {
+  font-weight: var(--weight-label);
+}
+
+.archive {
+  columns: 14rem;
+  column-gap: var(--space-s);
+}
+
+.archive__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  break-inside: avoid;
+  margin-bottom: var(--space-m);
+  color: inherit;
+  text-decoration: none;
+}
+
+.archive__item img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  margin-bottom: var(--space-2xs);
+  transition: transform 0.4s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.archive__item:hover img,
+.archive__item:focus-visible img {
+  transform: translateY(-0.3rem);
+}
+
+.archive__item:hover .archive__title {
+  text-decoration: underline;
+}
+
+.archive__title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-weight: var(--weight-label);
+  line-height: 1.25;
+}
+
+.archive__where {
+  font-size: var(--text-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive__item img {
+    transition: none;
+  }
+}
+
+/* the nearest names: small copies of the hero's card, to keep exploring.
+   Each card sizes its type off its own width (container query units). */
+.neighbors {
+  display: grid;
+  /* 12 cards: 6, 4, 3 or 2 to a row, so the last row is never ragged */
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-m) var(--space-s);
+}
+
+@media (max-width: 1100px) {
+  .neighbors {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .neighbors {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .neighbors {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.neighbor {
+  container-type: inline-size;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.4s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.neighbor .swatchcard {
+  inline-size: 100%;
+  font-size: 20.5cqi; /* the original's 0.205 of the card's width */
+}
+
+/* on a white slide the white label would vanish: there it's black, the
+   hex and name in white */
+.slide:not(.slide--invert) .neighbor .swatchcard__info {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.neighbor:hover,
+.neighbor:focus-visible {
+  transform: translateY(-0.4rem) rotate(-1.5deg);
+}
+
+.neighbor:focus-visible {
+  outline: var(--line) solid var(--fg);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neighbor {
+    transition: none;
+  }
+}
+
+.color-page .footer .actions .btn {
+  font: inherit;
+  font-weight: var(--weight-label);
+  color: var(--fg);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.color-page .footer .actions .btn:hover {
+  color: var(--bg);
+  background: var(--fg);
+}
+
+/* portrait: the card above the title instead of beside it */
+@media (max-width: 760px), (orientation: portrait) {
+  .color-hero {
+    justify-content: flex-end;
+    padding-top: calc(var(--space-l) + 60vw);
+  }
+  .color-hero__card {
+    top: calc(var(--space-l) + 30vw);
+    transform: translate(-50%, -50%)
+      translate(calc((var(--x, 0.5) - 0.5) * 30vw), 0) rotate(var(--r, 6deg));
+  }
+  .color-hero__card .swatchcard {
+    --card-w: min(52vw, 18rem);
+  }
+  .color-hero .hero__content {
+    max-width: none;
+  }
+}
+
+/* ——————————————————————————————————————————————
+   Swatch card — the animated card from the Color Parrot companion site.
+   The swatch springs up out of a stack of its own shades, then the label
+   drops in under it.
+   Sizes are in em of the card's font-size, so it scales as one piece.
+   —————————————————————————————————————————————— */
+.swatchcard {
+  --anim-appear-duration: 1100ms;
+  --s-label-height: 1.46em;
+  position: relative;
+  inline-size: 16rem;
+  font-size: 3.28rem; /* the original's 4.1vw at 20vw wide */
+  overflow: hidden;
+}
+
+.swatchcard__upper {
+  position: relative;
+  padding-top: 100%;
+  overflow: hidden;
+}
+
+.swatchcard__swatch {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  transform: translateY(150%);
+  transition: calc(var(--anim-appear-duration) * 0.666) transform
+    cubic-bezier(0.8, 0.3, 0.25, 1.75);
+}
+
+.swatchcard__shade {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  transform: scaleY(0);
+  transition: calc(var(--anim-appear-duration) * 0.2) transform ease-in;
+}
+
+.swatchcard__shade:nth-child(1) {
+  background: var(--c-shade0);
+  transition-delay: calc(var(--anim-appear-duration) * 0.06);
+}
+
+.swatchcard__shade:nth-child(2) {
+  background: var(--c-shade1);
+  transition-delay: calc(var(--anim-appear-duration) * 0.03);
+}
+
+.swatchcard__shade:nth-child(3) {
+  background: var(--c-color);
+}
+
+.swatchcard__label {
+  position: relative;
+  z-index: 2;
+  height: var(--s-label-height);
+  margin-top: -1px;
+}
+
+.swatchcard__info {
+  position: absolute;
+  inset: -1px 0 0;
+  display: block;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  padding: 0 0.3em;
+  color: var(--ink);
+  background: var(--paper);
+  transition: calc(var(--anim-appear-duration) * 0.2) height cubic-bezier(0.7, 0.3, 0, 1)
+    calc(var(--anim-appear-duration) * 0.15);
+}
+
+.swatchcard__row1,
+.swatchcard__row2 {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transform: translateY(200%);
+  transition:
+    calc(var(--anim-appear-duration) * 0.1) opacity linear,
+    calc(var(--anim-appear-duration) * 0.2) transform cubic-bezier(0.7, 0.3, 0, 1);
+}
+
+.swatchcard__row1 {
+  height: 1.2em;
+  margin-top: 0.45em;
+  font-size: 0.55em;
+  font-weight: 700;
+  line-height: 1.2;
+  transition-delay: calc(var(--anim-appear-duration) * 0.05);
+}
+
+.swatchcard__row2 {
+  height: 1.2em;
+  margin-top: -0.05em;
+  font-size: 0.27em;
+  font-weight: 300;
+  line-height: 1.2;
+}
+
+/* visible: the swatch springs up, the shades unroll, the label drops.
+   --anim-appear-delay holds it back until the panel has slid in. */
+.swatchcard--visible .swatchcard__swatch {
+  transform: translateY(0);
+  transition: calc(var(--anim-appear-duration) * 0.566) transform
+    cubic-bezier(0.8, 0.3, 0.25, 1) var(--anim-appear-delay, 0ms);
+}
+
+.swatchcard--visible .swatchcard__shade {
+  transform: scaleY(1);
+  transition: calc(var(--anim-appear-duration) * 0.666) transform cubic-bezier(0.7, 0.3, 0, 1);
+}
+
+.swatchcard--visible .swatchcard__shade:nth-child(1) {
+  transition-delay: var(--anim-appear-delay, 0ms);
+}
+
+.swatchcard--visible .swatchcard__shade:nth-child(2) {
+  transition-delay: calc(var(--anim-appear-delay, 0ms) + var(--anim-appear-duration) * 0.1);
+}
+
+.swatchcard--visible .swatchcard__shade:nth-child(3) {
+  transition-delay: calc(var(--anim-appear-delay, 0ms) + var(--anim-appear-duration) * 0.2);
+}
+
+.swatchcard--visible .swatchcard__info {
+  height: var(--s-label-height);
+  transition: calc(var(--anim-appear-duration) * 0.6) height cubic-bezier(0.7, 0.3, 0, 1)
+    var(--anim-appear-delay, 0ms);
+}
+
+.swatchcard--visible .swatchcard__row1,
+.swatchcard--visible .swatchcard__row2 {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    calc(var(--anim-appear-duration) * 0.05) opacity linear var(--anim-appear-delay, 0ms),
+    calc(var(--anim-appear-duration) * 0.7) transform cubic-bezier(0.8, 0.3, 0.25, 1)
+      var(--anim-appear-delay, 0ms);
+}
+
+.swatchcard--visible .swatchcard__row2 {
+  transition-delay:
+    calc(var(--anim-appear-delay, 0ms) + var(--anim-appear-duration) * 0.15),
+    calc(var(--anim-appear-delay, 0ms) + var(--anim-appear-duration) * 0.15);
+}
+
+/* a new color starts from the first frame, without playing the exit */
+.swatchcard--reset,
+.swatchcard--reset * {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swatchcard * {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* the static example on slide 5 opens the detail view */
+a.result {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.result:hover span:last-child {
+  text-decoration: underline;
+  text-decoration-thickness: var(--line);
+}
+
+/* ——————————————————————————————————————————————
+   Explore — the full searchable list (virtualized).
+   Chrome stays black & white; the swatches carry the colour.
+   —————————————————————————————————————————————— */
+.explore {
+  /* a definite height so .explore__list becomes the scroll container
+     and the page itself doesn't scroll with the virtual list */
+  height: 100svh;
+  justify-content: flex-start;
+  gap: var(--space-m);
+  padding-block: var(--space-l);
+}
+
+.explore__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.explore__search {
+  flex: 1 1 18ch;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--text-lg);
+  color: var(--fg);
+  background: transparent;
+  border: var(--line) solid var(--fg);
+  border-radius: 0;
+  padding: var(--space-xs) var(--space-s);
+}
+
+.explore__search::placeholder {
+  color: var(--fg);
+  opacity: 1;
+}
+
+.explore__search:focus-visible {
+  outline: var(--line) solid var(--fg);
+  outline-offset: 3px;
+}
+
+/* native colour input, framed to match */
+.explore__pick {
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  flex: none;
+  padding: 0;
+  border: var(--line) solid var(--fg);
+  background: transparent;
+  cursor: pointer;
+}
+.explore__pick::-webkit-color-swatch-wrapper {
+  padding: 4px;
+}
+.explore__pick::-webkit-color-swatch {
+  border: none;
+}
+.explore__pick::-moz-color-swatch {
+  border: none;
+}
+
+.explore__reset {
+  font: inherit;
+  font-weight: var(--weight-label);
+  color: var(--fg);
+  background: transparent;
+  border: var(--line) solid var(--fg);
+  padding: var(--space-xs) var(--space-m);
+  cursor: pointer;
+}
+.explore__reset:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.explore__count {
+  margin: 0 0 0 auto;
+  font-size: var(--text-base);
+  font-variant-numeric: tabular-nums;
+}
+
+/* scroll viewport — the virtual window */
+.explore__list {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border-block: var(--line) solid var(--fg);
+}
+
+.explore__sizer {
+  width: 1px; /* gives the scroll container its full height */
+}
+
+.explore__rows {
+  position: absolute;
+  inset: 0 0 auto 0;
+  will-change: transform;
+}
+
+.explore__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  width: 100%;
+  height: 44px; /* must match ROW in explore.js */
+  margin: 0;
+  padding: 0 var(--space-2xs);
+  border: 0;
+  border-bottom: 1px solid var(--fg);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.explore__row:hover,
+.explore__row:focus-visible {
+  background: var(--fg);
+  color: var(--bg);
+  outline: none;
+}
+
+/* a filled ring — the empty swatch, finally given its colour */
+.explore__swatch {
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 1px solid currentColor;
+}
+
+.explore__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.explore__hex {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs);
+}
+
+/* ——————————————————————————————————————————————
+   Hero stacks — named color cards that pile over the title.
+   The cards bring their own colour; the page chrome stays mono.
+   —————————————————————————————————————————————— */
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m); /* the gap .slide used to give these directly */
+}
+
+.stacks {
+  --time: 3s;
+  --ease: cubic-bezier(0.3, 0.7, 0, 1);
+  --ease2: cubic-bezier(0.3, 0.7, 0.2, 2);
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none; /* only the cards themselves are clickable */
+}
+
+.stack-card {
+  --bg: var(--paper);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30vmin;
+  padding: 2vmin;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  text-decoration: none;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  animation: var(--time) stack-down var(--ease) forwards;
+}
+
+.stack-card::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--bg);
+}
+
+/* the colour, framing each white card and glowing as it lands */
+.stack-card::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: -2vmin;
+  background: var(--color);
+  animation: var(--time) stack-expand var(--ease) forwards;
+}
+
+.stack-card__swatch {
+  order: 1;
+  aspect-ratio: 1;
+  background: var(--color);
+}
+
+.stack-card__bottom {
+  order: 2;
+}
+
+.stack-card__name {
+  display: inline-block;
+  margin: 0;
+  padding-top: 1.9vmin;
+  padding-bottom: 0.9vmin;
+  font-size: 3.4vmin;
+  font-weight: var(--weight-display);
+  line-height: 0.9;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  --id: calc(var(--time) * 0.2);
+}
+
+.stack-card__name--long {
+  font-size: 2.8vmin;
+}
+
+.stack-card__name--verylong {
+  font-size: 2.3vmin;
+}
+
+.stack-card__name i {
+  --top: 1.1;
+  position: relative;
+  font-style: normal;
+  opacity: 0;
+  transform: translate(0, 100%);
+  animation: calc(var(--time) * 0.3) stack-jump var(--ease2) forwards;
+  animation-delay: calc(var(--id) + var(--i) * calc(var(--time) * 0.2));
+}
+
+.stack-card__name i.heavy {
+  --top: 0.5;
+}
+
+.stack-card__value {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  font-size: 2vmin;
+  font-weight: var(--weight-body);
+  font-style: normal;
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  clip-path: inset(0 0 100% 0);
+  animation: stack-open calc(var(--time) * 0.2) var(--ease)
+    calc(var(--time) * 0.35) forwards;
+}
+
+@keyframes stack-down {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--rnd2) * 400%), calc(var(--rnd4) * 400%))
+      scale(3) rotate(calc(var(--rnd2) * -90deg));
+    filter: blur(50px);
+  }
+  40% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%)
+      translate(calc(var(--rnd3) * 32vw), calc(var(--rnd4) * 30vh)) scale(1)
+      rotate(calc(var(--rnd) * 20deg));
+  }
+}
+
+@keyframes stack-expand {
+  0% {
+    transform: scale(0.8);
+    box-shadow: 0 0 6vmin var(--color);
+    opacity: 0;
+  }
+  35% {
+    transform: scale(0.8);
+    box-shadow: 0 0 6vmin var(--color);
+    opacity: 1;
+  }
+  65%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 var(--color);
+    opacity: 1;
+  }
+}
+
+@keyframes stack-jump {
+  0% {
+    opacity: 0;
+    top: calc(1.2em * var(--top));
+    color: var(--paper);
+  }
+  40% {
+    color: var(--color);
+  }
+  100% {
+    opacity: 1;
+    top: 0;
+  }
+}
+
+@keyframes stack-open {
+  0%,
+  25% {
+    clip-path: inset(0 0 100% 0);
+  }
+  90%,
+  100% {
+    clip-path: inset(0 0 0% 0);
+  }
+}
+
+/* ——————————————————————————————————————————————
+   Motion: off by request
+   —————————————————————————————————————————————— */
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track {
+    animation: none;
+  }
+}
+
+/* —— The color wall (home): every name as a card, on a field of ink —— */
+
+html:has(.wall-page) {
+  background: var(--ink);
+}
+
+/* Arriving from the wall, the color page holds back its scrollbar until
+   the card is in place: the wall has none, and a scrollbar would narrow
+   the page and shift the card it just took over. */
+html.is-arriving {
+  overflow: hidden;
+}
+
+.wall-page {
+  --fg: var(--paper);
+  --bg: var(--ink);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.wall {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.wall__canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.wall.is-dragging .wall__canvas {
+  cursor: grabbing;
+}
+
+/* names sit in the cards' label strips, scaled with the zoom */
+.wall__labels,
+.wall__mark,
+.wall__tip {
+  position: absolute;
+  inset: 0 auto auto 0;
+  pointer-events: none;
+}
+
+/* the labels stack among themselves (nearer cards on top) inside a layer
+   of their own, under the bar and the buttons */
+.wall__labels {
+  z-index: 1;
+  isolation: isolate;
+}
+
+/* set like the color page's card label: the hex large, the name below;
+   width and font-size come from the card's size on screen */
+.wall__label {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.3em;
+  color: var(--ink);
+  will-change: transform;
+}
+
+/* the same type as .swatchcard__row1 / __row2, so a card reads the same in
+   the space as on its color page; keep the two in step */
+.wall__label-hex,
+.wall__label-name {
+  display: block;
+  height: 1.2em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.wall__label-hex {
+  margin-top: 0.45em;
+  font-size: 0.55em;
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+}
+
+.wall__label-name {
+  margin-top: -0.05em;
+  font-size: 0.27em;
+  font-weight: 300;
+  font-feature-settings: normal;
+}
+
+/* the color itself, before its name; a fine edge so white shows too */
+.wall__tip-dot {
+  flex: none;
+  inline-size: 0.8rem;
+  block-size: 0.8rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.wall__label[hidden],
+.wall__mark[hidden],
+.wall__tip[hidden] {
+  display: none;
+}
+
+.wall__mark {
+  outline: 3px solid var(--paper);
+  outline-offset: 5px;
+}
+
+.wall__tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 1.1rem 0 0 0.9rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.3rem;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  font-feature-settings: normal;
+  white-space: nowrap;
+}
+
+.wall__intro,
+.wall__models,
+.wall__zoom {
+  z-index: 2;
+}
+
+/* above the model picker, so the search results open over it */
+.wall__bar {
+  z-index: 3;
+}
+
+/* the bar: name, search, the way to the rest of the site; the search
+   stays in the middle whatever sits either side of it */
+.wall__bar {
+  position: absolute;
+  inset: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 26rem) 1fr;
+  align-items: center;
+  gap: var(--space-s);
+  padding: var(--space-xs) var(--space-s);
+  pointer-events: none;
+}
+
+.wall__bar > * {
+  pointer-events: auto;
+}
+
+/* ink pills, so the words stay readable over white card strips */
+.wall__nav a {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  color: var(--paper);
+  background: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-decoration: none;
+}
+
+.wall__nav {
+  display: flex;
+  grid-column: 3;
+  gap: 0.4rem;
+  justify-self: end;
+}
+
+/* hover: the pill turns over, white on black to black on white */
+.wall__nav a {
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.wall__nav a:hover,
+.wall__nav a:focus-visible {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.wall__find {
+  position: relative;
+  grid-column: 2;
+}
+
+/* The logo: the cockatoo and the name, in one place over everything, on
+   the wall and on the color page alike (opened over the wall, it's the
+   wall's that stays). Lined up with the middle of the search field. */
+.brand {
+  --brand-h: 2.5rem;
+  position: fixed;
+  z-index: 8;
+  top: calc(var(--space-xs) + (var(--bar-h) - var(--brand-h)) / 2);
+  left: var(--space-s);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  block-size: var(--brand-h);
+  padding: 0 0.85rem 0 0.6rem;
+  border-radius: 999px;
+  color: var(--paper);
+  background: var(--ink);
+  font-family: var(--font);
+  font-size: var(--text-base);
+  font-weight: var(--weight-display);
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+/* the bird, trimmed to its own outline (see its viewBox), and lifted a
+   hair: its crest is airy and its head heavy, so true center reads low */
+.brand__logo {
+  block-size: 1.45rem;
+  inline-size: auto;
+  aspect-ratio: 130 / 158;
+  overflow: visible;
+  translate: 0 -0.08rem;
+}
+
+/* On hover the cockatoo raises its crest, feather after feather, and
+   opens its beak. The parts turn about points in the drawing's own units:
+   the top of the head for the crest, the corner of the mouth for the beak. */
+.brand__crest,
+.brand__beak {
+  transform-box: view-box;
+  transition: transform 0.5s cubic-bezier(0.34, 1.8, 0.5, 1);
+}
+
+.brand__crest {
+  transform-origin: 108px 104px;
+}
+
+.brand__crest--2 {
+  transition-delay: 0.03s;
+}
+
+.brand__crest--3 {
+  transition-delay: 0.06s;
+}
+
+.brand__crest--4 {
+  transition-delay: 0.09s;
+}
+
+.brand__beak {
+  transform-origin: 112px 128px;
+}
+
+.brand:hover .brand__crest--1,
+.brand:focus-visible .brand__crest--1 {
+  transform: rotate(-22deg);
+}
+
+.brand:hover .brand__crest--2,
+.brand:focus-visible .brand__crest--2 {
+  transform: rotate(-14deg);
+}
+
+.brand:hover .brand__crest--3,
+.brand:focus-visible .brand__crest--3 {
+  transform: rotate(-6deg);
+}
+
+.brand:hover .brand__crest--4,
+.brand:focus-visible .brand__crest--4 {
+  transform: rotate(9deg);
+}
+
+.brand:hover .brand__beak--top,
+.brand:focus-visible .brand__beak--top {
+  transform: rotate(-16deg);
+}
+
+.brand:hover .brand__beak--bottom,
+.brand:focus-visible .brand__beak--bottom {
+  transform: rotate(24deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand__crest,
+  .brand__beak {
+    transition: none;
+  }
+}
+
+.brand:focus-visible {
+  outline: 3px solid var(--paper);
+  outline-offset: 2px;
+}
+
+/* nothing sticks out sideways (the picture pile can): clipped, never a
+   horizontal scroll; clip, unlike hidden, leaves the pile free to hang
+   down into the next slide */
+.color-page {
+  overflow-x: clip;
+}
+
+.wall__page {
+  overflow-x: hidden;
+}
+
+/* a color page scrolls with a scrollbar in its color, over the page */
+html:has(body > .color-page),
+.wall__page {
+  scrollbar-color: var(--page-color, var(--fg)) transparent;
+}
+
+/* opened over the wall, the color page leaves the logo to the wall's */
+.wall__page .color-hero__home {
+  display: none;
+}
+
+/* the color circle at the start of the search field: any color, and the
+   wall flies to the name closest to it */
+.wall__picker {
+  position: absolute;
+  inset: 50% auto auto 0.55rem;
+  z-index: 1;
+  inline-size: 1.7rem;
+  block-size: 1.7rem;
+  border-radius: 50%;
+  overflow: hidden;
+  translate: 0 -50%;
+  cursor: pointer;
+}
+
+.wall__picker input {
+  position: absolute;
+  inset: -0.5rem;
+  inline-size: calc(100% + 1rem);
+  block-size: calc(100% + 1rem);
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+
+.wall__picker:focus-within {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.wall__search {
+  block-size: var(--bar-h);
+  inline-size: 100%;
+  padding: 0.7rem 2.9rem 0.7rem 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--paper);
+  font: inherit;
+  font-size: var(--text-base);
+}
+
+/* the browser's own clear button would be the one blue thing on the page;
+   Escape clears the field */
+.wall__search::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* the × at the end of the field, while there's something in it */
+.wall__clear {
+  position: absolute;
+  inset: 50% 0.55rem auto auto;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 1.9rem;
+  block-size: 1.9rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink);
+  background: none;
+  translate: 0 -50%;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.wall__clear[hidden] {
+  display: none;
+}
+
+.wall__clear svg {
+  inline-size: 0.95rem;
+  block-size: 0.95rem;
+}
+
+.wall__clear:hover,
+.wall__clear:focus-visible {
+  outline: none;
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.wall__search::placeholder {
+  color: var(--ink);
+  opacity: 1;
+}
+
+.wall__search:focus-visible {
+  outline: 3px solid var(--paper);
+  outline-offset: 3px;
+}
+
+.wall__results {
+  position: absolute;
+  inset: calc(100% + 0.5rem) 0 auto;
+  margin: 0;
+  padding: 0.4rem;
+  list-style: none;
+  border-radius: 1rem;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.wall__result {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr auto;
+  align-items: center;
+  gap: var(--space-2xs);
+  inline-size: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  border-radius: 0.6rem;
+  color: inherit;
+  background: none;
+  font: inherit;
+  font-size: var(--text-xs);
+  text-align: start;
+  cursor: pointer;
+}
+
+.wall__result[aria-selected="true"],
+.wall__result:hover {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.wall__result-swatch {
+  aspect-ratio: 1;
+  border-radius: 0.3rem;
+}
+
+.wall__result-name {
+  overflow: hidden;
+  font-weight: var(--weight-label);
+  font-feature-settings: normal;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* the lower left: messages (working something out, an error), and under
+   them the intro card */
+.wall__corner {
+  position: absolute;
+  inset: auto auto var(--space-s) var(--space-s);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2xs);
+  max-inline-size: 22rem;
+  pointer-events: none;
+}
+
+.wall__corner > * {
+  pointer-events: auto;
+}
+
+.wall__status {
+  margin: 0;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the intro: what you're looking at, once */
+.wall__intro {
+  padding: var(--space-s);
+  border-radius: 1rem;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: var(--text-xs);
+}
+
+.wall__intro p {
+  margin: 0;
+}
+
+.wall__intro p + p {
+  margin-block-start: var(--space-2xs);
+}
+
+.wall__intro-title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-display);
+  line-height: 1.2;
+}
+
+.wall__intro-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-block-start: var(--space-2xs);
+}
+
+.wall__intro-links a {
+  color: inherit;
+  font-weight: var(--weight-label);
+}
+
+.wall__intro-links button,
+.wall__zoom button {
+  border: 0;
+  color: var(--paper);
+  background: var(--ink);
+  font: inherit;
+  font-weight: var(--weight-label);
+  cursor: pointer;
+}
+
+.wall__intro-links button {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+}
+
+/* opening a card: the interface clears along with the other cards,
+   each part off past its own edge of the screen, and comes back from there */
+.wall__bar,
+.wall__corner,
+.wall__models,
+.wall__zoom {
+  transition:
+    opacity 0.35s ease,
+    translate 0.55s cubic-bezier(0.3, 0.8, 0.2, 1);
+}
+
+/* coming back, one after another (leaving, all at once) */
+.wall:not(.is-opening) .wall__zoom {
+  transition-delay: 50ms;
+}
+
+.wall:not(.is-opening) .wall__models {
+  transition-delay: 100ms;
+}
+
+.wall:not(.is-opening) .wall__corner {
+  transition-delay: 150ms;
+}
+
+.wall.is-opening .wall__bar {
+  translate: 0 -110%;
+}
+
+.wall.is-opening .wall__models {
+  translate: 0 calc(100% + var(--space-s));
+}
+
+.wall.is-opening .wall__zoom {
+  translate: calc(100% + var(--space-s)) 0;
+}
+
+.wall.is-opening .wall__corner {
+  translate: calc(-100% - var(--space-s)) 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall.is-opening .wall__bar,
+  .wall.is-opening .wall__models,
+  .wall.is-opening .wall__zoom,
+  .wall.is-opening .wall__corner {
+    translate: none;
+  }
+}
+
+.wall.is-opening .wall__bar,
+.wall.is-opening .wall__corner,
+.wall.is-opening .wall__intro,
+.wall.is-opening .wall__models,
+.wall.is-opening .wall__zoom {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* the HTML copy of a clicked card, laid over it for the view transition */
+.wall__handoff {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* the copy's last move: to the color page's card, size and tilt and all */
+.wall__handoff {
+  transform-origin: 50% 50%;
+}
+
+.wall__handoff.is-travelling {
+  transition: transform 0.75s cubic-bezier(0.65, 0, 0.25, 1);
+}
+
+.wall__handoff.is-travelling .swatchcard {
+  transition:
+    inline-size 0.75s cubic-bezier(0.65, 0, 0.25, 1),
+    font-size 0.75s cubic-bezier(0.65, 0, 0.25, 1);
+}
+
+/* Arriving from the wall, the card is already in place; then the words
+   come in, one after another. */
+.color-hero .hero__content > *,
+.color-hero__close {
+  transition: opacity 0.6s ease, translate 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.color-hero .hero__content > :nth-child(2) {
+  transition-delay: 0.12s;
+}
+
+.color-hero .hero__content > :nth-child(3),
+.color-hero__close {
+  transition-delay: 0.24s;
+}
+
+.is-arriving .color-hero .hero__content > *,
+.is-arriving .color-hero__close {
+  opacity: 0;
+  translate: 0 0.6rem;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .color-hero .hero__content > *,
+  .color-hero__close {
+    transition: none;
+  }
+}
+
+/* the color page, opened inside the wall: over it, scrolling on its own */
+.wall__page {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background: var(--ink);
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* closing: the color page fades from under its card */
+.wall__page.is-leaving {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.wall__handoff.is-returning {
+  z-index: 6;
+}
+
+/* an invisible copy of the color page's hero, to measure where its card goes */
+.wall__probe {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* the color model: one pill, the chosen model filled */
+.wall__models {
+  position: absolute;
+  inset: auto auto var(--space-s) 50%;
+  z-index: 2;
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--paper);
+  transform: translateX(-50%);
+}
+
+.wall__models button {
+  position: relative;
+  z-index: 1;
+  padding: 0.45rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  color: var(--ink);
+  background: none;
+  transition: color 0.3s ease;
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  cursor: pointer;
+}
+
+.wall__models button[aria-pressed="true"] {
+  color: var(--paper);
+}
+
+/* the chosen model's pill, sliding from one to the next with a little
+   overshoot */
+.wall__models-thumb {
+  position: absolute;
+  inset-block: 0.25rem;
+  left: 0;
+  inline-size: var(--w, 0);
+  border-radius: 999px;
+  background: var(--ink);
+  translate: var(--x, 0) 0;
+  transition:
+    translate 0.5s cubic-bezier(0.34, 1.4, 0.5, 1),
+    inline-size 0.5s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall__models-thumb,
+  .wall__models button {
+    transition: none;
+  }
+}
+
+.wall__models button:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: -3px;
+}
+
+.wall__zoom {
+  position: absolute;
+  inset: auto var(--space-s) var(--space-s) auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wall__zoom svg {
+  display: block;
+  inline-size: 1.1rem;
+  margin: auto;
+}
+
+.wall__zoom button {
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+/* the lists: a menu opening to the left of its button */
+.wall__lists {
+  position: absolute;
+  inset: 0 calc(100% + 0.6rem) auto auto;
+  display: grid;
+  gap: 0.2rem;
+  min-inline-size: 13rem;
+  padding: 0.3rem;
+  border-radius: 1rem;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.wall__lists[hidden] {
+  display: none;
+}
+
+/* empty until the script fills it: not a stray white dot meanwhile */
+.wall__models:empty {
+  display: none;
+}
+
+.wall__zoom .wall__lists button {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-s);
+  inline-size: auto;
+  block-size: auto;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.7rem;
+  color: var(--ink);
+  background: none;
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.wall__zoom .wall__lists button small {
+  font-size: inherit;
+  font-weight: var(--weight-body);
+}
+
+.wall__zoom .wall__lists button:hover,
+.wall__zoom .wall__lists button:focus-visible,
+.wall__zoom .wall__lists button[aria-checked="true"] {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+/* each list, and next to it a link to its file */
+.wall__list {
+  display: flex;
+  align-items: stretch;
+  gap: 0.2rem;
+}
+
+.wall__zoom .wall__list button {
+  flex: 1;
+}
+
+.wall__list-file {
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  border-radius: 0.7rem;
+  color: var(--ink);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.wall__list-file svg {
+  inline-size: 0.95rem;
+  block-size: 0.95rem;
+}
+
+.wall__list-file:hover,
+.wall__list-file:focus-visible {
+  outline: none;
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.wall__zoom .wall__lists button:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 2px var(--ink);
+}
+
+/* the cells toggle, on */
+.wall__zoom button[aria-pressed="true"] {
+  color: var(--paper);
+  background: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--paper);
+}
+
+.wall__zoom button:focus-visible,
+.wall__intro-links button:focus-visible,
+.wall__result:focus-visible {
+  outline: 3px solid var(--paper);
+  outline-offset: 2px;
+}
+
+@media (max-width: 40rem) {
+  /* the logo and the links on one row, the search under them */
+  .wall__bar {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: var(--brand-h, 2.5rem) auto;
+    gap: var(--space-2xs) var(--space-s);
+    padding: var(--space-2xs) 1rem;
+  }
+
+  .wall__nav {
+    grid-row: 1;
+    grid-column: 2;
+    align-self: center;
+  }
+
+  .wall__find {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+
+  .brand {
+    top: var(--space-2xs);
+    left: 1rem;
+  }
+
+  /* clear of the buttons on the right */
+  .wall__corner {
+    inset: auto 4.5rem 1rem 1rem;
+    max-inline-size: none;
+  }
+
+  .wall__zoom {
+    inset: auto 1rem 1rem auto;
+  }
+
+  /* under the bar, clear of the intro card */
+  .wall__models {
+    inset-block: 7rem auto;
+  }
+}

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Names — 31,912 colors, named by people</title>
+    <meta
+      name="description"
+      content="Wander through 31,912 color names, each one chosen by a person: a space of color cards, each hanging where its color is. Free, MIT-licensed."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;600;700;850&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="wall-page">
+    <!--
+      The color wall: every name on the list as a card, hanging in 3D where
+      its color sits in OKLCH. Drawn with WebGL; the names are HTML, shown
+      once the cards are near enough to read. A clicked card carries over
+      into its color page with a view transition. The previous home, a
+      scroll of slides, is at classic/.
+    -->
+    <main class="wall" data-wall>
+      <!-- the logo: in one place, over everything, here and on the color
+           page (opened over the wall, or on its own) -->
+      <a class="brand wall__brand" href="./"><svg class="brand__logo" viewBox="20 12 130 158" aria-hidden="true"><path d="M30 170h80v-60a39.8 39.8 0 0 0-5.25-19.81A80 80 0 0 0 30 170z" fill="#f69"/><path class="brand__crest brand__crest--1" d="M80.36 81.34L63 71.34c-.73-.42-1.42-.87-2.1-1.34H20a30 30 0 0 0 30 30h20a10.07 10.07 0 0 1 1.15.07 79.54 79.54 0 0 1 13.28-5.87 10 10 0 0 0-4.07-12.86z" fill="#ed0"/><path class="brand__crest brand__crest--2" d="M70 70h-9.06c.68.47 1.37.92 2.1 1.34l17.32 10a10 10 0 0 1 4.07 12.86 79.64 79.64 0 0 1 20.32-4A40 40 0 0 0 70 70z" fill="#5a0"/><path class="brand__crest brand__crest--2" d="M98.66 70.36L88.66 53c-.42-.73-.8-1.46-1.15-2.21L78 45.36l-26-15A30 30 0 0 0 60.94 70H70a39.86 39.86 0 0 1 28 11.41 10 10 0 0 0 .66-11.05z" fill="#6c6"/><path class="brand__crest brand__crest--3" d="M120 70V50c0-.84 0-1.67.11-2.49L114.64 38l-15-26a30 30 0 0 0-12.13 38.83l7.85 4.53a39.86 39.86 0 0 1 18.51 23.86A10 10 0 0 0 120 70z" fill="#19f"/><path class="brand__crest brand__crest--3" d="M114 100.2a40 40 0 0 0-18.64-44.84l-7.85-4.53c.35.74.73 1.48 1.15 2.21l10 17.32A10 10 0 0 1 98 81.41 40 40 0 0 1 108.74 100H110q2 0 4 .2z" fill="#176"/><path class="brand__crest brand__crest--4" d="M120.11 47.51l4.53 7.85a40 40 0 0 1-4.25 46 39.74 39.74 0 0 1 9 3.63A40 40 0 0 0 150 70V20a30 30 0 0 0-29.89 27.51z" fill="#f69"/><path class="brand__crest brand__crest--4" d="M110 110a39.81 39.81 0 0 0 19.37-5 39.47 39.47 0 0 0-9-3.63 40 40 0 0 0 4.25-46l-4.53-7.85c-.07.82-.11 1.65-.11 2.49V70a10 10 0 0 1-6.13 9.22 40 40 0 0 1 .17 21s-2.51-.2-4.05-.2h-1.27A39.89 39.89 0 0 1 110 110z" fill="#139"/><path class="brand__beak brand__beak--top" d="M129.37 105a39.81 39.81 0 0 1-19.37 5v20a10 10 0 0 0 10 10h30a40 40 0 0 0-20.63-35z" fill="#19f"/><path class="brand__beak brand__beak--bottom" d="M120 140a10 10 0 0 1-10-10v40a30 30 0 0 0 30-30z" fill="#ed0"/><circle cx="87.5" cy="127.5" r="7.5" fill="#fff"/></svg><span>Color Names</span></a>
+
+      <canvas class="wall__canvas" data-canvas aria-hidden="true"></canvas>
+      <div class="wall__labels" data-labels aria-hidden="true"></div>
+      <div class="wall__mark" data-mark hidden></div>
+      <div class="wall__tip" data-tip hidden></div>
+
+      <header class="wall__bar">
+
+        <form class="wall__find" data-find role="search" autocomplete="off">
+          <label class="wall__picker" title="Pick a color">
+            <input type="color" data-picker value="#dd2233" aria-label="Pick a color and go to its closest name" />
+          </label>
+          <input
+            class="wall__search"
+            type="search"
+            data-search
+            placeholder="Find a name, or paste a hex"
+            aria-label="Find a color name or a hex code"
+            spellcheck="false"
+          />
+          <button type="button" class="wall__clear" data-clear aria-label="Clear the search" hidden>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <ul class="wall__results" data-results hidden></ul>
+        </form>
+
+        <nav class="wall__nav" aria-label="Project">
+          <a href="https://github.com/meodai/color-names">GitHub</a>
+        </nav>
+      </header>
+
+      <!-- the lower left: what's going on, and the intro card -->
+      <div class="wall__corner">
+      <p class="wall__status" data-status aria-live="polite">Loading the names…</p>
+      <aside class="wall__intro" data-intro>
+        <p class="wall__intro-title"><span data-count>31,912</span> colors, each named by a person.</p>
+        <p>
+          Every name hangs where its color is. Pick a color model below to
+          rearrange them all. Drag to turn, scroll to zoom, right-drag or two
+          fingers to move, double-click the dark to see everything again.
+          The cells button fills in each name’s part of the space.
+        </p>
+        <p class="wall__intro-links">
+          <button type="button" data-intro-close>Got it</button>
+        </p>
+      </aside>
+      </div>
+
+      <div class="wall__models" role="group" aria-label="Color model" data-models></div>
+
+      <div class="wall__zoom">
+        <button type="button" data-lists aria-haspopup="menu" aria-expanded="false" aria-label="Choose a list of names" title="Lists">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor"><circle cx="4.5" cy="5.5" r="1.5"/><circle cx="4.5" cy="10" r="1.5"/><circle cx="4.5" cy="14.5" r="1.5"/></g><path d="M8.5 5.5H16M8.5 10H16M8.5 14.5H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="wall__lists" role="menu" aria-label="Lists of names" data-list-menu hidden>
+          <div class="wall__list" role="none">
+            <button type="button" role="menuitemradio" data-list="default" aria-checked="true">
+              <span>Full</span><small>every name</small>
+            </button>
+            <a class="wall__list-file" href="https://unpkg.com/color-name-list/dist/colornames.json" target="_blank" rel="noopener" aria-label="The Full list as a JSON file" title="colornames.json"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M11 4h5v5M16 4l-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </div>
+          <div class="wall__list" role="none">
+            <button type="button" role="menuitemradio" data-list="bestOf" aria-checked="false">
+              <span>Best of</span><small>hand-picked</small>
+            </button>
+            <a class="wall__list-file" href="https://unpkg.com/color-name-list/dist/colornames.bestof.json" target="_blank" rel="noopener" aria-label="The Best of list as a JSON file" title="colornames.bestof.json"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M11 4h5v5M16 4l-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </div>
+          <div class="wall__list" role="none">
+            <button type="button" role="menuitemradio" data-list="short" aria-checked="false">
+              <span>Short</span><small>a word or two</small>
+            </button>
+            <a class="wall__list-file" href="https://unpkg.com/color-name-list/dist/colornames.short.json" target="_blank" rel="noopener" aria-label="The Short list as a JSON file" title="colornames.short.json"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M11 4h5v5M16 4l-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </div>
+        </div>
+        <button type="button" data-cells aria-pressed="false" aria-label="Show each name’s part of the space" title="Cells">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M10 3v7l6.58 2.39M10 10H3"/></g></svg>
+        </button>
+        <button type="button" data-home aria-label="Show the whole space">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
+        </button>
+      </div>
+
+    </main>
+
+    <script type="module">
+      import { initWall } from "/src/wall.js";
+      initWall(document.querySelector("[data-wall]"));
+    </script>
+  </body>
+</html>
