@@ -1837,6 +1837,19 @@ a:hover {
   transform: translateX(calc((1 - var(--show)) * 100%)) rotate(var(--rot));
 }
 
+/* until it comes in: all of it past the edge */
+.peek--left:not(.is-in) .peek__print {
+  transform: translateX(calc(-100% - 2rem)) rotate(var(--rot));
+}
+
+.peek--right:not(.is-in) .peek__print {
+  transform: translateX(calc(100% + 2rem)) rotate(var(--rot));
+}
+
+.peek:not(.is-in) {
+  pointer-events: none;
+}
+
 .peek--left:hover .peek__print,
 .peek--left:focus-visible .peek__print {
   transform: translateX(var(--space-s)) rotate(0deg);
@@ -3060,32 +3073,39 @@ html:has(body > .color-page),
    each part off past its own edge of the screen, and comes back from there */
 .wall__bar,
 .wall__corner,
-.wall__dock,
+.wall__models,
+.wall__pick-list,
 .wall__zoom {
   transition:
     opacity 0.35s ease,
-    translate 0.55s cubic-bezier(0.3, 0.8, 0.2, 1);
+    translate 0.55s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
-/* coming back, one after another (leaving, all at once) */
+/* coming back, one after another, 50ms apart (leaving, all at once) */
 .wall:not(.is-opening) .wall__zoom {
   transition-delay: 50ms;
 }
 
-.wall:not(.is-opening) .wall__dock {
+.wall:not(.is-opening) .wall__models {
   transition-delay: 100ms;
 }
 
-.wall:not(.is-opening) .wall__corner {
+.wall:not(.is-opening) .wall__pick-list {
   transition-delay: 150ms;
+}
+
+.wall:not(.is-opening) .wall__corner {
+  transition-delay: 200ms;
 }
 
 .wall.is-opening .wall__bar {
   translate: 0 -110%;
 }
 
-.wall.is-opening .wall__dock {
-  translate: 0 calc(100% + var(--space-s));
+/* the picker and the lists button leave and come back each on its own */
+.wall.is-opening .wall__models,
+.wall.is-opening .wall__pick-list {
+  translate: 0 calc(100% + var(--space-s) + 1rem);
 }
 
 .wall.is-opening .wall__zoom {
@@ -3098,7 +3118,8 @@ html:has(body > .color-page),
 
 @media (prefers-reduced-motion: reduce) {
   .wall.is-opening .wall__bar,
-  .wall.is-opening .wall__dock,
+  .wall.is-opening .wall__models,
+  .wall.is-opening .wall__pick-list,
   .wall.is-opening .wall__zoom,
   .wall.is-opening .wall__corner {
     translate: none;
@@ -3108,7 +3129,8 @@ html:has(body > .color-page),
 .wall.is-opening .wall__bar,
 .wall.is-opening .wall__corner,
 .wall.is-opening .wall__intro,
-.wall.is-opening .wall__dock,
+.wall.is-opening .wall__models,
+.wall.is-opening .wall__pick-list,
 .wall.is-opening .wall__zoom {
   opacity: 0;
   pointer-events: none;

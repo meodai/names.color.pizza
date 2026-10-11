@@ -222,7 +222,7 @@ const peeksHTML = (pictures, hex) => {
       // the link holds still and takes the hover; the print inside it moves
       return `<a class="peek peek--${side}" data-k="${(k + 0.5) / perSide + between(-0.03, 0.03)}" href="${escapeHTML(p.link)}" target="_blank" rel="noopener" style="${vars}">
         <span class="peek__print">
-          <img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.title)}" loading="lazy" style="aspect-ratio:${p.ratio.toFixed(3)}" />
+          <img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.title)}" decoding="async" style="aspect-ratio:${p.ratio.toFixed(3)}" />
           <span class="peek__caption"><span>
             <span class="peek__title">${escapeHTML(p.title)}</span>
             <span class="peek__where">${Math.round(p.share * 100)}% close to ${hex}, on Wikimedia Commons</span>
@@ -339,11 +339,15 @@ function wikiMedia(title) {
 
 // a Wikimedia file's name, from a thumbnail URL or a media-list title, to
 // tell when two are the same picture
-const fileOf = (s) =>
-  decodeURIComponent(s.match(/\/([^/]+\.\w{3,4})\/\d+px-[^/]*$/)?.[1] || s.split("/").pop() || s)
+// the file a picture's address is of, whatever size or tracking query
+// (?utm_source=…) it's asked for with
+const fileOf = (url) => {
+  const s = url.replace(/[?#].*$/, "");
+  return decodeURIComponent(s.match(/\/([^/]+\.\w{3,4})\/\d+px-[^/]*$/)?.[1] || s.split("/").pop() || s)
     .replace(/^File:/, "")
     .replace(/ /g, "_")
     .toLowerCase();
+};
 
 async function wikiImages(titles, limit = 8, skip = []) {
   const lists = await Promise.all(titles.map(wikiMedia));
@@ -866,21 +870,24 @@ function placePeeks() {
     const r = el.getBoundingClientRect();
     return [r.top - top, r.bottom - top];
   };
-  // a picture is placed by its top: the tallest one sets how far above a
-  // place to keep clear of has to stay free
-  const tallest = Math.max(...peeks.map((el) => el.firstElementChild.offsetHeight));
-  const hero = page.root.querySelector(".color-hero");
-  // down to the footers, which stay clear
+  // pictures are placed by their middles, so a stretch has to keep half the
+  // tallest one (and a little) clear at each end
+  const half = Math.max(...peeks.map((el) => el.firstElementChild.offsetHeight)) / 2 + 24;
+  // from under the hero down to the footers
+  const start = span(page.root.querySelector(".color-hero"))[1];
   const end = span(page.root.querySelector(".footer") || main)[0];
-  let free = [[span(hero)[1] * 0.75, end - tallest - 40]];
+  let free = [[start + half, end - half]];
+  // not on the Wikipedia slide, nor on its pile hanging into the next one
   if (!page.meaningSlide.hidden) {
     const [a, b] = span(page.meaningSlide);
-    const gap = [a - tallest - 40, b + 260]; // and the pile hanging into the next slide
+    const pile = page.root.querySelector(".picture-pile");
+    const low = pile?.childElementCount ? Math.max(b, span(pile)[1]) : b;
+    const gap = [a - half, low + half];
     free = free.flatMap(([s, e]) =>
       [
         [s, Math.min(e, gap[0])],
         [Math.max(s, gap[1]), e],
-      ].filter(([x, y]) => y - x > 40)
+      ].filter(([x, y]) => y - x > 0)
     );
   }
   const total = free.reduce((n, [s, e]) => n + e - s, 0);
@@ -890,12 +897,31 @@ function placePeeks() {
     let d = Math.min(0.999, Math.max(0, +el.dataset.k)) * total;
     for (const [s, e] of free) {
       if (d <= e - s) {
-        el.style.setProperty("--top", `${Math.round(s + d)}px`);
+        el.style.setProperty("--top", `${Math.round(s + d - el.firstElementChild.offsetHeight / 2)}px`);
         break;
       }
       d -= e - s;
     }
   }
+}
+
+// Each edge picture comes in from past the edge once its image has loaded
+// and its place is on screen, not before (they load right away: lazy
+// loading would wait for them to be on screen, which they aren't till then)
+let peeksSeen;
+function revealPeeks() {
+  peeksSeen?.disconnect();
+  peeksSeen = new IntersectionObserver((seen) => {
+    for (const { target, isIntersecting } of seen) {
+      if (!isIntersecting) continue;
+      peeksSeen.unobserve(target);
+      const img = target.querySelector("img");
+      const show = () => requestAnimationFrame(() => target.classList.add("is-in"));
+      if (img.complete && img.naturalWidth) show();
+      else img.addEventListener("load", show, { once: true });
+    }
+  });
+  for (const el of page.peeks.children) peeksSeen.observe(el);
 }
 
 // The pictures hang into the slide after theirs, each a different amount:
@@ -978,7 +1004,7 @@ async function render(hex) {
   page.fillHex.textContent = hex;
   page.fill.style.setProperty("--fill", hex);
   page.colophon.style.setProperty("--fill", hex);
-  page.colophonColor.textContent = hex;
+  page.colophonColor.textContent = handedOver ? `${handoff.name} · ${hex}` : hex;
   // the scrollbar in the color (the page's own, or the layer's over the wall)
   (page.embedded ? page.root : document.documentElement).style.setProperty("--page-color", hex);
   page.ink.textContent = "";
@@ -989,6 +1015,7 @@ async function render(hex) {
   page.dictionary.replaceChildren();
   page.wiki.replaceChildren();
   page.wordsSlide.hidden = true;
+  peeksSeen?.disconnect();
   page.peeks.replaceChildren();
   page.meaningSlide.hidden = true;
   page.meaningSlide.classList.remove("has-pile");
@@ -1008,6 +1035,7 @@ async function render(hex) {
 
   page.cardName.textContent = exact ? exact.name : unnamed ? "No name yet" : `≈ ${near.name}`;
   page.name.textContent = title;
+  page.colophonColor.textContent = current.name ? `${current.name} · ${hex}` : hex;
   fitTitle();
   document.title = `${title}: ${hex} — Color Names`;
 
@@ -1134,6 +1162,7 @@ async function showPictures(hex, title, terms) {
   if (current?.hex !== hex || !pictures.length) return;
   page.peeks.innerHTML = peeksHTML(pictures, hex);
   placePeeks();
+  revealPeeks();
 }
 
 // The color comes after the hash: color/#5c3a8e
