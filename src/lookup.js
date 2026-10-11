@@ -6,9 +6,12 @@
   (scripts/collect.mjs), so the page can mostly read that copy instead of
   asking Wikipedia. Everything it returns is plain data (lookupName).
 
-  In the browser it uses fetch and DOMParser; elsewhere, configure() hands
-  it its own (Node: fetch with a User-Agent, linkedom's parser).
+  In the browser it uses fetch, DOMParser and a canvas; elsewhere,
+  configure() hands it its own (Node: fetch with a User-Agent, linkedom's
+  parser, sharp for pixels).
 */
+
+import { hexToRgb, rgbToOklab } from "./names.js";
 
 // In a browser the User-Agent can't be set: Wikimedia asks scripts to say
 // who they are with Api-User-Agent instead
@@ -16,6 +19,27 @@ const AGENT = "ColorNamesBot/1.0 (https://github.com/meodai/color-names) color-p
 const io = {
   fetch: (url, options = {}) => fetch(url, { ...options, headers: { "Api-User-Agent": AGENT, ...options.headers } }),
   parse: (html) => new DOMParser().parseFromString(html, "text/html"),
+  // a picture drawn SAMPLE×SAMPLE, its RGBA pixels (null if unreadable)
+  pixels: (url) =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = SAMPLE;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0, SAMPLE, SAMPLE);
+          resolve(ctx.getImageData(0, 0, SAMPLE, SAMPLE).data);
+        } catch {
+          resolve(null); // the image turned out not to be readable
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    }),
+  // pictures measured at once
+  parallelPictures: 8,
 };
 
 // a "%" that isn't an escape ("100% Cocoa") stays as it is
@@ -405,4 +429,101 @@ export async function lookupName(name) {
     Promise.all(definitions.map(async (d) => [d.term, await pronunciations(d.term)])),
   ]);
   return { definitions, entries, images, sounds: Object.fromEntries(sounds.filter(([, s]) => s.length)) };
+}
+
+/* —— Wikimedia Commons: pictures with the color in them —— */
+
+// Commons can't search by color, so this does: it searches Commons for the
+// color's name and its noun, draws each candidate small, and keeps the
+// pictures with the largest share of pixels near the color in OKLab.
+// Candidates are measured on their 60px thumbnails and shown at 500px:
+// both standard thumbnail sizes, the only ones Wikimedia serves to
+// scripts. Commons thumbnails allow cross-origin reading: no key needed.
+export const SAMPLE = 40; // candidates are measured at 40×40 pixels
+const NEAR = 0.05; // OKLab distance that still counts as "this color"
+const MEASURE_WIDTH = 60;
+const SHOW_WIDTH = 500;
+
+// the 500px thumbnail's address, from the 60px one's (whatever query it
+// carries); the original when it's no wider than that
+function showable(info) {
+  const [path] = info.thumburl.split("?");
+  if (info.width <= SHOW_WIDTH || !/\/\d+px-[^/]+$/.test(path)) return info.url;
+  return path.replace(/\/\d+px-([^/]+)$/, `/${SHOW_WIDTH}px-$1`);
+}
+
+async function commonsSearch(term, limit = 40) {
+  const url = new URL("https://commons.wikimedia.org/w/api.php");
+  Object.entries({
+    action: "query",
+    format: "json",
+    origin: "*",
+    generator: "search",
+    gsrnamespace: "6", // File:
+    // photographs only: JPEGs leave out most flags, diagrams and swatches
+    gsrsearch: `${term} filemime:image/jpeg`,
+    gsrlimit: String(limit),
+    prop: "imageinfo",
+    iiprop: "url|size",
+    iiurlwidth: String(MEASURE_WIDTH),
+  }).forEach(([k, v]) => url.searchParams.set(k, v));
+  try {
+    const res = await io.fetch(url);
+    const pages = Object.values((await res.json()).query?.pages || {});
+    return pages
+      .map((p) => ({ title: p.title, info: p.imageinfo?.[0] }))
+      .filter((p) => p.info?.thumburl)
+      .map(({ title, info }) => ({
+        title: title.replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, ""),
+        // the 60px thumbnail to measure; to show, the 500px one (or the
+        // original, when it's smaller than that)
+        measure: info.thumburl,
+        image: showable(info),
+        ratio: info.width / info.height,
+        link: info.descriptionurl,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+// the share of a picture's pixels within NEAR of the color (0–1)
+function shareOf(data, target) {
+  const limit = NEAR * NEAR;
+  let near = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const [L, a, b] = rgbToOklab([data[i], data[i + 1], data[i + 2]]);
+    if ((L - target[0]) ** 2 + (a - target[1]) ** 2 + (b - target[2]) ** 2 < limit) near++;
+  }
+  return near / (data.length / 4);
+}
+
+// a few at a time, so dozens of pictures don't all load at once
+async function measureAll(candidates, target) {
+  const results = [];
+  let next = 0;
+  const worker = async () => {
+    while (next < candidates.length) {
+      const { measure, ...candidate } = candidates[next++];
+      const data = await io.pixels(measure);
+      if (data) results.push({ ...candidate, share: shareOf(data, target) });
+    }
+  };
+  await Promise.all(Array.from({ length: io.parallelPictures }, worker));
+  return results;
+}
+
+// The pictures for a color, best first: [{ title, image, ratio, link, share }]
+export async function lookupPictures(hex, terms, count = 12) {
+  const lists = await Promise.all([...new Set(terms.filter(Boolean))].map((t) => commonsSearch(t)));
+  const seen = new Set();
+  const candidates = lists.flat().filter((c) => !seen.has(c.link) && seen.add(c.link));
+  const measured = await measureAll(candidates, rgbToOklab(hexToRgb(hex)));
+  return (
+    measured
+      // at least a noticeable patch of it, but not a flat swatch of it
+      .filter((p) => p.share >= 0.04 && p.share <= 0.85)
+      .sort((a, b) => b.share - a.share)
+      .slice(0, count)
+  );
 }

@@ -23,6 +23,13 @@
   --all fetches every name without a copy, however many (the first fill);
   --limit stops after N names.
 
+  Pictures: which Wikimedia Commons pictures have the color in them, best
+  first (looked.pictures: addresses and how much of each is the color, not
+  the pictures). --with-pictures picks them along with the rest;
+  --pictures only picks them, for copies that have none yet. Picking
+  downloads each candidate's 60px thumbnail, at most 2 at a time, as
+  Wikimedia's robot policy asks of its image servers.
+
   By Wikimedia's rules (mediawiki.org/wiki/Wikimedia_APIs/Rate_limits,
   mediawiki.org/wiki/API:Etiquette, the Foundation's User-Agent policy):
   - a User-Agent naming this bot and where to reach its makers
@@ -45,7 +52,9 @@ import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseHTML } from "linkedom";
-import { configure, lookupName } from "../src/lookup.js";
+import sharp from "sharp";
+import ColorDescription from "color-description";
+import { configure, lookupName, lookupPictures, SAMPLE } from "../src/lookup.js";
 import { slugsOf } from "../src/names.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -65,10 +74,14 @@ const TOKEN =
   process.env.WIKIMEDIA_TOKEN ||
   (existsSync(local) && readFileSync(local, "utf8").match(/^WIKIMEDIA_TOKEN=(.+)$/m)?.[1].trim()) ||
   "";
-let rate = +arg("rate", TOKEN ? 25 : 3); // requests a second, at most
+// 3 a second keeps under 200 a minute; an account allowed more (an
+// established editor) can say so with --rate
+let rate = +arg("rate", 3); // requests a second, at most
 const PARALLEL = Math.min(3, +arg("parallel", 3)); // requests in flight: 3 at most, by the rules
 const WORKERS = PARALLEL; // names looked up at once
 const ALL = process.argv.includes("--all");
+const PICTURES_ONLY = process.argv.includes("--pictures");
+const WITH_PICTURES = PICTURES_ONLY || process.argv.includes("--with-pictures");
 const LIMIT = +arg("limit", Infinity);
 const CYCLE_DAYS = 180;
 const AGENT = `ColorNamesBot/1.0 (https://github.com/meodai/color-names) node/${process.versions.node}`;
@@ -200,8 +213,42 @@ async function politeFetch(url, options = {}) {
   }
 }
 
+// Pictures come from Wikimedia's image servers, which ask robots for at most
+// 2 downloads at a time (wikitech.wikimedia.org/wiki/Robot_policy)
+let mediaInFlight = 0;
+const mediaWaiting = [];
+async function pixels(url) {
+  while (mediaInFlight >= 2) await new Promise((r) => mediaWaiting.push(r));
+  mediaInFlight++;
+  try {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = await fetch(url, { headers: headersFor(url) }).catch(() => null);
+      if (res?.status === 429 || (res && res.status >= 500) || !res) {
+        await sleep(Math.max(+res?.headers.get("retry-after") * 1000 || 0, 5000) * 2 ** attempt);
+        continue;
+      }
+      if (!res.ok) return null; // gone: not a picture to measure
+      const { data } = await sharp(Buffer.from(await res.arrayBuffer()))
+        .resize(SAMPLE, SAMPLE, { fit: "fill" })
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      return new Uint8ClampedArray(data);
+    }
+    forName.getStore()?.failed.push(`picture ${url}`);
+    return null;
+  } catch {
+    return null; // not readable as a picture
+  } finally {
+    mediaInFlight--;
+    mediaWaiting.shift()?.();
+  }
+}
+
 configure({
   fetch: politeFetch,
+  pixels,
+  parallelPictures: 2,
   parse: (html) => parseHTML(html.includes("<html") ? html : `<html><body>${html}</body></html>`).document,
 });
 
@@ -219,13 +266,16 @@ const slugs = slugsOf(items);
 const fileOf = (slug) => join(DATA, "names", slug[0], `${slug}.json`);
 
 const fetched = new Map(); // slug → date of its copy
+const pictured = new Set(); // slugs whose copy has its pictures
 const dir = join(DATA, "names");
 mkdirSync(dir, { recursive: true });
 for (const shard of readdirSync(dir)) {
   for (const file of readdirSync(join(dir, shard))) {
     const slug = file.replace(/\.json$/, "");
     try {
-      fetched.set(slug, JSON.parse(readFileSync(join(dir, shard, file), "utf8")).fetched);
+      const copy = JSON.parse(readFileSync(join(dir, shard, file), "utf8"));
+      fetched.set(slug, copy.fetched);
+      if (copy.looked?.pictures) pictured.add(slug);
     } catch {
       fetched.set(slug, "0000-00-00");
     }
@@ -254,7 +304,12 @@ const oldest = items
   .slice(0, renew);
 // every run renews its share; new names on top of that (all of them with
 // --all, otherwise as many again)
-const todo = [...(ALL ? missing : missing.slice(0, Math.max(renew, 500))), ...oldest].slice(0, LIMIT);
+const todo = (
+  PICTURES_ONLY
+    ? // copies without their pictures yet
+      items.filter((it) => fetched.has(slugs.get(it.name)) && !pictured.has(slugs.get(it.name)))
+    : [...(ALL ? missing : missing.slice(0, Math.max(renew, 500))), ...oldest]
+).slice(0, LIMIT);
 
 if (TOKEN) {
   // who the token is for, and that account's limits, as Wikimedia sees them
@@ -272,6 +327,7 @@ if (TOKEN) {
 } else {
   console.log("collect: without a login (no WIKIMEDIA_TOKEN): 200 requests a minute");
 }
+if (PICTURES_ONLY) console.log("collect: pictures only, for copies without them");
 console.log(
   `collect: ${items.length} names, ${fetched.size} copies, ${missing.length} missing, ` +
     `${removed} removed; this run: ${todo.length} (${Math.min(missing.length, todo.length)} new)`
@@ -286,20 +342,33 @@ let saved = 0;
 const failures = [];
 const started = Date.now();
 
+// what the page searches Commons for: the name, and the color's noun
+const pictureTerms = (it) => [it.name, new ColorDescription(it.hex).nouns[0]];
+
 async function collect(it) {
   const slug = slugs.get(it.name);
   const state = { failed: [] };
-  const looked = await forName.run(state, () => lookupName(it.name)).catch((e) => {
-    state.failed.push(e.message);
-    return null;
-  });
+  const previous = fetched.has(slug) ? JSON.parse(readFileSync(fileOf(slug), "utf8")) : null;
+  const copy = await forName
+    .run(state, async () => {
+      // pictures only: the copy as it is, with its pictures added
+      const looked = PICTURES_ONLY ? previous.looked : await lookupName(it.name);
+      if (WITH_PICTURES) looked.pictures = await lookupPictures(it.hex, pictureTerms(it));
+      // renewing the rest keeps the pictures it had
+      else if (previous?.looked?.pictures) looked.pictures = previous.looked.pictures;
+      return { name: it.name, hex: it.hex, fetched: PICTURES_ONLY ? previous.fetched : today, looked };
+    })
+    .catch((e) => {
+      state.failed.push(e.message);
+      return null;
+    });
   done++;
-  if (!looked || state.failed.length) {
+  if (!copy || state.failed.length) {
     failures.push(`${it.name}: ${state.failed[0]}`);
     return;
   }
   mkdirSync(dirname(fileOf(slug)), { recursive: true });
-  writeFileSync(fileOf(slug), JSON.stringify({ name: it.name, hex: it.hex, fetched: today, looked }));
+  writeFileSync(fileOf(slug), JSON.stringify(copy));
   saved++;
 }
 

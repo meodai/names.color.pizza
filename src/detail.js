@@ -23,7 +23,7 @@ import {
   showVersion,
   slugsOf,
 } from "./names.js";
-import { lookupName, isWhole, baseTitle } from "./lookup.js";
+import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -110,102 +110,6 @@ function neighbors(data, hex, count = 12) {
     .sort((x, y) => x.d - y.d)
     .slice(0, count)
     .map(({ it }) => it);
-}
-
-/* —— Wikimedia Commons: pictures picked by how much of them is the color —— */
-
-// Commons can't search by color, so the page does: it searches Commons for
-// the color's name and its noun, draws each candidate small, and keeps the
-// pictures with the largest share of pixels near the color in OKLab.
-// Commons thumbnails allow cross-origin reading, so this needs no key.
-const NEAR = 0.05; // OKLab distance that still counts as "this color"
-const SAMPLE = 40; // candidates are measured at 40×40 pixels
-
-async function commonsSearch(term, limit = 40) {
-  const url = new URL("https://commons.wikimedia.org/w/api.php");
-  Object.entries({
-    action: "query",
-    format: "json",
-    origin: "*",
-    generator: "search",
-    gsrnamespace: "6", // File:
-    // photographs only: JPEGs leave out most flags, diagrams and swatches
-    gsrsearch: `${term} filemime:image/jpeg`,
-    gsrlimit: String(limit),
-    prop: "imageinfo",
-    iiprop: "url|size",
-    iiurlwidth: "400",
-  }).forEach(([k, v]) => url.searchParams.set(k, v));
-  try {
-    const res = await fetch(url);
-    const pages = Object.values((await res.json()).query?.pages || {});
-    return pages
-      .map((p) => ({ title: p.title, info: p.imageinfo?.[0] }))
-      .filter((p) => p.info?.thumburl)
-      .map(({ title, info }) => ({
-        title: title.replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, ""),
-        image: info.thumburl,
-        ratio: info.width / info.height,
-        link: info.descriptionurl,
-      }));
-  } catch {
-    return [];
-  }
-}
-
-// the share of a picture's pixels within NEAR of the color (0–1)
-function shareOf(img, target) {
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = SAMPLE;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(img, 0, 0, SAMPLE, SAMPLE);
-  const { data } = ctx.getImageData(0, 0, SAMPLE, SAMPLE);
-  const limit = NEAR * NEAR;
-  let near = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    const [L, a, b] = rgbToOklab([data[i], data[i + 1], data[i + 2]]);
-    if ((L - target[0]) ** 2 + (a - target[1]) ** 2 + (b - target[2]) ** 2 < limit) near++;
-  }
-  return near / (SAMPLE * SAMPLE);
-}
-
-function measure(candidate, target) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        resolve({ ...candidate, share: shareOf(img, target) });
-      } catch {
-        resolve(null); // the image turned out not to be readable
-      }
-    };
-    img.onerror = () => resolve(null);
-    img.src = candidate.image;
-  });
-}
-
-// measure a few at a time, so dozens of images don't all load at once
-async function measureAll(candidates, target, parallel = 8) {
-  const results = [];
-  let next = 0;
-  const worker = async () => {
-    while (next < candidates.length) results.push(await measure(candidates[next++], target));
-  };
-  await Promise.all(Array.from({ length: parallel }, worker));
-  return results.filter(Boolean);
-}
-
-async function picturesWith(hex, terms, count = 12) {
-  const lists = await Promise.all(terms.map((t) => commonsSearch(t)));
-  const seen = new Set();
-  const candidates = lists.flat().filter((c) => !seen.has(c.link) && seen.add(c.link));
-  const measured = await measureAll(candidates, rgbToOklab(hexToRgb(hex)));
-  return measured
-    // at least a noticeable patch of it, but not a flat swatch of it
-    .filter((p) => p.share >= 0.04 && p.share <= 0.85)
-    .sort((a, b) => b.share - a.share)
-    .slice(0, count);
 }
 
 // The pictures peek in at the page's edges, left and right in turn,
@@ -787,7 +691,9 @@ async function render(hex) {
   page.about.innerHTML = lore.description.map((t) => `<p>${escapeHTML(t)}</p>`).join("");
   page.wordsTitle.textContent = wordsTitle(lore);
   page.words.innerHTML = wordsHTML(lore);
-  showPictures(hex, current.name || hex, [current.name, lore.nouns[0]]);
+  // the nightly copy of what Wikipedia says, when the name has one
+  const saved = exact ? savedLookup(current.name, slugFor(data, current.name)) : Promise.resolve(null);
+  showPictures(hex, [current.name, lore.nouns[0]], saved);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex));
   page.neighborsSlide.hidden = false;
   revealNeighbors();
@@ -810,7 +716,7 @@ async function render(hex) {
 
   if (!current.name) return;
   // the nightly copy when there is one, otherwise Wikipedia itself
-  const looked = (exact && (await savedLookup(current.name, slugFor(data, current.name)))) || (await lookupName(current.name));
+  const looked = (await saved) || (await lookupName(current.name));
   const { definitions, entries, images, sounds } = looked;
   if (current?.hex !== hex || (!definitions.length && !entries.length)) return;
   page.meaningTitle.textContent = current.name;
@@ -832,11 +738,10 @@ async function render(hex) {
   page.wiki.querySelectorAll(".picture-pile img").forEach((img) => img.addEventListener("load", pileGap, { once: true }));
 }
 
-// Pictures from Wikimedia Commons, picked by how much of them is the color;
-// the slide only appears once something close enough came back
-async function showPictures(hex, title, terms) {
-  const searched = [...new Set(terms.filter(Boolean))];
-  const pictures = await picturesWith(hex, searched);
+// Pictures from Wikimedia Commons, picked by how much of them is the color:
+// as the nightly copy picked them, or else picked here (see lookupPictures)
+async function showPictures(hex, terms, saved) {
+  const pictures = (await saved)?.pictures ?? (await lookupPictures(hex, terms));
   if (current?.hex !== hex || !pictures.length) return;
   page.peeks.innerHTML = peeksHTML(pictures, hex);
   placePeeks();
