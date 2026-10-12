@@ -24,6 +24,7 @@ import {
   slugsOf,
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
+import { artImage } from "./art.js";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -211,15 +212,16 @@ const builtPage = (() => {
   }
 })();
 
+// the copy: { name, hex, looked, art }
 async function savedLookup(name, slug) {
-  if (builtPage?.name === name) return builtPage.looked;
+  if (builtPage?.name === name) return builtPage;
   if (!slug) return null;
   try {
     const res = await fetch(siteURL(`color/${slug}/`));
     if (!res.ok) return null;
     const json = (await res.text()).match(COPY)?.[1];
     const copy = json && JSON.parse(json);
-    return copy?.name === name ? copy.looked : null;
+    return copy?.name === name ? copy : null;
   } catch {
     return null;
   }
@@ -470,16 +472,20 @@ function placePeeks() {
   const start = span(page.root.querySelector(".color-hero"))[1];
   const end = span(page.root.querySelector(".footer") || main)[0];
   let free = [[start + half, end - half]];
-  // not on the Wikipedia slide, nor on its pile hanging into the next one
+  // not on the slides of pictures: the Wikipedia one (with its pile hanging
+  // into the next) and the one of art
+  const taken = [];
   if (!page.meaningSlide.hidden) {
     const [a, b] = span(page.meaningSlide);
     const pile = page.root.querySelector(".picture-pile");
-    const low = pile?.childElementCount ? Math.max(b, span(pile)[1]) : b;
-    const gap = [a - half, low + half];
+    taken.push([a, pile?.childElementCount ? Math.max(b, span(pile)[1]) : b]);
+  }
+  if (!page.artSlide.hidden) taken.push(span(page.artSlide));
+  for (const [a, b] of taken) {
     free = free.flatMap(([s, e]) =>
       [
-        [s, Math.min(e, gap[0])],
-        [Math.max(s, gap[1]), e],
+        [s, Math.min(e, a - half)],
+        [Math.max(s, b + half), e],
       ].filter(([x, y]) => y - x > 0)
     );
   }
@@ -522,7 +528,10 @@ function revealPeeks() {
 // so its heading sits like every other slide's.
 function pileGap() {
   const pile = page.root.querySelector(".picture-pile");
-  const next = page.meaningSlide.nextElementSibling;
+  // the next slide that shows (one after it may still be hidden)
+  let next = page.meaningSlide.nextElementSibling;
+  while (next?.hidden) next = next.nextElementSibling;
+  page.root.querySelectorAll("[data-slide]").forEach((el) => el !== next && el.style.removeProperty("--pile-gap"));
   if (!next) return;
   if (!pile || !page.meaningSlide.classList.contains("has-pile")) {
     next.style.removeProperty("--pile-gap");
@@ -612,6 +621,8 @@ async function render(hex) {
   page.peeks.replaceChildren();
   page.meaningSlide.hidden = true;
   page.meaningSlide.classList.remove("has-pile");
+  page.artSlide.hidden = true;
+  page.art.replaceChildren();
   alternate();
   document.title = `${hex} — Color Names`;
 
@@ -694,6 +705,7 @@ async function render(hex) {
   // the nightly copy of what Wikipedia says, when the name has one
   const saved = exact ? savedLookup(current.name, slugFor(data, current.name)) : Promise.resolve(null);
   showPictures(hex, [current.name, lore.nouns[0]], saved);
+  showArt(hex, current.name || hex, saved);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex));
   page.neighborsSlide.hidden = false;
   revealNeighbors();
@@ -716,7 +728,7 @@ async function render(hex) {
 
   if (!current.name) return;
   // the nightly copy when there is one, otherwise Wikipedia itself
-  const looked = (await saved) || (await lookupName(current.name));
+  const looked = (await saved)?.looked || (await lookupName(current.name));
   const { definitions, entries, images, sounds } = looked;
   if (current?.hex !== hex || (!definitions.length && !entries.length)) return;
   page.meaningTitle.textContent = current.name;
@@ -741,12 +753,42 @@ async function render(hex) {
 // Pictures from Wikimedia Commons, picked by how much of them is the color:
 // as the nightly copy picked them, or else picked here (see lookupPictures)
 async function showPictures(hex, terms, saved) {
-  const pictures = (await saved)?.pictures ?? (await lookupPictures(hex, terms));
+  const pictures = (await saved)?.looked?.pictures ?? (await lookupPictures(hex, terms));
   if (current?.hex !== hex || !pictures.length) return;
   page.peeks.innerHTML = peeksHTML(pictures, hex);
   placePeeks();
   revealPeeks();
 }
+
+// Works of art whose colors are close to this one, as the build picked them
+// for a name (see art.js); a color without a name has none
+async function showArt(hex, title, saved) {
+  const works = (await saved)?.art || [];
+  if (current?.hex !== hex || !works.length) return;
+  page.artTitle.textContent = `${title}, in art.`;
+  page.art.innerHTML = artHTML(works);
+  page.artSlide.hidden = false;
+  alternate();
+  pileGap();
+}
+
+// each work in a frame, tilted a little, hung at its own height; under it
+// what it is, and a dot of the color the museum found in it
+const artHTML = (works) =>
+  works
+    .map((w) => {
+      const vars = `--tilt:${between(-2.5, 2.5).toFixed(1)}deg;--drop:${between(0, 4).toFixed(1)}rem`;
+      return `<a class="art__work" href="${escapeHTML(w.url)}" target="_blank" rel="noopener" style="${vars}">
+        <span class="art__frame"><img src="${artImage(w.image, 400)}" srcset="${artImage(w.image, 400)} 400w, ${artImage(w.image, 800)} 800w"
+          sizes="(max-width: 640px) 90vw, 30vw" alt="${escapeHTML(w.title)}" loading="lazy" decoding="async"
+          style="aspect-ratio:${w.ratio}" /></span>
+        <span class="art__caption">
+          <span class="art__title"><span class="art__dot" style="background:${w.color}"></span>${escapeHTML(w.title)}</span>
+          <span class="art__by">${escapeHTML([w.artist, w.date].filter(Boolean).join(", "))}</span>
+        </span>
+      </a>`;
+    })
+    .join("");
 
 // The color comes after the hash: color/#5c3a8e
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
@@ -788,6 +830,9 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     meaningSlide: q("[data-meaning-slide]"),
     peeks: q("[data-peeks]"),
     meaningTitle: q("[data-meaning-title]"),
+    art: q("[data-art]"),
+    artSlide: q("[data-art-slide]"),
+    artTitle: q("[data-art-title]"),
     pageLink: q("[data-page-link]"),
     outro: q("[data-outro]"),
   });

@@ -13,7 +13,9 @@
     sitemap.xml, robots.txt
 
   The copy is read from .data (the website-data branch); a name without
-  one still gets its page, and the page asks Wikipedia itself.
+  one still gets its page, and the page asks Wikipedia itself. Each name's
+  works of art are picked here from the art index there (scripts/art.mjs),
+  unless it's older than the Harvard Art Museums allow (two weeks).
 
     node scripts/pages.mjs [--data .data] [--site https://meodai.github.io/color-names/]
 */
@@ -22,7 +24,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
-import { slugsOf } from "../src/names.js";
+import { slugsOf, hexToRgb, rgbToOklab } from "../src/names.js";
+import { gunzipSync } from "node:zlib";
+import { bucketed, pickArt, artImage, unpackWork, MAX_AGE_DAYS } from "../src/art.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const arg = (name, fallback) => {
@@ -57,6 +61,23 @@ const copyOf = (slug) => {
   } catch {
     return null;
   }
+};
+
+// the Art Institute of Chicago's works, to pick each name's from
+const artFile = join(DATA, "art", "works.json.gz");
+const artSource = join(DATA, "art", "source.json");
+const artAge = existsSync(artSource)
+  ? (Date.now() - Date.parse(JSON.parse(readFileSync(artSource, "utf8")).built)) / 86_400_000
+  : Infinity;
+if (existsSync(artFile) && artAge > MAX_AGE_DAYS) console.log("pages.mjs: the art index is older than two weeks; left out");
+const near =
+  existsSync(artFile) && artAge <= MAX_AGE_DAYS
+    ? bucketed(JSON.parse(gunzipSync(readFileSync(artFile)).toString()).map(unpackWork))
+    : null;
+const artFor = (hex) => {
+  if (!near) return null;
+  const [L, A, B] = rgbToOklab(hexToRgb(hex));
+  return pickArt(near(L, A, B), hex);
 };
 
 // the color page as built, one folder further down
@@ -113,6 +134,7 @@ function meaningHTML(looked) {
 const meta = (attr, key, value) => `<meta ${attr}="${key}" content="${escapeHTML(value)}" />`;
 
 let written = 0;
+let withArt = 0;
 let withCopy = 0;
 const sitemap = [`<url><loc>${SITE}</loc></url>`];
 
@@ -121,6 +143,7 @@ for (const { name, hex } of items) {
   const copy = copyOf(slug);
   if (copy) withCopy++;
   const looked = copy?.looked || null;
+  const art = artFor(hex);
   const url = `${SITE}color/${slug}/`;
   const lines = intro(name, hex);
   const about = summary(looked);
@@ -148,7 +171,7 @@ for (const { name, hex } of items) {
     )
     .replace(
       "</body>",
-      `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, fetched: copy?.fetched || null, looked })}</script>\n  </body>`
+      `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, fetched: copy?.fetched || null, looked, art })}</script>\n  </body>`
     );
   const meaning = meaningHTML(looked);
   if (meaning) {
@@ -156,6 +179,21 @@ for (const { name, hex } of items) {
       .replace(/(<section[^>]*data-meaning-slide)([^>]*?)\s+hidden(\s*>)/, "$1$2$3")
       .replace(/(<h2[^>]*data-meaning-title[^>]*>)[\s\S]*?(<\/h2>)/, `$1${escapeHTML(name)}$2`)
       .replace(/(<div[^>]*data-wiki[^>]*>)[\s\S]*?(<\/div>)/, `$1${meaning}$2`);
+  }
+
+  if (art?.length) {
+    html = html
+      .replace(/(<section[^>]*data-art-slide)([^>]*?)\s+hidden(\s*>)/, "$1$2$3")
+      .replace(/(<h2[^>]*data-art-title[^>]*>)[\s\S]*?(<\/h2>)/, `$1${escapeHTML(name)}, in art.$2`)
+      .replace(
+        /(<div[^>]*\bdata-art(?=[\s>])[^>]*>)[\s\S]*?(<\/div>)/,
+        `$1${art
+          .map(
+            (w) =>
+              `<a class="art__work" href="${escapeHTML(w.url)}"><span class="art__frame"><img src="${artImage(w.image, 400)}" alt="${escapeHTML(w.title)}" loading="lazy" style="aspect-ratio:${w.ratio}" /></span><span class="art__caption"><span class="art__title">${escapeHTML(w.title)}</span><span class="art__by">${escapeHTML([w.artist, w.date].filter(Boolean).join(", "))}</span></span></a>`
+          )
+          .join("")}$2`
+      );
   }
 
   mkdirSync(join(DIST, "color", slug), { recursive: true });
@@ -179,6 +217,7 @@ for (const { name, hex } of items) {
 `
   );
 
+  if (art?.length) withArt++;
   sitemap.push(`<url><loc>${url}</loc>${copy?.fetched ? `<lastmod>${copy.fetched}</lastmod>` : ""}</url>`);
   written++;
 }
@@ -212,4 +251,6 @@ writeFileSync(
 );
 writeFileSync(join(DIST, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}sitemap.xml\n`);
 
-console.log(`pages.mjs: ${written} color pages (${withCopy} with the nightly copy), ${written} hex forwards, sitemap`);
+console.log(
+  `pages.mjs: ${written} color pages (${withCopy} with the nightly copy, ${withArt} with art), ${written} hex forwards, sitemap`
+);

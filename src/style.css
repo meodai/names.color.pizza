@@ -533,6 +533,100 @@ a:hover {
   max-width: 34ch;
 }
 
+/* In art: the works hung like a salon wall, three across, each at its own
+   height and a little crooked, in a white frame; under each what it is,
+   with a dot of the color the museum found in it */
+.art {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-l) var(--space-m);
+  align-items: start;
+  max-width: 72rem;
+}
+
+.art__work {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--drop, 0);
+  color: inherit;
+  text-decoration: none;
+}
+
+.art__frame {
+  display: block;
+  padding: 0.5rem;
+  background: var(--paper);
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.45s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.art__work:hover .art__frame,
+.art__work:focus-visible .art__frame {
+  transform: rotate(0deg) scale(1.02);
+}
+
+.art__frame img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 26rem;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--paper) 92%, var(--ink));
+}
+
+.art__caption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+.art__title {
+  font-weight: var(--weight-label);
+}
+
+.art__dot {
+  display: inline-block;
+  inline-size: 0.7em;
+  block-size: 0.7em;
+  margin-inline-end: 0.45em;
+  border-radius: 50%;
+  vertical-align: -0.02em;
+  box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.color-art__credit {
+  margin: var(--space-l) 0 0;
+  font-size: var(--text-xs);
+}
+
+.color-art__credit a {
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .art {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .art {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .art__work {
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art__frame {
+    transition: none;
+  }
+}
+
 /* the color page ends in its color: where to get the list,
    set in whichever of black or white reads best on the color */
 .colophon {
@@ -1685,7 +1779,8 @@ a:hover {
 
 /* the slide after the pile starts below its lowest picture (measured by
    detail.js, --pile-gap) by the usual spacing */
-.color-page .has-pile + .slide {
+.color-page .has-pile + .slide,
+.color-page .has-pile + .slide[hidden] + .slide {
   padding-top: calc(var(--space-l) + var(--pile-gap, 8rem));
 }
 
