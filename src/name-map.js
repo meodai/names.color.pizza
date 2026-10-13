@@ -17,6 +17,7 @@ import {
   rgbToOklab,
   oklabToRgb,
   normalizeHex,
+  fold,
   getList,
   nearestIndex,
   colorURL,
@@ -808,7 +809,7 @@ export function initNameMap(root) {
         resultButton(hex, `Go to ${hex}`, () => goToHex(hex))
       );
     }
-    const needle = raw.toLowerCase();
+    const needle = fold(raw);
     const starts = [];
     const contains = [];
     for (const it of data.items) {

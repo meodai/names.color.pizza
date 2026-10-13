@@ -27,6 +27,16 @@ export const siteURL = (path = "") =>
   new URL(path, new URL(document.documentElement.dataset.root || "./", location.href)).href;
 export const colorURL = (hex) => siteURL(`color/#${hex.replace("#", "")}`);
 
+// A name as search matches it: lowercase and without accents, so "creme"
+// finds Crème (and "crème" finds Creme)
+const LETTERS = { ß: "ss", æ: "ae", œ: "oe", ø: "o", ł: "l", đ: "d", ð: "d", þ: "th", ı: "i" };
+export const fold = (text) =>
+  text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[ßæœøłđðþı]/g, (ch) => LETTERS[ch]);
+
 // A named color also has a page of its own, at color/<slug>/ (built from
 // the list, for search engines and sharing): "Red-Handed" → red-handed.
 // Two names that come out the same ("Rose", "Rosé") leave the plain one to
@@ -134,7 +144,7 @@ function prepare(colors) {
     hex = hex.toLowerCase();
     const rgb = hexToRgb(hex);
     const [L, a, b] = rgbToOklab(rgb);
-    return { hex, name, lower: name.toLowerCase(), rgb, L, a, b };
+    return { hex, name, lower: fold(name), rgb, L, a, b };
   });
   const n = items.length;
   const pL = new Float32Array(n);

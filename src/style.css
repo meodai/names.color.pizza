@@ -3156,6 +3156,7 @@ html:has(body > .color-page),
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: var(--space-s);
   padding-block-start: var(--space-2xs);
 }
 

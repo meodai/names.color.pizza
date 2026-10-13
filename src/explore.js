@@ -10,6 +10,7 @@
 
 import { converter, differenceEuclidean } from "culori";
 import { loadList } from "./api.js";
+import { fold } from "./names.js";
 
 const ROW = 44; // px — must match .explore__row height in CSS
 const toHsl = converter("hsl");
@@ -76,8 +77,8 @@ export function initExplore(root) {
 
   function update() {
     if (query) {
-      const q = query.toLowerCase();
-      const found = byHue.filter((c) => c.name.toLowerCase().includes(q));
+      const q = fold(query);
+      const found = byHue.filter((c) => fold(c.name).includes(q));
       setList(found, `${fmt(found.length)} of ${fmt(all.length)}`);
     } else if (picked) {
       const ranked = all

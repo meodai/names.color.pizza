@@ -13,7 +13,7 @@
   its place on the color page.
 */
 
-import { getList, LISTS, normalizeHex, colorURL, siteURL, hexToRgb, rgbToOklab, cardPlace, UNNAMED, showVersion } from "./names.js";
+import { getList, LISTS, normalizeHex, fold, colorURL, siteURL, hexToRgb, rgbToOklab, cardPlace, UNNAMED, showVersion } from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 
 /* —— the space, in world units (a card is 1 wide) —— */
@@ -1315,11 +1315,11 @@ export async function initWall(root) {
       tip.hidden = true;
       return;
     }
-    // a dot of the color, then the name and the hex
+    // a dot of the color, then the name
     const dot = document.createElement("i");
     dot.className = "wall__tip-dot";
     dot.style.background = items[hit.i].hex;
-    tip.replaceChildren(dot, `${items[hit.i].name} ${items[hit.i].hex}`);
+    tip.replaceChildren(dot, items[hit.i].name);
     tip.style.transform = `translate(${sx}px, ${sy}px)`;
     tip.hidden = false;
   }
@@ -1744,7 +1744,7 @@ export async function initWall(root) {
       const i = nearest(hex);
       return [{ i, note: items[i].hex === hex ? "" : `closest to ${hex}` }];
     }
-    const t = text.trim().toLowerCase();
+    const t = fold(text.trim());
     if (t.length < 2) return [];
     const starts = [];
     const within = [];
