@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
-import { slugsOf, hexToRgb, rgbToOklab } from "../src/names.js";
+import { slugsOf, hexToRgb, rgbToOklab, complementOf } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS } from "../src/art.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -39,17 +39,17 @@ const slugs = slugsOf(items);
 const NEIGHBORS = 12;
 const lab = new Float64Array(items.length * 3);
 items.forEach(({ hex }, i) => lab.set(rgbToOklab(hexToRgb(hex)), i * 3));
-function neighborsOf(i) {
+const labOf = (i) => [lab[i * 3], lab[i * 3 + 1], lab[i * 3 + 2]];
+function neighborsOf(i, count = NEIGHBORS, [L, a, b] = labOf(i)) {
   const best = []; // [distance², index], closest first
-  const [L, a, b] = [lab[i * 3], lab[i * 3 + 1], lab[i * 3 + 2]];
   for (let j = 0; j < items.length; j++) {
     if (items[j].hex === items[i].hex) continue;
     const d = (lab[j * 3] - L) ** 2 + (lab[j * 3 + 1] - a) ** 2 + (lab[j * 3 + 2] - b) ** 2;
-    if (best.length === NEIGHBORS && d >= best[NEIGHBORS - 1][0]) continue;
+    if (best.length === count && d >= best[count - 1][0]) continue;
     let k = best.length;
     while (k > 0 && best[k - 1][0] > d) k--;
     best.splice(k, 0, [d, j]);
-    if (best.length > NEIGHBORS) best.pop();
+    if (best.length > count) best.pop();
   }
   return best.map(([, j]) => items[j]);
 }
@@ -220,6 +220,13 @@ for (const [i, { name, hex }] of items.entries()) {
       /(<div[^>]*data-neighbors[^>]*>)[\s\S]*?(<\/div>)/,
       (_, open, close) =>
         `${open}${neighborsOf(i)
+          .map((it) => `<a class="neighbor" href="../${slugs.get(it.name)}/">${escapeHTML(it.name)}, ${it.hex}</a>`)
+          .join("")}${close}`,
+    )
+    .replace(
+      /(<div[^>]*data-complements[^>]*>)[\s\S]*?(<\/div>)/,
+      (_, open, close) =>
+        `${open}${neighborsOf(i, 6, complementOf(labOf(i)))
           .map((it) => `<a class="neighbor" href="../${slugs.get(it.name)}/">${escapeHTML(it.name)}, ${it.hex}</a>`)
           .join("")}${close}`,
     );

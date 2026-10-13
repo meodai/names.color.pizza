@@ -1893,11 +1893,19 @@ a:hover {
   .neighbors {
     grid-template-columns: repeat(4, 1fr);
   }
+
+  .neighbors--row > :nth-child(n + 5) {
+    display: none;
+  }
 }
 
 @media (max-width: 760px) {
   .neighbors {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .neighbors--row > :nth-child(n + 4) {
+    display: none;
   }
 }
 
@@ -1905,6 +1913,14 @@ a:hover {
   .neighbors {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .neighbors--row > :nth-child(n + 3) {
+    display: none;
+  }
+}
+
+.color-complements {
+  margin-top: var(--space-l);
 }
 
 .neighbor {

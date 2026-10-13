@@ -4,6 +4,7 @@ import {
   UNNAMED,
   hexToRgb,
   rgbToOklab,
+  complementOf,
   oklchString,
   normalizeHex,
   getList,
@@ -82,8 +83,7 @@ function closestAny(data, hex) {
   return { item: best, distance: Math.sqrt(bd) };
 }
 
-function neighbors(data, hex, count = 12) {
-  const [L, a, b] = rgbToOklab(hexToRgb(hex));
+function neighbors(data, hex, count = 12, [L, a, b] = rgbToOklab(hexToRgb(hex))) {
   return data.items
     .filter((it) => it.hex !== hex)
     .map((it) => ({ it, d: (it.L - L) ** 2 + (it.a - a) ** 2 + (it.b - b) ** 2 }))
@@ -287,7 +287,7 @@ function revealNeighbors() {
     (entries) => {
       if (!entries.some((e) => e.isIntersecting)) return;
       neighborWatch.disconnect();
-      page.neighbors.querySelectorAll(".swatchcard").forEach((card) => card.classList.add("swatchcard--visible"));
+      page.neighborsSlide.querySelectorAll(".swatchcard").forEach((card) => card.classList.add("swatchcard--visible"));
     },
     { threshold: 0.2 },
   );
@@ -524,6 +524,7 @@ async function render(hex) {
   page.mix.replaceChildren();
   page.about.replaceChildren();
   page.neighbors.replaceChildren();
+  page.complements.replaceChildren();
   page.neighborsSlide.hidden = true;
   page.dictionary.replaceChildren();
   page.wiki.replaceChildren();
@@ -628,6 +629,7 @@ async function render(hex) {
   showPictures(hex, [current.name, lore.nouns[0]], saved);
   showArt(hex, exact ? current.name : hex, exact ? saved : savedLookup(near.name, slugFor(data, near.name)), !exact);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
+  page.complements.innerHTML = neighborsHTML(neighbors(data, hex, 6, complementOf(rgbToOklab(hexToRgb(hex)))), data);
   page.neighborsSlide.hidden = false;
   revealNeighbors();
   page.wordsSlide.hidden = !page.words.innerHTML.trim();
@@ -715,6 +717,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     mix: q("[data-mix]"),
     about: q("[data-about]"),
     neighbors: q("[data-neighbors]"),
+    complements: q("[data-complements]"),
     neighborsSlide: q("[data-neighbors-slide]"),
     words: q("[data-words]"),
     wordsTitle: q("[data-words-title]"),
