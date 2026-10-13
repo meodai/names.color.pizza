@@ -595,6 +595,8 @@ a:hover {
   transition-delay: calc(var(--i, 0) * 40ms);
 }
 
+/* the color close to the page's stands out from the start */
+.art__palette > a.is-match,
 .art__palette:hover > a,
 .art__palette:focus-within > a {
   transform: translateY(0.15rem) scaleY(2.2);

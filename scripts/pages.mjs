@@ -25,8 +25,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
-import { slugsOf } from "../src/names.js";
-import { bucketed, pickArt, unpackWork, workHTML, MUSEUMS } from "../src/art.js";
+import { slugsOf, hexToRgb, rgbToOklab } from "../src/names.js";
+import { bucketed, pickArt, unpackWork, MUSEUMS } from "../src/art.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const arg = (name, fallback) => {
@@ -52,6 +52,27 @@ const items = readFileSync(LIST, "utf8")
     return { name, hex: hex.toLowerCase() };
   });
 const slugs = slugsOf(items);
+
+// Each name's nearest names (as the page shows them, detail.js), written
+// into the page as links to theirs: the way from page to page that search
+// engines follow. Every pair, in OKLab: a few seconds.
+const NEIGHBORS = 12;
+const lab = new Float64Array(items.length * 3);
+items.forEach(({ hex }, i) => lab.set(rgbToOklab(hexToRgb(hex)), i * 3));
+function neighborsOf(i) {
+  const best = []; // [distance², index], closest first
+  const [L, a, b] = [lab[i * 3], lab[i * 3 + 1], lab[i * 3 + 2]];
+  for (let j = 0; j < items.length; j++) {
+    if (items[j].hex === items[i].hex) continue;
+    const d = (lab[j * 3] - L) ** 2 + (lab[j * 3 + 1] - a) ** 2 + (lab[j * 3 + 2] - b) ** 2;
+    if (best.length === NEIGHBORS && d >= best[NEIGHBORS - 1][0]) continue;
+    let k = best.length;
+    while (k > 0 && best[k - 1][0] > d) k--;
+    best.splice(k, 0, [d, j]);
+    if (best.length > NEIGHBORS) best.pop();
+  }
+  return best.map(([, j]) => items[j]);
+}
 
 const copyOf = (slug) => {
   const file = join(DATA, "names", slug[0], `${slug}.json`);
@@ -131,6 +152,32 @@ function meaningHTML(looked) {
   return words || articles ? `<div class="wiki-index">${articles}${words}</div>` : "";
 }
 
+// What the page is, for search engines (schema.org): a page about a name
+// for a color, the name a term in the list of names, its hex its code
+const structured = ({ name, hex, url, description, lines }) => ({
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  url,
+  name: `${name} (${hex})`,
+  description,
+  primaryImageOfPage: { "@type": "ImageObject", url: `${url}card.png`, width: 600, height: 315 },
+  isPartOf: { "@type": "WebSite", name: "Color Names", url: SITE },
+  about: {
+    "@type": "DefinedTerm",
+    name,
+    termCode: hex,
+    description: lines.join(" "),
+    inDefinedTermSet: { "@type": "DefinedTermSet", name: "Color Names", url: SITE },
+  },
+  breadcrumb: {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Color Names", item: SITE },
+      { "@type": "ListItem", position: 2, name, item: url },
+    ],
+  },
+});
+
 const meta = (attr, key, value) => `<meta ${attr}="${key}" content="${escapeHTML(value)}" />`;
 
 let written = 0;
@@ -138,7 +185,7 @@ let withArt = 0;
 let withCopy = 0;
 const sitemap = [`<url><loc>${SITE}</loc></url>`];
 
-for (const { name, hex } of items) {
+for (const [i, { name, hex }] of items.entries()) {
   const slug = slugs.get(name);
   const copy = copyOf(slug);
   if (copy) withCopy++;
@@ -158,7 +205,15 @@ for (const { name, hex } of items) {
     meta("property", "og:title", `${name} (${hex})`),
     meta("property", "og:description", description),
     meta("property", "og:url", url),
+    meta("property", "og:site_name", "Color Names"),
+    // the picture scripts/previews.mjs makes for every name
+    meta("property", "og:image", `${url}card.png`),
+    meta("property", "og:image:width", "600"),
+    meta("property", "og:image:height", "315"),
+    meta("property", "og:image:alt", `${name}, ${hex}: a swatch of the color`),
+    meta("name", "twitter:card", "summary_large_image"),
     meta("name", "theme-color", hex),
+    `<script type="application/ld+json">${scriptJSON(structured({ name, hex, url, description, lines }))}</script>`,
   ].join("\n    ");
 
   // what goes in is given by a function throughout: in a string, a "$'"
@@ -184,15 +239,20 @@ for (const { name, hex } of items) {
       .replace(/(<div[^>]*data-wiki[^>]*>)[\s\S]*?(<\/div>)/, (_, open, close) => `${open}${meaning}${close}`);
   }
 
-  if (art?.length) {
-    html = html
-      .replace(/(<section[^>]*data-art-slide)([^>]*?)\s+hidden(\s*>)/, "$1$2$3")
-      .replace(/(<h2[^>]*data-art-title[^>]*>)[\s\S]*?(<\/h2>)/, (_, open, close) => `${open}${escapeHTML(name)}, in art.${close}`)
-      .replace(
-        /(<div[^>]*\bdata-art(?=[\s>])[^>]*>)[\s\S]*?(<\/div>)/,
-        (_, open, close) => `${open}${art.map((w) => workHTML(w)).join("")}${close}`
-      );
-  }
+  // the works of art go in the page's data only (art): the page shows them
+  // when it runs, as for a color without a name; written into the page as
+  // well they would make it half again as heavy, and the site has to stay
+  // under GitHub Pages' 1 GB
+
+  // the nearest names, as links to their pages; the page shows them as
+  // cards when it runs (the slide stays hidden until then)
+  html = html.replace(
+    /(<div[^>]*data-neighbors[^>]*>)[\s\S]*?(<\/div>)/,
+    (_, open, close) =>
+      `${open}${neighborsOf(i)
+        .map((it) => `<a class="neighbor" href="../${slugs.get(it.name)}/">${escapeHTML(it.name)}, ${it.hex}</a>`)
+        .join("")}${close}`
+  );
 
   mkdirSync(join(DIST, "color", slug), { recursive: true });
   writeFileSync(join(DIST, "color", slug, "index.html"), html);

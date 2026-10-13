@@ -8,3 +8,6 @@ public/added.json
 .data/
 .data-fill.log
 .data-pictures.log
+
+# the previews made so far, by name and hex (scripts/previews.mjs)
+.cache/

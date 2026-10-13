@@ -12,7 +12,7 @@
     "prebuild": "node scripts/added.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "postbuild": "node scripts/pages.mjs",
+    "postbuild": "node scripts/pages.mjs && node scripts/previews.mjs",
     "collect": "node scripts/collect.mjs"
   },
   "devDependencies": {

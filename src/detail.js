@@ -24,7 +24,7 @@ import {
   slugsOf,
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
-import { workHTML, artNear } from "./art.js";
+import { workHTML, artNear, creditHTML } from "./art.js";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -311,12 +311,16 @@ const cardStyle = (hex) =>
     .map(([k, v]) => `${k}:${v}`)
     .join(";");
 
-// The neighbors as small copies of the hero's card, each linking to its page.
-// --anim-appear-delay staggers their entrance, as on the original.
-const neighborsHTML = (items) =>
+// The neighbors as small copies of the hero's card, each linking to its page
+// (its own, built, so search engines find their way from name to name; a
+// click just changes the color here, see initDetailPage). --anim-appear-delay
+// staggers their entrance, as on the original.
+const neighborsHTML = (items, data) =>
   items
     .map(
-      (it, i) => `<a class="neighbor" href="#${it.hex.slice(1)}" aria-label="${escapeHTML(it.name)}, ${it.hex}">
+      (it, i) => `<a class="neighbor" href="${
+        import.meta.env.PROD ? siteURL(`color/${slugFor(data, it.name)}/`) : `#${it.hex.slice(1)}`
+      }" data-hex="${it.hex.slice(1)}" aria-label="${escapeHTML(it.name)}, ${it.hex}">
         <article class="swatchcard" style="${cardStyle(it.hex)};--anim-appear-delay:${i * 75}ms">
           <div class="swatchcard__upper">
             <i class="swatchcard__swatch" aria-hidden="true">
@@ -713,7 +717,7 @@ async function render(hex) {
     exact ? saved : savedLookup(near.name, slugFor(data, near.name)),
     !exact
   );
-  page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex));
+  page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
   page.neighborsSlide.hidden = false;
   revealNeighbors();
   page.wordsSlide.hidden = !page.words.innerHTML.trim();
@@ -775,6 +779,7 @@ async function showArt(hex, title, saved, borrowed) {
   if (current?.hex !== hex || !works.length) return;
   page.artTitle.textContent = `${title}, in art.`;
   page.art.innerHTML = artHTML(works);
+  page.artCredit.innerHTML = creditHTML(works);
   page.artSlide.hidden = false;
   alternate();
   pileGap();
@@ -826,6 +831,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     art: q("[data-art]"),
     artSlide: q("[data-art-slide]"),
     artTitle: q("[data-art-title]"),
+    artCredit: q("[data-art-credit]"),
     pageLink: q("[data-page-link]"),
     outro: q("[data-outro]"),
   });
@@ -846,6 +852,15 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       page.pageLink.textContent = "Link copied";
       setTimeout(() => (page.pageLink.textContent = was), 1500);
     } catch {} // clipboard blocked: the address is right there to copy
+  });
+
+  // a neighbor links to its own page, but a plain click only changes the
+  // color here, as before (a new tab, or a search engine, gets the page)
+  page.neighbors.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-hex]");
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    location.hash = a.dataset.hex;
   });
 
   page.formats.addEventListener("click", (e) => {
