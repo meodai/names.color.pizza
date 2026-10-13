@@ -1,14 +1,3 @@
-/*
-  Submit — name a color and send it in.
-
-  Ported from the color-parrot-web submission page. Checks run as you type,
-  mirroring what the repo's tests will ask of a new name: no exact
-  duplicates, Title Case, no slurs, and staying clear of the protected
-  primary colors. A color that already has a name close by is flagged, not
-  blocked. Sending opens a prefilled GitHub issue (no server needed);
-  swap `send()` for a form endpoint if the site moves to a host that has one.
-*/
-
 import Fuse from "fuse.js";
 import { Filter } from "bad-words";
 import protectedTargets from "../../tests/protected-targets.json";
@@ -33,7 +22,7 @@ const escapeHTML = (s) =>
     (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])
   );
 
-// the same normalization tests/duplicates.test.js compares names with
+// same normalization as tests/duplicates.test.js
 const normalizeName = (s) =>
   String(s)
     .toLowerCase()
@@ -45,7 +34,7 @@ const normalizeName = (s) =>
 const SMALL_WORDS =
   /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|v.?|vs.?|via)$/i;
 
-// APA-ish Title Case, as in the original submission page
+// APA-ish Title Case
 function toTitleCase(text) {
   return text
     .replace(/\s+/g, " ")
@@ -89,8 +78,6 @@ export function initSubmit(root) {
   let hex = "#f00f00";
   let verdict = { ok: false };
 
-  /* —— the color —— */
-
   function setColor(next) {
     const h = normalizeHex(next);
     if (!h) return;
@@ -101,7 +88,6 @@ export function initSubmit(root) {
     validate();
   }
 
-  // a random color nobody has named yet: noticeably different from every name
   function randomBlank() {
     if (!data) return null;
     for (let i = 0; i < 500; i++) {
@@ -117,7 +103,7 @@ export function initSubmit(root) {
   hexInput.addEventListener("blur", () => (hexInput.value = hex));
   blankBtn.addEventListener("click", () => setColor(randomBlank()));
 
-  // the browser's eyedropper, where there is one (Chromium only, for now)
+  // Chromium only
   if ("EyeDropper" in window) {
     dropperBtn.hidden = false;
     dropperBtn.addEventListener("click", async () => {
@@ -125,21 +111,17 @@ export function initSubmit(root) {
         const { sRGBHex } = await new window.EyeDropper().open();
         setColor(sRGBHex);
       } catch {
-        // picking was cancelled
+        // cancelled
       }
     });
   }
 
-  /* —— the checks —— */
-
-  // returns { level: 'ok' | 'warn' | 'stop', text }
   function check() {
     const list = [];
     const raw = nameInput.value;
     const name = toTitleCase(raw);
     const lab = rgbToOklab(hexToRgb(hex));
 
-    // the color
     const taken = data?.byHex.get(hex);
     if (taken) {
       list.push({ level: "stop", text: `${hex} is already “${taken.name}”.`, swatch: hex });
@@ -161,7 +143,6 @@ export function initSubmit(root) {
       list.push({ level: "stop", text: `Too close to plain “${guarded.name}”, which is kept free.` });
     }
 
-    // the name
     if (raw.trim().length > 1) {
       if (filter.isProfane(raw)) {
         list.push({ level: "stop", text: "No slurs, no insults." });
@@ -209,8 +190,6 @@ export function initSubmit(root) {
       .join("");
   }
 
-  /* —— sending —— */
-
   function sendIssue(name) {
     const url = new URL(ISSUE_URL);
     url.searchParams.set("title", `New color name: ${name}`);
@@ -237,11 +216,7 @@ export function initSubmit(root) {
     if (verdict.ok) sendIssue(verdict.name);
   });
 
-  /* —— a color handed over from the name map —— */
-
   document.addEventListener("color-names:suggest", (e) => setColor(e.detail.hex));
-
-  /* —— start —— */
 
   const suggested = normalizeHex(new URLSearchParams(location.search).get("suggest"));
   setColor(suggested || hex);

@@ -1,51 +1,5 @@
-/*
-  Collect — keeps a copy of what Wikipedia and Wiktionary say about every
-  name on the list, so the color pages can read it instead of asking them
-  each time (and the build can write a page per name with it).
-
-  One file per name, in the data branch's checkout:
-
-    <data>/names/<first letter>/<slug>.json
-      { name, hex, fetched: "2026-10-11", looked: { definitions, entries, images, sounds } }
-
-  Each run: names without a copy first (new on the list), then the oldest
-  copies, 1/180 of the list per run, so run nightly every copy is renewed
-  about every six months, a few at a time rather than all at once. Copies
-  of names no longer on the list are removed. Pictures are not copied, only
-  their addresses.
-
-  A name is only saved when every request for it went through: an outage
-  or a refusal leaves its copy as it was, to be tried again next time.
-
-    node scripts/collect.mjs [--data ../.data] [--list ../../src/colornames.csv]
-      [--minutes 330] [--rate N] [--parallel N] [--all] [--limit N]
-
-  --all fetches every name without a copy, however many (the first fill);
-  --limit stops after N names.
-
-  Pictures: which Wikimedia Commons pictures have the color in them, best
-  first (looked.pictures: addresses and how much of each is the color, not
-  the pictures). --with-pictures picks them along with the rest;
-  --pictures only picks them, for copies that have none yet. Picking
-  downloads each candidate's 60px thumbnail, at most 2 at a time, as
-  Wikimedia's robot policy asks of its image servers.
-
-  By Wikimedia's rules (mediawiki.org/wiki/Wikimedia_APIs/Rate_limits,
-  mediawiki.org/wiki/API:Etiquette, the Foundation's User-Agent policy):
-  - a User-Agent naming this bot and where to reach its makers
-  - no more than 3 requests at a time, at a pace under the limit: 200 a
-    minute without a login; logged in, more (2000 for an established
-    editor), so the pace starts higher and halves whenever told to wait
-  - Retry-After honoured when told to wait, the wait growing each time
-  - maxlag on the Action API, so it steps back when the servers are busy
-  - cookies returned, one session for the whole run
-  - what's fetched is kept: that's what this is for
-
-  Logged in: an access token in WIKIMEDIA_TOKEN, or in website/.env.local
-  as WIKIMEDIA_TOKEN=…: a personal ("owner-only") OAuth 2 consumer from
-  meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose/oauth2,
-  with basic rights only. The account's limits are printed at the start.
-*/
+// node scripts/collect.mjs [--data ../.data] [--list ../../src/colornames.csv]
+//   [--minutes 330] [--rate N] [--parallel N] [--all] [--limit N] [--with-pictures | --pictures]
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync } from "node:fs";
@@ -65,28 +19,21 @@ const arg = (name, fallback) => {
 const DATA = resolve(here, "..", arg("data", ".data"));
 const LIST = resolve(here, "..", arg("list", "../src/colornames.csv"));
 const MINUTES = +arg("minutes", 330);
-// Wikimedia's limits for a client like this (no login, a User-Agent that
-// says who it is): 200 requests a minute, no more than 3 at a time
-// (mediawiki.org/wiki/Wikimedia_APIs/Rate_limits). Kept a little under.
-// Logged in, more; how much depends on the account, so the pace finds it.
 const local = resolve(here, "../.env.local");
 const TOKEN =
   process.env.WIKIMEDIA_TOKEN ||
   (existsSync(local) && readFileSync(local, "utf8").match(/^WIKIMEDIA_TOKEN=(.+)$/m)?.[1].trim()) ||
   "";
-// 3 a second keeps under 200 a minute; an account allowed more (an
-// established editor) can say so with --rate
-let rate = +arg("rate", 3); // requests a second, at most
-const PARALLEL = Math.min(3, +arg("parallel", 3)); // requests in flight: 3 at most, by the rules
-const WORKERS = PARALLEL; // names looked up at once
+// anonymous limit: 200/min, 3 in flight (mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
+let rate = +arg("rate", 3); // per second
+const PARALLEL = Math.min(3, +arg("parallel", 3));
+const WORKERS = PARALLEL;
 const ALL = process.argv.includes("--all");
 const PICTURES_ONLY = process.argv.includes("--pictures");
 const WITH_PICTURES = PICTURES_ONLY || process.argv.includes("--with-pictures");
 const LIMIT = +arg("limit", Infinity);
 const CYCLE_DAYS = 180;
 const AGENT = `ColorNamesBot/1.0 (https://github.com/meodai/color-names) node/${process.versions.node}`;
-
-/* —— requests: a steady pace, a User-Agent, retries when told to wait —— */
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let next = 0;
@@ -97,7 +44,6 @@ async function slot() {
   if (at > now) await sleep(at - now);
 }
 
-// no more than PARALLEL requests in flight
 let inFlight = 0;
 const waiting = [];
 async function take() {
@@ -109,8 +55,6 @@ function release() {
   waiting.shift()?.();
 }
 
-// Told to slow down: half the pace. A minute without being told: a little
-// faster again, up to where it started.
 const START = rate;
 let calm = Date.now();
 function slowDown() {
@@ -124,7 +68,7 @@ setInterval(() => {
   }
 }, 10_000).unref();
 
-// Wikimedia tells clients apart by their cookies: sent back, one session
+// Wikimedia tells clients apart by their cookies
 const cookies = new Map(); // host → { name: value }
 const cookieHeader = (host) =>
   Object.entries(cookies.get(host) || {})
@@ -148,14 +92,13 @@ function headersFor(url) {
   return headers;
 }
 
-// the Action API steps back when the servers lag: maxlag on every request
 const withMaxlag = (url) => {
   const u = new URL(url);
   if (u.pathname.endsWith("/api.php")) u.searchParams.set("maxlag", "5");
   return u.href;
 };
 
-// a maxlag refusal comes as an error in a 200 answer, with Retry-After
+// a maxlag refusal is an error inside a 200 response
 async function lagged(res) {
   if (!res.ok || !res.url.includes("/api.php")) return 0;
   try {
@@ -166,10 +109,10 @@ async function lagged(res) {
   }
 }
 
-let told = 0; // times Wikimedia said to slow down
+let told = 0;
 const toldBy = {};
 
-// which name a request is for, to know if all of that name's went through
+// to know whether all of a name's requests went through
 const forName = new AsyncLocalStorage();
 
 async function politeFetch(url, options = {}) {
@@ -184,8 +127,7 @@ async function politeFetch(url, options = {}) {
         next = Math.max(next, Date.now() + lag * 1000 * 2 ** Math.min(attempt, 3));
         continue;
       }
-      // 404 is an answer (no such article); being told to slow down isn't:
-      // then every request waits, not just this one
+      // a 429 or 5xx delays every request, not just this one
       if (res.status === 429 || res.status >= 500) {
         if (res.status === 429) {
           told++;
@@ -194,7 +136,6 @@ async function politeFetch(url, options = {}) {
           toldBy[kind] = (toldBy[kind] || 0) + 1;
         }
         if (attempt < 4) {
-          // Retry-After, or at least 5 seconds; longer each time
           const wait = Math.max(+res.headers.get("retry-after") * 1000 || 0, 5000) * 2 ** attempt;
           next = Math.max(next, Date.now() + wait);
           continue;
@@ -213,8 +154,7 @@ async function politeFetch(url, options = {}) {
   }
 }
 
-// Pictures come from Wikimedia's image servers, which ask robots for at most
-// 2 downloads at a time (wikitech.wikimedia.org/wiki/Robot_policy)
+// at most 2 image downloads at a time (wikitech.wikimedia.org/wiki/Robot_policy)
 let mediaInFlight = 0;
 const mediaWaiting = [];
 async function pixels(url) {
@@ -227,7 +167,7 @@ async function pixels(url) {
         await sleep(Math.max(+res?.headers.get("retry-after") * 1000 || 0, 5000) * 2 ** attempt);
         continue;
       }
-      if (!res.ok) return null; // gone: not a picture to measure
+      if (!res.ok) return null;
       const { data } = await sharp(Buffer.from(await res.arrayBuffer()))
         .resize(SAMPLE, SAMPLE, { fit: "fill" })
         .ensureAlpha()
@@ -238,7 +178,7 @@ async function pixels(url) {
     forName.getStore()?.failed.push(`picture ${url}`);
     return null;
   } catch {
-    return null; // not readable as a picture
+    return null;
   } finally {
     mediaInFlight--;
     mediaWaiting.shift()?.();
@@ -252,8 +192,6 @@ configure({
   parse: (html) => parseHTML(html.includes("<html") ? html : `<html><body>${html}</body></html>`).document,
 });
 
-/* —— the list, and the copies there are —— */
-
 const items = readFileSync(LIST, "utf8")
   .split("\n")
   .slice(1)
@@ -265,8 +203,8 @@ const items = readFileSync(LIST, "utf8")
 const slugs = slugsOf(items);
 const fileOf = (slug) => join(DATA, "names", slug[0], `${slug}.json`);
 
-const fetched = new Map(); // slug → date of its copy
-const pictured = new Set(); // slugs whose copy has its pictures
+const fetched = new Map();
+const pictured = new Set();
 const dir = join(DATA, "names");
 mkdirSync(dir, { recursive: true });
 for (const shard of readdirSync(dir)) {
@@ -282,7 +220,6 @@ for (const shard of readdirSync(dir)) {
   }
 }
 
-// copies of names that left the list (or were renamed)
 const wanted = new Set(slugs.values());
 let removed = 0;
 for (const slug of fetched.keys()) {
@@ -295,15 +232,12 @@ for (const slug of fetched.keys()) {
 
 const missing = items.filter((it) => !fetched.has(slugs.get(it.name)));
 const renew = Math.ceil(items.length / CYCLE_DAYS);
-// renewing starts with copies at least a week old: not the ones fetched
-// earlier the same day, between the passes of a first fill
+// skips copies fetched earlier the same day, between passes of a first fill
 const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
 const oldest = items
   .filter((it) => fetched.has(slugs.get(it.name)) && fetched.get(slugs.get(it.name)) < weekAgo)
   .sort((a, b) => (fetched.get(slugs.get(a.name)) < fetched.get(slugs.get(b.name)) ? -1 : 1))
   .slice(0, renew);
-// every run renews its share; new names on top of that (all of them with
-// --all, otherwise as many again)
 const todo = (
   PICTURES_ONLY
     ? // copies without their pictures yet
@@ -312,7 +246,6 @@ const todo = (
 ).slice(0, LIMIT);
 
 if (TOKEN) {
-  // who the token is for, and that account's limits, as Wikimedia sees them
   const me = await politeFetch(
     "https://en.wikipedia.org/w/api.php?action=query&meta=userinfo&uiprop=ratelimits|groups&format=json"
   )
@@ -333,8 +266,6 @@ console.log(
     `${removed} removed; this run: ${todo.length} (${Math.min(missing.length, todo.length)} new)`
 );
 
-/* —— the run —— */
-
 const today = new Date().toISOString().slice(0, 10);
 const until = Date.now() + MINUTES * 60_000;
 let done = 0;
@@ -342,7 +273,6 @@ let saved = 0;
 const failures = [];
 const started = Date.now();
 
-// what the page searches Commons for: the name, and the color's noun
 const pictureTerms = (it) => [it.name, new ColorDescription(it.hex).nouns[0]];
 
 async function collect(it) {
@@ -351,10 +281,9 @@ async function collect(it) {
   const previous = fetched.has(slug) ? JSON.parse(readFileSync(fileOf(slug), "utf8")) : null;
   const copy = await forName
     .run(state, async () => {
-      // pictures only: the copy as it is, with its pictures added
       const looked = PICTURES_ONLY ? previous.looked : await lookupName(it.name);
       if (WITH_PICTURES) looked.pictures = await lookupPictures(it.hex, pictureTerms(it));
-      // renewing the rest keeps the pictures it had
+      // renewing keeps the pictures it had
       else if (previous?.looked?.pictures) looked.pictures = previous.looked.pictures;
       return { name: it.name, hex: it.hex, fetched: PICTURES_ONLY ? previous.fetched : today, looked };
     })
@@ -372,7 +301,6 @@ async function collect(it) {
   saved++;
 }
 
-// a few names at a time; the pace is kept by the requests themselves
 const queue = todo.slice();
 await Promise.all(
   Array.from({ length: WORKERS }, async () => {
@@ -392,7 +320,7 @@ await Promise.all(
 if (told) console.log("told to wait by:", JSON.stringify(toldBy));
 console.log(`collect: ${saved} saved, ${failures.length} not (kept as they were), ${queue.length} left for later`);
 if (failures.length) console.log(failures.slice(0, 10).map((f) => `  ${f}`).join("\n"));
-// a run where nearly everything failed is an outage, and should say so
+// nearly everything failing is an outage
 if (todo.length && failures.length > todo.length / 2) process.exit(1);
 if (!existsSync(join(DATA, "README.md"))) {
   writeFileSync(

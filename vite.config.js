@@ -1,12 +1,18 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
-// Relative base so the build works as a GitHub project page
-// (e.g. meodai.github.io/color-names/) without hardcoding the subpath.
+// relative base: works as a GitHub project page without hardcoding the subpath
 export default defineConfig({
   base: './',
-  // three pages: the color wall (home), the classic scroll of slides, and
-  // the page for one color (color/#5c3a8e)
+  plugins: [
+    {
+      name: 'strip-html-comments',
+      transformIndexHtml: {
+        order: 'post',
+        handler: (html) => html.replace(/\s*<!--[\s\S]*?-->/g, ''),
+      },
+    },
+  ],
   build: {
     rolldownOptions: {
       input: {
@@ -16,8 +22,7 @@ export default defineConfig({
       },
     },
   },
-  // The submit form reads tests/protected-targets.json from the repo, one
-  // level up, so the dev server may serve from there.
+  // the submit form reads ../tests/protected-targets.json
   server: {
     fs: { allow: ['..'] },
   },

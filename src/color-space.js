@@ -1,16 +1,3 @@
-/*
-  Color Names — 3D color-space viewer.
-
-  The one place real color appears. 31,912 named colors plotted as a point
-  cloud, re-projected through any of fourteen color spaces. A modernised port
-  of an old CodePen (three r110 + chroma + a mystery Color class) to current
-  three + culori.
-
-  The geometry maths is kept faithful to the original so the shapes match;
-  only the data source (now culori + a few small helpers) and the three.js
-  APIs (BufferGeometry, color management, addons) are new.
-*/
-
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { converter } from "culori";
@@ -18,10 +5,6 @@ import { loadList } from "./api.js";
 
 const CUBE = 100;
 
-/* —————————————————————————————————————————————————————————
-   Color-space definitions — which components map to which axis,
-   and the range each component spans. Ported verbatim from the pen.
-   ————————————————————————————————————————————————————————— */
 const SPACES = {
   rgb: { func: "rgb", x: [0, 255], y: [1, 255], z: [2, 255] },
   xyz: { func: "xyz", x: [0, 95.047], y: [1, 100], z: [2, 108.883] },
@@ -39,11 +22,6 @@ const SPACES = {
   hcg: { func: "hcg", x: [0, 360], y: [1, 1], z: [2, 1] },
 };
 
-/* —————————————————————————————————————————————————————————
-   Color conversions — culori for the standard spaces, small
-   helpers for the ones culori doesn't cover, returned in the
-   same scale the original config was tuned for.
-   ————————————————————————————————————————————————————————— */
 const toRgb = converter("rgb");
 const toHsl = converter("hsl");
 const toHsv = converter("hsv");
@@ -158,9 +136,6 @@ function yuv([r, g, b]) {
 const translate = (value, low1, high1, low2, high2) =>
   low2 + (high2 - low2) * ((value - low1) / (high1 - low1));
 
-/* —————————————————————————————————————————————————————————
-   Public entry point
-   ————————————————————————————————————————————————————————— */
 export function initColorSpace(root) {
   const canvasEl = root.querySelector("[data-canvas]");
   const modelSel = root.querySelector("[data-model]");
@@ -196,7 +171,6 @@ export function initColorSpace(root) {
   controls.autoRotate = !reduceMotion;
   controls.autoRotateSpeed = 1.4;
 
-  // wireframe of the color space
   const cubeMat = new THREE.LineBasicMaterial({ color: paper });
   const cube = new THREE.LineSegments(
     new THREE.EdgesGeometry(new THREE.BoxGeometry(CUBE, CUBE, CUBE)),
@@ -204,11 +178,10 @@ export function initColorSpace(root) {
   );
   scene.add(cube);
 
-  // shared round-point sprite
   const sprite = makeDiscTexture();
 
   let points = null;
-  let colors = []; // the current list, for hover lookups
+  let colors = [];
 
   function clearPoints() {
     if (!points) return;
@@ -286,7 +259,6 @@ export function initColorSpace(root) {
     raycaster.params.Points.threshold = dotSize;
   }
 
-  /* —— interaction: hover to read a name —— */
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   let hoverQueued = false;
@@ -321,7 +293,6 @@ export function initColorSpace(root) {
 
   renderer.domElement.addEventListener("pointermove", onPointerMove);
 
-  /* —— sizing —— */
   function resize() {
     width = canvasEl.clientWidth || 1;
     height = canvasEl.clientHeight || 1;
@@ -332,7 +303,6 @@ export function initColorSpace(root) {
   const ro = new ResizeObserver(resize);
   ro.observe(canvasEl);
 
-  /* —— render only while on screen —— */
   let visible = false;
   let rafId = null;
 
@@ -361,7 +331,6 @@ export function initColorSpace(root) {
   );
   io.observe(root);
 
-  /* —— data —— */
   async function showList(name) {
     colors = await loadList(name);
     build(modelSel.value);
@@ -373,7 +342,6 @@ export function initColorSpace(root) {
   showList(listSel.value || "default");
 }
 
-/* a soft white disc, used as the point sprite */
 function makeDiscTexture() {
   const size = 64;
   const canvas = document.createElement("canvas");

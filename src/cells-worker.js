@@ -1,17 +1,9 @@
-/*
-  Cells — which name owns each point of a grid over one model's shape: the
-  name closest to it in that model's own space (RGB distance in the RGB
-  cube, and so on), as long as it's within r; otherwise nobody (0).
-  Runs off the main thread; the wall ray-marches the result.
-*/
-
 self.onmessage = (e) => {
   const { X, Y, Z, r, lo, voxel, dims } = e.data;
   const n = X.length;
   const [nx, ny, nz] = dims;
 
-  // the names, bucketed on a grid of cells a little wider than a name's
-  // reach, so a point only has to look at the 3×3×3 cells around it
+  // a little wider than a name's reach, so 3×3×3 neighbor cells suffice
   const G = r + voxel;
   const gx = Math.ceil((nx * voxel) / G) + 2;
   const gy = Math.ceil((ny * voxel) / G) + 2;
@@ -35,9 +27,7 @@ self.onmessage = (e) => {
   for (let i = 0; i < n; i++) order[fill[home[i]]++] = i;
 
   const owners = new Uint16Array(nx * ny * nz);
-  // a grid point notes its nearest name a little past r (by a grid cell's
-  // half diagonal), so a quick look at the nearest grid point never turns
-  // away a point that is within r; the exact test trims the rest
+  // past r by about half a cell's diagonal, so the quick nearest-grid-point check never misses
   const reach = r + voxel * 0.9;
   const r2 = reach * reach;
   let k = 0;

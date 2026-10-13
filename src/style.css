@@ -1,41 +1,24 @@
-/*
-  Color Names microsite — styles.
-
-  Concept: a website about color, shown in no color at all.
-  Only pure black and pure white — no greys, no alpha, no color-mix.
-  Slides alternate ink-on-paper / paper-on-ink down the scroll.
-  Inter does all the talking; personality is weight + scale, not extra faces.
-
-  Every design decision is a token in :root. A small, deliberate set.
-*/
-
 :root {
-  /* —— the only two colours in the project —— */
   --ink: #000;
   --paper: #fff;
 
-  /* foreground / background — swapped on inverted slides */
   --fg: var(--ink);
   --bg: var(--paper);
 
-  /* —— type —— */
   --font: "Inter", system-ui, -apple-system, sans-serif;
 
-  /* a handful of sizes, fluid */
-  --text-xs: clamp(0.72rem, 0.68rem + 0.2vw, 0.82rem); /* labels, captions */
-  --text-base: clamp(1rem, 0.94rem + 0.3vw, 1.18rem); /* body */
-  --text-lg: clamp(1.4rem, 1.1rem + 1.4vw, 2.1rem); /* lead lines */
-  --lead-inset: var(--text-lg); /* what follows a headline steps in this far */
-  --text-xl: clamp(2.2rem, 1.4rem + 3.6vw, 4rem); /* section statements */
-  --text-2xl: clamp(3rem, 1.4rem + 7.2vw, 7rem); /* hero */
-  --text-mega: clamp(4.5rem, 1rem + 15vw, 13rem); /* the count, the wall */
+  --text-xs: clamp(0.72rem, 0.68rem + 0.2vw, 0.82rem);
+  --text-base: clamp(1rem, 0.94rem + 0.3vw, 1.18rem);
+  --text-lg: clamp(1.4rem, 1.1rem + 1.4vw, 2.1rem);
+  --lead-inset: var(--text-lg);
+  --text-xl: clamp(2.2rem, 1.4rem + 3.6vw, 4rem);
+  --text-2xl: clamp(3rem, 1.4rem + 7.2vw, 7rem);
+  --text-mega: clamp(4.5rem, 1rem + 15vw, 13rem);
 
-  /* weights */
   --weight-body: 400;
   --weight-label: 600;
   --weight-display: 850;
 
-  /* —— space —— */
   --space-2xs: 0.5rem;
   --space-xs: 0.875rem;
   --space-s: 1.5rem;
@@ -43,11 +26,10 @@
   --space-l: 5rem;
   --space-xl: 9rem;
 
-  /* —— lines & layout —— */
-  --line: 2px; /* hairlines are full ink — no greys allowed */
-  --gutter: clamp(1.5rem, 6vw, 7rem); /* page side padding */
-  --bar-h: 3.2rem; /* the wall's search field; the logo lines up with it */
-  --measure: 24ch; /* readable line length for prose */
+  --line: 2px;
+  --gutter: clamp(1.5rem, 6vw, 7rem);
+  --bar-h: 3.2rem;
+  --measure: 24ch;
 
   color-scheme: light;
 }
@@ -70,7 +52,7 @@ body {
   line-height: 1.5;
   color: var(--fg);
   background: var(--bg);
-  font-feature-settings: "tnum" 1; /* tabular figures for stats */
+  font-feature-settings: "tnum" 1;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -94,10 +76,6 @@ a:hover {
   outline-offset: 4px;
 }
 
-/* ——————————————————————————————————————————————
-   Slides — each is one full-bleed moment.
-   .slide--invert flips the two colours.
-   —————————————————————————————————————————————— */
 .slide {
   --bg: var(--paper);
   --fg: var(--ink);
@@ -125,15 +103,11 @@ a:hover {
   gap: var(--space-s);
 }
 
-/* center everything — used for the closing poster quote */
 .slide--center {
   align-items: center;
   text-align: center;
 }
 
-/* ——————————————————————————————————————————————
-   Shared type roles
-   —————————————————————————————————————————————— */
 .label {
   font-size: var(--text-xs);
   font-weight: var(--weight-label);
@@ -170,9 +144,6 @@ a:hover {
   margin-top: var(--space-s);
 }
 
-/* ——————————————————————————————————————————————
-   Hero
-   —————————————————————————————————————————————— */
 .hero__title {
   font-size: var(--text-2xl);
   font-weight: var(--weight-display);
@@ -190,8 +161,6 @@ a:hover {
   text-transform: uppercase;
 }
 
-/* when the name was added: a link to the commit, set like the rest of the
-   line, marked as a link by its underline */
 .hero__stats a {
   color: inherit;
   text-decoration: underline;
@@ -204,9 +173,6 @@ a:hover {
   text-decoration-thickness: 2px;
 }
 
-/* ——————————————————————————————————————————————
-   The big number (count / fraction)
-   —————————————————————————————————————————————— */
 .figure {
   font-size: var(--text-mega);
   font-weight: var(--weight-display);
@@ -215,9 +181,6 @@ a:hover {
   margin: 0;
 }
 
-/* ——————————————————————————————————————————————
-   Quote
-   —————————————————————————————————————————————— */
 .quote {
   margin: 0;
 }
@@ -247,12 +210,11 @@ a:hover {
   letter-spacing: 0;
 }
 
-/* closing quote as a poster: big, centered, a single held breath */
 .quote--poster {
 }
 
 .quote--poster::before {
-  content: "\201C"; /* a big opening quote mark, the only flourish */
+  content: "\201C"; /* opening quote mark */
   display: block;
   font-size: var(--text-2xl);
   font-weight: var(--weight-display);
@@ -271,9 +233,6 @@ a:hover {
   margin-top: var(--space-m);
 }
 
-/* ——————————————————————————————————————————————
-   Try-it inputs (static for now — wired up later)
-   —————————————————————————————————————————————— */
 .field {
   display: flex;
   align-items: stretch;
@@ -294,7 +253,7 @@ a:hover {
 
 .field__input::placeholder {
   color: var(--fg);
-  opacity: 1; /* full ink, never a faded grey */
+  opacity: 1;
 }
 
 .field__input:focus {
@@ -319,9 +278,6 @@ a:hover {
   padding-inline: 0.3em;
 }
 
-/* ——————————————————————————————————————————————
-   Rules list (how it's made)
-   —————————————————————————————————————————————— */
 .rules {
   list-style: none;
   margin: 0;
@@ -344,12 +300,9 @@ a:hover {
   width: 6px;
   height: 6px;
   border: 1.5px solid var(--fg);
-  border-radius: 50%; /* an empty swatch — the missing colour */
+  border-radius: 50%;
 }
 
-/* ——————————————————————————————————————————————
-   Use it — code + formats
-   —————————————————————————————————————————————— */
 .code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: var(--text-base);
@@ -379,9 +332,6 @@ a:hover {
   padding: 0.35em 0.7em;
 }
 
-/* ——————————————————————————————————————————————
-   Actions / links
-   —————————————————————————————————————————————— */
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -403,10 +353,6 @@ a:hover {
   color: var(--bg);
 }
 
-/* ——————————————————————————————————————————————
-   Signature: the wall of names (marquee)
-   No swatches — the words are the colours.
-   —————————————————————————————————————————————— */
 .wall {
   gap: var(--space-l);
 }
@@ -415,7 +361,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: var(--space-s);
-  margin-inline: calc(var(--gutter) * -1); /* bleed to the edges */
+  margin-inline: calc(var(--gutter) * -1);
 }
 
 .marquee {
@@ -454,7 +400,6 @@ a:hover {
   gap: var(--space-m);
 }
 
-/* empty-swatch separator between names */
 .marquee__track span::after {
   content: "";
   width: 0.55em;
@@ -473,9 +418,6 @@ a:hover {
   }
 }
 
-/* ——————————————————————————————————————————————
-   Footer
-   —————————————————————————————————————————————— */
 .footer {
   min-height: auto;
   gap: var(--space-m);
@@ -492,7 +434,6 @@ a:hover {
   text-transform: uppercase;
 }
 
-/* the page's address, and next to it the share button */
 .footer__share {
   display: inline-flex;
   align-items: center;
@@ -533,15 +474,10 @@ a:hover {
   background: var(--fg);
 }
 
-/* under "Share it.", what the list is, stepped in like the hero's intro */
 .color-page .footer .footer__about {
   max-width: 34ch;
 }
 
-/* In art: the works hung like a salon wall, in columns each work as tall
-   as its picture (masonry), a little crooked, in a white frame; under the
-   picture its palette, each color as wide as its share, a way to that
-   color; under that what it is, with a dot of the color found in it */
 .art {
   columns: 3 16rem;
   column-gap: var(--space-m);
@@ -587,7 +523,6 @@ a:hover {
   block-size: 0.6rem;
 }
 
-/* hovered, the strip grows one color after the other */
 .art__palette > a {
   flex-basis: 0;
   transform-origin: top;
@@ -595,7 +530,6 @@ a:hover {
   transition-delay: calc(var(--i, 0) * 40ms);
 }
 
-/* the color close to the page's stands out from the start */
 .art__palette > a.is-match,
 .art__palette:hover > a,
 .art__palette:focus-within > a {
@@ -647,8 +581,6 @@ a:hover {
   }
 }
 
-/* the color page ends in its color: where to get the list,
-   set in whichever of black or white reads best on the color */
 .colophon {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -679,10 +611,6 @@ a:hover {
   font-feature-settings: "tnum" 1;
 }
 
-/* ——————————————————————————————————————————————
-   Color space — the one section that holds color.
-   The canvas fills the slide; chrome floats over it.
-   —————————————————————————————————————————————— */
 .color-space {
   position: relative;
   overflow: hidden;
@@ -721,7 +649,7 @@ a:hover {
   flex-direction: column;
   gap: 0.1em;
   margin: 0;
-  text-shadow: 0 1px 12px var(--ink); /* keep legible over bright points */
+  text-shadow: 0 1px 12px var(--ink);
 }
 
 .color-space__controls {
@@ -757,7 +685,6 @@ a:hover {
   outline-offset: 3px;
 }
 
-/* caret — a small open ring, echoing the empty-swatch motif */
 .color-space__field::after {
   content: "";
   position: absolute;
@@ -781,11 +708,6 @@ a:hover {
   }
 }
 
-/* ——————————————————————————————————————————————
-   Name map — every color on an OkHSL wheel, each patch owned by its
-   closest name. The canvases fill the slide; the panel floats over them
-   on plain paper, so a zoomed-in wheel slides behind it.
-   —————————————————————————————————————————————— */
 .name-map {
   position: relative;
   height: 100svh;
@@ -812,7 +734,7 @@ a:hover {
 }
 
 .name-map__frame .name-map__mosaic {
-  inset: auto; /* placed over the disc by name-map.js */
+  inset: auto; /* positioned by name-map.js */
 }
 
 .name-map__hit {
@@ -853,7 +775,6 @@ a:hover {
   font-size: clamp(1.8rem, 1.2rem + 1.6vw, 2.8rem);
 }
 
-/* search */
 .name-map__find {
   position: relative;
 }
@@ -912,7 +833,6 @@ a:hover {
   color: var(--bg);
 }
 
-/* the filled ring, as in the full list */
 .name-map__dot {
   inline-size: 1.1rem;
   block-size: 1.1rem;
@@ -926,7 +846,6 @@ a:hover {
   padding: var(--space-2xs) var(--space-xs);
 }
 
-/* saturation: a plain ink line with a paper thumb */
 .name-map__depth {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -977,7 +896,6 @@ a:hover {
   outline-offset: 3px;
 }
 
-/* list picker + zoom */
 .name-map__tools {
   display: flex;
   flex-wrap: wrap;
@@ -1009,7 +927,6 @@ a:hover {
   color: var(--bg);
 }
 
-/* status: what's on the map, and how to drive it */
 .name-map__status p {
   margin: 0;
   max-width: 32ch;
@@ -1023,7 +940,6 @@ a:hover {
   text-transform: uppercase;
 }
 
-/* hover tip and the pulse that marks a picked color */
 .name-map__tip {
   position: absolute;
   z-index: 2;
@@ -1056,7 +972,6 @@ a:hover {
   animation: name-map-pin 2.4s ease-out forwards;
 }
 
-/* draws the eye to the picked color, then gets out of the label's way */
 @keyframes name-map-pin {
   0% {
     transform: scale(2.6);
@@ -1107,9 +1022,6 @@ a:hover {
   }
 }
 
-/* ——————————————————————————————————————————————
-   Submit — name a color. Black & white form; the swatch is the only color.
-   —————————————————————————————————————————————— */
 .submit__form {
   display: flex;
   flex-direction: column;
@@ -1123,7 +1035,6 @@ a:hover {
   align-items: stretch;
 }
 
-/* the swatch is the color input: click it to open the picker */
 .submit__swatch {
   flex: none;
   inline-size: 7rem;
@@ -1198,8 +1109,6 @@ a:hover {
   cursor: pointer;
 }
 
-/* checks: an open ring for fine, a half for "think again", a filled one
-   for "won't get in" — the page's ring motif instead of colored status */
 .submit__checks {
   display: flex;
   flex-direction: column;
@@ -1241,7 +1150,7 @@ a:hover {
   background: currentColor;
 }
 
-/* a check that points at an existing color shows it */
+/* [style] is set when the check points at an existing color */
 .submit__check[style]::after {
   content: "";
   flex: none;
@@ -1308,17 +1217,10 @@ a:hover {
   }
 }
 
-/* ——————————————————————————————————————————————
-   Color page — one color, at color/#<hex>, as a scroll of slides like the
-   start page. The hero has the name, and the animated card landing on it
-   like the cards that fall on the start page.
-   —————————————————————————————————————————————— */
 .color-hero {
   min-height: 100svh;
 }
 
-/* the way out: across from the logo, as tall as it and level with it,
-   and staying put while the page scrolls, like the logo */
 .color-hero__close {
   position: fixed;
   z-index: 8;
@@ -1352,7 +1254,7 @@ a:hover {
   }
 }
 
-/* the card lands where detail.js puts it: center + x·32vw, y·30vh */
+/* detail.js places it at center + x·32vw, y·30vh */
 .color-hero__card {
   position: absolute;
   z-index: 2;
@@ -1369,8 +1271,7 @@ a:hover {
   font-size: calc(var(--card-w) * 0.205);
 }
 
-/* the text keeps to the left half, so even a long name wraps before the
-   card's landing zone on the right */
+/* keeps long names clear of the card's landing zone */
 .color-hero .hero__content {
   max-width: 52vw;
 }
@@ -1391,8 +1292,7 @@ a:hover {
   max-width: 34ch;
 }
 
-/* Names are words, not figures: the page-wide tabular figures would set
-   the hyphen in "Red-Handed" as wide as a digit. Values keep them. */
+/* page-wide tnum would widen the hyphen in names like Red-Handed */
 .color-page,
 .swatchcard__row2 {
   font-feature-settings: normal;
@@ -1402,15 +1302,11 @@ a:hover {
   font-feature-settings: "tnum" 1;
 }
 
-/* Slides after the hero only take the room they need: a detail page with
-   a screen of white under three lines reads as unfinished. */
 .color-page .slide--dense {
   min-height: auto;
   padding-block: var(--space-l);
 }
 
-/* the one slide in color: the color itself, set in whichever of black or
-   white reads best on it */
 .color-page .color-fill {
   --bg: var(--fill);
   --fg: var(--fill-ink, #fff);
@@ -1418,7 +1314,6 @@ a:hover {
   justify-content: center;
 }
 
-/* the hex as the headline, as big as the start page's "0.19%" */
 .color-fill__hex {
   font-feature-settings: "tnum" 1;
   overflow-wrap: anywhere;
@@ -1429,7 +1324,6 @@ a:hover {
   font-weight: 400; /* hairline type fades on mid-tone colors */
 }
 
-/* the specs: groups set apart by space alone, a label over each value */
 .color-specs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
@@ -1442,13 +1336,10 @@ a:hover {
   max-width: 30ch;
 }
 
-/* under the headline, the values step in as far as the hero's intro; what
-   they're made of stays at the edge */
 .color-fill .color-specs--formats {
   margin-inline-start: var(--lead-inset);
 }
 
-/* the formats size to their values and wrap whole, never mid-value */
 .color-specs--formats {
   display: flex;
   flex-wrap: wrap;
@@ -1480,8 +1371,6 @@ a:hover {
   text-underline-offset: 0.15em;
 }
 
-
-/* the library's short essays about the color's families */
 .color-about {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
@@ -1505,8 +1394,6 @@ a:hover {
   line-height: 1.5;
 }
 
-/* meanings, effects and usage: laid out like the specs, the words in
-   light lead type separated by small rings */
 .color-words__title {
   max-width: 18ch;
 }
@@ -1516,15 +1403,10 @@ a:hover {
   max-width: 72rem;
 }
 
-/* Slide titles get room to breathe before what they introduce */
 .color-page .slide--dense > .display {
   margin-bottom: var(--space-m);
 }
 
-/* ——— What the name means ———
-   The dictionary leads, like a dictionary page: the headword big, senses in
-   large light type with big numerals. Wikipedia follows as an index, then
-   the pictures as one strip. */
 .color-dictionary:empty,
 .color-wiki:empty {
   display: none;
@@ -1584,12 +1466,10 @@ a:hover {
   text-transform: uppercase;
 }
 
-/* the whole name is in the dictionary: one entry, set large */
 .dictionary--whole {
   grid-template-columns: minmax(0, 52rem);
 }
 
-/* the slide is titled with the name; a pronunciation sits right after it */
 .color-meaning__title {
   display: flex;
   flex-wrap: wrap;
@@ -1612,7 +1492,6 @@ a:hover {
   font-weight: var(--weight-display);
 }
 
-/* play a pronunciation: a ring with a triangle; a square while it plays */
 .play {
   position: relative;
   flex: none;
@@ -1651,10 +1530,6 @@ a:hover {
   background: var(--fg);
 }
 
-/* The words and articles, after the slide's title: blocks set apart by
-   space, each at its own inset, so they step across the slide like a
-   magazine page rather than sit in a table. A block: its heading, then its
-   picture beside the text, sides alternating from block to block. */
 .color-wiki {
   margin-top: var(--space-l);
 }
@@ -1711,7 +1586,6 @@ a:hover {
   grid-template-columns: minmax(6rem, 13rem) minmax(0, 1fr);
 }
 
-/* every other block, the picture on the right */
 .wiki-index__row:nth-child(even) .wiki-index__body:has(.wiki-index__picture) {
   grid-template-columns: minmax(0, 1fr) minmax(6rem, 13rem);
 }
@@ -1720,8 +1594,6 @@ a:hover {
   order: 2;
 }
 
-/* the article's picture: a print in a frame of the slide's ink, laid down
-   a little crooked and off its place */
 .wiki-index__picture {
   display: block;
   box-sizing: border-box;
@@ -1742,8 +1614,7 @@ a:hover {
   max-width: 60ch;
 }
 
-/* the article's opening, at most five lines (the rest is a click away on
-   Wikipedia; the whole of it stays in the page for search) */
+/* clamped, not cut: the full text stays in the page for search */
 .wiki-index__text p,
 .wiki-index__row > p {
   display: -webkit-box;
@@ -1766,8 +1637,6 @@ a:hover {
   text-transform: uppercase;
 }
 
-/* the dictionary's word, under the heading, set small; when there's an
-   article too, the article steps in further than the definitions */
 .wiki-index__words {
   display: flex;
   flex-direction: column;
@@ -1785,19 +1654,14 @@ a:hover {
   margin-bottom: var(--space-2xs);
 }
 
-/* The pictures hang off the bottom of the slide like a loose pile of
-   prints: each at its own ratio, placed and tilted by detail.js (--x, --y,
-   --h, --rot, --z), overlapping. Hover straightens one and brings it to the
-   front. The slide sits above the next one so the pile can spill into it. */
+/* --x, --y, --h, --rot and --z are set by detail.js */
 .color-page .has-pile {
   position: relative;
   z-index: 2;
   padding-bottom: 0;
 }
 
-/* The pile is a line at the slide's bottom edge, and each print is centered
-   on it (give or take --y). Room above and below: half the tallest print
-   (12.5rem / 2) plus a spacing step. */
+/* half the tallest print (12.5rem / 2) plus a spacing step */
 .picture-pile {
   --half: 6.5rem;
   position: relative;
@@ -1805,8 +1669,7 @@ a:hover {
   margin-top: calc(var(--space-l) + var(--half));
 }
 
-/* the slide after the pile starts below its lowest picture (measured by
-   detail.js, --pile-gap) by the usual spacing */
+/* --pile-gap is measured by detail.js */
 .color-page .has-pile + .slide,
 .color-page .has-pile + .slide[hidden] + .slide {
   padding-top: calc(var(--space-l) + var(--pile-gap, 8rem));
@@ -1838,8 +1701,6 @@ a:hover {
   transform: translate(-50%, -50%) translateY(-1.25rem) rotate(0deg) scale(1.1);
 }
 
-/* the prints around a lifted one make room: those before it slide left,
-   those after it right, the direct neighbors most, and they lean away */
 .picture-pile a:is(:hover, :focus-visible) ~ a {
   --push: 1.25rem;
   --lean: 2deg;
@@ -1872,7 +1733,6 @@ a:hover {
 }
 
 @media (max-width: 640px) {
-  /* one under the other, full width, the picture above the text */
   .wiki-index__row {
     --inset: 0px !important;
   }
@@ -1899,9 +1759,6 @@ a:hover {
   }
 }
 
-/* Pictures with the color in them peek in at the page's edges: prints in
-   white frames, most of each out of sight past the edge, tilted; hovering
-   one (or focusing it) brings it in, straight, with its caption. */
 .color-page {
   position: relative;
 }
@@ -1913,10 +1770,7 @@ a:hover {
   pointer-events: none;
 }
 
-/* The link is the hover's ground and holds still: at rest only as wide as
-   the strip that shows, so it covers nothing else; once hovered, as wide
-   as the print coming in, so the print can't slide out from under the
-   pointer (and back, and out again). The print inside it does the moving. */
+/* the link stays put and widens on hover so the print can't slip out from under the pointer */
 .peek {
   --show: 0.26;
   position: absolute;
@@ -1960,7 +1814,6 @@ a:hover {
   transform: translateX(calc((1 - var(--show)) * 100%)) rotate(var(--rot));
 }
 
-/* until it comes in: all of it past the edge */
 .peek--left:not(.is-in) .peek__print {
   transform: translateX(calc(-100% - 2rem)) rotate(var(--rot));
 }
@@ -1989,7 +1842,6 @@ a:hover {
   block-size: auto;
 }
 
-/* the caption opens under the picture as it comes in */
 .peek__caption {
   display: grid;
   grid-template-rows: 0fr;
@@ -2035,8 +1887,6 @@ a:hover {
   }
 }
 
-/* the nearest names: small copies of the hero's card, to keep exploring.
-   Each card sizes its type off its own width (container query units). */
 .neighbors {
   display: grid;
   /* 12 cards: 6, 4, 3 or 2 to a row, so the last row is never ragged */
@@ -2075,8 +1925,7 @@ a:hover {
   font-size: 20.5cqi; /* the original's 0.205 of the card's width */
 }
 
-/* on a white slide the white label would vanish: there it's black, the
-   hex and name in white */
+/* on white slides the white label would vanish */
 .slide:not(.slide--invert) .neighbor .swatchcard__info {
   color: var(--paper);
   background: var(--ink);
@@ -2111,10 +1960,8 @@ a:hover {
   background: var(--fg);
 }
 
-/* portrait: the card above the title instead of beside it */
 @media (max-width: 760px), (orientation: portrait) {
-  /* the text starts under the card, however short the screen: the card's
-     middle, half its (tilted) height, then room to breathe */
+  /* card middle + half its tilted height, then a spacing step */
   .color-hero {
     justify-content: flex-end;
     padding-top: calc(var(--space-l) + 30vw + min(52vw, 18rem) * 0.8 + var(--space-l));
@@ -2132,12 +1979,6 @@ a:hover {
   }
 }
 
-/* ——————————————————————————————————————————————
-   Swatch card — the animated card from the Color Parrot companion site.
-   The swatch springs up out of a stack of its own shades, then the label
-   drops in under it.
-   Sizes are in em of the card's font-size, so it scales as one piece.
-   —————————————————————————————————————————————— */
 .swatchcard {
   --anim-appear-duration: 1100ms;
   --s-label-height: 1.46em;
@@ -2237,8 +2078,6 @@ a:hover {
   line-height: 1.2;
 }
 
-/* visible: the swatch springs up, the shades unroll, the label drops.
-   --anim-appear-delay holds it back until the panel has slid in. */
 .swatchcard--visible .swatchcard__swatch {
   transform: translateY(0);
   transition: calc(var(--anim-appear-duration) * 0.566) transform
@@ -2284,7 +2123,6 @@ a:hover {
     calc(var(--anim-appear-delay, 0ms) + var(--anim-appear-duration) * 0.15);
 }
 
-/* a new color starts from the first frame, without playing the exit */
 .swatchcard--reset,
 .swatchcard--reset * {
   transition: none !important;
@@ -2297,7 +2135,6 @@ a:hover {
   }
 }
 
-/* the static example on slide 5 opens the detail view */
 a.result {
   color: inherit;
   text-decoration: none;
@@ -2308,13 +2145,8 @@ a.result:hover span:last-child {
   text-decoration-thickness: var(--line);
 }
 
-/* ——————————————————————————————————————————————
-   Explore — the full searchable list (virtualized).
-   Chrome stays black & white; the swatches carry the colour.
-   —————————————————————————————————————————————— */
 .explore {
-  /* a definite height so .explore__list becomes the scroll container
-     and the page itself doesn't scroll with the virtual list */
+  /* definite height so .explore__list is the scroll container */
   height: 100svh;
   justify-content: flex-start;
   gap: var(--space-m);
@@ -2350,7 +2182,6 @@ a.result:hover span:last-child {
   outline-offset: 3px;
 }
 
-/* native colour input, framed to match */
 .explore__pick {
   inline-size: 3.25rem;
   block-size: 3.25rem;
@@ -2390,7 +2221,6 @@ a.result:hover span:last-child {
   font-variant-numeric: tabular-nums;
 }
 
-/* scroll viewport — the virtual window */
 .explore__list {
   position: relative;
   flex: 1 1 auto;
@@ -2433,7 +2263,6 @@ a.result:hover span:last-child {
   outline: none;
 }
 
-/* a filled ring — the empty swatch, finally given its colour */
 .explore__swatch {
   inline-size: 1.4rem;
   block-size: 1.4rem;
@@ -2457,10 +2286,6 @@ a.result:hover span:last-child {
   font-size: var(--text-xs);
 }
 
-/* ——————————————————————————————————————————————
-   Hero stacks — named color cards that pile over the title.
-   The cards bring their own colour; the page chrome stays mono.
-   —————————————————————————————————————————————— */
 .hero {
   position: relative;
   overflow: hidden;
@@ -2471,7 +2296,7 @@ a.result:hover span:last-child {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-m); /* the gap .slide used to give these directly */
+  gap: var(--space-m);
 }
 
 .stacks {
@@ -2482,7 +2307,7 @@ a.result:hover span:last-child {
   inset: 0;
   z-index: 2;
   overflow: hidden;
-  pointer-events: none; /* only the cards themselves are clickable */
+  pointer-events: none;
 }
 
 .stack-card {
@@ -2511,7 +2336,6 @@ a.result:hover span:last-child {
   background: var(--bg);
 }
 
-/* the colour, framing each white card and glowing as it lands */
 .stack-card::before {
   content: "";
   position: absolute;
@@ -2646,24 +2470,17 @@ a.result:hover span:last-child {
   }
 }
 
-/* ——————————————————————————————————————————————
-   Motion: off by request
-   —————————————————————————————————————————————— */
 @media (prefers-reduced-motion: reduce) {
   .marquee__track {
     animation: none;
   }
 }
 
-/* —— The color wall (home): every name as a card, on a field of ink —— */
-
 html:has(.wall-page) {
   background: var(--ink);
 }
 
-/* Arriving from the wall, the color page holds back its scrollbar until
-   the card is in place: the wall has none, and a scrollbar would narrow
-   the page and shift the card it just took over. */
+/* no scrollbar while arriving: it would narrow the page and shift the card */
 html.is-arriving {
   overflow: hidden;
 }
@@ -2695,7 +2512,6 @@ html.is-arriving {
   cursor: grabbing;
 }
 
-/* names sit in the cards' label strips, scaled with the zoom */
 .wall__labels,
 .wall__mark,
 .wall__tip {
@@ -2704,15 +2520,11 @@ html.is-arriving {
   pointer-events: none;
 }
 
-/* the labels stack among themselves (nearer cards on top) inside a layer
-   of their own, under the bar and the buttons */
 .wall__labels {
   z-index: 1;
   isolation: isolate;
 }
 
-/* set like the color page's card label: the hex large, the name below;
-   width and font-size come from the card's size on screen */
 .wall__label {
   position: absolute;
   inset: 0 auto auto 0;
@@ -2723,8 +2535,7 @@ html.is-arriving {
   will-change: transform;
 }
 
-/* the same type as .swatchcard__row1 / __row2, so a card reads the same in
-   the space as on its color page; keep the two in step */
+/* keep in step with .swatchcard__row1 / __row2 */
 .wall__label-hex,
 .wall__label-name {
   display: block;
@@ -2749,7 +2560,7 @@ html.is-arriving {
   font-feature-settings: normal;
 }
 
-/* the color itself, before its name; a fine edge so white shows too */
+/* the edge keeps a white dot visible */
 .wall__tip-dot {
   flex: none;
   inline-size: 0.8rem;
@@ -2790,13 +2601,11 @@ html.is-arriving {
   z-index: 2;
 }
 
-/* above the model picker, so the search results open over it */
+/* above the model picker, so search results open over it */
 .wall__bar {
   z-index: 3;
 }
 
-/* the bar: name, search, the way to the rest of the site; the search
-   stays in the middle whatever sits either side of it */
 .wall__bar {
   position: absolute;
   inset: 0 0 auto;
@@ -2812,7 +2621,6 @@ html.is-arriving {
   pointer-events: auto;
 }
 
-/* ink pills, so the words stay readable over white card strips */
 .wall__nav a {
   padding: 0.35rem 0.8rem;
   border-radius: 999px;
@@ -2830,7 +2638,6 @@ html.is-arriving {
   justify-self: end;
 }
 
-/* hover: the pill turns over, white on black to black on white */
 .wall__nav a {
   transition: color 0.2s ease, background 0.2s ease;
 }
@@ -2846,9 +2653,6 @@ html.is-arriving {
   grid-column: 2;
 }
 
-/* The logo: the cockatoo and the name, in one place over everything, on
-   the wall and on the color page alike (opened over the wall, it's the
-   wall's that stays). Lined up with the middle of the search field. */
 .brand {
   --brand-h: 2.5rem;
   position: fixed;
@@ -2872,8 +2676,7 @@ html.is-arriving {
   text-decoration: none;
 }
 
-/* the bird, trimmed to its own outline (see its viewBox), and lifted a
-   hair: its crest is airy and its head heavy, so true center reads low */
+/* lifted a hair: the heavy head makes true center read low */
 .brand__logo {
   block-size: 1.45rem;
   inline-size: auto;
@@ -2882,9 +2685,7 @@ html.is-arriving {
   translate: 0 -0.08rem;
 }
 
-/* On hover the cockatoo raises its crest, feather after feather, and
-   opens its beak. The parts turn about points in the drawing's own units:
-   the top of the head for the crest, the corner of the mouth for the beak. */
+/* origins in the SVG's own units: head top for crest, mouth corner for beak */
 .brand__crest,
 .brand__beak {
   transform-box: view-box;
@@ -2953,9 +2754,7 @@ html.is-arriving {
   outline-offset: 2px;
 }
 
-/* nothing sticks out sideways (the picture pile can): clipped, never a
-   horizontal scroll; clip, unlike hidden, leaves the pile free to hang
-   down into the next slide */
+/* clip, unlike hidden, lets the pile hang into the next slide */
 .color-page {
   overflow-x: clip;
 }
@@ -2964,19 +2763,15 @@ html.is-arriving {
   overflow-x: hidden;
 }
 
-/* a color page scrolls with a scrollbar in its color, over the page */
 html:has(body > .color-page),
 .wall__page {
   scrollbar-color: var(--page-color, var(--fg)) transparent;
 }
 
-/* opened over the wall, the color page leaves the logo to the wall's */
 .wall__page .color-hero__home {
   display: none;
 }
 
-/* the color circle at the start of the search field: any color, and the
-   wall flies to the name closest to it */
 .wall__picker {
   position: absolute;
   inset: 50% auto auto 0.55rem;
@@ -3016,14 +2811,12 @@ html:has(body > .color-page),
   font-size: var(--text-base);
 }
 
-/* the browser's own clear button would be the one blue thing on the page;
-   Escape clears the field */
+/* hides the native blue clear button; Escape clears */
 .wall__search::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
 }
 
-/* the × at the end of the field, while there's something in it */
 .wall__clear {
   position: absolute;
   inset: 50% 0.55rem auto auto;
@@ -3115,8 +2908,6 @@ html:has(body > .color-page),
   text-overflow: ellipsis;
 }
 
-/* the lower left: messages (working something out, an error), and under
-   them the intro card */
 .wall__corner {
   position: absolute;
   inset: auto auto var(--space-s) var(--space-s);
@@ -3144,12 +2935,10 @@ html:has(body > .color-page),
   font-variant-numeric: tabular-nums;
 }
 
-/* the intro: what you're looking at, once */
 .wall__intro[hidden] {
   display: none;
 }
 
-/* comes in from its edge, like the rest of the interface */
 @keyframes wall-intro-in {
   from {
     opacity: 0;
@@ -3208,8 +2997,6 @@ html:has(body > .color-page),
   border-radius: 999px;
 }
 
-/* opening a card: the interface clears along with the other cards,
-   each part off past its own edge of the screen, and comes back from there */
 .wall__bar,
 .wall__corner,
 .wall__models,
@@ -3220,7 +3007,6 @@ html:has(body > .color-page),
     translate 0.55s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
-/* coming back, one after another, 50ms apart (leaving, all at once) */
 .wall:not(.is-opening) .wall__zoom {
   transition-delay: 50ms;
 }
@@ -3241,7 +3027,6 @@ html:has(body > .color-page),
   translate: 0 -110%;
 }
 
-/* the picker and the lists button leave and come back each on its own */
 .wall.is-opening .wall__models,
 .wall.is-opening .wall__pick-list {
   translate: 0 calc(100% + var(--space-s) + 1rem);
@@ -3275,7 +3060,6 @@ html:has(body > .color-page),
   pointer-events: none;
 }
 
-/* the HTML copy of a clicked card, laid over it for the view transition */
 .wall__handoff {
   position: absolute;
   inset: 0 auto auto 0;
@@ -3283,7 +3067,6 @@ html:has(body > .color-page),
   pointer-events: none;
 }
 
-/* the copy's last move: to the color page's card, size and tilt and all */
 .wall__handoff {
   transform-origin: 50% 50%;
 }
@@ -3298,8 +3081,6 @@ html:has(body > .color-page),
     font-size 0.75s cubic-bezier(0.65, 0, 0.25, 1);
 }
 
-/* Arriving from the wall, the card is already in place; then the words
-   come in, one after another. */
 .color-hero .hero__content > *,
 .color-hero__close {
   transition: opacity 0.6s ease, translate 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -3328,7 +3109,6 @@ html:has(body > .color-page),
   }
 }
 
-/* the color page, opened inside the wall: over it, scrolling on its own */
 .wall__page {
   position: fixed;
   inset: 0;
@@ -3341,7 +3121,6 @@ html:has(body > .color-page),
   -webkit-user-select: text;
 }
 
-/* closing: the color page fades from under its card */
 .wall__page.is-leaving {
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -3351,16 +3130,11 @@ html:has(body > .color-page),
   z-index: 6;
 }
 
-/* an invisible copy of the color page's hero, to measure where its card goes */
 .wall__probe {
   visibility: hidden;
   pointer-events: none;
 }
 
-/* the color model: one pill, the chosen model filled */
-/* the dock: the model picker, centered, with the lists button right of it
-   (outside the centering, so the picker stays in the middle) */
-/* with its menu open, over the buttons beside it */
 .wall__dock:has([data-list-menu]:not([hidden])) {
   z-index: 4;
 }
@@ -3423,8 +3197,6 @@ html:has(body > .color-page),
   color: var(--paper);
 }
 
-/* the chosen model's pill, sliding from one to the next with a little
-   overshoot */
 .wall__models-thumb {
   position: absolute;
   inset-block: 0.25rem;
@@ -3474,7 +3246,6 @@ html:has(body > .color-page),
   line-height: 1;
 }
 
-/* the lists: a menu opening above its button */
 .wall__lists {
   position: absolute;
   inset: auto auto calc(100% + 0.6rem) 0;
@@ -3491,7 +3262,7 @@ html:has(body > .color-page),
   display: none;
 }
 
-/* empty until the script fills it: not a stray white dot meanwhile */
+/* hidden until the script fills it, else a stray dot shows */
 .wall__dock:has(.wall__models:empty) {
   display: none;
 }
@@ -3528,7 +3299,6 @@ html:has(body > .color-page),
   background: var(--ink);
 }
 
-/* each list, and next to it a link to its file */
 .wall__list {
   display: flex;
   align-items: stretch;
@@ -3565,7 +3335,6 @@ html:has(body > .color-page),
   box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 2px var(--ink);
 }
 
-/* the cells toggle, on */
 .wall__zoom button[aria-pressed="true"] {
   color: var(--paper);
   background: var(--ink);
@@ -3580,7 +3349,6 @@ html:has(body > .color-page),
 }
 
 @media (max-width: 40rem) {
-  /* the logo and the links on one row, the search under them */
   .wall__bar {
     grid-template-columns: 1fr auto;
     grid-template-rows: var(--brand-h, 2.5rem) auto;
@@ -3604,8 +3372,6 @@ html:has(body > .color-page),
     left: 1rem;
   }
 
-  /* the tabs and the lists button, one row in the bottom right corner;
-     the round buttons above them, the intro and messages to their left */
   .wall__dock {
     inset: auto 1rem 1rem auto;
     display: flex;

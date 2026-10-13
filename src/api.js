@@ -1,8 +1,3 @@
-/*
-  color.pizza API — one memoized fetch per list, shared across sections
-  so the big default list (31,912 colors) is only pulled once.
-*/
-
 const cache = new Map();
 
 export function loadList(name = "default") {
@@ -13,7 +8,7 @@ export function loadList(name = "default") {
         .then((res) => res.json())
         .then((data) => data.colors || [])
         .catch((err) => {
-          cache.delete(name); // let a later attempt retry
+          cache.delete(name); // so a later call retries
           throw err;
         })
     );

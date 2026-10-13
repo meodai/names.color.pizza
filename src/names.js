@@ -1,17 +1,5 @@
-/*
-  Names — the lists, prepared once and shared by the name map and the
-  submission form: parsed into OKLab, bucketed on a 3D grid for fast
-  closest-name lookups, and the color conversions both need.
-*/
-
 import { loadList } from "./api.js";
 
-// The site's root, wherever a page sits: each page says how far up it is
-// (<html data-root="../">), so links work in development, in a build and
-// under a subpath.
-// The list's latest release on npm, written into each [data-version]
-// ("GitHub v14.51.0"); asked for once per page, and if npm can't be
-// reached the links just say GitHub
 let release;
 export function showVersion(root = document) {
   release ??= fetch("https://registry.npmjs.org/color-name-list/latest")
@@ -23,12 +11,12 @@ export function showVersion(root = document) {
   });
 }
 
+// pages set <html data-root="../"> so links work in dev, in a build and under a subpath
 export const siteURL = (path = "") =>
   new URL(path, new URL(document.documentElement.dataset.root || "./", location.href)).href;
 export const colorURL = (hex) => siteURL(`color/#${hex.replace("#", "")}`);
 
-// A name as search matches it: lowercase and without accents, so "creme"
-// finds Crème (and "crème" finds Creme)
+// letters NFKD doesn't decompose
 const LETTERS = { ß: "ss", æ: "ae", œ: "oe", ø: "o", ł: "l", đ: "d", ð: "d", þ: "th", ı: "i" };
 export const fold = (text) =>
   text
@@ -37,11 +25,6 @@ export const fold = (text) =>
     .toLowerCase()
     .replace(/[ßæœøłđðþı]/g, (ch) => LETTERS[ch]);
 
-// A named color also has a page of its own, at color/<slug>/ (built from
-// the list, for search engines and sharing): "Red-Handed" → red-handed.
-// Two names that come out the same ("Rose", "Rosé") leave the plain one to
-// the name with the fewest letters changed; the other, like any slug that
-// reads as a hex (Façade → facade), gets its hex added: rose-f7c9d4.
 export const baseSlug = (name) =>
   name
     .normalize("NFKD")
@@ -53,6 +36,7 @@ export const baseSlug = (name) =>
 
 const changed = (name, slug) => [...name.toLowerCase()].filter((ch) => !slug.includes(ch)).length;
 
+// on a clash the fewest-changed name keeps the plain slug; others and hex-like slugs get -<hex>
 export function slugsOf(items) {
   const groups = new Map();
   for (const it of items) {
@@ -71,9 +55,7 @@ export function slugsOf(items) {
   return slugs;
 }
 
-// Where the color page's card lands on its hero: center + x·32vw, y·30vh,
-// a little tilted, and on the right, clear of where even a long name wraps.
-// The wall picks it too, to fly a card there before opening its page.
+// right of center, clear of where even a long name wraps
 export function cardPlace() {
   const between = (a, b) => a + Math.random() * (b - a);
   return { x: between(0.6, 0.92), y: between(-0.55, 0.45), r: between(-14, 14) };
@@ -86,15 +68,12 @@ export const LISTS = {
   short: "Short",
 };
 
-// OKLab distance beyond which a color counts as unnamed: about one
-// just-noticeable difference, so it looks different from every name.
+// about one just-noticeable difference in OKLab
 export const UNNAMED = 0.02;
 const G = UNNAMED; // grid cell size; must be >= UNNAMED for the 3x3x3 search
 const AB = 0.36; // OKLab a/b extent covered by the grid (sRGB peaks near 0.32)
 
 export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-
-/* —— color helpers —— */
 
 export function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -128,8 +107,6 @@ export function normalizeHex(input) {
   if (h.length === 3) h = [...h].map((c) => c + c).join("");
   return "#" + h;
 }
-
-/* —— data: each list bucketed on a 3D OKLab grid —— */
 
 const GL = Math.ceil(1 / G) + 1;
 const GA = Math.ceil((2 * AB) / G);
@@ -180,9 +157,7 @@ export const getList = (key) => {
   return prepared.get(key);
 };
 
-// Index of the closest name within UNNAMED of an OKLab color, or -1.
-// Scans the color's own grid cell first, then only those neighbor cells
-// that could still hold something closer than the best match so far.
+// own cell first, then only neighbors that could still hold something closer
 const NEIGHBORS = [0, -1, 1];
 export function nearestIndex(d, L, a, b) {
   const fl = L / G;

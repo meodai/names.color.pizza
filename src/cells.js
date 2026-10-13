@@ -1,25 +1,6 @@
-/*
-  Cells — the wall's other view: instead of a card per name, the space
-  itself, filled. Every point of a model's shape belongs to the name
-  closest to it in that model's own space (RGB distance in the RGB cube,
-  OKLab distance in OKLab, and so on: a true Voronoi of the shape you see),
-  as long as it's within r of it; past that it belongs to nobody and stays
-  empty, so the unnamed parts of the space show as holes.
+const VOXEL = 1.3; // in the wall's world units
+const NAMES_W = 256;
 
-  A worker works out the owners on a grid over the shape, once per model;
-  the GPU ray-marches it and settles the exact owner at the surface from
-  the few names around it. As the camera closes in, what lies between it
-  and the point it turns around is cut away, so you look into the space
-  rather than at its skin. The same march runs on the CPU for the one
-  pixel under the pointer, to say whose cell it is.
-*/
-
-const VOXEL = 1.3; // grid step, in the wall's world units
-const NAMES_W = 256; // the names textures' width
-
-// Which name owns each grid point over one model's shape, worked out in a
-// worker. positions: the names' places in that model; r: how far a name
-// reaches.
 export function buildOwners(positions, bounds, r, onProgress) {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./cells-worker.js", import.meta.url), { type: "module" });
@@ -47,10 +28,7 @@ export function buildOwners(positions, bounds, r, onProgress) {
   });
 }
 
-/* —— is a point inside the model's shape? ——
-   The wall's MODELS place a color; undoing that tells whether a point is a
-   color at all. The same in GLSL below. */
-
+// undoes the wall's MODELS to tell whether a point is a color at all; mirrored in GLSL
 const E1 = [1 / Math.SQRT2, -1 / Math.SQRT2, 0];
 const E2 = [1 / Math.sqrt(3), 1 / Math.sqrt(3), 1 / Math.sqrt(3)];
 const E3 = [1 / Math.sqrt(6), 1 / Math.sqrt(6), -2 / Math.sqrt(6)];
@@ -95,8 +73,7 @@ export function inside(p, model, geo) {
   return inGamut(oklabToLin(...lab));
 }
 
-// the exact owner of a point, from the names stored at the 8 grid points
-// around it: { i, d1 } (i = -1 for nobody)
+// { i, d1 }, i = -1 for nobody
 export function ownerOf(p, cells) {
   const { owners, X, Y, Z, lo, dims, r } = cells;
   const b = [0, 1, 2].map((k) => Math.floor((p[k] - lo[k]) / VOXEL - 0.5));
@@ -117,7 +94,6 @@ export function ownerOf(p, cells) {
   return d1 < r ? { i, d1 } : { i: -1, d1 };
 }
 
-// the grid point nearest a point: a quick "anyone here?"
 function quickOwner(p, cells) {
   const { owners, lo, dims } = cells;
   const c = [0, 1, 2].map((k) => Math.round((p[k] - lo[k]) / VOXEL - 0.5));
@@ -125,11 +101,10 @@ function quickOwner(p, cells) {
   return owners[c[0] + dims[0] * (c[1] + dims[1] * c[2])];
 }
 
-// how far apart the march samples are, at a distance t from the eye: well
-// under a cell's reach, a little longer far away
+// well under a cell's reach, a little longer far away
 const stepAt = (t) => Math.min(1.2, Math.max(0.6, t * 0.004));
 
-// The cell under a screen point: march the ray as the GPU does.
+// mirrors the GPU march
 export function pick(ray, eye, bounds, cut, model, geo, cells) {
   const span = slab(eye, ray, bounds);
   if (!span) return -1;
@@ -155,8 +130,6 @@ function slab(o, d, { lo, hi }) {
   }
   return t0 <= t1 ? [t0, t1] : null;
 }
-
-/* —— the GPU side —— */
 
 const VERT = `#version 300 es
 out vec2 v_ndc;
@@ -201,7 +174,6 @@ vec3 oklabToLin(vec3 lab) {
     -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s);
 }
 
-// is a point inside the model's shape, a color at all?
 bool inside(vec3 p) {
   float LY = u_geo.x, R = u_geo.y, S = u_geo.z;
   if (u_model == 0) {
@@ -238,7 +210,6 @@ uint quickOwner(vec3 p) {
 ivec2 at(int i) { return ivec2(i % NAMES_W, i / NAMES_W); }
 vec3 place(int i) { return texelFetch(u_places, at(i), 0).xyz; }
 
-// the exact owner, from the names at the 8 grid points around the point
 int ownerOf(vec3 p, out float d1) {
   ivec3 b = ivec3(floor(gridOf(p)));
   d1 = 1e9;
@@ -253,8 +224,7 @@ int ownerOf(vec3 p, out float d1) {
   return d1 < u_r ? best : -1;
 }
 
-// the same, from the 27 grid points around it: surer at the surface,
-// where the color is settled. Once a pixel.
+// 27 neighbors: surer at the surface, run once per pixel
 int ownerWide(vec3 p, out float d1) {
   ivec3 b = ivec3(floor(gridOf(p) + 0.5));
   d1 = 1e9;
@@ -278,7 +248,6 @@ bool owned(vec3 p) {
 void main() {
   vec2 px = v_ndc * u_view * 0.5 / u_fpx;
   vec3 dir = normalize(u_fwd + u_right * px.x + u_up * px.y);
-  // only where the ray crosses the shape's box
   vec3 inv = 1.0 / dir;
   vec3 ta = (u_lo - u_eye) * inv, tb = (u_hi - u_eye) * inv;
   vec3 tmin = min(ta, tb), tmax = max(ta, tb);
@@ -291,7 +260,7 @@ void main() {
     if (owned(u_eye + dir * t)) { hitT = t; break; }
     last = t;
   }
-  // the surface, between the last empty sample and the first owned one
+  // bisect to the surface
   if (hitT > t0) {
     float a = last, b = hitT;
     for (int k = 0; k < 6; k++) {
@@ -307,8 +276,7 @@ void main() {
     int id = ownerWide(u_eye + dir * hitT, d1);
     if (id >= 0) color = texelFetch(u_colors, at(id), 0).rgb;
   }
-  // no outlines: each cell is a little lighter at its name and darker at
-  // its rim, which is enough to tell one from the next
+  // no outlines: cells darken toward their rim
   color *= 1.0 - 0.22 * pow(clamp(d1 / u_r, 0.0, 1.0), 2.0);
   float z0 = max(hitT * dot(dir, u_fwd), 0.001);
   color = mix(color, vec3(0.0), smoothstep(u_fog.x, u_fog.y, z0));
@@ -345,10 +313,7 @@ function nearestTexture(gl, target) {
   return t;
 }
 
-// The cells, drawn into the wall's WebGL context. colors: each name's
-// sRGB as bytes. Each model's owners are added once they're worked out.
-// It renders at a fraction of the canvas's resolution while things move,
-// then once in full.
+// renders at reduced resolution while moving, then once in full
 export function createCellsRenderer(gl, canvas, colors, geo) {
   const march = program(gl, VERT, FRAG);
   const blit = program(gl, VERT, BLIT_FRAG);
@@ -368,7 +333,6 @@ export function createCellsRenderer(gl, canvas, colors, geo) {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, NAMES_W, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
   gl.activeTexture(gl.TEXTURE0);
 
-  // per model: who owns each grid point, and where each name sits
   const models = {};
   function add(key, cells) {
     gl.activeTexture(gl.TEXTURE1);
@@ -383,7 +347,6 @@ export function createCellsRenderer(gl, canvas, colors, geo) {
     models[key] = { owners, places, cells };
   }
 
-  // the picture, before it's scaled up to the canvas
   gl.activeTexture(gl.TEXTURE3);
   const image = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, image);
@@ -440,7 +403,6 @@ export function createCellsRenderer(gl, canvas, colors, geo) {
     gl.uniform3f(u.geo, geo.LY, geo.R, geo.RGB_SIDE);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    // up to the canvas
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(blit);
@@ -454,7 +416,6 @@ export function createCellsRenderer(gl, canvas, colors, geo) {
   };
   draw.add = add;
   draw.has = (key) => !!models[key];
-  // done with it: another list's cells replace these
   draw.dispose = () => {
     for (const m of Object.values(models)) {
       gl.deleteTexture(m.owners);

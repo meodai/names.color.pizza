@@ -18,20 +18,8 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!--
-      One top-to-bottom scroll of full-bleed slides.
-      Copy lives here in the HTML; design lives in src/style.css.
-      Slides alternate ink-on-paper / paper-on-ink via .slide--invert.
-
-      Values like the color count (31,912), years running (since 2017),
-      and named fraction (~0.19%) are real and current as of this writing.
-      They are the {{ }} build-time values from docs/contents.md and can be
-      wired to the live dataset / git history later.
-    -->
     <main>
-      <!-- 1 · Hero ————————————————————————————————————— -->
       <section class="slide slide--invert hero" id="top">
-        <!-- named color cards fly in and pile up over the title -->
         <div class="stacks" data-wrap aria-hidden="true"></div>
         <div class="hero__content">
           <h1 class="hero__title">Color Names</h1>
@@ -44,9 +32,6 @@
         </div>
       </section>
 
-      <!-- 2 · Find a color, or a name — the name map ———— -->
-      <!-- Every color on an OkHSL wheel, each patch owned by its closest
-           name; hatched ground has no name yet. Loads lazily. -->
       <section
         class="slide name-map"
         id="name-map"
@@ -116,11 +101,9 @@
           </div>
         </div>
 
-        <!-- the free space the fitted wheel sits in -->
         <div class="name-map__home" data-home></div>
       </section>
 
-      <!-- 3 · The scale ——————————————————————————————— -->
       <section class="slide slide--invert">
         <p class="figure">0.19%</p>
         <p class="lead">
@@ -128,9 +111,6 @@
         </p>
       </section>
 
-      <!-- 4 · All the colors, across color spaces ———————— -->
-      <!-- The one section with color. Picks up where 0.19% left off:
-           the same black void, now filled. three.js loads lazily here. -->
       <section
         class="slide slide--invert color-space"
         id="color-space"
@@ -146,7 +126,6 @@
 
         <div class="color-space__controls">
           <div class="color-space__field">
-            <!-- static data in HTML; the module reads .value -->
             <select data-model aria-label="Color space">
               <option value="rgb">RGB</option>
               <option value="hsl">HSL</option>
@@ -184,17 +163,14 @@
         </div>
       </section>
 
-      <!-- 5 · Nearest named color ——————————————————————— -->
       <section class="slide slide--dense">
         <p class="display">Pick any color. Meet its closest name.</p>
-        <!-- static example; becomes interactive later -->
         <a class="result" href="../color/#6b8e23">
           <span>#6b8e23</span><span class="result__arrow">→</span
           ><span>Sap Green</span>
         </a>
       </section>
 
-      <!-- 6 · Wall of names — Best Of (signature) ———————— -->
       <section class="slide slide--invert wall">
         <div class="wall__rows" aria-label="A selection of color names">
           <div class="marquee">
@@ -252,7 +228,6 @@
         </div>
       </section>
 
-      <!-- 7 · How it's made —————————————————————————————— -->
       <section class="slide slide--dense">
         <p class="display">Nine years. Mostly by hand.</p>
         <ul class="rules">
@@ -272,7 +247,6 @@
         </p>
       </section>
 
-      <!-- 8 · Use it ——————————————————————————————————— -->
       <section class="slide slide--invert slide--dense">
         <p class="display">Free. Open. Drop it in.</p>
         <p class="code">npm install color-name-list</p>
@@ -293,9 +267,6 @@
         <p class="prose">Lists: Full · Best Of · Short. License: MIT.</p>
       </section>
 
-      <!-- 9 · Contribute & support — name a color ————————— -->
-      <!-- Checks a new name the way the repo's tests will, then opens a
-           prefilled GitHub issue. Loads lazily. -->
       <section class="slide slide--dense submit" id="submit" aria-labelledby="submit-title">
         <p class="display" id="submit-title">Add a name. Keep it alive.</p>
 
@@ -357,7 +328,6 @@
         </p>
       </section>
 
-      <!-- 10 · Quote — a breath before the tool ——————————— -->
       <section class="slide slide--invert slide--center">
         <figure class="quote quote--poster">
           <p class="quote__text">
@@ -369,9 +339,6 @@
         </figure>
       </section>
 
-      <!-- 11 · Explore — the full searchable list (the app) — -->
-      <!-- Framework-free virtual scroller; three.js-free. Loads lazily.
-           Only ~30 rows live in the DOM at once, out of all 31,912. -->
       <section class="slide explore" id="explore" aria-label="Search every color name">
         <p class="display">All of them. Yours to search.</p>
 
@@ -401,7 +368,6 @@
         </div>
       </section>
 
-      <!-- 12 · Footer ——————————————————————————————————— -->
       <footer class="slide slide--invert footer">
         <p class="display">Made by people. Add yours.</p>
         <nav class="footer__nav" aria-label="Project links">

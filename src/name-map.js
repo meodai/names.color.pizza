@@ -1,13 +1,3 @@
-/*
-  Name map — every color on an OkHSL wheel, claimed by its closest name.
-
-  Hue goes around, lightness grows from black at the center to white at the
-  rim, and the saturation slider picks which disc you're looking at (OkHSL
-  in polar form). Every pixel belongs to the closest name, measured in OKLab,
-  unless no name is within UNNAMED: that ground has no name yet and is
-  hatched. The chrome stays black and white; the map carries the color.
-*/
-
 import {
   LISTS,
   UNNAMED,
@@ -33,15 +23,13 @@ import {
 
 const Z_MAX = 24;
 const START_S = 0.5;
-const RIM = 12; // CSS px of breathing room around the fitted disc
+const RIM = 12; // CSS px around the fitted disc
 
 const fmt = (n) => n.toLocaleString("en-US");
 const wrap = (v) => ((v % 1) + 1) % 1;
 
 const okhslOf = (item) =>
   (item.okhsl ??= oklabToOkhsl(item.L, item.a, item.b));
-
-/* —— OkHSL chroma stops: solved once on a hue × lightness grid —— */
 
 const LUT_H = 720;
 const LUT_L = 256;
@@ -61,7 +49,7 @@ function buildLut() {
   }
 }
 
-// Writes the bilinearly interpolated stops for (h, l) into out[o..o+2].
+// bilinear lookup, written into out[o..o+2]
 function stopsAt(h, l, out, o) {
   const fh = h * LUT_H;
   const fl = l * (LUT_L - 1);
@@ -78,8 +66,6 @@ function stopsAt(h, l, out, o) {
     out[o + c] = top + (bot - top) * th;
   }
 }
-
-/* —— the section —— */
 
 export function initNameMap(root) {
   const q = (sel) => root.querySelector(sel);
@@ -106,19 +92,19 @@ export function initNameMap(root) {
   const state = {
     s: START_S,
     list: "default",
-    view: { cx: 0, cy: 0, z: 1 }, // disc center offset (radius 1 = white), zoom
+    view: { cx: 0, cy: 0, z: 1 },
     slice: null,
-    hover: null, // index into the list's items
+    hover: null,
     selected: null, // { kind: 'name', item } or { kind: 'blank', hex, L, a, b, h, l, s }
-    cursor: null, // keyboard cursor in CSS px
-    engaged: false, // the wheel only zooms once someone has reached for the map
+    cursor: null,
+    engaged: false,
   };
   const loaded = {};
   let bestSet = new Set();
 
-  let W = 800; // canvas size in CSS px: the whole section
+  let W = 800;
   let H = 500;
-  let HX = 400; // the fitted disc: center of the free space, and its radius
+  let HX = 400;
   let HY = 250;
   let R = 200;
   let dpr = 1;
@@ -138,8 +124,7 @@ export function initNameMap(root) {
     }
   }
 
-  /* —— geometry: the disc has radius 1, lightness 0 at the center —— */
-
+  // the disc has radius 1, lightness 0 at the center
   const unit = () => R * state.view.z;
 
   const toCss = (h, l) => {
@@ -153,7 +138,6 @@ export function initNameMap(root) {
     const u = unit();
     return [cx + (x - HX) / u, cy - (y - HY) / u];
   };
-  // [hue, lightness] under a CSS point, or null outside the disc
   const toHsl = (x, y, slack = 0) => {
     const [X, Y] = toDisc(x, y);
     const l = Math.hypot(X, Y);
@@ -162,7 +146,6 @@ export function initNameMap(root) {
       : [wrap(Math.atan2(Y, X) / (2 * Math.PI)), Math.min(l, 1)];
   };
 
-  // the part of the frame the disc covers; only this gets pixels
   function discRect() {
     const u = unit();
     const [X, Y] = toCss(0, 0);
@@ -181,10 +164,7 @@ export function initNameMap(root) {
     state.view = { cx: cx * k, cy: cy * k, z };
   }
 
-  /* —— slicing —— */
-
-  // Per-pixel chroma stops depend on hue and lightness only, so they are
-  // cached per view and reused while the saturation changes.
+  // stops depend only on hue and lightness, so they survive saturation changes
   const tables = {};
 
   function getTable(NX, NY, rect) {
@@ -251,8 +231,6 @@ export function initNameMap(root) {
     return { s, rect, NX, NY, table: t, items: data.items, owner, area, sx, sy, land, blank };
   }
 
-  /* —— drawing —— */
-
   function paintMosaic(sl, crisp) {
     const { NX, NY, owner, items, table: t, s, rect } = sl;
     mosaic.width = NX;
@@ -266,7 +244,7 @@ export function initNameMap(root) {
     });
     const img = mctx.createImageData(NX, NY);
     const d = img.data;
-    // patch outlines fade in with zoom: none at first sight, full from 4× on
+    // outlines fade in with zoom, full from 4×
     const edge = crisp ? 1 - 0.16 * clamp((state.view.z - 2) / 2, 0, 1) : 1;
     const period = Math.max(2, Math.round((NX / rect.w) * 4));
 
@@ -275,12 +253,12 @@ export function initNameMap(root) {
         const p = y * NX + x;
         const o = owner[p];
         const i = p * 4;
-        if (o === -2) continue; // off the disc: transparent
+        if (o === -2) continue;
         let r;
         let g;
         let b;
         if (o === -1) {
-          // unnamed ground: the true color, hatched with a paler stripe
+          // unnamed ground: hatched with a paler stripe
           const C = chromaFor(s, t.stops[p * 3], t.stops[p * 3 + 1], t.stops[p * 3 + 2]);
           [r, g, b] = oklabToRgb(t.Lp[p], C * t.ca[p], C * t.cb[p]);
           if (Math.floor((x + y) / period) & 1) {
@@ -309,9 +287,7 @@ export function initNameMap(root) {
     mctx.putImageData(img, 0, 0);
   }
 
-  // Where to label or pin a name's patch: its centroid if the name owns that
-  // spot, else the name's own position. Rings of near-grays around the
-  // center have their centroid in the hole, so they need the fallback.
+  // near-gray rings have their centroid in the hole, hence the fallback
   function anchorOf(sl, k) {
     const { rect, NX, NY, owner, area, sx, sy } = sl;
     const owns = (x, y) => {
@@ -343,7 +319,6 @@ export function initNameMap(root) {
     const p = panel.getBoundingClientRect();
     const boxes = [[p.left - origin.left, p.top - origin.top, p.right - origin.left, p.bottom - origin.top]];
 
-    // name labels, biggest territories first, never overlapping
     const { items, area, NX, NY, rect } = sl;
     const scx = rect.w / NX;
     const scy = rect.h / NY;
@@ -452,7 +427,7 @@ export function initNameMap(root) {
     const k = selectedIndex();
     if (k >= 0) pos = anchorOf(sl, k);
     else if (sel?.kind === "blank" && Math.abs(sel.s - state.s) < 0.006) {
-      pos = toCss(sel.h, sel.l); // unnamed spots are pinned where they are
+      pos = toCss(sel.h, sel.l);
     }
     if (!pos || pos[0] < 0 || pos[1] < 0 || pos[0] > W || pos[1] > H) {
       pin.hidden = true;
@@ -512,8 +487,6 @@ export function initNameMap(root) {
     idle = setTimeout(() => render(true), 180);
   }
 
-  /* —— saturation —— */
-
   function syncDepth() {
     const pct = Math.round(state.s * 100);
     depth.value = Math.round(state.s * 1000);
@@ -529,9 +502,6 @@ export function initNameMap(root) {
 
   depth.addEventListener("input", () => setSaturation(depth.value / 1000));
 
-  /* —— zoom, pan and the wheel —— */
-
-  // zoom so the point under (x, y) stays put
   function zoomAt(x, y, factor) {
     const [X, Y] = toDisc(x, y);
     const z = clamp(state.view.z / factor, 1, Z_MAX);
@@ -548,9 +518,7 @@ export function initNameMap(root) {
     requestRender();
   });
 
-  // The page scrolls past this section, so the wheel only zooms once
-  // someone has clicked the map (pinch always zooms). Fully zoomed out,
-  // scrolling down lets go so the page keeps scrolling.
+  // the wheel zooms only after a click, so the page can still scroll past
   function engage(on) {
     if (state.engaged === on) return;
     state.engaged = on;
@@ -582,8 +550,6 @@ export function initNameMap(root) {
     },
     { passive: false }
   );
-
-  /* —— hover, tooltips and picking —— */
 
   function ownerAt(x, y) {
     const sl = state.slice;
@@ -648,7 +614,6 @@ export function initNameMap(root) {
     return [e.clientX - rect.left, e.clientY - rect.top];
   };
 
-  // dragging pans the view once zoomed in
   hit.addEventListener("pointerdown", (e) => {
     engage(true);
     down = { x: e.clientX, y: e.clientY, view: { ...state.view }, panning: false };
@@ -722,16 +687,12 @@ export function initNameMap(root) {
     drawHighlights();
   });
 
-  /* —— the selected color: outlined on the map, detailed on the side —— */
-
   function restartPin() {
     pin.style.animation = "none";
     void pin.offsetWidth;
     pin.style.animation = "";
   }
 
-  // Marks a pick on the map and opens the color page for `detailHex`
-  // (pass false to only mark it).
   function select(selected, detailHex) {
     state.selected = selected;
     restartPin();
@@ -751,8 +712,6 @@ export function initNameMap(root) {
     drawHighlights();
   }
 
-  // Move to a color's saturation disc. Search also zooms in around it;
-  // a shared link opens on the full circle with the color pinned.
   function flyTo(h, s, l, zoom = true) {
     state.s = s;
     syncDepth();
@@ -767,8 +726,6 @@ export function initNameMap(root) {
     selectName(item, detailHex);
   }
 
-  // A hex goes to its own patch, or to the closest name's; the detail view
-  // shows the hex itself and says which name is closest.
   function goToHex(hex, { zoom = true, open = true } = {}) {
     const data = loaded[state.list];
     const detailHex = open && hex;
@@ -781,8 +738,6 @@ export function initNameMap(root) {
     flyTo(h, s, l, zoom);
     selectBlank({ hex, L, a, b, h, s, l }, detailHex);
   }
-
-  /* —— search —— */
 
   function resultButton(swatch, text, onPick) {
     const li = document.createElement("li");
@@ -843,12 +798,9 @@ export function initNameMap(root) {
     render(true);
   });
 
-  // a color handed over from the detail view
   document.addEventListener("color-names:show", (e) => {
     if (loaded[state.list]) goToHex(e.detail.hex, { open: false });
   });
-
-  /* —— start —— */
 
   syncDepth();
   updateHint();

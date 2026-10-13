@@ -1,24 +1,13 @@
-/*
-  Hero stacks — named color cards that fly in and pile up on the title.
-
-  A port of the "Color Name Stacks" pen. Cards are appended over the hero and
-  removed after a while so the DOM never grows unbounded. Adding pauses while
-  the hero is off-screen, and the whole thing is skipped under reduced motion.
-*/
-
 import { loadList } from "./api.js";
 import { colorURL } from "./names.js";
 
 const INTERVAL = 2500; // ms between new cards
-const LIFETIME = INTERVAL * 22; // how long a card lingers before it's removed
+const LIFETIME = INTERVAL * 22;
 
 const rnd = () => -1 + Math.random() * 2;
 const between = (min, max) => min + Math.random() * (max - min);
 
-// Pick a landing spot that tends to avoid the centre text: the right third,
-// the top ~10%, or the bottom ~10%. Values past ±1 push cards to the very
-// edges (the transform multiplies y by 30vh). Once in a while it lands
-// anywhere, so it reads as a tendency, not a hard rule.
+// tends to avoid the centre text; y is multiplied by 30vh, so past ±1 is the very edge
 function landingSpot() {
   if (Math.random() < 0.2) return [rnd(), rnd()];
   switch (Math.floor(Math.random() * 3)) {

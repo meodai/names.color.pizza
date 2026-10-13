@@ -1,29 +1,10 @@
-/*
-  The color wall — every name on the list as a color card, hanging in 3D
-  where its color sits in OKLCH: lightness runs up the middle axis, chroma
-  is the distance from it, hue the angle around it. Greys gather on the
-  axis, the most colorful names on the outside.
-
-  Cards are instanced billboards in WebGL, always facing the camera, drawn
-  like the color page's card: a square swatch over a white label strip.
-  Close enough to read, the strip gets its hex and name as HTML.
-
-  Clicking a card flies to it until it is as big as the color page's card,
-  then navigates; a cross-document view transition carries the card into
-  its place on the color page.
-*/
-
 import { getList, LISTS, normalizeHex, fold, colorURL, siteURL, hexToRgb, rgbToOklab, cardPlace, UNNAMED, showVersion } from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 
-/* —— the space, in world units (a card is 1 wide) —— */
 const W = 1;
-const H = 1.3; // the color page's card: a square swatch, a 0.3 label strip
-const LY = 180; // lightness → world height, the same in every model
-const R = 100; // the outer radius of the polar models
-
-/* —— where each model puts a color. RGB, OKLab and HSL stand light
-   above dark; OKLCH lays the space out as a landscape instead. —— */
+const H = 1.3; // square swatch over a 0.3 label strip
+const LY = 180; // lightness → world height
+const R = 100;
 
 function hsl([r, g, b]) {
   r /= 255;
@@ -50,7 +31,7 @@ const ROOT3 = Math.sqrt(3);
 const ROOT6 = Math.sqrt(6);
 
 export const MODELS = {
-  // the cube stood on its black corner, white straight above it
+  // the cube stood on its black corner, white straight above
   rgb: {
     label: "RGB",
     place: (it) => {
@@ -62,15 +43,11 @@ export const MODELS = {
       ];
     },
   },
-  // OKLab to scale: every axis in the same units, so the solid is as tall
-  // and as narrow as the space really is
   oklab: {
     label: "OKLab",
     place: (it) => [it.a * LY, (it.L - 0.5) * LY, -it.b * LY],
   },
-  // a landscape: hue round the ground, lightness from black at the center
-  // out to white at the rim, chroma as height. The colorful names rise as
-  // hills, the greys lie flat in the valleys.
+  // lightness as the radius, chroma as the height
   oklch: {
     label: "OKLCH",
     place: (it) =>
@@ -80,8 +57,6 @@ export const MODELS = {
         (Math.hypot(it.a, it.b) / 0.32) * LY * 0.55 - LY * 0.25
       ),
   },
-  // HSL's double cone: hue the angle, saturation out to the rim at mid
-  // lightness, pinched to a point at black and at white
   hsl: {
     label: "HSL",
     place: (it) => {
@@ -91,34 +66,28 @@ export const MODELS = {
   },
 };
 const DEFAULT_MODEL = "rgb";
-const GEO = { LY, R, RGB_SIDE }; // for the cells, which undo MODELS' placing
-// how far a name's cell reaches: the name map's "unnamed" distance, in the
-// wall's units (OKLab's L runs over LY), the same in every model
+const GEO = { LY, R, RGB_SIDE }; // cells.js undoes MODELS' placing with these
+// the name map's "unnamed" distance, in wall units
 const CELL_REACH = UNNAMED * LY;
 
 const FOV = (42 * Math.PI) / 180;
 const NEAR = 0.3;
 const FAR = 3000;
-const MIN_DIST = 2.5; // closer than this, scrolling flies forward instead
+const MIN_DIST = 2.5;
 const MAX_DIST = 860;
-const DAMPING = 0.1; // share of the remaining motion applied per frame (OrbitControls: 0.05)
-const MORPH_MS = 1400; // switching models
-const BANG_MS = 2600; // the opening burst
-const LIST_SHIFT_MS = 600; // changing lists: names leaving shrink, new ones grow
-// opening a card: the others pushed off, then gone, then the page changes
-// and the card itself travels into place on the color page
-// Opening a card and closing it again, as overlapping parts on one
-// timeline each ([start, length] in ms): every part begins while the one
-// before is still settling, so the whole reads as one movement.
+const DAMPING = 0.1; // share of the remaining motion per frame (OrbitControls: 0.05)
+const MORPH_MS = 1400;
+const BANG_MS = 2600;
+const LIST_SHIFT_MS = 600;
+// [start, length] in ms; the parts overlap so it reads as one movement
 const IN = { fly: 800, clear: [0, 450], repel: [150, 500], fade: [420, 380], glide: 640, travel: 760 };
 const OUT = { leave: 300, travel: 760, fade: [380, 420], repel: [520, 520], fly: 900 };
 const part = (t, [at, length]) => ease(clamp((t - at) / length, 0, 1));
 const START_DIST = 340;
-const LABEL_PX = 92; // a card this wide on screen gets its name
+const LABEL_PX = 92;
 const MAX_LABELS = 140;
-const FOCUS_PX = 230; // card width when flying to a search result
+const FOCUS_PX = 230;
 
-// the color page's card, shown as it looks once it has appeared
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
   <div class="swatchcard__upper"><i class="swatchcard__swatch" aria-hidden="true">
     <i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i>
@@ -133,7 +102,6 @@ const ease = (t) => 1 - Math.pow(1 - t, 4);
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-/* —— small vector helpers —— */
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const scale = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
@@ -141,8 +109,6 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const norm = (a) => scale(a, 1 / Math.hypot(...a));
 const lerp3 = (a, b, k) => add(a, scale(sub(b, a), k));
-
-/* —— WebGL —— */
 
 const VERT = `#version 300 es
 in vec2 a_corner;
@@ -153,41 +119,38 @@ uniform vec3 u_right;
 uniform vec3 u_up;
 uniform vec3 u_fwd;
 uniform float u_fpx;   // focal length in device px
-uniform vec2 u_view;   // canvas size in device px
+uniform vec2 u_view;
 uniform vec2 u_size;
 uniform vec2 u_clip;   // near, far
 uniform vec2 u_fog;    // depth where the fog starts, ends (from the eye)
-uniform int u_focus;   // the opened card, or -1
+uniform int u_focus;
 uniform vec3 u_focusPos;
-uniform float u_repel; // 0–1: the others pushed away from it
-uniform float u_fade;  // 0–1: the others shrinking into the dark
-uniform float u_clear; // 0–1: the cards between the eye and it, cleared away
-uniform bool u_handed; // the opened card has been handed to its HTML copy
-uniform float u_bang;  // the opening burst, 0–1, or -1 once it's over
+uniform float u_repel;
+uniform float u_fade;
+uniform float u_clear;
+uniform bool u_handed; // the focused card is now drawn by its HTML copy
+uniform float u_bang;
 uniform vec3 u_bangCenter;
-in float a_grow;       // 1 for a card that's new to the list it's on
-uniform float u_grow;  // 0–1: how far the new cards have grown in
-uniform int u_only;      // draw only this card (over the cells), or -1
-uniform float u_keepAll; // 0–1: every card but the opened one, shrunk away
+in float a_grow;
+uniform float u_grow;
+uniform int u_only;
+uniform float u_keepAll;
 out vec2 v_local;
 out vec3 v_color;
 out float v_cardpx;
 out float v_fog;
 void main() {
-  // opening a card: everything else is pushed away from it, nearest the
-  // hardest, then shrinks to nothing
   vec3 pos = a_pos;
   float keep = 1.0;
   if (u_focus >= 0 && gl_InstanceID != u_focus) {
     vec3 d = a_pos - u_focusPos;
     float len = length(d) + 0.001;
-    // pushed out across the screen, not toward the camera, so nothing
-    // sweeps past the eye
+    // across the screen, not toward the eye, so nothing sweeps past the camera
     vec3 across = d - u_fwd * dot(d, u_fwd);
     float wide = length(across) + 0.001;
     pos += across / wide * u_repel * (4.0 + 30.0 * exp(-len / 24.0));
     keep = 1.0 - u_fade;
-    // a card nearer than it, and covering it on screen, gets out of the way
+    // clear the cards between the eye and the focused one
     vec3 vf = u_focusPos - u_eye;
     vec3 vc = a_pos - u_eye;
     float zf = dot(vf, u_fwd);
@@ -198,16 +161,14 @@ void main() {
       if (d.x < reach.x && d.y < reach.y) keep *= 1.0 - u_clear;
     }
   }
-  // the opening burst: out of the middle, past their places and back,
-  // growing in out of the dark. Like a change of model, it ripples by
-  // lightness, the lightest cards first, with a little jitter
+  // the burst ripples by lightness, lightest first, with a little jitter
   float born = 1.0;
   if (u_bang >= 0.0) {
     float h = fract(sin(float(gl_InstanceID) * 12.9898) * 43758.5453);
     float light = dot(a_color, vec3(0.2126, 0.7152, 0.0722));
     float t = clamp((u_bang - (1.0 - light) * 0.4 - h * 0.08) / 0.52, 0.0, 1.0);
     float c1 = 2.4, c3 = c1 + 1.0, u = t - 1.0;
-    float out_ = 1.0 + c3 * u * u * u + c1 * u * u; // ease out, with a bounce back
+    float out_ = 1.0 + c3 * u * u * u + c1 * u * u; // easeOutBack
     pos = mix(u_bangCenter, pos, out_);
     born = smoothstep(0.0, 0.45, t);
     keep *= born;
@@ -215,7 +176,6 @@ void main() {
   keep *= mix(1.0, u_grow, a_grow);
   if (u_only >= 0 && gl_InstanceID != u_only) keep = 0.0;
   if (gl_InstanceID != u_focus) keep *= u_keepAll;
-  // once its HTML copy has taken over, the drawn card is gone
   if (u_handed && gl_InstanceID == u_focus) keep = 0.0;
   vec3 v = pos - u_eye;
   float z = dot(v, u_fwd);
@@ -231,7 +191,7 @@ void main() {
     (z * (f + n) - 2.0 * f * n) / (f - n),
     z
   );
-  // the opened card stays in front of everything on its way out
+  // the focused card is always in front
   if (u_focus >= 0 && gl_InstanceID == u_focus) gl_Position.z = -z;
   v_color = a_color;
   v_cardpx = u_size.x / px;
@@ -248,8 +208,7 @@ uniform vec2 u_size;
 out vec4 o;
 void main() {
   if (v_local.x < 0.0 || v_local.y < 0.0 || v_local.x > u_size.x || v_local.y > u_size.y) discard;
-  // the label strip is white once the card is big enough to have one;
-  // further out the whole card is its color, so the space reads as a cloud
+  // far cards are solid color, so the space reads as a cloud
   vec3 paper = mix(v_color, vec3(1.0), smoothstep(10.0, 34.0, v_cardpx));
   vec3 c = v_local.y < u_size.x ? v_color : paper;
   o = vec4(mix(c, vec3(0.0), v_fog), 1.0);
@@ -303,7 +262,6 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   gl.clearColor(0, 0, 0, 1);
 
   const count = positions.length / 3;
-  // clear: false draws over what's there (the cells); only: one card
   const draw = (cam, dpr, { clear = true, only = -1, keepAll = 1 } = {}) => {
     gl.useProgram(prog);
     gl.bindVertexArray(vao);
@@ -317,24 +275,20 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform3fv(u.fwd, cam.fwd);
     gl.uniform1f(u.fpx, cam.fpx * dpr);
     gl.uniform2f(u.view, canvas.width, canvas.height);
-    // the far side of the shape sinks into the black: measured from the
-    // shape's middle, so it doesn't change with where the camera turns
+    // fog from the shape's middle, so it doesn't shift as the camera turns
     const mid = Math.hypot(...sub(cam.center, cam.eye));
     gl.uniform2f(u.fog, Math.max(0, mid) + 60, mid + 420);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
   };
-  // the opening burst: progress 0–1 from a center, or -1 for none
   draw.bang = (t, center) => {
     gl.useProgram(prog);
     gl.uniform1f(u.bang, t);
     if (center) gl.uniform3fv(u.bangCenter, center);
   };
-  // the cards new to the list, growing in
   draw.grow = (k) => {
     gl.useProgram(prog);
     gl.uniform1f(u.grow, k);
   };
-  // the card being opened, and how far the others have gone
   draw.focus = (i, pos, repel, fade, clear = 0, handed = false) => {
     gl.useProgram(prog);
     gl.uniform1i(u.focus, i);
@@ -345,13 +299,11 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform1f(u.clear, clear);
   };
   draw.gl = gl;
-  // done with it: another list's cards replace these
   draw.dispose = () => {
     Object.values(buffers).forEach((b) => gl.deleteBuffer(b));
     gl.deleteVertexArray(vao);
     gl.deleteProgram(prog);
   };
-  // new positions for every card, while models morph
   draw.move = (array) => {
     gl.useProgram(prog);
     gl.bindVertexArray(vao);
@@ -360,8 +312,6 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   };
   return draw;
 }
-
-/* —— the page —— */
 
 export async function initWall(root) {
   const q = (s) => root.querySelector(s);
@@ -376,8 +326,6 @@ export async function initWall(root) {
   const results = q("[data-results]");
   const intro = q("[data-intro]");
 
-  // the intro card, once dismissed, stays dismissed; otherwise it comes in
-  // once the names (and so its count) are there, not before
   let introWanted = true;
   try {
     introWanted = !localStorage.getItem("wall-intro-seen");
@@ -389,8 +337,6 @@ export async function initWall(root) {
     } catch {}
   });
 
-  // which list: the full one, unless the address asks for another (it can
-  // be switched later: see setList)
   let listKey = new URLSearchParams(location.search).get("list");
   if (!LISTS[listKey]) listKey = "default";
   let list;
@@ -409,8 +355,6 @@ export async function initWall(root) {
   showCount();
   if (introWanted) intro.hidden = false;
 
-  // each name where the chosen model puts its color; every model's
-  // positions are worked out once, the first time it's shown
   const colorsOf = (list) => {
     const out = new Uint8Array(list.length * 3);
     list.forEach((it, i) => out.set(it.rgb, i * 3));
@@ -425,12 +369,10 @@ export async function initWall(root) {
       return out;
     })());
 
-  // each model's middle, worked out once (see home())
   const middles = {};
   const middleOf = (key) => (middles[key] ??= home(key).target);
 
   const picker = q("[data-models]");
-  // RGB first, unless the address asks for another
   let model = new URLSearchParams(location.search).get("model");
   if (!MODELS[model]) model = DEFAULT_MODEL;
   let positions = placeAll(model).slice();
@@ -447,8 +389,6 @@ export async function initWall(root) {
     return;
   }
   status.hidden = true;
-
-  /* —— camera: orbits a target; yaw round the axis, pitch over it —— */
 
   const view = { w: 1, h: 1 };
   let dpr = 1;
@@ -472,7 +412,7 @@ export async function initWall(root) {
     cam.fpx = view.h / 2 / Math.tan(FOV / 2); // in CSS px
   }
 
-  // a world point on screen: x, y in CSS px, z its depth, s px per world unit
+  // x, y in CSS px; z depth; s px per world unit
   function project(p) {
     const v = sub(p, cam.eye);
     const z = dot(v, cam.fwd);
@@ -480,8 +420,6 @@ export async function initWall(root) {
     return { x: view.w / 2 + dot(v, cam.right) * s, y: view.h / 2 - dot(v, cam.up) * s, z, s };
   }
 
-  // Every card on screen, nearest first. Cheap enough to run for all of
-  // them: a few dot products each.
   function onScreen(minPx = 0, limit = Infinity) {
     const out = [];
     const [ex, ey, ez] = cam.eye;
@@ -489,8 +427,7 @@ export async function initWall(root) {
     const [rx, ry, rz] = cam.right;
     const [ux, uy, uz] = cam.up;
     const maxZ = minPx ? (W * cam.fpx) / minPx : FAR;
-    // the cards cleared out of the way of a found card can't be hit: nearer
-    // than it, and covering it on screen (the shader's rule)
+    // mirrors the shader's clearing around a found card
     let sp = null;
     if (spot?.on) {
       const p = project(posOf(spot.i));
@@ -516,7 +453,6 @@ export async function initWall(root) {
   }
 
   function cardAt(sx, sy) {
-    // a found card is drawn in front of everything
     if (spot?.on) {
       const b = drawnBox(spot.i);
       if (Math.abs(sx - b.x) <= b.w / 2 && Math.abs(sy - b.y) <= (b.w * H) / 2) return spot.i;
@@ -528,8 +464,6 @@ export async function initWall(root) {
     return -1;
   }
 
-  /* —— frame —— */
-
   let queued = false;
   const request = () => {
     if (!queued) {
@@ -538,25 +472,23 @@ export async function initWall(root) {
     }
   };
 
-  let anim = null; // a flight: { from, to, start, duration, done }
-  let morph = null; // a change of model: { from, to, start }
-  let bang = null; // the opening burst: { start, center }
-  let listShift = null; // changing lists: { start }
-  let leaving = null; // the cards of names not on the new list, shrinking away
-  let opening = null; // a card on its way into its color page: { i, pos, start }
-  // what the pointer and wheel ask of the camera, applied over the next
-  // frames (see frame): turns, a move of the target, a zoom (log scale)
+  let anim = null;
+  let morph = null;
+  let bang = null;
+  let listShift = null;
+  let leaving = null;
+  let opening = null;
+  // pending input, eased out in frame(); zoom is log scale
   const delta = { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0 };
   const moving = () =>
     Math.abs(delta.yaw) + Math.abs(delta.pitch) + Math.abs(delta.zoom) > 1e-5 || Math.hypot(...delta.pan) > 1e-4;
   const stopMoving = () => Object.assign(delta, { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0 });
-  let idle = !reduceMotion; // a slow turn until someone touches it
+  let idle = !reduceMotion;
   let lastTime = 0;
   let marked = -1;
-  // a found card (search, color circle, ?c=): drawn in front, with the cards
-  // between it and the eye shrunk out of the way, until the camera moves
-  let spot = null; // { i, on, t }
-  let busy = false; // on the way into a color page
+  // a found card: drawn in front until the camera moves
+  let spot = null;
+  let busy = false;
 
   function frame(time) {
     queued = false;
@@ -564,8 +496,6 @@ export async function initWall(root) {
     lastTime = time;
 
     if (anim?.card) {
-      // zooming into a card: it slides straight from where it was to the
-      // middle while it grows, and the camera is placed to show exactly that
       const t = Math.min(1, (time - anim.start) / anim.duration);
       const k = anim.ease(t);
       const w = Math.exp(Math.log(anim.w0) + (Math.log(anim.w1) - Math.log(anim.w0)) * k);
@@ -575,8 +505,7 @@ export async function initWall(root) {
       cam.target = sub(anim.card, add(scale(cam.right, (sx * z) / cam.fpx), scale(cam.up, (sy * z) / cam.fpx)));
       cam.dist = z;
       if (t >= 1) {
-        // the same view as the camera asked for; only its target may sit
-        // elsewhere along the line of sight
+        // same view; only the target may differ along the line of sight
         if (anim.final) Object.assign(cam, anim.final);
         const done = anim.done;
         anim = null;
@@ -595,8 +524,7 @@ export async function initWall(root) {
         done?.();
       }
     } else if (moving()) {
-      // like three.js OrbitControls with damping: each frame takes a share
-      // of what the input asked for, the rest carries on and dies away
+      // damped like three.js OrbitControls
       const f = reduceMotion ? 1 : 1 - Math.pow(1 - DAMPING, dt / 16.7);
       cam.yaw += delta.yaw * f;
       cam.pitch += delta.pitch * f;
@@ -612,8 +540,7 @@ export async function initWall(root) {
     }
 
     if (morph) {
-      // lighter cards set off a little earlier, so the change ripples
-      // through the space instead of happening all at once
+      // lighter cards start earlier, so the change ripples
       const t = (time - morph.start) / MORPH_MS;
       const { from, to } = morph;
       for (let i = 0; i < n; i++) {
@@ -625,8 +552,6 @@ export async function initWall(root) {
     }
 
     if (listShift) {
-      // changing lists: the names on both stay put, those leaving shrink
-      // away where they are, the new ones grow in at their places
       const t = reduceMotion ? 1 : clamp((time - listShift.start) / LIST_SHIFT_MS, 0, 1);
       const k = easeInOut(t);
       draw.grow(k);
@@ -663,8 +588,6 @@ export async function initWall(root) {
       const t = time - opening.t0;
       let now;
       if (opening.reverse) {
-        // the others grow back while the card is still on its way home,
-        // then drift in; from wherever the way in had got to
         const f = opening.from;
         now = {
           clear: f.clear * (1 - part(t, OUT.fade)),
@@ -672,8 +595,6 @@ export async function initWall(root) {
           fade: f.fade * (1 - part(t, OUT.fade)),
         };
       } else {
-        // the path clears as the camera flies in, the push starts on the
-        // way, the others shrink away as it settles
         now = { clear: part(t, IN.clear), repel: part(t, IN.repel), fade: part(t, IN.fade) };
       }
       opening.now = now;
@@ -692,8 +613,6 @@ export async function initWall(root) {
     idle = false;
   };
 
-  /* —— names, on the cards near enough to read —— */
-
   const pool = [];
   function label(k) {
     if (!pool[k]) {
@@ -708,8 +627,6 @@ export async function initWall(root) {
 
   function placeLabels() {
     let used = 0;
-    // opening or closing a card, only it keeps its label, while it's drawn
-    // (its HTML copy has its own)
     const one = (i) => [{ i, ...boxRect(drawnBox(i)), s: drawnBox(i).w / W }].filter((c) => c.x1 - c.x0 > 36);
     const near = opening
       ? opening.handed
@@ -722,7 +639,6 @@ export async function initWall(root) {
         : onScreen(LABEL_PX, MAX_LABELS * 3);
     const covers = [];
     for (const c of near) {
-      // the strip under the swatch; skipped when a nearer card covers it
       const top = c.y0 + W * c.s;
       const hidden = covers.some((r) => r.x0 < c.x1 && r.x1 > c.x0 && r.y0 < c.y1 && r.y1 > top);
       covers.push(c);
@@ -743,7 +659,6 @@ export async function initWall(root) {
     for (let k = used; k < pool.length && !pool[k].el.hidden; k++) pool[k].el.hidden = true;
   }
 
-  // the found card goes back among the others once the camera moves
   function dropSpot() {
     if (!spot?.on) return;
     spot = { ...spot, on: false, t: performance.now() };
@@ -767,8 +682,6 @@ export async function initWall(root) {
     mark.style.height = `${H * p.s}px`;
   }
 
-  /* —— size —— */
-
   function resize() {
     const rect = canvas.getBoundingClientRect();
     view.w = rect.width;
@@ -781,8 +694,6 @@ export async function initWall(root) {
   }
   new ResizeObserver(resize).observe(canvas);
   resize();
-
-  /* —— flights —— */
 
   function flyTo(to, duration = 1100, done, easing = ease) {
     stopMoving();
@@ -807,8 +718,6 @@ export async function initWall(root) {
     request();
   }
 
-  // Fly into a card: from wherever it is on screen, it moves in a straight
-  // line to the middle while it grows to w px; the view doesn't turn.
   function zoomInto(i, w, duration, easing = easeInOut) {
     stopMoving();
     stopIdle();
@@ -835,15 +744,11 @@ export async function initWall(root) {
     request();
   }
 
-  // And back out of it, the same way in reverse: from the middle, the card
-  // moves in a straight line to where it sits in the view we return to,
-  // shrinking as it goes. Both views look the same way, so nothing turns.
   function zoomOutOf(i, to, duration, done, easing = easeInOut) {
     stopMoving();
     stopIdle();
     const card = posOf(i);
     const now = project(card);
-    // where the card will be in that view
     const keep = { ...cam };
     Object.assign(cam, to);
     update();
@@ -856,8 +761,6 @@ export async function initWall(root) {
       done?.();
       return;
     }
-    // a card out of sight in the view we return to (a color reached from
-    // the color page): an ordinary flight then
     if (!(end.z > NEAR) || !(now.z > NEAR)) return flyTo(to, duration, done, easing);
     anim = {
       card,
@@ -876,7 +779,6 @@ export async function initWall(root) {
     request();
   }
 
-  // the distance at which a card is px wide on screen
   const distFor = (px) => (W * cam.fpx) / px;
 
   function focusCard(i) {
@@ -891,12 +793,9 @@ export async function initWall(root) {
     } catch {}
   }
 
-  // Where the color page puts its card, for a given place: measured on an
-  // invisible copy of its hero and card, so it follows the color page's own
-  // CSS (landscape or portrait, its card size) rather than repeating it.
+  // measured on a hidden copy, so it follows the color page's own CSS
   function slotOf(place) {
-    // inside a layer like the one the color page opens in, so its width
-    // (scrollbar and all) is the same
+    // same layer as the color page, so the scrollbar width matches
     const probe = document.createElement("div");
     probe.className = "wall__page wall__probe";
     probe.innerHTML = `<section class="slide hero color-hero"><div class="color-hero__card">${CARD_HTML}</div></section>`;
@@ -907,11 +806,6 @@ export async function initWall(root) {
     probe.remove();
     return { x: b.left + b.width / 2, y: b.top + b.height / 2, w: b.width, h: b.height };
   }
-
-  // Into the color page: the others are pushed off and shrink away, then
-  // the card travels into its place on the color page.
-  /* —— an HTML copy of the color page's card, to carry a card between
-     the 3D space and the color page —— */
 
   const sizeCard = (card, w) => {
     card.style.inlineSize = `${w}px`;
@@ -930,7 +824,6 @@ export async function initWall(root) {
     return { copy, card };
   }
 
-  // a box is a center and a width; the card's height follows from it
   function placeCopy({ copy, card }, box, r = 0) {
     copy.style.transform = `translate(${box.x - box.w / 2}px, ${box.y - (box.w * H) / 2}px) rotate(${r}deg)`;
     sizeCard(card, box.w);
@@ -959,19 +852,14 @@ export async function initWall(root) {
     });
   }
 
-  // where a card is drawn on screen right now
   function drawnBox(i) {
     const p = project(posOf(i));
     return { x: p.x, y: p.y, w: W * p.s };
   }
 
-  // the size the color page gives its card
   const pageCardWidth = () => clamp(view.w * 0.21, 208, 384);
 
-  // Into the color page: fly to the card, push the others off and let
-  // them shrink away, then the card glides into its place on the color
-  // page, which opens underneath it.
-  let pending = null; // a card on its way in: { i, before, c, cancelled }
+  let pending = null;
 
   function open(i) {
     if (busy) return;
@@ -980,24 +868,16 @@ export async function initWall(root) {
     mark.hidden = true;
     tip.hidden = true;
     const it = items[i];
-    // coming back, the wall is as it was before the click
     const before = saveable();
     const task = (pending = { i, before, c: null, cancelled: false });
     spot = null;
-    // the address changes at once, as for a link, so Back at any point on
-    // the way in comes back to the wall (see cancelOpening)
+    // push now, so Back at any point on the way in returns to the wall
     history.pushState({ colorDepth: 1 }, "", colorURL(it.hex));
 
-    // The camera flies to the card until it's as big as on the color
-    // page; it's drawn in front from now on, whatever is in the way clears
-    // off, the others are pushed away and shrink (see IN and the frame)
     root.classList.add("is-opening");
     opening = { i, pos: posOf(i), t0: performance.now(), handed: false };
     zoomInto(i, pageCardWidth(), IN.fly);
 
-    // As the camera settles, the card becomes an HTML copy laid exactly
-    // over the drawn one and glides and tilts to where the color page puts
-    // it; the color page opens under it, its own card in the same place.
     later(IN.glide, async () => {
       if (task.cancelled) return;
       const c = (task.c = makeCopy(it.hex, it.name, 0));
@@ -1015,8 +895,7 @@ export async function initWall(root) {
       try {
         await showColorPage(it.hex, before, c.copy, task);
       } catch (e) {
-        // can't build it here: the address is already the color page's,
-        // so load it on its own
+        // the address is already the color page's, so load it on its own
         console.error(e);
         location.reload();
       }
@@ -1025,23 +904,15 @@ export async function initWall(root) {
 
   const later = (ms, fn) => setTimeout(fn, reduceMotion ? 0 : ms);
 
-  /* —— the color page, inside the wall ——
-     Rather than loading a new page (and the cut that comes with it), the
-     color page's markup is laid over the wall in this same document and
-     the address changes to color/#hex. Its card takes over from the copy
-     in the very same place. Closing plays the way in backwards; a reload
-     of that address opens the color page on its own. */
-
-  let colorPage = null; // { layer, controller, returnTo, hex, depth }
+  let colorPage = null;
   let colorMarkup = null;
-  // resolved now: once a card is opening, the address is the color page's
+  // resolve now: once a card is opening, the address is the color page's
   const colorPageURL = siteURL("color/");
   const loadColorPage = () =>
     (colorMarkup ??= fetch(colorPageURL)
       .then((r) => r.text())
       .then((html) => new DOMParser().parseFromString(html, "text/html").querySelector("main")));
   const loadDetail = () => import("./detail.js");
-  // fetched ahead, so a click doesn't wait on them
   setTimeout(() => {
     loadColorPage().catch(() => (colorMarkup = null));
     loadDetail().catch(() => {});
@@ -1056,7 +927,7 @@ export async function initWall(root) {
     const layer = document.createElement("div");
     layer.className = "wall__page";
     layer.append(document.importNode(main, true));
-    // links on the color page are relative to it, one level down
+    // links on the color page are relative to color/
     document.documentElement.dataset.root = "../";
     root.append(layer);
     const controller = new AbortController();
@@ -1064,15 +935,13 @@ export async function initWall(root) {
     detail.initDetailPage(layer, {
       embedded: true,
       signal: controller.signal,
-      // ×, Escape, the home link: straight back to the 3D space, past
-      // every color visited since
+      // back past every color visited since
       onClose: () => history.go(-colorPage.depth),
     });
-    // the color page's own card is in place now; the copy can go
     requestAnimationFrame(() => copy.remove());
   }
 
-  // a neighbor on the color page is a new history entry, one deeper
+  // each neighbor visited is one more history entry
   addEventListener("hashchange", () => {
     if (!colorPage) return;
     colorPage.hex = normalizeHex(location.hash.slice(1)) || colorPage.hex;
@@ -1082,9 +951,6 @@ export async function initWall(root) {
     colorPage.depth = history.state.colorDepth;
   });
 
-  // Out of the color page, the way in backwards: the page fades from under
-  // its card, the card glides back to its place in the space, the others
-  // grow back and drift in, and the camera returns to where it was.
   function closeColorPage() {
     const page = colorPage;
     colorPage = null;
@@ -1100,8 +966,7 @@ export async function initWall(root) {
     c.copy.classList.add("is-returning");
     placeCopy(c, from, tilt);
     root.append(c.copy);
-    // the copy covers the page's own card exactly; that one goes, so no
-    // second card stays behind on the fading page
+    // hide the page's own card so no second one lingers on the fading page
     slot.style.visibility = "hidden";
 
     page.controller.abort();
@@ -1109,7 +974,6 @@ export async function initWall(root) {
     document.documentElement.classList.remove("is-arriving");
     document.title = wallTitle;
 
-    // behind the page, the camera already waits on the card, the others gone
     anim = null;
     Object.assign(cam, {
       target: posOf(i),
@@ -1119,19 +983,15 @@ export async function initWall(root) {
     });
     update();
 
-    // the page fades from under its card while the card already glides home
     page.layer.classList.add("is-leaving");
     later(OUT.leave, () => page.layer.remove());
     returnCard(c, i, page.returnTo, { repel: 1, fade: 1, clear: 1 });
   }
 
-  // The way back from the copy: it glides to where its card is drawn while
-  // the others grow back around it and drift in; it hands over to the drawn
-  // card, and the camera sets off home while the last of them settle.
   async function returnCard(c, i, returnTo, from) {
     opening = { i, pos: posOf(i), reverse: true, t0: performance.now(), handed: true, from };
     request();
-    // the copy is shown where it was for a frame before it sets off
+    // show the copy in place for a frame before it moves
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     await glide(c, drawnBox(i), 0, OUT.travel);
     c.copy.remove();
@@ -1139,8 +999,6 @@ export async function initWall(root) {
     zoomOutOf(i, returnTo, OUT.fly, resetOpening);
   }
 
-  // Back while a card is still on its way in: it turns round from wherever
-  // it got to.
   function cancelOpening() {
     const task = pending;
     pending = null;
@@ -1148,10 +1006,8 @@ export async function initWall(root) {
     const from = opening?.now || { repel: 0, fade: 0, clear: 0 };
     anim = null;
     if (task.c) {
-      // the copy is somewhere between the space and the color page's place
       returnCard(task.c, task.i, task.before, from);
     } else {
-      // still flying in: back out, the others coming back on the way
       opening = { i: task.i, pos: posOf(task.i), reverse: true, t0: performance.now() - OUT.fade[0], handed: false, from };
       flyTo(task.before, reduceMotion ? 0 : OUT.fly, resetOpening, easeInOut);
     }
@@ -1171,21 +1027,17 @@ export async function initWall(root) {
     const onColor = /\/color\/$/.test(location.pathname);
     if (pending && !onColor) cancelOpening();
     else if (colorPage && !onColor) closeColorPage();
-    // forward again into a color page that's no longer open: load it
+    // forward into a color page that's no longer open: load it
     else if (!colorPage && !pending && onColor) location.reload();
   });
 
-  // back from a color page (bfcache): the copy is gone, the wall is live again
+  // back from bfcache
   addEventListener("pageshow", (e) => {
     if (e.persisted && !colorPage) resetOpening();
   });
 
-  /* —— pointer and wheel, the way three.js OrbitControls does it: drag
-     turns round the target, right-drag / shift-drag / two fingers move
-     it, the wheel and a pinch zoom toward it —— */
-
   const pointers = new Map();
-  let press = null; // the first pointer down, to tell a click from a drag
+  let press = null;
   let pinch = null;
 
   // a full screen height of drag is a full turn
@@ -1194,7 +1046,6 @@ export async function initWall(root) {
     delta.pitch += (2 * Math.PI * dy) / view.h;
   }
 
-  // the target moves with the pointer, at the target's depth
   function pan(dx, dy) {
     const k = cam.dist / cam.fpx;
     delta.pan = add(delta.pan, add(scale(cam.right, -dx * k), scale(cam.up, dy * k)));
@@ -1204,7 +1055,6 @@ export async function initWall(root) {
     delta.zoom += logFactor;
   };
 
-  // the middle of the current model's shape, and the view of all of it
   function home(key = model) {
     const p = placeAll(key);
     const lo = [Infinity, Infinity, Infinity];
@@ -1213,7 +1063,6 @@ export async function initWall(root) {
       lo[i % 3] = Math.min(lo[i % 3], p[i]);
       hi[i % 3] = Math.max(hi[i % 3], p[i]);
     }
-    // far enough for the whole shape, on a wide screen and a narrow one
     const radius = Math.hypot(...sub(hi, lo)) / 2;
     const half = Math.min(FOV / 2, Math.atan(Math.tan(FOV / 2) * (view.w / view.h)));
     const dist = clamp((radius / Math.sin(half)) * 0.92, MIN_DIST * 10, MAX_DIST);
@@ -1288,7 +1137,6 @@ export async function initWall(root) {
   canvas.addEventListener("pointerup", release);
   canvas.addEventListener("pointercancel", release);
 
-  // a mouse over the space: the card's name follows it, unless it has a label
   let hoverQueued = null;
   function hover(e) {
     if (e.pointerType !== "mouse" || busy) return;
@@ -1310,12 +1158,10 @@ export async function initWall(root) {
     const i = cardAt(sx, sy);
     const hit = i < 0 ? null : onScreen().find((c) => c.i === i) || { i, ...boxRect(drawnBox(i)) };
     canvas.style.cursor = hit ? "pointer" : "";
-    // cards big enough carry their own label; cells never do
     if (!hit || (cellsMix <= 0.5 && hit.x1 - hit.x0 >= LABEL_PX)) {
       tip.hidden = true;
       return;
     }
-    // a dot of the color, then the name
     const dot = document.createElement("i");
     dot.className = "wall__tip-dot";
     dot.style.background = items[hit.i].hex;
@@ -1325,7 +1171,6 @@ export async function initWall(root) {
   }
   canvas.addEventListener("pointerleave", () => (tip.hidden = true));
 
-  // the wheel and a trackpad pinch zoom toward the target
   canvas.addEventListener(
     "wheel",
     (e) => {
@@ -1351,21 +1196,17 @@ export async function initWall(root) {
   };
   const goHome = () => !busy && flyTo(home(), 1000);
 
-  // The logo: over an open color page it closes it (the way the × does);
-  // on the wall it shows the whole space again.
   q(".brand").addEventListener("click", (e) => {
     e.preventDefault();
     if (colorPage) history.go(-colorPage.depth);
     else goHome();
   });
   q("[data-home]").addEventListener("click", goHome);
-  // a double-click on the dark: back to the whole shape
   canvas.addEventListener("dblclick", (e) => {
     const rect = canvas.getBoundingClientRect();
     if (cardAt(e.clientX - rect.left, e.clientY - rect.top) < 0) goHome();
   });
 
-  // the keyboard turns and flies too, unless someone is typing
   window.addEventListener("keydown", (e) => {
     if (busy || e.target.closest?.("input, button, a")) return;
     const turns = { ArrowLeft: [0.25, 0], ArrowRight: [-0.25, 0], ArrowUp: [0, 0.2], ArrowDown: [0, -0.2] };
@@ -1382,19 +1223,16 @@ export async function initWall(root) {
     }
   });
 
-  /* —— cells: the space filled, each name's region in its color —— */
-
   const cellsButton = q("[data-cells]");
-  const cellsData = {}; // per model: who owns which part of it (see cells.js)
+  const cellsData = {};
   const building = {};
   let cellsDraw = null;
   let cellsOn = false;
-  let cellsMix = 0; // 0 cards … 1 cells
-  let cellsFade = null; // { from, to, t0 }
-  let cellsModel = model; // the model the cells are drawn in
-  let flip = null; // a change of model under the cells: { t0, from, to }
+  let cellsMix = 0;
+  let cellsFade = null;
+  let cellsModel = model;
+  let flip = null;
 
-  // the box around each model's shape, to clip the cells' rays to
   const bounds = {};
   function boundsOf(key) {
     if (bounds[key]) return bounds[key];
@@ -1408,8 +1246,7 @@ export async function initWall(root) {
     return (bounds[key] = { lo: lo.map((v) => v - 6), hi: hi.map((v) => v + 6) });
   }
 
-  // Closing in, the space between the camera and the point it turns round
-  // is cut away, more the closer it gets: you look into the cells there.
+  // the closer in, the more of the space in front of the target is cut away
   const wholeDist = {};
   function cutDepth() {
     const key = `${cellsModel} ${view.w}×${view.h}`;
@@ -1440,7 +1277,7 @@ export async function initWall(root) {
       if (leaving) leaving(cam, dpr, { clear: false, keepAll: listShift?.leave ?? 0 });
       return;
     }
-    // the cells: coarser while anything moves, sharp once it all stops
+    // lower resolution while anything moves
     const still = !anim && !moving() && !morph && !bang && !cellsFade && !flip && !opening && !pointers.size;
     cellsDraw({
       cam,
@@ -1453,14 +1290,11 @@ export async function initWall(root) {
       fog: fogRange(),
       scale: Math.min(1, 1.25 / dpr) * (still ? 1 : 0.5),
     });
-    // over them, the cards shrinking away, or the one card being opened
-    // or found
     const only = opening ? opening.i : spot ? spot.i : -1;
     if (cellsMix < 1) draw(cam, dpr, { clear: false, keepAll: 1 - cellsMix });
     else if (only >= 0) draw(cam, dpr, { clear: false, only });
   }
 
-  // the cell under a screen point: the name it belongs to, or -1
   function cellAt(sx, sy) {
     if (!cellsData[cellsModel]) return -1;
     const x = (sx - view.w / 2) / cam.fpx;
@@ -1491,10 +1325,6 @@ export async function initWall(root) {
   }
   cellsButton.addEventListener("click", () => setCells(!cellsOn));
 
-  /* —— the lists: Full, Best of, Short ——
-     Switching keeps the names that are on both lists where they are; those
-     leaving shrink away, the new ones grow in at their places. */
-
   const listButton = q("[data-lists]");
   const listMenu = q("[data-list-menu]");
 
@@ -1515,7 +1345,6 @@ export async function initWall(root) {
     toggleListMenu(false);
     setList(b.dataset.list);
   });
-  // a click anywhere else, or Escape, closes it
   document.addEventListener("pointerdown", (e) => {
     if (!listMenu.hidden && !e.target.closest("[data-list-menu], [data-lists]")) toggleListMenu(false);
   });
@@ -1551,7 +1380,6 @@ export async function initWall(root) {
       history.replaceState(history.state, "", url);
     } catch {}
 
-    // the cells fade while the other list loads
     if (cellsMix > 0) cellsFade = { from: cellsMix, to: 0, t0: performance.now() };
     request();
     const slow = setTimeout(() => {
@@ -1567,9 +1395,6 @@ export async function initWall(root) {
     clearTimeout(slow);
     if (next) {
       status.hidden = true;
-      // The names on both lists stay where they are. Those only on the old
-      // one become cards of their own, which shrink away; those only on
-      // the new one are marked to grow in.
       const id = (it) => `${it.name}\u0000${it.hex}`;
       const coming = new Set(next.items.map(id));
       const staying = new Set(items.map(id));
@@ -1589,15 +1414,12 @@ export async function initWall(root) {
       draw.grow(0);
       listShift = { start: performance.now(), leave: 1 };
     } else {
-      // the list it had stays
       status.textContent = `The ${LISTS[key]} list didn’t load. Check your connection.`;
       setTimeout(() => (status.hidden = true), 3000);
       listKey = before;
       showListChoice();
     }
 
-    // the cells, if they were on, come back once they're worked out for
-    // this list
     busy = false;
     if (cellsOn) {
       ensureCells(model).then((ok) => {
@@ -1611,7 +1433,6 @@ export async function initWall(root) {
     request();
   }
 
-  // everything that comes from the list, built again from another one
   function useList(next, grow) {
     list = next;
     items = next.items;
@@ -1632,7 +1453,6 @@ export async function initWall(root) {
     showCount();
   }
 
-  // a model's cells, worked out the first time they're shown in it
   async function ensureCells(key) {
     if (cellsDraw?.has(key)) return true;
     status.textContent = "Working out each name’s part of the space…";
@@ -1654,13 +1474,10 @@ export async function initWall(root) {
     }
   }
 
-  /* —— the model: the same names, rearranged —— */
-
   function setModel(key) {
     if (key === model || !MODELS[key]) return;
     dropSpot();
-    // the cells can't morph: they dip into the dark and come back reshaped
-    // (worked out first, if they haven't been yet)
+    // cells can't morph: they dip into the dark and come back reshaped
     if (cellsMix > 0) {
       const from = cellsModel;
       ensureCells(key).then((ok) => {
@@ -1678,7 +1495,6 @@ export async function initWall(root) {
     } else {
       morph = { from: positions.slice(), to, start: performance.now() };
     }
-    // each shape has its own middle: turn round the new one
     if (!busy) flyTo(home(), MORPH_MS);
     showModel();
     try {
@@ -1689,7 +1505,6 @@ export async function initWall(root) {
     request();
   }
 
-  // the black pill slides under the chosen model
   const thumb = document.createElement("span");
   thumb.className = "wall__models-thumb";
   thumb.setAttribute("aria-hidden", "true");
@@ -1716,10 +1531,8 @@ export async function initWall(root) {
     })
   );
   showModel();
-  // its size follows the buttons' (fonts loading, the phone layout)
+  // fonts loading and the phone layout resize the buttons
   new ResizeObserver(showModel).observe(picker);
-
-  /* —— search: a name, or a hex and the name closest to it —— */
 
   let found = [];
   let active = 0;
@@ -1783,7 +1596,6 @@ export async function initWall(root) {
     showResults();
   }
 
-  // the × at the end of the field: shown while there's something in it
   const clearButton = q("[data-clear]");
   const showClear = () => (clearButton.hidden = !search.value);
   clearButton.addEventListener("click", () => {
@@ -1815,8 +1627,6 @@ export async function initWall(root) {
       search.blur();
     }
   });
-  // the color circle: pick any color, fly to the name closest to it; while
-  // the picker is being dragged, only every so often
   let pickTimer = 0;
   colorPicker.addEventListener("input", () => {
     clearTimeout(pickTimer);
@@ -1830,35 +1640,29 @@ export async function initWall(root) {
   });
   results.hidden = true;
 
-  // a handle for poking at the camera in development
   if (import.meta.env.DEV) {
     window.__wall = {
       cam,
       state: () => ({ anim: !!anim, moving: moving(), idle, busy, marked, open: !!colorPage, list: listKey, n }),
       open: (hex) => open(nearest(hex)),
-      // where the card closest to a hex is drawn right now
       box: (hex) => drawnBox(nearest(hex)),
       nearest: (hex) => items[nearest(hex)],
-      // where the card closest to a hex hangs in the space
       at: (hex) => posOf(nearest(hex)),
       cellAt: (x, y) => cellAt(x, y),
       cardAt: (x, y) => { const i = cardAt(x, y); return i < 0 ? null : items[i]; },
     };
   }
 
-  /* —— start —— */
-
   const saveable = () => ({ target: cam.target, yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist });
   addEventListener("pagehide", () => {
-    if (busy) return; // opening a card saved the view from before the click
+    if (busy) return; // opening a card already saved the view from before the click
     try {
       sessionStorage.setItem("wall-camera", JSON.stringify(saveable()));
     } catch {}
   });
 
   const start = normalizeHex(new URLSearchParams(location.search).get("c") || "");
-  // The camera is kept only for coming back from a color page (Back, or
-  // its ×); a reload or a fresh visit starts over, with the burst.
+  // the camera is restored only when coming back from a color page
   const nav = performance.getEntriesByType("navigation")[0]?.type;
   let fromColorPage = false;
   try {
@@ -1872,7 +1676,6 @@ export async function initWall(root) {
   }
 
   if (saved && Number.isFinite(saved.dist) && saved.target?.length === 3) {
-    // coming back from a color page: where we were, still
     Object.assign(cam, saved);
     if (new URLSearchParams(location.search).get("view") === "cells") setCells(true);
     idle = false;
@@ -1882,9 +1685,6 @@ export async function initWall(root) {
     }
     request();
   } else {
-    // the big bang: every card bursts out of the middle of the shape, past
-    // its place and back into it; then a slow turn, or, with a color in the
-    // address (?c=), a flight to it
     const h = home();
     const startCells = new URLSearchParams(location.search).get("view") === "cells";
     const then = () => {
@@ -1897,12 +1697,11 @@ export async function initWall(root) {
       update();
       then();
     } else {
-      // the camera starts in the middle of it and pulls back as they fly out
       Object.assign(cam, { ...h, dist: h.dist * 0.07, yaw: cam.yaw - 0.6 });
       update();
       flyTo(h, BANG_MS);
       bang = { start: performance.now(), center: h.target, then };
-      busy = true; // nothing to click until they've landed
+      busy = true;
     }
     request();
   }

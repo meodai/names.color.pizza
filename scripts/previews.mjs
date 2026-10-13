@@ -1,18 +1,5 @@
-/*
-  Previews — the picture a link to a color's page shows (og:image), one per
-  name, written by the build after the pages (scripts/pages.mjs):
-
-    dist/color/<slug>/card.png   600×315: the color, under it a white strip
-                                 with the hex and the name, and the parrot
-
-  Like the site's color cards, wide. 600×315 and optimized (oxipng, when
-  it's installed): every name has one, and the site has to stay under
-  GitHub Pages' 1 GB. A picture is made once: kept in .cache/previews by
-  name and hex (the deploy keeps that folder from run to run), so a build
-  only makes those of new or changed names.
-
-    node scripts/previews.mjs
-*/
+// Each name's link preview, dist/color/<slug>/card.png, cached in
+// .cache/previews by name and hex.
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -27,7 +14,7 @@ const DIST = resolve(here, "../dist");
 const CACHE = resolve(here, "../.cache/previews");
 const LIST = resolve(here, "../../src/colornames.csv");
 const FONTS = join(here, "fonts");
-const DESIGN = 2; // change it when the picture changes: every one is made again
+const DESIGN = 2; // bump to remake every preview
 
 const W = 600;
 const H = 315;
@@ -46,8 +33,6 @@ const items = readFileSync(LIST, "utf8")
   });
 const slugs = slugsOf(items);
 
-// the parrot, from the page's own logo, in black like the text (its eye
-// stays white)
 const page = readFileSync(resolve(here, "../color/index.html"), "utf8");
 const [, viewBox, logo] = page.match(/<svg class="brand__logo" viewBox="([^"]+)"[^>]*>([\s\S]*?)<\/svg>/);
 const paths = logo.replace(/fill="(?!#fff")[^"]*"/g, 'fill="#000"');
@@ -61,7 +46,7 @@ const strip = Buffer.from(
 );
 
 const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-// a line of text cut to its ink, so the block is centered by what shows
+// trimmed to its ink, so the block centers on what shows
 async function line(text, weight, size, width) {
   const raw = await sharp({
     text: {
@@ -99,7 +84,6 @@ mkdirSync(CACHE, { recursive: true });
 const keyOf = ({ name, hex }) => createHash("sha1").update(`${DESIGN}|${name}|${hex}`).digest("hex");
 const todo = items.filter((it) => !existsSync(join(CACHE, `${keyOf(it)}.png`)));
 
-// made a few at a time (sharp works off the main thread)
 let next = 0;
 await Promise.all(
   Array.from({ length: 8 }, async () => {
@@ -110,7 +94,6 @@ await Promise.all(
   })
 );
 
-// the new ones optimized, in batches; without oxipng they stay as made
 if (todo.length) {
   try {
     const files = todo.map((it) => join(CACHE, `${keyOf(it)}.png`));
@@ -122,7 +105,6 @@ if (todo.length) {
   }
 }
 
-// each page its picture; the cache keeps only what the list still has
 const keep = new Set();
 for (const it of items) {
   const key = keyOf(it);

@@ -1,13 +1,3 @@
-/*
-  Explore — the full list of every named color, framework-free.
-
-  A plain-JS virtual scroller: of all 31,912 names, only the ~30 rows in view
-  are ever in the DOM. Search filters by name; picking a color ranks the whole
-  list by perceptual nearness (OKLab distance). The list's chrome stays black
-  and white — the swatches are the only color, filled rings echoing the empty
-  ones elsewhere on the page.
-*/
-
 import { converter, differenceEuclidean } from "culori";
 import { loadList } from "./api.js";
 import { fold } from "./names.js";
@@ -111,7 +101,6 @@ export function initExplore(root) {
     update();
   });
 
-  // click a row to make it the reference color for "nearest"
   rowsEl.addEventListener("click", (event) => {
     const row = event.target.closest("[data-hex]");
     if (!row) return;
@@ -129,7 +118,7 @@ export function initExplore(root) {
     all = colors;
     for (const c of all) {
       const h = toHsl(c.hex);
-      // achromatic colours have no hue — float them to the top, by lightness
+      // achromatic colours have no hue: float them to the top
       c._h = h.h == null || Number.isNaN(h.h) ? -1 : h.h;
       c._l = h.l == null ? 0 : h.l;
     }
