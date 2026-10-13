@@ -19,7 +19,7 @@ const current = new Set(
     .split("\n")
     .slice(1)
     .map((line) => line.split(",")[0])
-    .filter(Boolean)
+    .filter(Boolean),
 );
 
 // newest first: --reverse would stop --follow at the file's old name
@@ -28,7 +28,7 @@ try {
   log = execFileSync(
     "git",
     ["log", "--follow", "--no-merges", `--format=${MARK}%h${SEP}%aI${SEP}%an${SEP}%ae`, "-p", "--unified=0", "--", CSV],
-    { cwd: repo, maxBuffer: 1 << 30 }
+    { cwd: repo, maxBuffer: 1 << 30 },
   ).toString();
 } catch (e) {
   console.warn(`added.mjs: no git history to read (${e.message.split("\n")[0]}); writing an empty file`);
@@ -69,5 +69,5 @@ writeFileSync(out, JSON.stringify({ commits, names }));
 const missing = current.size - Object.keys(names).length;
 console.log(
   `added.mjs: ${Object.keys(names).length} names from ${commits.length} commits` +
-    (missing ? ` (${missing} not committed yet)` : "")
+    (missing ? ` (${missing} not committed yet)` : ""),
 );

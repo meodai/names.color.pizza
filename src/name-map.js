@@ -12,14 +12,7 @@ import {
   nearestIndex,
   colorURL,
 } from "./names.js";
-import {
-  findCusp,
-  chromaStops,
-  chromaFor,
-  toeInv,
-  okhslToOklab,
-  oklabToOkhsl,
-} from "./okhsl.js";
+import { findCusp, chromaStops, chromaFor, toeInv, okhslToOklab, oklabToOkhsl } from "./okhsl.js";
 
 const Z_MAX = 24;
 const START_S = 0.5;
@@ -28,8 +21,7 @@ const RIM = 12; // CSS px around the fitted disc
 const fmt = (n) => n.toLocaleString("en-US");
 const wrap = (v) => ((v % 1) + 1) % 1;
 
-const okhslOf = (item) =>
-  (item.okhsl ??= oklabToOkhsl(item.L, item.a, item.b));
+const okhslOf = (item) => (item.okhsl ??= oklabToOkhsl(item.L, item.a, item.b));
 
 const LUT_H = 720;
 const LUT_L = 256;
@@ -141,9 +133,7 @@ export function initNameMap(root) {
   const toHsl = (x, y, slack = 0) => {
     const [X, Y] = toDisc(x, y);
     const l = Math.hypot(X, Y);
-    return l > 1 + slack
-      ? null
-      : [wrap(Math.atan2(Y, X) / (2 * Math.PI)), Math.min(l, 1)];
+    return l > 1 + slack ? null : [wrap(Math.atan2(Y, X) / (2 * Math.PI)), Math.min(l, 1)];
   };
 
   function discRect() {
@@ -303,8 +293,7 @@ export function initNameMap(root) {
     return owns(...own) ? own : null;
   }
 
-  const overlaps = (box, boxes) =>
-    boxes.some((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1]);
+  const overlaps = (box, boxes) => boxes.some((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1]);
 
   function drawLabels(sl) {
     const ctx = lctx;
@@ -449,9 +438,7 @@ export function initNameMap(root) {
   }
 
   function updateHint() {
-    hint.textContent = state.engaged
-      ? "Scroll to zoom. Drag to move."
-      : "Click the map, then scroll to zoom.";
+    hint.textContent = state.engaged ? "Scroll to zoom. Drag to move." : "Click the map, then scroll to zoom.";
   }
 
   function render(crisp) {
@@ -459,9 +446,7 @@ export function initNameMap(root) {
     if (!data) return;
     const rect = discRect();
     const px = rect.w * rect.h;
-    const k = crisp
-      ? Math.min(dpr * 0.7, Math.sqrt(300000 / px))
-      : Math.min(dpr * 0.3, Math.sqrt(36000 / px));
+    const k = crisp ? Math.min(dpr * 0.7, Math.sqrt(300000 / px)) : Math.min(dpr * 0.3, Math.sqrt(36000 / px));
     const NX = Math.max(40, Math.round(rect.w * k));
     const NY = Math.max(40, Math.round(rect.h * k));
     state.slice = computeSlice(data, state.s, rect, NX, NY);
@@ -548,7 +533,7 @@ export function initNameMap(root) {
       const rect = hit.getBoundingClientRect();
       zoomAt(e.clientX - rect.left, e.clientY - rect.top, Math.exp(dy * (pinch ? 0.01 : 0.002)));
     },
-    { passive: false }
+    { passive: false },
   );
 
   function ownerAt(x, y) {
@@ -592,8 +577,7 @@ export function initNameMap(root) {
     tip.hidden = false;
     tip.style.left = x + "px";
     tip.style.top = y + "px";
-    tip.style.transform =
-      x > W - 200 ? "translate(calc(-100% - 14px), 14px)" : "translate(14px, 14px)";
+    tip.style.transform = x > W - 200 ? "translate(calc(-100% - 14px), 14px)" : "translate(14px, 14px)";
     const hover = o >= 0 ? o : null;
     if (hover !== state.hover) {
       state.hover = hover;
@@ -701,10 +685,8 @@ export function initNameMap(root) {
     if (detailHex) location.href = colorURL(detailHex);
   }
 
-  const selectName = (item, detailHex = item.hex) =>
-    select({ kind: "name", item }, detailHex);
-  const selectBlank = (spot, detailHex = spot.hex) =>
-    select({ kind: "blank", ...spot }, detailHex);
+  const selectName = (item, detailHex = item.hex) => select({ kind: "name", item }, detailHex);
+  const selectBlank = (spot, detailHex = spot.hex) => select({ kind: "blank", ...spot }, detailHex);
 
   function clearSelection() {
     state.selected = null;
@@ -760,9 +742,7 @@ export function initNameMap(root) {
     if (!raw || !data) return findResults.replaceChildren();
     const hex = normalizeHex(raw);
     if (hex) {
-      return findResults.replaceChildren(
-        resultButton(hex, `Go to ${hex}`, () => goToHex(hex))
-      );
+      return findResults.replaceChildren(resultButton(hex, `Go to ${hex}`, () => goToHex(hex)));
     }
     const needle = fold(raw);
     const starts = [];
@@ -779,9 +759,7 @@ export function initNameMap(root) {
       li.textContent = `No name contains “${raw}” in the ${LISTS[state.list]} list.`;
       return findResults.replaceChildren(li);
     }
-    findResults.replaceChildren(
-      ...hits.map((it) => resultButton(it.hex, it.name, () => goToItem(it)))
-    );
+    findResults.replaceChildren(...hits.map((it) => resultButton(it.hex, it.name, () => goToItem(it))));
   }
 
   findInput.addEventListener("input", search);

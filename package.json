@@ -13,10 +13,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "postbuild": "node scripts/pages.mjs && node scripts/previews.mjs",
-    "collect": "node scripts/collect.mjs"
+    "collect": "node scripts/collect.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "linkedom": "^0.18.12",
+    "prettier": "3.6.2",
     "sharp": "^0.34.4",
     "vite": "^8.1.1"
   },

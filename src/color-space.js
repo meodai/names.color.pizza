@@ -133,8 +133,7 @@ function yuv([r, g, b]) {
   ];
 }
 
-const translate = (value, low1, high1, low2, high2) =>
-  low2 + (high2 - low2) * ((value - low1) / (high1 - low1));
+const translate = (value, low1, high1, low2, high2) => low2 + (high2 - low2) * ((value - low1) / (high1 - low1));
 
 export function initColorSpace(root) {
   const canvasEl = root.querySelector("[data-canvas]");
@@ -144,9 +143,7 @@ export function initColorSpace(root) {
 
   const ink = "#000000";
   const paper = "#ffffff";
-  const reduceMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)"
-  ).matches;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   let width = canvasEl.clientWidth || 1;
   let height = canvasEl.clientHeight || 1;
@@ -172,10 +169,7 @@ export function initColorSpace(root) {
   controls.autoRotateSpeed = 1.4;
 
   const cubeMat = new THREE.LineBasicMaterial({ color: paper });
-  const cube = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(CUBE, CUBE, CUBE)),
-    cubeMat
-  );
+  const cube = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(CUBE, CUBE, CUBE)), cubeMat);
   scene.add(cube);
 
   const sprite = makeDiscTexture();
@@ -327,7 +321,7 @@ export function initColorSpace(root) {
       if (visible) start();
       else stop();
     },
-    { threshold: 0.01 }
+    { threshold: 0.01 },
   );
   io.observe(root);
 

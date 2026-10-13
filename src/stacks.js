@@ -19,11 +19,7 @@ function landingSpot() {
       return [rnd(), between(1.25, 1.5)]; // bottom ~10%
   }
 }
-const escapeHTML = (s) =>
-  s.replace(
-    /[&<>"]/g,
-    (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])
-  );
+const escapeHTML = (s) => s.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
 function createCard(hex, name) {
   const card = document.createElement("a");
@@ -49,9 +45,7 @@ function createCard(hex, name) {
   nameEl.innerHTML = [...name]
     .map((ch, i) => {
       const heavy = ch === ch.toUpperCase() && /[A-Z]/.test(ch) ? " heavy" : "";
-      return `<i class="${heavy.trim()}" style="--i:${(i / name.length).toFixed(
-        3
-      )}">${escapeHTML(ch)}</i>`;
+      return `<i class="${heavy.trim()}" style="--i:${(i / name.length).toFixed(3)}">${escapeHTML(ch)}</i>`;
     })
     .join("");
 

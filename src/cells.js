@@ -319,7 +319,27 @@ export function createCellsRenderer(gl, canvas, colors, geo) {
   const blit = program(gl, VERT, BLIT_FRAG);
   const vao = gl.createVertexArray();
   const u = {};
-  for (const k of ["owners", "places", "colors", "gridLo", "dims", "r", "eye", "right", "up", "fwd", "fpx", "view", "model", "lo", "hi", "cut", "dim", "fog", "geo"]) {
+  for (const k of [
+    "owners",
+    "places",
+    "colors",
+    "gridLo",
+    "dims",
+    "r",
+    "eye",
+    "right",
+    "up",
+    "fwd",
+    "fpx",
+    "view",
+    "model",
+    "lo",
+    "hi",
+    "cut",
+    "dim",
+    "fog",
+    "geo",
+  ]) {
     u[k] = gl.getUniformLocation(march, `u_${k}`);
   }
   const n = colors.length / 3;

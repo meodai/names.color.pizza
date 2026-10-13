@@ -1,4 +1,16 @@
-import { getList, LISTS, normalizeHex, fold, colorURL, siteURL, hexToRgb, rgbToOklab, cardPlace, UNNAMED, showVersion } from "./names.js";
+import {
+  getList,
+  LISTS,
+  normalizeHex,
+  fold,
+  colorURL,
+  siteURL,
+  hexToRgb,
+  rgbToOklab,
+  cardPlace,
+  UNNAMED,
+  showVersion,
+} from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 
 const W = 1;
@@ -36,11 +48,7 @@ export const MODELS = {
     label: "RGB",
     place: (it) => {
       const [r, g, b] = it.rgb.map((v) => v / 255 - 0.5);
-      return [
-        ((r - g) / ROOT2) * RGB_SIDE,
-        ((r + g + b) / ROOT3) * RGB_SIDE,
-        ((r + g - 2 * b) / ROOT6) * RGB_SIDE,
-      ];
+      return [((r - g) / ROOT2) * RGB_SIDE, ((r + g + b) / ROOT3) * RGB_SIDE, ((r + g - 2 * b) / ROOT6) * RGB_SIDE];
     },
   },
   oklab: {
@@ -54,7 +62,7 @@ export const MODELS = {
       polar(
         (Math.atan2(it.b, it.a) * 180) / Math.PI,
         it.L * R * 1.2,
-        (Math.hypot(it.a, it.b) / 0.32) * LY * 0.55 - LY * 0.25
+        (Math.hypot(it.a, it.b) / 0.32) * LY * 0.55 - LY * 0.25,
       ),
   },
   hsl: {
@@ -250,7 +258,28 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   attrib("a_grow", grow, 1, gl.UNSIGNED_BYTE, false, 1);
 
   const u = {};
-  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "size", "clip", "fog", "focus", "focusPos", "repel", "fade", "clear", "handed", "bang", "bangCenter", "only", "keepAll", "grow"]) {
+  for (const k of [
+    "eye",
+    "right",
+    "up",
+    "fwd",
+    "fpx",
+    "view",
+    "size",
+    "clip",
+    "fog",
+    "focus",
+    "focusPos",
+    "repel",
+    "fade",
+    "clear",
+    "handed",
+    "bang",
+    "bangCenter",
+    "only",
+    "keepAll",
+    "grow",
+  ]) {
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
   }
   gl.uniform2f(u.size, W, H);
@@ -1008,7 +1037,14 @@ export async function initWall(root) {
     if (task.c) {
       returnCard(task.c, task.i, task.before, from);
     } else {
-      opening = { i: task.i, pos: posOf(task.i), reverse: true, t0: performance.now() - OUT.fade[0], handed: false, from };
+      opening = {
+        i: task.i,
+        pos: posOf(task.i),
+        reverse: true,
+        t0: performance.now() - OUT.fade[0],
+        handed: false,
+        from,
+      };
       flyTo(task.before, reduceMotion ? 0 : OUT.fly, resetOpening, easeInOut);
     }
   }
@@ -1184,7 +1220,7 @@ export async function initWall(root) {
       zoom(e.deltaY * unit * (e.ctrlKey ? 0.01 : 0.0015));
       request();
     },
-    { passive: false }
+    { passive: false },
   );
 
   // Safari's own pinch events, so the page itself never zooms
@@ -1528,7 +1564,7 @@ export async function initWall(root) {
       b.textContent = m.label;
       b.addEventListener("click", () => setModel(key));
       return b;
-    })
+    }),
   );
   showModel();
   // fonts loading and the phone layout resize the buttons
@@ -1584,7 +1620,7 @@ export async function initWall(root) {
         b.addEventListener("click", () => pick(k));
         li.append(b);
         return li;
-      })
+      }),
     );
     results.hidden = !found.length;
   }
@@ -1649,7 +1685,10 @@ export async function initWall(root) {
       nearest: (hex) => items[nearest(hex)],
       at: (hex) => posOf(nearest(hex)),
       cellAt: (x, y) => cellAt(x, y),
-      cardAt: (x, y) => { const i = cardAt(x, y); return i < 0 ? null : items[i]; },
+      cardAt: (x, y) => {
+        const i = cardAt(x, y);
+        return i < 0 ? null : items[i];
+      },
     };
   }
 

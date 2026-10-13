@@ -1,26 +1,14 @@
 import Fuse from "fuse.js";
 import { Filter } from "bad-words";
 import protectedTargets from "../../tests/protected-targets.json";
-import {
-  UNNAMED,
-  hexToRgb,
-  rgbToHex,
-  rgbToOklab,
-  normalizeHex,
-  getList,
-  nearestIndex,
-} from "./names.js";
+import { UNNAMED, hexToRgb, rgbToHex, rgbToOklab, normalizeHex, getList, nearestIndex } from "./names.js";
 
 const ISSUE_URL = "https://github.com/meodai/color-names/issues/new";
 const PROTECTED_DISTANCE = 0.005; // same as tests/primary-distance.test.js
 
 const filter = new Filter();
 
-const escapeHTML = (s) =>
-  s.replace(
-    /[&<>"]/g,
-    (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])
-  );
+const escapeHTML = (s) => s.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
 // same normalization as tests/duplicates.test.js
 const normalizeName = (s) =>
@@ -31,8 +19,7 @@ const normalizeName = (s) =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-const SMALL_WORDS =
-  /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|v.?|vs.?|via)$/i;
+const SMALL_WORDS = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|v.?|vs.?|via)$/i;
 
 // APA-ish Title Case
 function toTitleCase(text) {
@@ -52,8 +39,7 @@ function toTitleCase(text) {
     .replace(/'/g, "’"); // the list uses typographic apostrophes
 }
 
-const distance = (p, q) =>
-  Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+const distance = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
 
 const PROTECTED = protectedTargets.map((t) => ({
   ...t,
@@ -165,7 +151,7 @@ export function initSubmit(root) {
         (c) =>
           `<li class="submit__check submit__check--${c.level}"${
             c.swatch ? ` style="--dot:${c.swatch}"` : ""
-          }>${escapeHTML(c.text)}</li>`
+          }>${escapeHTML(c.text)}</li>`,
       )
       .join("");
     send.disabled = !verdict.ok;
@@ -183,10 +169,7 @@ export function initSubmit(root) {
     const hits = raw.length > 2 && fuse ? fuse.search(raw, { limit: 8 }) : [];
     similar.hidden = !hits.length;
     similar.querySelector("ul").innerHTML = hits
-      .map(
-        ({ item }) =>
-          `<li style="--dot:${item.hex}">${escapeHTML(item.name)}</li>`
-      )
+      .map(({ item }) => `<li style="--dot:${item.hex}">${escapeHTML(item.name)}</li>`)
       .join("");
   }
 
@@ -205,7 +188,7 @@ export function initSubmit(root) {
         "```",
         "",
         "Submitted from the color-names website.",
-      ].join("\n")
+      ].join("\n"),
     );
     window.open(url, "_blank", "noopener");
   }

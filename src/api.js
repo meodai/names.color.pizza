@@ -10,7 +10,7 @@ export function loadList(name = "default") {
         .catch((err) => {
           cache.delete(name); // so a later call retries
           throw err;
-        })
+        }),
     );
   }
   return cache.get(name);

@@ -20,10 +20,7 @@ const toRgb = converter("rgb");
 const toHsl = converter("hsl");
 
 const escapeHTML = (s) =>
-  String(s).replace(
-    /[&<>"]/g,
-    (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])
-  );
+  String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
 const pct = (v) => `${Math.round(v * 100)}%`;
 const round = (v) => Math.round(v);
@@ -61,9 +58,7 @@ const FORMATS = {
       const { r, g, b } = toRgb(c);
       const k = 1 - Math.max(r, g, b);
       if (k === 1) return "0% 0% 0% 100%";
-      return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k]
-        .map(pct)
-        .join(" ");
+      return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k].map(pct).join(" ");
     },
   },
 };
@@ -103,10 +98,7 @@ const peeksHTML = (pictures, hex) => {
     .map((p, i) => {
       const side = i % 2 ? "right" : "left";
       const k = Math.floor(i / 2);
-      const vars = [
-        `--w:${between(11, 16).toFixed(1)}rem`,
-        `--rot:${between(-9, 9).toFixed(1)}deg`,
-      ].join(";");
+      const vars = [`--w:${between(11, 16).toFixed(1)}rem`, `--rot:${between(-9, 9).toFixed(1)}deg`].join(";");
       // the link holds still and takes the hover; the print inside it moves
       return `<a class="peek peek--${side}" data-k="${(k + 0.5) / perSide + between(-0.03, 0.03)}" href="${escapeHTML(p.link)}" target="_blank" rel="noopener" style="${vars}">
         <span class="peek__print">
@@ -159,9 +151,7 @@ const dictionaryHTML = (entries) =>
 const blocksHTML = (blocks) =>
   blocks
     .map((b) =>
-      b.items
-        ? `<ul>${b.items.map((i) => `<li>${escapeHTML(i)}</li>`).join("")}</ul>`
-        : `<p>${escapeHTML(b.text)}</p>`
+      b.items ? `<ul>${b.items.map((i) => `<li>${escapeHTML(i)}</li>`).join("")}</ul>` : `<p>${escapeHTML(b.text)}</p>`,
     )
     .join("");
 
@@ -286,7 +276,7 @@ const neighborsHTML = (items, data) =>
             </div>
           </div>
         </div>
-      </a>`
+      </a>`,
     )
     .join("");
 
@@ -297,11 +287,9 @@ function revealNeighbors() {
     (entries) => {
       if (!entries.some((e) => e.isIntersecting)) return;
       neighborWatch.disconnect();
-      page.neighbors
-        .querySelectorAll(".swatchcard")
-        .forEach((card) => card.classList.add("swatchcard--visible"));
+      page.neighbors.querySelectorAll(".swatchcard").forEach((card) => card.classList.add("swatchcard--visible"));
     },
-    { threshold: 0.2 }
+    { threshold: 0.2 },
   );
   neighborWatch.observe(page.neighbors);
 }
@@ -312,7 +300,7 @@ const sensesHTML = (word) =>
   word.parts
     .map(
       (p) => `<p class="label">${escapeHTML(p.part)}</p>
-        <ol class="dictionary__senses">${p.definitions.map((d) => `<li>${escapeHTML(d)}</li>`).join("")}</ol>`
+        <ol class="dictionary__senses">${p.definitions.map((d) => `<li>${escapeHTML(d)}</li>`).join("")}</ol>`,
     )
     .join("") +
   `<a class="dictionary__source" href="${escapeHTML(word.link)}" target="_blank" rel="noopener">Wiktionary</a>`;
@@ -347,7 +335,7 @@ function indexHTML(words, entries) {
       mine,
       e.image,
       (opening ? blocksHTML([opening]) : "") +
-        (e.link ? `<a href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>` : "")
+        (e.link ? `<a href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>` : ""),
     );
   });
   for (const word of words) {
@@ -422,7 +410,7 @@ function placePeeks() {
       [
         [s, Math.min(e, a - half)],
         [Math.max(s, b + half), e],
-      ].filter(([x, y]) => y - x > 0)
+      ].filter(([x, y]) => y - x > 0),
     );
   }
   const total = free.reduce((n, [s, e]) => n + e - s, 0);
@@ -582,26 +570,38 @@ async function render(hex) {
     `It can be described as ${lore.getDescriptiveList(false, 4)}.`,
   ].filter(Boolean);
   page.intro.replaceChildren(
-    ...lines.map((t) => Object.assign(document.createElement("p"), { className: "lead", textContent: t }))
+    ...lines.map((t) => Object.assign(document.createElement("p"), { className: "lead", textContent: t })),
   );
 
   const stats = [hex];
   if (unnamed) stats.push("Not named yet");
   else if (!exact) stats.push(`Nearest name, ${near.hex}`);
-  page.stats.replaceChildren(
-    ...stats.map((t) => Object.assign(document.createElement("span"), { textContent: t }))
-  );
+  page.stats.replaceChildren(...stats.map((t) => Object.assign(document.createElement("span"), { textContent: t })));
   if (exact) {
     // "by" is only set when someone other than the list's maintainer added it
     addedOn(current.name).then((added) => {
       if (!added || current?.hex !== hex) return;
       const link = (href, text, title) =>
-        Object.assign(document.createElement("a"), { href, textContent: text, title, target: "_blank", rel: "noopener" });
+        Object.assign(document.createElement("a"), {
+          href,
+          textContent: text,
+          title,
+          target: "_blank",
+          rel: "noopener",
+        });
       const line = document.createElement("span");
-      line.append(link(`https://github.com/meodai/color-names/commit/${added.hash}`, `Added ${added.date}`, `Commit ${added.hash}`));
+      line.append(
+        link(
+          `https://github.com/meodai/color-names/commit/${added.hash}`,
+          `Added ${added.date}`,
+          `Commit ${added.hash}`,
+        ),
+      );
       if (added.by) {
         line.append(" by ");
-        line.append(added.github ? link(`https://github.com/${added.github}`, added.by, `@${added.github} on GitHub`) : added.by);
+        line.append(
+          added.github ? link(`https://github.com/${added.github}`, added.by, `@${added.github} on GitHub`) : added.by,
+        );
       }
       page.stats.append(line);
     });
@@ -626,12 +626,7 @@ async function render(hex) {
   page.words.innerHTML = wordsHTML(lore);
   const saved = exact ? savedLookup(current.name, slugFor(data, current.name)) : Promise.resolve(null);
   showPictures(hex, [current.name, lore.nouns[0]], saved);
-  showArt(
-    hex,
-    exact ? current.name : hex,
-    exact ? saved : savedLookup(near.name, slugFor(data, near.name)),
-    !exact
-  );
+  showArt(hex, exact ? current.name : hex, exact ? saved : savedLookup(near.name, slugFor(data, near.name)), !exact);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
   page.neighborsSlide.hidden = false;
   revealNeighbors();
@@ -647,7 +642,7 @@ async function render(hex) {
     requestAnimationFrame(() => {
       card.classList.remove("swatchcard--reset");
       card.classList.add("swatchcard--visible");
-    })
+    }),
   );
 
   if (!current.name) return;
@@ -655,8 +650,7 @@ async function render(hex) {
   const { definitions, entries, images, sounds } = looked;
   if (current?.hex !== hex || (!definitions.length && !entries.length)) return;
   page.meaningTitle.textContent = current.name;
-  const whole =
-    isWhole(definitions) && !entries.some((e) => baseTitle(e.title) === definitions[0].term.toLowerCase());
+  const whole = isWhole(definitions) && !entries.some((e) => baseTitle(e.title) === definitions[0].term.toLowerCase());
   page.dictionary.innerHTML = whole ? dictionaryHTML(definitions) : "";
   page.wiki.innerHTML = indexHTML(whole ? [] : definitions, entries);
   addPronunciations(whole ? page.dictionary : page.wiki, definitions, sounds, whole ? page.meaningTitle : null);
@@ -667,7 +661,9 @@ async function render(hex) {
   page.meaningSlide.classList.add("has-pile");
   pileGap();
   // a tilted picture reaches lower once it has its width: measure again
-  page.wiki.querySelectorAll(".picture-pile img").forEach((img) => img.addEventListener("load", pileGap, { once: true }));
+  page.wiki
+    .querySelectorAll(".picture-pile img")
+    .forEach((img) => img.addEventListener("load", pileGap, { once: true }));
 }
 
 async function showPictures(hex, terms, saved) {
@@ -770,7 +766,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       a.addEventListener("click", (e) => {
         e.preventDefault();
         onClose();
-      })
+      }),
     );
   }
   document.addEventListener(
@@ -778,7 +774,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     (e) => {
       if (e.key === "Escape") close.click();
     },
-    { signal }
+    { signal },
   );
 
   const show = () => {
@@ -801,7 +797,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       if (page.name.textContent) fitTitle();
       pileGap();
     },
-    { signal }
+    { signal },
   );
   show();
 }

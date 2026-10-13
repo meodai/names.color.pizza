@@ -80,16 +80,12 @@ export function hexToRgb(hex) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-export const rgbToHex = (rgb) =>
-  "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
+export const rgbToHex = (rgb) => "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
 
-export const rgbToOklab = (rgb) =>
-  linearToOklab(...rgb.map((v) => toLinear(v / 255)));
+export const rgbToOklab = (rgb) => linearToOklab(...rgb.map((v) => toLinear(v / 255)));
 
 export const oklabToRgb = (L, a, b) =>
-  oklabToLinear(L, a, b).map((c) =>
-    Math.round(clamp(toGamma(clamp(c, 0, 1)), 0, 1) * 255)
-  );
+  oklabToLinear(L, a, b).map((c) => Math.round(clamp(toGamma(clamp(c, 0, 1)), 0, 1) * 255));
 
 export function oklchString(L, a, b) {
   const C = Math.hypot(a, b);
@@ -111,9 +107,7 @@ export function normalizeHex(input) {
 const GL = Math.ceil(1 / G) + 1;
 const GA = Math.ceil((2 * AB) / G);
 const cellIndex = (L, a, b) =>
-  (clamp(Math.floor(L / G), 0, GL - 1) * GA +
-    clamp(Math.floor((a + AB) / G), 0, GA - 1)) *
-    GA +
+  (clamp(Math.floor(L / G), 0, GL - 1) * GA + clamp(Math.floor((a + AB) / G), 0, GA - 1)) * GA +
   clamp(Math.floor((b + AB) / G), 0, GA - 1);
 
 function prepare(colors) {

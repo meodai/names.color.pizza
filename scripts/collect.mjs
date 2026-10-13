@@ -22,7 +22,10 @@ const MINUTES = +arg("minutes", 330);
 const local = resolve(here, "../.env.local");
 const TOKEN =
   process.env.WIKIMEDIA_TOKEN ||
-  (existsSync(local) && readFileSync(local, "utf8").match(/^WIKIMEDIA_TOKEN=(.+)$/m)?.[1].trim()) ||
+  (existsSync(local) &&
+    readFileSync(local, "utf8")
+      .match(/^WIKIMEDIA_TOKEN=(.+)$/m)?.[1]
+      .trim()) ||
   "";
 // anonymous limit: 200/min, 3 in flight (mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 let rate = +arg("rate", 3); // per second
@@ -247,7 +250,7 @@ const todo = (
 
 if (TOKEN) {
   const me = await politeFetch(
-    "https://en.wikipedia.org/w/api.php?action=query&meta=userinfo&uiprop=ratelimits|groups&format=json"
+    "https://en.wikipedia.org/w/api.php?action=query&meta=userinfo&uiprop=ratelimits|groups&format=json",
   )
     .then((r) => r.json())
     .catch(() => null);
@@ -263,7 +266,7 @@ if (TOKEN) {
 if (PICTURES_ONLY) console.log("collect: pictures only, for copies without them");
 console.log(
   `collect: ${items.length} names, ${fetched.size} copies, ${missing.length} missing, ` +
-    `${removed} removed; this run: ${todo.length} (${Math.min(missing.length, todo.length)} new)`
+    `${removed} removed; this run: ${todo.length} (${Math.min(missing.length, todo.length)} new)`,
 );
 
 const today = new Date().toISOString().slice(0, 10);
@@ -310,22 +313,28 @@ await Promise.all(
         const perMin = done / ((Date.now() - started) / 60_000);
         console.log(
           `  ${done}/${todo.length}, ${saved} saved, ${failures.length} failed, ${perMin.toFixed(0)} names/min, ` +
-            `${rate.toFixed(1)} requests/s, told to wait ${told}×`
+            `${rate.toFixed(1)} requests/s, told to wait ${told}×`,
         );
       }
     }
-  })
+  }),
 );
 
 if (told) console.log("told to wait by:", JSON.stringify(toldBy));
 console.log(`collect: ${saved} saved, ${failures.length} not (kept as they were), ${queue.length} left for later`);
-if (failures.length) console.log(failures.slice(0, 10).map((f) => `  ${f}`).join("\n"));
+if (failures.length)
+  console.log(
+    failures
+      .slice(0, 10)
+      .map((f) => `  ${f}`)
+      .join("\n"),
+  );
 // nearly everything failing is an outage
 if (todo.length && failures.length > todo.length / 2) process.exit(1);
 if (!existsSync(join(DATA, "README.md"))) {
   writeFileSync(
     join(DATA, "README.md"),
     "What Wikipedia and Wiktionary say about each color name, copied nightly by\n" +
-      "website/scripts/collect.mjs on the project-website branch. Read by the site's build.\n"
+      "website/scripts/collect.mjs on the project-website branch. Read by the site's build.\n",
   );
 }

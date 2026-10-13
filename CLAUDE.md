@@ -10,6 +10,7 @@ as a sequence of full-bleed **slides** — each section is one moment with minim
 copy.
 
 This is the upstream project the microsite promotes:
+
 - Live page: https://meodai.github.io/color-names/
 - API: `api.color.pizza` (e.g. `api.color.pizza/v1/?values=00f,f00&list=bestOf`)
 - Package: `npm install color-name-list`
@@ -18,8 +19,9 @@ This is the upstream project the microsite promotes:
 ## Current state
 
 Lives in `website/` of the color-names repo. Vite, plain ES modules, no
-framework: `npm run dev`, `npm run build`, `npm run preview`. No tests or lint of
-its own. Heavy sections load lazily from `src/main.js`:
+framework: `npm run dev`, `npm run build`, `npm run preview`. Formatted with
+Prettier (`npm run format`); no tests or lint of its own. Comments only where
+the code would surprise, and none in the HTML. Heavy sections load lazily from `src/main.js`:
 
 - `src/color-space.js` — 3D point cloud across color spaces (three.js)
 - `src/name-map.js` — OkHSL wheel where every pixel belongs to its closest
@@ -29,11 +31,12 @@ its own. Heavy sections load lazily from `src/main.js`:
 Data comes from `api.color.pizza` via `src/api.js`, one memoized fetch per list.
 
 Pages (multi-page Vite build):
+
 - `index.html` — the color wall (`src/wall.js`): every name as a card in WebGL,
   hue across (wrapping), light to dark down, search by name or hex.
 - `classic/index.html` — the previous home, the scroll of slides.
 - `color/index.html` — one color at `color/#hex` (`src/detail.js`).
-Links between pages go through `siteURL()` / `colorURL()` in `src/names.js`.
+  Links between pages go through `siteURL()` / `colorURL()` in `src/names.js`.
 
 ## Source of truth for content
 

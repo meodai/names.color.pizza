@@ -65,7 +65,7 @@ const copyOf = (slug) => {
 };
 
 const ART = [arg("art"), join(DATA, "art-colors"), resolve(here, "../../../art-colors")].find(
-  (dir) => dir && existsSync(dir)
+  (dir) => dir && existsSync(dir),
 );
 const works = [];
 for (const museum of Object.keys(MUSEUMS)) {
@@ -100,8 +100,7 @@ function summary(looked) {
   return text ? text.replace(/\s+/g, " ").trim() : "";
 }
 
-const clip = (text, length) =>
-  text.length <= length ? text : `${text.slice(0, length - 1).replace(/\s+\S*$/, "")}…`;
+const clip = (text, length) => (text.length <= length ? text : `${text.slice(0, length - 1).replace(/\s+\S*$/, "")}…`);
 
 // for readers without JS; the script replaces it
 function meaningHTML(looked) {
@@ -111,10 +110,10 @@ function meaningHTML(looked) {
         ${d.parts
           .map(
             (p) =>
-              `<p class="label">${escapeHTML(p.part)}</p><ol>${p.definitions.map((t) => `<li>${escapeHTML(t)}</li>`).join("")}</ol>`
+              `<p class="label">${escapeHTML(p.part)}</p><ol>${p.definitions.map((t) => `<li>${escapeHTML(t)}</li>`).join("")}</ol>`,
           )
           .join("")}
-        <a href="${escapeHTML(d.link)}">Wiktionary</a></article>`
+        <a href="${escapeHTML(d.link)}">Wiktionary</a></article>`,
     )
     .join("");
   const articles = (looked?.entries || [])
@@ -196,18 +195,21 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(/(<h1[^>]*data-name[^>]*>)[\s\S]*?(<\/h1>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
     .replace(
       /(<div[^>]*data-intro[^>]*>)[\s\S]*?(<\/div>)/,
-      (_, open, close) => `${open}${lines.map((t) => `<p class="lead">${escapeHTML(t)}</p>`).join("")}${close}`
+      (_, open, close) => `${open}${lines.map((t) => `<p class="lead">${escapeHTML(t)}</p>`).join("")}${close}`,
     )
     .replace(
       "</body>",
       () =>
-        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, fetched: copy?.fetched || null, looked, art })}</script>\n  </body>`
+        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, fetched: copy?.fetched || null, looked, art })}</script>\n  </body>`,
     );
   const meaning = meaningHTML(looked);
   if (meaning) {
     html = html
       .replace(/(<section[^>]*data-meaning-slide)([^>]*?)\s+hidden(\s*>)/, "$1$2$3")
-      .replace(/(<h2[^>]*data-meaning-title[^>]*>)[\s\S]*?(<\/h2>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
+      .replace(
+        /(<h2[^>]*data-meaning-title[^>]*>)[\s\S]*?(<\/h2>)/,
+        (_, open, close) => `${open}${escapeHTML(name)}${close}`,
+      )
       .replace(/(<div[^>]*data-wiki[^>]*>)[\s\S]*?(<\/div>)/, (_, open, close) => `${open}${meaning}${close}`);
   }
 
@@ -219,7 +221,7 @@ for (const [i, { name, hex }] of items.entries()) {
       (_, open, close) =>
         `${open}${neighborsOf(i)
           .map((it) => `<a class="neighbor" href="../${slugs.get(it.name)}/">${escapeHTML(it.name)}, ${it.hex}</a>`)
-          .join("")}${close}`
+          .join("")}${close}`,
     );
 
   mkdirSync(join(DIST, "color", slug), { recursive: true });
@@ -239,7 +241,7 @@ for (const [i, { name, hex }] of items.entries()) {
 <script>location.replace("../${slug}/" + location.hash)</script>
 <a href="../${slug}/">${escapeHTML(name)}</a>
 </html>
-`
+`,
   );
 
   if (art?.length) withArt++;
@@ -266,15 +268,15 @@ writeFileSync(
 </script>
 <p><a href="${SITE}">Color Names</a></p>
 </html>
-`
+`,
 );
 
 writeFileSync(
   join(DIST, "sitemap.xml"),
-  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemap.join("\n")}\n</urlset>\n`
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemap.join("\n")}\n</urlset>\n`,
 );
 writeFileSync(join(DIST, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}sitemap.xml\n`);
 
 console.log(
-  `pages.mjs: ${written} color pages (${withCopy} with the nightly copy, ${withArt} with art), ${written} hex forwards, sitemap`
+  `pages.mjs: ${written} color pages (${withCopy} with the nightly copy, ${withArt} with art), ${written} hex forwards, sitemap`,
 );

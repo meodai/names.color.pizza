@@ -7,11 +7,7 @@ const toHsl = converter("hsl");
 const distance = differenceEuclidean("oklab");
 const fmt = (n) => n.toLocaleString("en-US");
 
-const escapeHTML = (s) =>
-  s.replace(
-    /[&<>"]/g,
-    (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])
-  );
+const escapeHTML = (s) => s.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
 export function initExplore(root) {
   const searchEl = root.querySelector("[data-search]");

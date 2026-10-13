@@ -345,7 +345,9 @@ a:hover {
   text-decoration: none;
   border: var(--line) solid var(--fg);
   padding: var(--space-xs) var(--space-m);
-  transition: color 0.15s, background-color 0.15s;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
 }
 
 .btn:hover {
@@ -368,13 +370,7 @@ a:hover {
   overflow: hidden;
   white-space: nowrap;
   user-select: none;
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent,
-    #000 8%,
-    #000 92%,
-    transparent
-  );
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 
@@ -459,7 +455,9 @@ a:hover {
   color: var(--fg);
   background: none;
   cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
 .footer__share button svg {
@@ -867,8 +865,7 @@ a:hover {
   width: 100%;
   height: 1.9rem;
   margin: 0;
-  background: linear-gradient(var(--fg), var(--fg)) center / 100% var(--line)
-    no-repeat;
+  background: linear-gradient(var(--fg), var(--fg)) center / 100% var(--line) no-repeat;
   border: 0;
   border-radius: 0;
   cursor: ew-resize;
@@ -1260,8 +1257,7 @@ a:hover {
   z-index: 2;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%)
-    translate(calc(var(--x, 0.5) * 32vw), calc(var(--y, 0) * 30vh))
+  transform: translate(-50%, -50%) translate(calc(var(--x, 0.5) * 32vw), calc(var(--y, 0) * 30vh))
     rotate(var(--r, 6deg));
 }
 
@@ -1683,8 +1679,7 @@ a:hover {
   height: var(--h);
   padding: 0.35rem;
   background: var(--paper);
-  transform: translate(calc(-50% + var(--push, 0rem)), -50%)
-    rotate(calc(var(--rot) + var(--lean, 0deg)));
+  transform: translate(calc(-50% + var(--push, 0rem)), -50%) rotate(calc(var(--rot) + var(--lean, 0deg)));
   transition: transform 0.45s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
@@ -1968,8 +1963,7 @@ a:hover {
   }
   .color-hero__card {
     top: calc(var(--space-l) + 30vw);
-    transform: translate(-50%, -50%)
-      translate(calc((var(--x, 0.5) - 0.5) * 30vw), 0) rotate(var(--r, 6deg));
+    transform: translate(-50%, -50%) translate(calc((var(--x, 0.5) - 0.5) * 30vw), 0) rotate(var(--r, 6deg));
   }
   .color-hero__card .swatchcard {
     --card-w: min(52vw, 18rem);
@@ -2001,8 +1995,7 @@ a:hover {
   display: block;
   overflow: hidden;
   transform: translateY(150%);
-  transition: calc(var(--anim-appear-duration) * 0.666) transform
-    cubic-bezier(0.8, 0.3, 0.25, 1.75);
+  transition: calc(var(--anim-appear-duration) * 0.666) transform cubic-bezier(0.8, 0.3, 0.25, 1.75);
 }
 
 .swatchcard__shade {
@@ -2080,8 +2073,8 @@ a:hover {
 
 .swatchcard--visible .swatchcard__swatch {
   transform: translateY(0);
-  transition: calc(var(--anim-appear-duration) * 0.566) transform
-    cubic-bezier(0.8, 0.3, 0.25, 1) var(--anim-appear-delay, 0ms);
+  transition: calc(var(--anim-appear-duration) * 0.566) transform cubic-bezier(0.8, 0.3, 0.25, 1)
+    var(--anim-appear-delay, 0ms);
 }
 
 .swatchcard--visible .swatchcard__shade {
@@ -2103,8 +2096,7 @@ a:hover {
 
 .swatchcard--visible .swatchcard__info {
   height: var(--s-label-height);
-  transition: calc(var(--anim-appear-duration) * 0.6) height cubic-bezier(0.7, 0.3, 0, 1)
-    var(--anim-appear-delay, 0ms);
+  transition: calc(var(--anim-appear-duration) * 0.6) height cubic-bezier(0.7, 0.3, 0, 1) var(--anim-appear-delay, 0ms);
 }
 
 .swatchcard--visible .swatchcard__row1,
@@ -2113,8 +2105,7 @@ a:hover {
   transform: translateY(0);
   transition:
     calc(var(--anim-appear-duration) * 0.05) opacity linear var(--anim-appear-delay, 0ms),
-    calc(var(--anim-appear-duration) * 0.7) transform cubic-bezier(0.8, 0.3, 0.25, 1)
-      var(--anim-appear-delay, 0ms);
+    calc(var(--anim-appear-duration) * 0.7) transform cubic-bezier(0.8, 0.3, 0.25, 1) var(--anim-appear-delay, 0ms);
 }
 
 .swatchcard--visible .swatchcard__row2 {
@@ -2402,15 +2393,13 @@ a.result:hover span:last-child {
   white-space: nowrap;
   text-overflow: ellipsis;
   clip-path: inset(0 0 100% 0);
-  animation: stack-open calc(var(--time) * 0.2) var(--ease)
-    calc(var(--time) * 0.35) forwards;
+  animation: stack-open calc(var(--time) * 0.2) var(--ease) calc(var(--time) * 0.35) forwards;
 }
 
 @keyframes stack-down {
   0% {
     opacity: 0;
-    transform: translate(calc(var(--rnd2) * 400%), calc(var(--rnd4) * 400%))
-      scale(3) rotate(calc(var(--rnd2) * -90deg));
+    transform: translate(calc(var(--rnd2) * 400%), calc(var(--rnd4) * 400%)) scale(3) rotate(calc(var(--rnd2) * -90deg));
     filter: blur(50px);
   }
   40% {
@@ -2419,8 +2408,7 @@ a.result:hover span:last-child {
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, -50%)
-      translate(calc(var(--rnd3) * 32vw), calc(var(--rnd4) * 30vh)) scale(1)
+    transform: translate(-50%, -50%) translate(calc(var(--rnd3) * 32vw), calc(var(--rnd4) * 30vh)) scale(1)
       rotate(calc(var(--rnd) * 20deg));
   }
 }
@@ -2639,7 +2627,9 @@ html.is-arriving {
 }
 
 .wall__nav a {
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
 .wall__nav a:hover,
@@ -2832,7 +2822,9 @@ html:has(body > .color-page),
   background: none;
   translate: 0 -50%;
   cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
 .wall__clear[hidden] {
@@ -3083,7 +3075,9 @@ html:has(body > .color-page),
 
 .color-hero .hero__content > *,
 .color-hero__close {
-  transition: opacity 0.6s ease, translate 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition:
+    opacity 0.6s ease,
+    translate 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .color-hero .hero__content > :nth-child(2) {
@@ -3315,7 +3309,9 @@ html:has(body > .color-page),
   inline-size: 2rem;
   border-radius: 0.7rem;
   color: var(--ink);
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
 .wall__list-file svg {
@@ -3332,7 +3328,9 @@ html:has(body > .color-page),
 
 .wall__lists button:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 2px var(--ink);
+  box-shadow:
+    inset 0 0 0 2px var(--paper),
+    0 0 0 2px var(--ink);
 }
 
 .wall__zoom button[aria-pressed="true"] {

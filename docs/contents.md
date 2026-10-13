@@ -1,7 +1,7 @@
 # Color Names — Microsite Contents
 
 The text content for the microsite. One single, top-to-bottom scroll, built as a
-sequence of **slides**: each section is one full-bleed moment. Minimal words. This doc is only about the copy — what each slide *says*.
+sequence of **slides**: each section is one full-bleed moment. Minimal words. This doc is only about the copy — what each slide _says_.
 
 **Voice:** warm, precise, a little playful. Pro-human, never anti-AI
 
@@ -20,13 +20,13 @@ contributors/sponsors — everyone should find their door in.
 > Section order is a first draft — to be reviewed in this doc.
 
 ---
+
 Actual page :D
 
 https://meodai.github.io/color-names/
 
 Oldish bot page:
 https://parrot.color.pizza/
-
 
 Possible Section pens:
 https://codepen.io/meodai/pen/zdgXJj
@@ -42,7 +42,7 @@ https://codepen.io/meodai/pen/QZmjWe
 
 ## Claim
 
-- "Every color deserves a name." *(or)* "{{colorCount}} colors, named by people."
+- "Every color deserves a name." _(or)_ "{{colorCount}} colors, named by people."
 
 ---
 
@@ -52,7 +52,7 @@ https://codepen.io/meodai/pen/QZmjWe
 > needle, capable of stitching together our most delicate emotions and memories.
 > When the needle hits the target, we feel either pleasure or empathy.
 >
-> — Kenya Hara, *White*
+> — Kenya Hara, _White_
 
 ---
 
@@ -86,7 +86,7 @@ https://codepen.io/meodai/pen/QZmjWe
 
 ---
 
-##  How it's made — people, time, rules
+## How it's made — people, time, rules
 
 - "{{yearsRunning}} years. By hand."
 - The rules: Title Case · original & clear · no duplicates · no slurs or brands.

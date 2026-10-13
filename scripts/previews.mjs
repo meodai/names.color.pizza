@@ -34,7 +34,7 @@ const items = readFileSync(LIST, "utf8")
 const slugs = slugsOf(items);
 
 const page = readFileSync(resolve(here, "../color/index.html"), "utf8");
-const [, viewBox, logo] = page.match(/<svg class="brand__logo" viewBox="([^"]+)"[^>]*>([\s\S]*?)<\/svg>/);
+const [, viewBox, logo] = page.match(/<svg class="brand__logo" viewBox="([^"]+)"[^>]*>([\s\S]*?)<\/svg\s*>/);
 const paths = logo.replace(/fill="(?!#fff")[^"]*"/g, 'fill="#000"');
 const mark = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">${paths}</svg>`))
   .resize({ height: LOGO })
@@ -42,7 +42,7 @@ const mark = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" vi
   .toBuffer();
 const markWidth = (await sharp(mark).metadata()).width;
 const strip = Buffer.from(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${STRIP}"><rect width="100%" height="100%" fill="#fff"/></svg>`
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${STRIP}"><rect width="100%" height="100%" fill="#fff"/></svg>`,
 );
 
 const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -91,7 +91,7 @@ await Promise.all(
       const it = todo[next++];
       await preview(it, join(CACHE, `${keyOf(it)}.png`));
     }
-  })
+  }),
 );
 
 if (todo.length) {

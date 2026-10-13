@@ -34,7 +34,7 @@ const paletteHTML = (palette = [], match) =>
     ? `<span class="art__palette">${palette
         .map(
           ([hex, share], i) =>
-            `<a href="#${hex.slice(1)}"${hex === match ? ' class="is-match"' : ""} style="flex-grow:${share};background:${hex};--i:${i}" aria-label="${hex}"></a>`
+            `<a href="#${hex.slice(1)}"${hex === match ? ' class="is-match"' : ""} style="flex-grow:${share};background:${hex};--i:${i}" aria-label="${hex}"></a>`,
         )
         .join("")}</span>`
     : "";
@@ -123,7 +123,7 @@ export function creditHTML(works) {
   const museums = Object.entries(MUSEUMS).filter(([folder]) => works.some((w) => w.museum === folder));
   if (!museums.length) return "";
   const links = museums.map(
-    ([, m]) => `the <a href="${m.url}" target="_blank" rel="noopener">${escapeHTML(m.name)}</a>`
+    ([, m]) => `the <a href="${m.url}" target="_blank" rel="noopener">${escapeHTML(m.name)}</a>`,
   );
   const list = links.length > 1 ? `${links.slice(0, -1).join(", ")} and ${links.at(-1)}` : links[0];
   return `From the open-access collection${museums.length > 1 ? "s" : ""} of ${list}.`;

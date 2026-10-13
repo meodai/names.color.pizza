@@ -49,9 +49,38 @@ export const forget = () => caches.forEach((c) => c.clear());
 
 const SMALL = ["the", "a", "in", "of", "an", "on"];
 
-const COMMON = ["light", "dark", "pale", "deep", "bright", "soft", "pastel", "medium", "dull", "vivid",
-  "red", "orange", "yellow", "green", "blue", "purple", "violet", "pink", "brown", "black", "white",
-  "grey", "gray", "cyan", "magenta", "teal", "gold", "silver", "beige", "tan"];
+const COMMON = [
+  "light",
+  "dark",
+  "pale",
+  "deep",
+  "bright",
+  "soft",
+  "pastel",
+  "medium",
+  "dull",
+  "vivid",
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+  "violet",
+  "pink",
+  "brown",
+  "black",
+  "white",
+  "grey",
+  "gray",
+  "cyan",
+  "magenta",
+  "teal",
+  "gold",
+  "silver",
+  "beige",
+  "tan",
+];
 
 const withoutAccents = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -85,13 +114,14 @@ function wikiSummary(title) {
   if (!wikiCache.has(title)) {
     if (wikiCache.size > 20000) wikiCache.clear();
     const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
-      title.replace(/ /g, "_")
+      title.replace(/ /g, "_"),
     )}?redirect=true`;
     wikiCache.set(
       title,
-      io.fetch(url)
+      io
+        .fetch(url)
         .then((res) => (res.ok ? res.json() : null))
-        .catch(() => null)
+        .catch(() => null),
     );
   }
   return wikiCache.get(title);
@@ -130,13 +160,14 @@ function wikiMedia(title) {
   if (!mediaCache.has(title)) {
     if (mediaCache.size > 20000) mediaCache.clear();
     const url = `https://en.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(
-      title.replace(/ /g, "_")
+      title.replace(/ /g, "_"),
     )}?redirect=true`;
     mediaCache.set(
       title,
-      io.fetch(url)
+      io
+        .fetch(url)
         .then((res) => (res.ok ? res.json() : null))
-        .catch(() => null)
+        .catch(() => null),
     );
   }
   return mediaCache.get(title);
@@ -176,7 +207,7 @@ async function wikiImages(titles, limit = 8, skip = []) {
 async function wikiMeanings(title, limit = 2) {
   try {
     const res = await io.fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title.replace(/ /g, "_"))}`
+      `https://en.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title.replace(/ /g, "_"))}`,
     );
     if (!res.ok) return [];
     const doc = io.parse(await res.text());
@@ -219,10 +250,7 @@ const sentenceCase = (t) => t[0] + t.slice(1).toLowerCase();
 
 async function wikiEntries(name) {
   const sentence = sentenceCase(name);
-  const [full, asSentence] = await Promise.all([
-    wikiSummary(name),
-    sentence !== name ? wikiSummary(sentence) : null,
-  ]);
+  const [full, asSentence] = await Promise.all([wikiSummary(name), sentence !== name ? wikiSummary(sentence) : null]);
   const ambiguous = [full, asSentence].find((p) => p?.type === "disambiguation");
   const found = [full, asSentence].some((p) => p && p.type !== "disambiguation" && p.extract);
   const [meanings, specific, searched] = await Promise.all([
@@ -244,7 +272,7 @@ async function wikiEntries(name) {
 
   // ambiguous words ("Bianchi") resolve to "Bianchi (company)" via full-text search on the whole name
   const ambiguousWords = titles.filter(
-    (t, k) => !/\s/.test(t) && pages[k]?.type === "disambiguation" && name.includes(t)
+    (t, k) => !/\s/.test(t) && pages[k]?.type === "disambiguation" && name.includes(t),
   );
   if (ambiguousWords.length) {
     const hits = await wikiSearch(name, 6, "text");
@@ -279,12 +307,11 @@ function wiktionary(term) {
     if (dictCache.size > 20000) dictCache.clear();
     dictCache.set(
       term,
-      io.fetch(
-        `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(term.replace(/ /g, "_"))}`
-      )
+      io
+        .fetch(`https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(term.replace(/ /g, "_"))}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => (data?.en?.length ? { term, senses: data.en } : null))
-        .catch(() => null)
+        .catch(() => null),
     );
   }
   return dictCache.get(term);
@@ -298,7 +325,14 @@ async function dictionaryEntries(name) {
     const hit = await wiktionary(term);
     if (hit) return [shapeEntry(hit, true)].filter(Boolean);
   }
-  const words = [...new Set(name.toLowerCase().replace(/['’]s\b/g, "").split(/[\s-]+/))]
+  const words = [
+    ...new Set(
+      name
+        .toLowerCase()
+        .replace(/['’]s\b/g, "")
+        .split(/[\s-]+/),
+    ),
+  ]
     .filter((w) => w.length > 2 && !SMALL.includes(w))
     .slice(0, 3);
   const hits = await Promise.all(words.map(wiktionary));
@@ -309,7 +343,10 @@ function shapeEntry({ term, senses }, whole = false) {
   const parts = senses
     .map((sense) => ({
       part: sense.partOfSpeech,
-      definitions: sense.definitions.map((d) => plain(d.definition)).filter(Boolean).slice(0, 2),
+      definitions: sense.definitions
+        .map((d) => plain(d.definition))
+        .filter(Boolean)
+        .slice(0, 2),
     }))
     .filter((p) => p.definitions.length)
     .slice(0, 2);
@@ -325,7 +362,7 @@ function shapeEntry({ term, senses }, whole = false) {
 async function pronunciations(term) {
   try {
     const res = await io.fetch(
-      `https://en.wiktionary.org/api/rest_v1/page/html/${encodeURIComponent(term.replace(/ /g, "_"))}`
+      `https://en.wiktionary.org/api/rest_v1/page/html/${encodeURIComponent(term.replace(/ /g, "_"))}`,
     );
     if (!res.ok) return [];
     const doc = io.parse(await res.text());
@@ -366,7 +403,7 @@ export async function lookupName(name) {
       ? wikiImages(
           entries.map((e) => e.title),
           8,
-          entries.map((e) => e.image).filter(Boolean)
+          entries.map((e) => e.image).filter(Boolean),
         )
       : [],
     Promise.all(definitions.map(async (d) => [d.term, await pronunciations(d.term)])),
