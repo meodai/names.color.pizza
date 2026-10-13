@@ -4,7 +4,6 @@ import {
   UNNAMED,
   hexToRgb,
   rgbToOklab,
-  complementOf,
   oklchString,
   normalizeHex,
   getList,
@@ -15,6 +14,7 @@ import {
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 import { workHTML, artNear, creditHTML } from "./art.js";
+import { rampOf, complementHex } from "./ramp.js";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -83,7 +83,8 @@ function closestAny(data, hex) {
   return { item: best, distance: Math.sqrt(bd) };
 }
 
-function neighbors(data, hex, count = 12, [L, a, b] = rgbToOklab(hexToRgb(hex))) {
+function neighbors(data, hex, count = 12) {
+  const [L, a, b] = rgbToOklab(hexToRgb(hex));
   return data.items
     .filter((it) => it.hex !== hex)
     .map((it) => ({ it, d: (it.L - L) ** 2 + (it.a - a) ** 2 + (it.b - b) ** 2 }))
@@ -260,7 +261,7 @@ const cardStyle = (hex) =>
 const neighborsHTML = (items, data) =>
   items
     .map(
-      (it, i) => `<a class="neighbor" href="${
+      (it, i) => `<a class="neighbor" style="--rnd:${between(-1, 1).toFixed(2)}" href="${
         import.meta.env.PROD ? siteURL(`color/${slugFor(data, it.name)}/`) : `#${it.hex.slice(1)}`
       }" aria-label="${escapeHTML(it.name)}, ${it.hex}">
         <div class="swatchcard" style="${cardStyle(it.hex)};--anim-appear-delay:${i * 75}ms">
@@ -280,18 +281,21 @@ const neighborsHTML = (items, data) =>
     )
     .join("");
 
+const named = (data, steps) => steps.map((step) => ({ hex: step, name: closestAny(data, step).item.name }));
+
 let neighborWatch = null;
 function revealNeighbors() {
   neighborWatch?.disconnect();
   neighborWatch = new IntersectionObserver(
     (entries) => {
-      if (!entries.some((e) => e.isIntersecting)) return;
-      neighborWatch.disconnect();
-      page.neighborsSlide.querySelectorAll(".swatchcard").forEach((card) => card.classList.add("swatchcard--visible"));
+      for (const e of entries.filter((e) => e.isIntersecting)) {
+        neighborWatch.unobserve(e.target);
+        e.target.querySelectorAll(".swatchcard").forEach((card) => card.classList.add("swatchcard--visible"));
+      }
     },
     { threshold: 0.2 },
   );
-  neighborWatch.observe(page.neighbors);
+  [page.neighbors, page.complements, page.ramp].forEach((grid) => neighborWatch.observe(grid));
 }
 
 const capital = (t) => t[0].toUpperCase() + t.slice(1);
@@ -525,6 +529,7 @@ async function render(hex) {
   page.about.replaceChildren();
   page.neighbors.replaceChildren();
   page.complements.replaceChildren();
+  page.ramp.replaceChildren();
   page.neighborsSlide.hidden = true;
   page.dictionary.replaceChildren();
   page.wiki.replaceChildren();
@@ -629,7 +634,8 @@ async function render(hex) {
   showPictures(hex, [current.name, lore.nouns[0]], saved);
   showArt(hex, exact ? current.name : hex, exact ? saved : savedLookup(near.name, slugFor(data, near.name)), !exact);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
-  page.complements.innerHTML = neighborsHTML(neighbors(data, hex, 6, complementOf(rgbToOklab(hexToRgb(hex)))), data);
+  page.complements.innerHTML = neighborsHTML(named(data, rampOf(complementHex(hex))), data);
+  page.ramp.innerHTML = neighborsHTML(named(data, rampOf(hex)), data);
   page.neighborsSlide.hidden = false;
   revealNeighbors();
   page.wordsSlide.hidden = !page.words.innerHTML.trim();
@@ -718,6 +724,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     about: q("[data-about]"),
     neighbors: q("[data-neighbors]"),
     complements: q("[data-complements]"),
+    ramp: q("[data-ramp]"),
     neighborsSlide: q("[data-neighbors-slide]"),
     words: q("[data-words]"),
     wordsTitle: q("[data-words-title]"),

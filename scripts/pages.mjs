@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
-import { slugsOf, hexToRgb, rgbToOklab, complementOf } from "../src/names.js";
+import { slugsOf, hexToRgb, rgbToOklab } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS } from "../src/art.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -39,8 +39,8 @@ const slugs = slugsOf(items);
 const NEIGHBORS = 12;
 const lab = new Float64Array(items.length * 3);
 items.forEach(({ hex }, i) => lab.set(rgbToOklab(hexToRgb(hex)), i * 3));
-const labOf = (i) => [lab[i * 3], lab[i * 3 + 1], lab[i * 3 + 2]];
-function neighborsOf(i, count = NEIGHBORS, [L, a, b] = labOf(i)) {
+function neighborsOf(i, count = NEIGHBORS) {
+  const [L, a, b] = [lab[i * 3], lab[i * 3 + 1], lab[i * 3 + 2]];
   const best = []; // [distance², index], closest first
   for (let j = 0; j < items.length; j++) {
     if (items[j].hex === items[i].hex) continue;
@@ -220,13 +220,6 @@ for (const [i, { name, hex }] of items.entries()) {
       /(<div[^>]*data-neighbors[^>]*>)[\s\S]*?(<\/div>)/,
       (_, open, close) =>
         `${open}${neighborsOf(i)
-          .map((it) => `<a class="neighbor" href="../${slugs.get(it.name)}/">${escapeHTML(it.name)}, ${it.hex}</a>`)
-          .join("")}${close}`,
-    )
-    .replace(
-      /(<div[^>]*data-complements[^>]*>)[\s\S]*?(<\/div>)/,
-      (_, open, close) =>
-        `${open}${neighborsOf(i, 6, complementOf(labOf(i)))
           .map((it) => `<a class="neighbor" href="../${slugs.get(it.name)}/">${escapeHTML(it.name)}, ${it.hex}</a>`)
           .join("")}${close}`,
     );
