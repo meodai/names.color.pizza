@@ -14,19 +14,19 @@
 
   The copy is read from .data (the website-data branch); a name without
   one still gets its page, and the page asks Wikipedia itself. Each name's
-  works of art are picked here from the art index there (scripts/art.mjs),
-  unless it's older than the Harvard Art Museums allow (two weeks).
+  works of art are picked here from the art-colors data (src/art.js): the
+  folder --art, else .data/art-colors (where the deploy checks it out),
+  else ../art-colors next to this repo; without it, no page has art.
 
-    node scripts/pages.mjs [--data .data] [--site https://meodai.github.io/color-names/]
+    node scripts/pages.mjs [--data .data] [--art ../../art-colors] [--site https://meodai.github.io/color-names/]
 */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
-import { slugsOf, hexToRgb, rgbToOklab } from "../src/names.js";
-import { gunzipSync } from "node:zlib";
-import { bucketed, pickArt, artImage, unpackWork, MAX_AGE_DAYS } from "../src/art.js";
+import { slugsOf } from "../src/names.js";
+import { bucketed, pickArt, unpackWork, workHTML, MUSEUMS } from "../src/art.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const arg = (name, fallback) => {
@@ -63,22 +63,22 @@ const copyOf = (slug) => {
   }
 };
 
-// the Art Institute of Chicago's works, to pick each name's from
-const artFile = join(DATA, "art", "works.json.gz");
-const artSource = join(DATA, "art", "source.json");
-const artAge = existsSync(artSource)
-  ? (Date.now() - Date.parse(JSON.parse(readFileSync(artSource, "utf8")).built)) / 86_400_000
-  : Infinity;
-if (existsSync(artFile) && artAge > MAX_AGE_DAYS) console.log("pages.mjs: the art index is older than two weeks; left out");
-const near =
-  existsSync(artFile) && artAge <= MAX_AGE_DAYS
-    ? bucketed(JSON.parse(gunzipSync(readFileSync(artFile)).toString()).map(unpackWork))
-    : null;
-const artFor = (hex) => {
-  if (!near) return null;
-  const [L, A, B] = rgbToOklab(hexToRgb(hex));
-  return pickArt(near(L, A, B), hex);
-};
+// the museums' works (art-colors), to pick each name's from
+const ART = [arg("art"), join(DATA, "art-colors"), resolve(here, "../../../art-colors")].find(
+  (dir) => dir && existsSync(dir)
+);
+const works = [];
+for (const museum of Object.keys(MUSEUMS)) {
+  const file = ART && join(ART, museum, "works.json");
+  if (!file || !existsSync(file)) continue;
+  for (const w of JSON.parse(readFileSync(file, "utf8"))) {
+    const work = unpackWork(w, museum);
+    if (work) works.push(work);
+  }
+}
+if (!works.length) console.log("pages.mjs: no art-colors data; no page has art");
+const near = works.length ? bucketed(works) : null;
+const artFor = (hex) => (near ? pickArt(near, hex) : null);
 
 // the color page as built, one folder further down
 const template = readFileSync(join(DIST, "color/index.html"), "utf8").replace(/"\.\.\//g, '"../../');
@@ -161,38 +161,36 @@ for (const { name, hex } of items) {
     meta("name", "theme-color", hex),
   ].join("\n    ");
 
+  // what goes in is given by a function throughout: in a string, a "$'"
+  // or "$`" in a name or an article would be read as a pattern
   let html = template
     .replace(/<title>[\s\S]*?<\/title>/, "")
-    .replace(/<meta\s+name="description"[\s\S]*?\/>/, head)
-    .replace(/(<h1[^>]*data-name[^>]*>)[\s\S]*?(<\/h1>)/, `$1${escapeHTML(name)}$2`)
+    .replace(/<meta\s+name="description"[\s\S]*?\/>/, () => head)
+    .replace(/(<h1[^>]*data-name[^>]*>)[\s\S]*?(<\/h1>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
     .replace(
       /(<div[^>]*data-intro[^>]*>)[\s\S]*?(<\/div>)/,
-      `$1${lines.map((t) => `<p class="lead">${escapeHTML(t)}</p>`).join("")}$2`
+      (_, open, close) => `${open}${lines.map((t) => `<p class="lead">${escapeHTML(t)}</p>`).join("")}${close}`
     )
     .replace(
       "</body>",
-      `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, fetched: copy?.fetched || null, looked, art })}</script>\n  </body>`
+      () =>
+        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, fetched: copy?.fetched || null, looked, art })}</script>\n  </body>`
     );
   const meaning = meaningHTML(looked);
   if (meaning) {
     html = html
       .replace(/(<section[^>]*data-meaning-slide)([^>]*?)\s+hidden(\s*>)/, "$1$2$3")
-      .replace(/(<h2[^>]*data-meaning-title[^>]*>)[\s\S]*?(<\/h2>)/, `$1${escapeHTML(name)}$2`)
-      .replace(/(<div[^>]*data-wiki[^>]*>)[\s\S]*?(<\/div>)/, `$1${meaning}$2`);
+      .replace(/(<h2[^>]*data-meaning-title[^>]*>)[\s\S]*?(<\/h2>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
+      .replace(/(<div[^>]*data-wiki[^>]*>)[\s\S]*?(<\/div>)/, (_, open, close) => `${open}${meaning}${close}`);
   }
 
   if (art?.length) {
     html = html
       .replace(/(<section[^>]*data-art-slide)([^>]*?)\s+hidden(\s*>)/, "$1$2$3")
-      .replace(/(<h2[^>]*data-art-title[^>]*>)[\s\S]*?(<\/h2>)/, `$1${escapeHTML(name)}, in art.$2`)
+      .replace(/(<h2[^>]*data-art-title[^>]*>)[\s\S]*?(<\/h2>)/, (_, open, close) => `${open}${escapeHTML(name)}, in art.${close}`)
       .replace(
         /(<div[^>]*\bdata-art(?=[\s>])[^>]*>)[\s\S]*?(<\/div>)/,
-        `$1${art
-          .map(
-            (w) =>
-              `<a class="art__work" href="${escapeHTML(w.url)}"><span class="art__frame"><img src="${artImage(w.image, 400)}" alt="${escapeHTML(w.title)}" loading="lazy" style="aspect-ratio:${w.ratio}" /></span><span class="art__caption"><span class="art__title">${escapeHTML(w.title)}</span><span class="art__by">${escapeHTML([w.artist, w.date].filter(Boolean).join(", "))}</span></span></a>`
-          )
-          .join("")}$2`
+        (_, open, close) => `${open}${art.map((w) => workHTML(w)).join("")}${close}`
       );
   }
 

@@ -111,6 +111,11 @@ a:hover {
   gap: var(--space-m);
 }
 
+/* display: flex above would otherwise show a hidden slide */
+.slide[hidden] {
+  display: none;
+}
+
 .slide--invert {
   --bg: var(--ink);
   --fg: var(--paper);
@@ -533,14 +538,13 @@ a:hover {
   max-width: 34ch;
 }
 
-/* In art: the works hung like a salon wall, three across, each at its own
-   height and a little crooked, in a white frame; under each what it is,
-   with a dot of the color the museum found in it */
+/* In art: the works hung like a salon wall, in columns each work as tall
+   as its picture (masonry), a little crooked, in a white frame; under the
+   picture its palette, each color as wide as its share, a way to that
+   color; under that what it is, with a dot of the color found in it */
 .art {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-l) var(--space-m);
-  align-items: start;
+  columns: 3 16rem;
+  column-gap: var(--space-m);
   max-width: 72rem;
 }
 
@@ -548,9 +552,8 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  margin-top: var(--drop, 0);
-  color: inherit;
-  text-decoration: none;
+  break-inside: avoid;
+  margin-bottom: var(--space-l);
 }
 
 .art__frame {
@@ -562,21 +565,50 @@ a:hover {
 }
 
 .art__work:hover .art__frame,
-.art__work:focus-visible .art__frame {
+.art__work:focus-within .art__frame {
   transform: rotate(0deg) scale(1.02);
+}
+
+.art__picture {
+  display: block;
 }
 
 .art__frame img {
   display: block;
   inline-size: 100%;
   block-size: auto;
-  max-block-size: 26rem;
-  object-fit: contain;
   background: color-mix(in srgb, var(--paper) 92%, var(--ink));
+}
+
+.art__palette {
+  display: flex;
+  gap: 2px;
+  margin-top: 0.3rem;
+  block-size: 0.6rem;
+}
+
+/* hovered, the strip grows one color after the other */
+.art__palette > a {
+  flex-basis: 0;
+  transform-origin: top;
+  transition: transform 0.35s cubic-bezier(0.3, 0.7, 0, 1);
+  transition-delay: calc(var(--i, 0) * 40ms);
+}
+
+.art__palette:hover > a,
+.art__palette:focus-within > a {
+  transform: translateY(0.15rem) scaleY(2.2);
+}
+
+.art__palette > a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .art__caption {
   display: flex;
+  color: inherit;
+  text-decoration: none;
   flex-direction: column;
   gap: 0.15em;
   font-size: var(--text-xs);
@@ -606,23 +638,9 @@ a:hover {
   color: inherit;
 }
 
-@media (max-width: 900px) {
-  .art {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .art {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .art__work {
-    margin-top: 0;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .art__frame {
+  .art__frame,
+  .art__palette > a {
     transition: none;
   }
 }
@@ -1722,8 +1740,16 @@ a:hover {
   max-width: 60ch;
 }
 
-.wiki-index__text p {
+/* the article's opening, at most five lines (the rest is a click away on
+   Wikipedia; the whole of it stays in the page for search) */
+.wiki-index__text p,
+.wiki-index__row > p {
+  display: -webkit-box;
   margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
 }
 
 .wiki-index__text ul {

@@ -24,7 +24,7 @@ import {
   slugsOf,
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
-import { artImage } from "./art.js";
+import { workHTML, artNear } from "./art.js";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -705,7 +705,14 @@ async function render(hex) {
   // the nightly copy of what Wikipedia says, when the name has one
   const saved = exact ? savedLookup(current.name, slugFor(data, current.name)) : Promise.resolve(null);
   showPictures(hex, [current.name, lore.nouns[0]], saved);
-  showArt(hex, current.name || hex, saved);
+  // a color without a name of its own borrows the nearest name's art,
+  // what of it is close to this color too
+  showArt(
+    hex,
+    exact ? current.name : hex,
+    exact ? saved : savedLookup(near.name, slugFor(data, near.name)),
+    !exact
+  );
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex));
   page.neighborsSlide.hidden = false;
   revealNeighbors();
@@ -761,9 +768,10 @@ async function showPictures(hex, terms, saved) {
 }
 
 // Works of art whose colors are close to this one, as the build picked them
-// for a name (see art.js); a color without a name has none
-async function showArt(hex, title, saved) {
-  const works = (await saved)?.art || [];
+// for a name (see art.js); a color without a name borrows its nearest's
+async function showArt(hex, title, saved, borrowed) {
+  const art = (await saved)?.art || [];
+  const works = borrowed ? artNear(art, hex) : art;
   if (current?.hex !== hex || !works.length) return;
   page.artTitle.textContent = `${title}, in art.`;
   page.art.innerHTML = artHTML(works);
@@ -772,23 +780,8 @@ async function showArt(hex, title, saved) {
   pileGap();
 }
 
-// each work in a frame, tilted a little, hung at its own height; under it
-// what it is, and a dot of the color the museum found in it
-const artHTML = (works) =>
-  works
-    .map((w) => {
-      const vars = `--tilt:${between(-2.5, 2.5).toFixed(1)}deg;--drop:${between(0, 4).toFixed(1)}rem`;
-      return `<a class="art__work" href="${escapeHTML(w.url)}" target="_blank" rel="noopener" style="${vars}">
-        <span class="art__frame"><img src="${artImage(w.image, 400)}" srcset="${artImage(w.image, 400)} 400w, ${artImage(w.image, 800)} 800w"
-          sizes="(max-width: 640px) 90vw, 30vw" alt="${escapeHTML(w.title)}" loading="lazy" decoding="async"
-          style="aspect-ratio:${w.ratio}" /></span>
-        <span class="art__caption">
-          <span class="art__title"><span class="art__dot" style="background:${w.color}"></span>${escapeHTML(w.title)}</span>
-          <span class="art__by">${escapeHTML([w.artist, w.date].filter(Boolean).join(", "))}</span>
-        </span>
-      </a>`;
-    })
-    .join("");
+// each work in a frame, tilted a little (art.js)
+const artHTML = (works) => works.map((w) => workHTML(w, `--tilt:${between(-2.5, 2.5).toFixed(1)}deg`)).join("");
 
 // The color comes after the hash: color/#5c3a8e
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
