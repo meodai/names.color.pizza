@@ -1,4 +1,4 @@
-import { hexToRgb, rgbToOklab } from "./names.js";
+import { hexToRgb, rgbToOklab, tidySenses } from "./names.js";
 
 // browsers can't set User-Agent; Wikimedia accepts Api-User-Agent instead
 const AGENT = "ColorNamesBot/1.0 (https://github.com/meodai/color-names) color-pages";
@@ -343,10 +343,11 @@ function shapeEntry({ term, senses }, whole = false) {
   const parts = senses
     .map((sense) => ({
       part: sense.partOfSpeech,
-      definitions: sense.definitions
-        .map((d) => plain(d.definition))
-        .filter(Boolean)
-        .slice(0, 2),
+      definitions: sense.definitions.map((d) => plain(d.definition)).filter(Boolean),
+    }))
+    .map((p) => ({
+      ...p,
+      definitions: tidySenses(p.definitions).slice(0, 2),
     }))
     .filter((p) => p.definitions.length)
     .slice(0, 2);

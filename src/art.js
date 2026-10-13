@@ -117,6 +117,7 @@ export function artNear(works, hex) {
 export const MUSEUMS = {
   "chicago-art": { name: "Art Institute of Chicago", url: "https://www.artic.edu/open-access/open-access-images" },
   "cleveland-art": { name: "Cleveland Museum of Art", url: "https://www.clevelandart.org/open-access" },
+  "met-art": { name: "Metropolitan Museum of Art", url: "https://www.metmuseum.org/hubs/open-access" },
 };
 
 export function creditHTML(works) {

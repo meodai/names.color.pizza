@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
-import { slugsOf, hexToRgb, rgbToOklab } from "../src/names.js";
+import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS } from "../src/art.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -110,7 +110,9 @@ function meaningHTML(looked) {
         ${d.parts
           .map(
             (p) =>
-              `<p class="label">${escapeHTML(p.part)}</p><ol>${p.definitions.map((t) => `<li>${escapeHTML(t)}</li>`).join("")}</ol>`,
+              `<p class="label">${escapeHTML(p.part)}</p><ol>${tidySenses(p.definitions)
+                .map((t) => `<li>${escapeHTML(t)}</li>`)
+                .join("")}</ol>`,
           )
           .join("")}
         <a href="${escapeHTML(d.link)}">Wiktionary</a></article>`,

@@ -87,6 +87,13 @@ export const rgbToOklab = (rgb) => linearToOklab(...rgb.map((v) => toLinear(v / 
 // hue turned half way; a very dark or very light color also flips its lightness
 export const complementOf = ([L, a, b]) => [L < 0.3 || L > 0.85 ? 1 - L : L, -a, -b];
 
+// a sense listing sub-senses keeps its lead line; one that repeats an
+// earlier sense goes
+export const tidySenses = (senses) =>
+  senses
+    .filter((d, i) => !senses.slice(0, i).some((e) => e.includes(d)))
+    .map((d) => d.split("\n")[0].trim().replace(/:$/, "."));
+
 export const oklabToRgb = (L, a, b) =>
   oklabToLinear(L, a, b).map((c) => Math.round(clamp(toGamma(clamp(c, 0, 1)), 0, 1) * 255));
 

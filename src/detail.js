@@ -11,10 +11,12 @@ import {
   cardPlace,
   showVersion,
   slugsOf,
+  tidySenses,
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 import { workHTML, artNear, creditHTML } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
+import parrot from "./favicon.svg?raw";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -304,7 +306,9 @@ const sensesHTML = (word) =>
   word.parts
     .map(
       (p) => `<p class="label">${escapeHTML(p.part)}</p>
-        <ol class="dictionary__senses">${p.definitions.map((d) => `<li>${escapeHTML(d)}</li>`).join("")}</ol>`,
+        <ol class="dictionary__senses">${tidySenses(p.definitions)
+          .map((d) => `<li><span>${escapeHTML(d)}</span></li>`)
+          .join("")}</ol>`,
     )
     .join("") +
   `<a class="dictionary__source" href="${escapeHTML(word.link)}" target="_blank" rel="noopener">Wiktionary</a>`;
@@ -542,6 +546,10 @@ async function render(hex) {
   page.art.replaceChildren();
   alternate();
   document.title = `${hex} — Color Names`;
+  if (!page.embedded) {
+    const icon = parrot.replace(/fill="(?!#fff")[^"]*"/g, `fill="${hex}"`);
+    document.querySelector('link[rel="icon"]').href = `data:image/svg+xml,${encodeURIComponent(icon)}`;
+  }
 
   const lore = new ColorDescription(hex);
   const mix = lore.percentageWords();

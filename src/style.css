@@ -1450,6 +1450,14 @@ a:hover {
   margin-top: 0.5em;
 }
 
+.dictionary__senses li > span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
 .dictionary__senses li::before {
   content: counter(sense);
   font-weight: var(--weight-display);
