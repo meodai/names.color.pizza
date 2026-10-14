@@ -125,26 +125,38 @@ const credit = (w) => ({ artist: w.artist, license: w.license, licenseUrl: w.lic
 const paletteOf = (w) => (w.palette || []).map((c) => [c.hex.toLowerCase(), c.share]);
 
 const fileLink = (src = "") => {
-  const m = src.match(/upload\.wikimedia\.org\/wikipedia\/(commons|en)\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/?#]+)/);
+  const m = src.match(
+    /(?:upload|thumb)\.wikimedia\.org\/wikipedia\/(commons|en)\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/?#]+)/,
+  );
   return m ? `https://${m[1] === "commons" ? "commons.wikimedia.org" : "en.wikipedia.org"}/wiki/File:${m[2]}` : "";
 };
 
-// the pictures that have a copy, pointing at it; an article's lead picture joins the rest
+// TEMPORARY until wikimedia-art has a copy of every picture: Commons pictures
+// without one load from Commons, with no palette or credit
+const commons = (src = "") => /^https:\/\/(upload|thumb)\.wikimedia\.org\/wikipedia\/commons\//.test(src);
+
+// the pictures that have a copy, pointing at it; an article keeps its lead picture
 function hosted(looked) {
   if (!looked) return looked;
   const copy = (p) => wikimedia.get(fileTitle(p.link));
-  const leads = (looked.entries || []).filter((e) => e.image).map((e) => ({ link: fileLink(e.image), alt: e.title }));
+  const leads = new Set((looked.entries || []).filter((e) => e.image).map((e) => fileTitle(fileLink(e.image))));
   return {
     ...looked,
-    entries: (looked.entries || []).map(({ image, ...e }) => e),
+    entries: (looked.entries || []).map(({ image, ...e }) => {
+      if (!image) return e;
+      const w = copy({ link: fileLink(image) });
+      return w ? { ...e, image: `${MEDIA}/${w.thumb}` } : commons(image) ? { ...e, image } : e;
+    }),
     pictures: (looked.pictures || []).flatMap((p) => {
       const w = copy(p);
       return w
         ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w), palette: paletteOf(w) }]
-        : [];
+        : commons(p.image)
+          ? [p]
+          : [];
     }),
-    images: [...leads, ...(looked.images || [])]
-      .filter((img, i, all) => all.findIndex((o) => fileTitle(o.link) === fileTitle(img.link)) === i)
+    images: (looked.images || [])
+      .filter((img) => !leads.has(fileTitle(img.link)))
       .flatMap((img) => {
         const w = copy(img);
         return w
@@ -158,7 +170,9 @@ function hosted(looked) {
                 palette: paletteOf(w),
               },
             ]
-          : [];
+          : commons(img.src) && img.link
+            ? [{ ...img, srcset: "" }]
+            : [];
       }),
   };
 }

@@ -294,10 +294,21 @@ const sensesHTML = (word) =>
 function indexHTML(words, entries) {
   const wordFor = new Map(words.map((w) => [w.term.toLowerCase(), w]));
   const placed = new Set();
-  const block = (title, term, word, article) => `<article class="wiki-index__row">
+  const block = (title, term, word, image, article) => `<article class="wiki-index__row">
       <h3${term ? ` data-term="${escapeHTML(term)}"` : ""}><span>${escapeHTML(title)}</span></h3>
       ${word ? `<div class="wiki-index__words">${sensesHTML(word)}</div>` : ""}
-      ${article ? `<div class="wiki-index__body"><div class="wiki-index__text">${article}</div></div>` : ""}
+      ${
+        article
+          ? `<div class="wiki-index__body">
+        ${
+          image
+            ? `<img class="wiki-index__picture" src="${escapeHTML(image)}" alt="" loading="lazy" style="--tilt:${between(-4, 4).toFixed(1)}deg;--nudge:${between(-0.6, 0.6).toFixed(2)}rem" />`
+            : ""
+        }
+        <div class="wiki-index__text">${article}</div>
+      </div>`
+          : ""
+      }
     </article>`;
   const rows = entries.map((e) => {
     const word = wordFor.get(baseTitle(e.title));
@@ -308,13 +319,14 @@ function indexHTML(words, entries) {
       e.title,
       mine?.term,
       mine,
+      e.image,
       (opening ? blocksHTML([opening]) : "") +
         (e.link ? `<a href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>` : ""),
     );
   });
   for (const word of words) {
     if (placed.has(word)) continue;
-    rows.push(block(capital(word.term), word.term, word, ""));
+    rows.push(block(capital(word.term), word.term, word, null, ""));
   }
   return rows.length ? `<div class="wiki-index">${rows.join("")}</div>` : "";
 }
@@ -606,7 +618,12 @@ let gallery = [];
 const galleryRows = () => 6;
 
 function addToGallery(hex, items) {
-  items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`));
+  // TEMPORARY: or from Commons, until wikimedia-art has a copy of every picture
+  items = items.filter(
+    (it) =>
+      it.image?.startsWith(`${MEDIA}/`) ||
+      /^https:\/\/(upload|thumb)\.wikimedia\.org\/wikipedia\/commons\//.test(it.image),
+  );
   if (current?.hex !== hex || !items.length) return;
   // most of the color first, whatever the source
   gallery = [...gallery, ...items].sort((a, b) => (b.share ?? -1) - (a.share ?? -1));
@@ -683,7 +700,7 @@ function layoutGallery() {
       if (!e.isIntersecting) return;
       seen.disconnect();
       page.art.classList.add("is-in");
-      setTimeout(() => (strip.entered = true), 1450);
+      setTimeout(() => (strip.entered = true), 1300);
     },
     { threshold: 0.25 },
   );
@@ -749,7 +766,7 @@ function drawStrip() {
         el.className = "tile";
         el.innerHTML = tileHTML(t.it, gallery.indexOf(t.it));
         const reach = Math.hypot(x - strip.offset - page.art.clientWidth / 2, (k - strip.middle) * strip.row);
-        const delay = strip.entered ? 0 : 750 + Math.round(Math.min(1, reach / page.art.clientWidth) * 360);
+        const delay = strip.entered ? 0 : 600 + Math.round(Math.min(1, reach / page.art.clientWidth) * 360);
         el.style.cssText = `top:${k * (strip.row + strip.gap)}px;width:${t.w}px;height:${strip.row}px;--d:${delay}ms`;
         page.art.append(el);
         strip.tiles.set(key, el);
