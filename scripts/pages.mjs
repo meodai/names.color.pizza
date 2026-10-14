@@ -251,8 +251,12 @@ const listed = existsSync(join(LISTS, "uploaded.json"))
 const toUpload = [];
 const sitemap = [`<url><loc>${SITE}</loc></url>`];
 
+// ONLY=slug,slug: just those pages, for a quick local preview
+const ONLY = process.env.ONLY && new Set(process.env.ONLY.split(","));
+
 for (const [i, { name, hex }] of items.entries()) {
   const slug = slugs.get(name);
+  if (ONLY && !ONLY.has(slug)) continue;
   const copy = copyOf(slug);
   if (copy) withCopy++;
   const looked = hosted(copy?.looked || null);
