@@ -561,6 +561,10 @@ async function render(hex) {
     return;
   }
   const near = exact || closestAny(data, hex).item;
+  if (!exact && import.meta.env.PROD && !page.embedded && builtPage?.name !== near.name) {
+    location.replace(`${siteURL(`color/${slugFor(data, near.name)}/`)}#${hex.slice(1)}`);
+    return;
+  }
   current.name = near.name;
 
   page.cardName.textContent = exact ? near.name : `≈ ${near.name}`;

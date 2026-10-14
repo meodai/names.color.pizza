@@ -5,6 +5,7 @@ import {
   fold,
   colorURL,
   siteURL,
+  slugsOf,
   hexToRgb,
   rgbToOklab,
   cardPlace,
@@ -889,6 +890,17 @@ export async function initWall(root) {
   const pageCardWidth = () => clamp(view.w * 0.21, 208, 384);
 
   let pending = null;
+  let slugs = null;
+  // the name's own address, so a copied link previews; the hash keeps the color
+  const toOwnURL = (it) => {
+    if (!import.meta.env.PROD) return;
+    slugs ??= getList("default").then((d) => slugsOf(d.items));
+    slugs.then((s) => {
+      const slug = s.get(it.name);
+      if (slug && location.hash === `#${it.hex.slice(1)}`)
+        history.replaceState(history.state, "", `${new URL(`${slug}/`, colorPageURL).href}#${it.hex.slice(1)}`);
+    });
+  };
 
   function open(i) {
     if (busy) return;
@@ -902,6 +914,7 @@ export async function initWall(root) {
     spot = null;
     // push now, so Back at any point on the way in returns to the wall
     history.pushState({ colorDepth: 1 }, "", colorURL(it.hex));
+    toOwnURL(it);
 
     root.classList.add("is-opening");
     opening = { i, pos: posOf(i), t0: performance.now(), handed: false };
@@ -957,8 +970,10 @@ export async function initWall(root) {
     const layer = document.createElement("div");
     layer.className = "wall__page";
     layer.append(document.importNode(main, true));
-    // links on the color page are relative to color/
-    document.documentElement.dataset.root = "../";
+    // links on the color page are relative to color/, the address may be color/<name>/
+    for (const a of layer.querySelectorAll("a[href]")) a.href = new URL(a.getAttribute("href"), colorPageURL).href;
+    for (const img of layer.querySelectorAll("img[src]")) img.src = new URL(img.getAttribute("src"), colorPageURL).href;
+    document.documentElement.dataset.root = new URL("../", colorPageURL).href;
     root.append(layer);
     const controller = new AbortController();
     colorPage = { layer, controller, returnTo, hex, depth: 1 };
@@ -1062,7 +1077,7 @@ export async function initWall(root) {
   }
 
   addEventListener("popstate", () => {
-    const onColor = /\/color\/$/.test(location.pathname);
+    const onColor = /\/color\/([^/]+\/)?$/.test(location.pathname);
     if (pending && !onColor) cancelOpening();
     else if (colorPage && !onColor) closeColorPage();
     // forward into a color page that's no longer open: load it
@@ -1707,7 +1722,7 @@ export async function initWall(root) {
   const nav = performance.getEntriesByType("navigation")[0]?.type;
   let fromColorPage = false;
   try {
-    fromColorPage = /\/color\/$/.test(new URL(document.referrer).pathname);
+    fromColorPage = /\/color\/([^/]+\/)?$/.test(new URL(document.referrer).pathname);
   } catch {}
   let saved = null;
   if (nav === "back_forward" || (nav === "navigate" && fromColorPage)) {
