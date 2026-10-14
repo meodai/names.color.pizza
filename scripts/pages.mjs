@@ -75,6 +75,8 @@ const copyOf = (slug) => {
 
 // palettes and credits of every collection, kept with the copies
 async function collection(name) {
+  const local = process.env.ART_DATA && join(process.env.ART_DATA, `${name}.json`);
+  if (local && existsSync(local)) return JSON.parse(readFileSync(local, "utf8"));
   try {
     const res = await fetch(`${MEDIA}/data/${name}.json`);
     return res.ok ? await res.json() : [];

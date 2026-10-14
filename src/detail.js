@@ -591,13 +591,14 @@ function addToGallery(hex, items) {
   items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`));
   if (current?.hex !== hex || !items.length) return;
   gallery = [...gallery, ...items].sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
-  layoutGallery();
   page.artTitle.textContent = `${current.name}, in pictures.`;
   page.artCredit.innerHTML = creditHTML(gallery.filter((it) => it.work).map((it) => it.work));
+  // shown first: a hidden strip has no width to measure
   if (page.artSlide.hidden) {
     page.artSlide.hidden = false;
     alternate();
   }
+  layoutGallery();
 }
 
 // rows filled shortest first, then each topped up with its own pictures to
@@ -630,13 +631,17 @@ function layoutGallery() {
   const width = first ? first.offsetWidth + parseFloat(getComputedStyle(first).marginInlineEnd) : 1;
   page.art.innerHTML = draw(Math.ceil(page.art.clientWidth / width) + 3);
   page.art.dataset.rows = rows.length;
-  page.art.dataset.set = width;
   page.art.scrollLeft = width * (1 + Math.random() * 0.6);
 }
 
+const setWidth = () => {
+  const first = page.art.querySelector(".gallery__set");
+  return first ? first.offsetWidth + parseFloat(getComputedStyle(first).marginInlineEnd) : 0;
+};
+
 function wrapGallery() {
-  const width = +page.art.dataset.set;
-  if (!width) return;
+  const width = setWidth();
+  if (width < 50) return;
   if (page.art.scrollLeft < width * 0.5) page.art.scrollLeft += width;
   else if (page.art.scrollLeft > width * 1.5) page.art.scrollLeft -= width;
 }
