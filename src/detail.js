@@ -1,7 +1,6 @@
 import { converter, formatHex, wcagLuminance } from "culori";
 import ColorDescription from "color-description";
 import {
-  UNNAMED,
   hexToRgb,
   rgbToOklab,
   oklchString,
@@ -563,24 +562,21 @@ async function render(hex) {
     location.replace(siteURL(`color/${slugFor(data, exact.name)}/`));
     return;
   }
-  const { item: near, distance } = exact ? { item: exact, distance: 0 } : closestAny(data, hex);
-  const unnamed = !exact && distance > UNNAMED;
-  current.name = exact || !unnamed ? near.name : null;
-  const title = current.name || "No name yet";
+  const near = exact || closestAny(data, hex).item;
+  current.name = near.name;
 
-  page.cardName.textContent = exact ? exact.name : unnamed ? "No name yet" : `≈ ${near.name}`;
-  page.name.textContent = title;
-  page.colophonColor.textContent = current.name ? `${current.name} · ${hex}` : hex;
+  page.cardName.textContent = exact ? near.name : `≈ ${near.name}`;
+  page.name.textContent = near.name;
+  page.colophonColor.textContent = `${near.name} · ${hex}`;
   fitTitle();
-  document.title = `${title}: ${hex} — Color Names`;
+  document.title = `${near.name}: ${hex} — Color Names`;
 
   const [noun, alt] = lore.nouns;
   const adjective = /^(black|white)$/.test(noun) ? "" : lore.descriptiveWords[0]; // no "very dark black"
   const kind = [adjective, noun].filter(Boolean).join(" ");
   const article = /^[aeiou]/i.test(kind) ? "an" : "a";
-  const subject = current.name || "This color";
   const lines = [
-    kind && `${subject} is ${article} ${kind}${alt ? `, close to ${alt}` : ""}.`,
+    kind && `${near.name} is ${article} ${kind}${alt ? `, close to ${alt}` : ""}.`,
     `It can be described as ${lore.getDescriptiveList(false, 4)}.`,
   ].filter(Boolean);
   const leads = (texts) =>
@@ -588,39 +584,30 @@ async function render(hex) {
   const describe = (said) => page.intro.replaceChildren(...leads(said ? [said] : lines));
   describe(builtPage?.name === current.name ? builtPage.description : null);
 
-  const stats = [hex];
-  if (unnamed) stats.push("Not named yet");
-  else if (!exact) stats.push(`Nearest name, ${near.hex}`);
-  page.stats.replaceChildren(...stats.map((t) => Object.assign(document.createElement("span"), { textContent: t })));
-  if (exact) {
-    // "by" is only set when someone other than the list's maintainer added it
-    addedOn(current.name).then((added) => {
-      if (!added || current?.hex !== hex) return;
-      const link = (href, text, title) =>
-        Object.assign(document.createElement("a"), {
-          href,
-          textContent: text,
-          title,
-          target: "_blank",
-          rel: "noopener",
-        });
-      const line = document.createElement("span");
+  page.stats.replaceChildren(Object.assign(document.createElement("span"), { textContent: hex }));
+  // "by" is only set when someone other than the list's maintainer added it
+  addedOn(current.name).then((added) => {
+    if (!added || current?.hex !== hex) return;
+    const link = (href, text, title) =>
+      Object.assign(document.createElement("a"), {
+        href,
+        textContent: text,
+        title,
+        target: "_blank",
+        rel: "noopener",
+      });
+    const line = document.createElement("span");
+    line.append(
+      link(`https://github.com/meodai/color-names/commit/${added.hash}`, `Added ${added.date}`, `Commit ${added.hash}`),
+    );
+    if (added.by) {
+      line.append(" by ");
       line.append(
-        link(
-          `https://github.com/meodai/color-names/commit/${added.hash}`,
-          `Added ${added.date}`,
-          `Commit ${added.hash}`,
-        ),
+        added.github ? link(`https://github.com/${added.github}`, added.by, `@${added.github} on GitHub`) : added.by,
       );
-      if (added.by) {
-        line.append(" by ");
-        line.append(
-          added.github ? link(`https://github.com/${added.github}`, added.by, `@${added.github} on GitHub`) : added.by,
-        );
-      }
-      page.stats.append(line);
-    });
-  }
+    }
+    page.stats.append(line);
+  });
 
   const ink = lore.bestContrast === "white" ? "#fff" : "#000";
   page.fill.style.setProperty("--fill-ink", ink);
@@ -641,11 +628,11 @@ async function render(hex) {
   page.about.innerHTML = lore.description.map((t) => `<p>${escapeHTML(t)}</p>`).join("");
   page.wordsTitle.textContent = wordsTitle(lore);
   page.words.innerHTML = wordsHTML(lore);
-  const saved = exact ? savedLookup(current.name, slugFor(data, current.name)) : Promise.resolve(null);
-  if (exact && builtPage?.name !== current.name)
+  const saved = savedLookup(current.name, slugFor(data, current.name));
+  if (builtPage?.name !== current.name)
     saved.then((c) => c?.description && current?.hex === hex && describe(c.description));
   showPictures(hex, [current.name, lore.nouns[0]], saved);
-  showArt(hex, exact ? current.name : hex, exact ? saved : savedLookup(near.name, slugFor(data, near.name)), !exact);
+  showArt(hex, current.name, saved, false);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
   page.complements.innerHTML = neighborsHTML(named(data, rampOf(complementHex(hex))), data);
   page.ramp.innerHTML = neighborsHTML(named(data, rampOf(hex)), data);
@@ -656,7 +643,7 @@ async function render(hex) {
   const own = exact && import.meta.env.PROD ? new URL(siteURL(`color/${slugFor(data, current.name)}/`)) : location;
   page.pageLink.href = own.href;
   page.pageLink.textContent = `${own.host}${own.pathname}${own.hash}`;
-  page.outro.textContent = unnamed ? "Nobody named it yet." : "Share it.";
+  page.outro.textContent = "Share it.";
   alternate();
 
   requestAnimationFrame(() =>
@@ -666,7 +653,6 @@ async function render(hex) {
     }),
   );
 
-  if (!current.name) return;
   const looked = (await saved)?.looked || (await lookupName(current.name));
   const { definitions, entries, images, sounds } = looked;
   if (current?.hex !== hex || (!definitions.length && !entries.length)) return;
