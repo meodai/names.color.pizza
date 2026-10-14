@@ -948,6 +948,7 @@ export async function initWall(root) {
   }, 1500);
 
   const wallTitle = document.title;
+  const wallIcon = document.querySelector('link[rel="icon"]').href;
 
   async function showColorPage(hex, returnTo, copy, task) {
     const [main, detail] = await Promise.all([loadColorPage(), loadDetail()]);
@@ -983,6 +984,7 @@ export async function initWall(root) {
   function closeColorPage() {
     const page = colorPage;
     colorPage = null;
+    document.querySelector('link[rel="icon"]').href = wallIcon;
     const slot = page.layer.querySelector(".color-hero__card");
     const b = slot.getBoundingClientRect();
     const from = { x: b.left + b.width / 2, y: b.top + b.height / 2, w: slot.firstElementChild.offsetWidth };

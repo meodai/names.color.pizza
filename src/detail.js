@@ -15,7 +15,7 @@ import {
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 import { workHTML, artNear, creditHTML } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
-import parrot from "./favicon.svg?raw";
+import outline from "./favicon-outline.svg?raw";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -545,10 +545,8 @@ async function render(hex) {
   page.art.replaceChildren();
   alternate();
   document.title = `${hex} — Color Names`;
-  if (!page.embedded) {
-    const icon = parrot.replace(/fill="(?!#fff")[^"]*"/g, `fill="${hex}"`);
-    document.querySelector('link[rel="icon"]').href = `data:image/svg+xml,${encodeURIComponent(icon)}`;
-  }
+  document.querySelector('link[rel="icon"]').href =
+    `data:image/svg+xml,${encodeURIComponent(outline.replace('stroke="#000"', `stroke="${hex}"`))}`;
 
   const lore = new ColorDescription(hex);
   const mix = lore.percentageWords();
