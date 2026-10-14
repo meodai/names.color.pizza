@@ -361,6 +361,19 @@ function placeCard(place = cardPlace()) {
   page.place.style.setProperty("--r", `${place.r.toFixed(1)}deg`);
 }
 
+// what Wikipedia and Wiktionary say; a page built for the name has it already
+function showMeaning(name, { definitions = [], entries = [], sounds = [] }) {
+  if (!definitions.length && !entries.length) return false;
+  page.meaningTitle.textContent = name;
+  const whole = isWhole(definitions) && !entries.some((e) => baseTitle(e.title) === definitions[0].term.toLowerCase());
+  page.dictionary.innerHTML = whole ? dictionaryHTML(definitions) : "";
+  page.wiki.innerHTML = indexHTML(whole ? [] : definitions, entries);
+  addPronunciations(whole ? page.dictionary : page.wiki, definitions, sounds, whole ? page.meaningTitle : null);
+  page.meaningSlide.hidden = false;
+  alternate();
+  return true;
+}
+
 async function render(hex) {
   const { card } = page;
   (page.embedded ? page.root : window).scrollTo(0, 0);
@@ -420,6 +433,8 @@ async function render(hex) {
 
   const lore = new ColorDescription(hex);
   const mix = lore.percentageWords();
+
+  const early = builtPage?.hex === hex && builtPage.looked ? showMeaning(builtPage.name, builtPage.looked) : false;
 
   const data = await getList("default");
   if (current?.hex !== hex) return; // a newer color took over
@@ -526,15 +541,9 @@ async function render(hex) {
   );
 
   const looked = (await saved)?.looked || (await lookupName(current.name));
-  const { definitions, entries, images, sounds } = looked;
-  if (current?.hex !== hex || (!definitions.length && !entries.length)) return;
-  page.meaningTitle.textContent = current.name;
-  const whole = isWhole(definitions) && !entries.some((e) => baseTitle(e.title) === definitions[0].term.toLowerCase());
-  page.dictionary.innerHTML = whole ? dictionaryHTML(definitions) : "";
-  page.wiki.innerHTML = indexHTML(whole ? [] : definitions, entries);
-  addPronunciations(whole ? page.dictionary : page.wiki, definitions, sounds, whole ? page.meaningTitle : null);
-  page.meaningSlide.hidden = false;
-  alternate();
+  if (current?.hex !== hex) return;
+  if (!early) showMeaning(current.name, looked);
+  const { images = [] } = looked;
   addToGallery(
     hex,
     images.map((img) => ({
@@ -570,9 +579,14 @@ async function showPictures(hex, terms, saved) {
 }
 
 async function showArt(hex, saved) {
+  const list = (await saved)?.list;
+  let art = [];
+  try {
+    if (list) art = await (await fetch(new URL(list, location.href))).json();
+  } catch {}
   addToGallery(
     hex,
-    ((await saved)?.art || []).map((w) => ({
+    art.map((w) => ({
       kind: "art",
       image: w.image,
       ratio: w.ratio,

@@ -4,6 +4,7 @@
 //   node scripts/pages.mjs [--data .data] [--descriptions .descriptions] [--site https://names.color.pizza/]
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
@@ -223,6 +224,15 @@ const meta = (attr, key, value) => `<meta ${attr}="${key}" content="${escapeHTML
 let written = 0;
 let withArt = 0;
 let withCopy = 0;
+// each name's art list lives on media.color.pizza (lists/<slug>.json), not in
+// its page; LOCAL_LISTS keeps them in dist/lists for a preview without uploads
+const LISTS = resolve(here, "../.cache/lists");
+const LOCAL = !!process.env.LOCAL_LISTS;
+const listURL = (slug) => (LOCAL ? `../../lists/${slug}.json` : `${MEDIA}/lists/${slug}.json`);
+const listed = existsSync(join(LISTS, "uploaded.json"))
+  ? JSON.parse(readFileSync(join(LISTS, "uploaded.json"), "utf8"))
+  : {};
+const toUpload = [];
 const sitemap = [`<url><loc>${SITE}</loc></url>`];
 
 for (const [i, { name, hex }] of items.entries()) {
@@ -276,7 +286,7 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(
       "</body>",
       () =>
-        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, art })}</script>\n  </body>`,
+        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art?.length ? listURL(slug) : null })}</script>\n  </body>`,
     );
   const meaning = meaningHTML(looked);
   if (meaning) {
@@ -320,7 +330,17 @@ for (const [i, { name, hex }] of items.entries()) {
 `,
   );
 
-  if (art?.length) withArt++;
+  if (art?.length) {
+    withArt++;
+    const body = JSON.stringify(art);
+    if (LOCAL) {
+      mkdirSync(join(DIST, "lists"), { recursive: true });
+      writeFileSync(join(DIST, "lists", `${slug}.json`), body);
+    } else {
+      const sum = createHash("sha1").update(body).digest("hex");
+      if (listed[slug] !== sum) toUpload.push({ slug, body, sum });
+    }
+  }
   sitemap.push(`<url><loc>${url}</loc>${copy?.fetched ? `<lastmod>${copy.fetched}</lastmod>` : ""}</url>`);
   written++;
 }
@@ -353,6 +373,32 @@ writeFileSync(
 );
 writeFileSync(join(DIST, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}sitemap.xml\n`);
 
+const { UPLOAD_URL, UPLOAD_KEY } = process.env;
+let uploaded = 0;
+if (UPLOAD_URL && UPLOAD_KEY && toUpload.length) {
+  await Promise.all(
+    Array.from({ length: 16 }, async () => {
+      while (toUpload.length) {
+        const { slug, body, sum } = toUpload.pop();
+        for (let attempt = 1; attempt <= 4; attempt++) {
+          const res = await fetch(`${UPLOAD_URL}/lists/${slug}.json`, {
+            method: "PUT",
+            headers: { authorization: `Bearer ${UPLOAD_KEY}`, "content-type": "application/json" },
+            body,
+          }).catch(() => null);
+          if (res?.ok) {
+            listed[slug] = sum;
+            uploaded++;
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 2000 * attempt));
+        }
+      }
+    }),
+  );
+  mkdirSync(LISTS, { recursive: true });
+  writeFileSync(join(LISTS, "uploaded.json"), JSON.stringify(listed));
+}
 console.log(
-  `pages.mjs: ${written} color pages (${withCopy} with the nightly copy, ${withArt} with art), ${written} hex forwards, sitemap`,
+  `pages.mjs: ${written} color pages (${withCopy} with the nightly copy, ${withArt} with art, ${uploaded} art lists uploaded${toUpload.length ? `, ${toUpload.length} not` : ""}), ${written} hex forwards, sitemap`,
 );

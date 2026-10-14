@@ -4,7 +4,7 @@ import { hexToRgb, rgbToOklab } from "./names.js";
 const CLOSE = 0.05;
 const SHARE = 0.05;
 const MIN_SHARE = 0.03;
-export const ART_COUNT = 30;
+export const ART_COUNT = 100;
 
 // colors: [L, A, B, share, hex]
 export const MEDIA = "https://media.color.pizza";
