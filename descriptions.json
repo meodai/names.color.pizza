@@ -270257,5 +270257,49 @@
     "reference": "Chanel No. 5",
     "description": "Chanel's perfume bottle in a field of sunflowers, bright and delicate.",
     "model": "describer"
+  },
+  {
+    "name": "Macabre Sensation",
+    "hex": "#661449",
+    "ai": true,
+    "kind": "mood",
+    "description": "Dark cabaret plum, velvet curtains and a hint of something unsettling.",
+    "model": "describer"
+  },
+  {
+    "name": "Evil Empire",
+    "hex": "#4c022f",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Star Wars, the Galactic Empire",
+    "description": "Dark side burgundy, fit for an Emperor's cloak.",
+    "model": "describer"
+  },
+  {
+    "name": "Creatures of the Night",
+    "hex": "#3b193f",
+    "ai": true,
+    "kind": "reference",
+    "reference": "KISS album",
+    "description": "Midnight purple, fit for a KISS concert in a darkened arena.",
+    "model": "describer"
+  },
+  {
+    "name": "Gothic Horror",
+    "hex": "#2c3d28",
+    "ai": true,
+    "kind": "mood",
+    "reference": "Gothic fiction genre",
+    "description": "Midnight in a ruined abbey, ivy crawling up stone walls.",
+    "model": "describer"
+  },
+  {
+    "name": "Medusa",
+    "hex": "#559260",
+    "ai": true,
+    "kind": "reference",
+    "reference": "mythological Medusa",
+    "description": "Snake-haired green, like the moss that grows in a Gorgon's gaze.",
+    "model": "describer"
   }
 ]
