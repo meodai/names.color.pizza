@@ -683,7 +683,7 @@ function layoutGallery() {
       if (!e.isIntersecting) return;
       seen.disconnect();
       page.art.classList.add("is-in");
-      setTimeout(() => (strip.entered = true), 980);
+      setTimeout(() => (strip.entered = true), 1450);
     },
     { threshold: 0.25 },
   );
@@ -749,7 +749,7 @@ function drawStrip() {
         el.className = "tile";
         el.innerHTML = tileHTML(t.it, gallery.indexOf(t.it));
         const reach = Math.hypot(x - strip.offset - page.art.clientWidth / 2, (k - strip.middle) * strip.row);
-        const delay = strip.entered ? 0 : 280 + Math.round(Math.min(1, reach / page.art.clientWidth) * 360);
+        const delay = strip.entered ? 0 : 750 + Math.round(Math.min(1, reach / page.art.clientWidth) * 360);
         el.style.cssText = `top:${k * (strip.row + strip.gap)}px;width:${t.w}px;height:${strip.row}px;--d:${delay}ms`;
         page.art.append(el);
         strip.tiles.set(key, el);
