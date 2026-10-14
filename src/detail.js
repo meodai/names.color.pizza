@@ -624,14 +624,20 @@ const strip = { offset: 0, rows: [], title: null, tiles: new Map(), frame: 0 };
 function layoutGallery() {
   const n = galleryRows();
   const rows = Array.from({ length: n }, () => ({ width: 0, items: [] }));
+  // every work in the rows that show in full; the cut-off rows at the top and
+  // bottom repeat them, out of step
+  const inner = rows.slice(1, -1);
   for (const it of gallery) {
-    const row = rows.reduce((a, b) => (b.width < a.width ? b : a));
+    const row = inner.reduce((a, b) => (b.width < a.width ? b : a));
     row.width += it.ratio || 1;
     row.items.push(it);
   }
-  rows.forEach((r, k) => {
+  inner.forEach((r, k) => {
     if (!r.items.length) r.items.push(gallery[k % gallery.length]);
   });
+  const rotate = (items, by) => [...items.slice(by % items.length), ...items.slice(0, by % items.length)];
+  rows[0].items = rotate(inner.at(-1).items, 2);
+  rows.at(-1).items = rotate(inner[0].items, 3);
   page.art.replaceChildren();
   strip.tiles = new Map();
   const title = document.createElement("div");
@@ -785,11 +791,11 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
     <div class="lightbox__frame">
       <span class="lightbox__mat"></span>
       <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
+      ${it.palette?.length ? `<div class="lightbox__palette">${paletteHTML(it.palette, it.color)}</div>` : ""}
     </div>
     <figcaption class="lightbox__info">
       ${link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ')}
       ${it.by ? `<span>${escapeHTML(it.by)}</span>` : ""}
-      ${it.palette?.length ? paletteHTML(it.palette, it.color) : ""}
       <span class="lightbox__source">${sourceHTML(it)}</span>
     </figcaption>
   </figure>`;
@@ -835,9 +841,30 @@ function openPicture(tile, it) {
       ],
       { duration: 400, delay: 360, easing: EASE, fill: "backwards" },
     );
+    // the palette once the frame has settled, swatch by swatch
+    box.querySelectorAll(".lightbox__palette .art__palette > a").forEach((swatch, i) =>
+      swatch.animate(
+        [
+          { opacity: 0, scale: "1 0" },
+          { opacity: 1, scale: "1 1" },
+        ],
+        { duration: 320, delay: 620 + i * 45, easing: EASE, fill: "backwards" },
+      ),
+    );
   };
   if (img.complete) go();
   else img.addEventListener("load", go, { once: true });
+  // each swatch's closest name, for when it opens on hover
+  getList("default").then((data) => {
+    for (const a of box.querySelectorAll(".lightbox__palette .art__palette > a")) {
+      const name = closestAny(data, a.getAttribute("aria-label")).item.name;
+      a.setAttribute("aria-label", `${name}, ${a.getAttribute("aria-label")}`);
+      a.insertAdjacentHTML(
+        "beforeend",
+        `<span class="art__square"><span class="art__name">${escapeHTML(name)}</span></span>`,
+      );
+    }
+  });
   box.querySelector(".lightbox__backdrop").addEventListener("click", () => closePicture());
   opened = { box, tile, frame, mat, info, fly };
 }
