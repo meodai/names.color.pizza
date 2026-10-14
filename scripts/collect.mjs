@@ -143,7 +143,9 @@ async function politeFetch(url, options = {}) {
           next = Math.max(next, Date.now() + wait);
           continue;
         }
-        forName.getStore()?.failed.push(`${res.status} ${url}`);
+        // some pages' media lists always 500 (Jazz, The Rite of Spring)
+        if (!(res.status === 500 && url.includes("/page/media-list/")))
+          forName.getStore()?.failed.push(`${res.status} ${url}`);
       }
       return res;
     } catch (e) {
