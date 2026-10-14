@@ -592,7 +592,7 @@ async function showArt(hex, saved) {
       image: w.image,
       ratio: w.ratio,
       title: w.title,
-      by: [w.artist, w.date, w.source && `via ${w.source}`].filter(Boolean).join(", "),
+      by: [w.artist, w.kind, w.date, w.source && `via ${w.source}`].filter(Boolean).join(", "),
       link: w.url,
       palette: w.palette,
       color: w.color,

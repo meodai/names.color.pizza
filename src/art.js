@@ -26,6 +26,8 @@ export function unpackWork(w, museum) {
     url: w.url,
     image: `${MEDIA}/${w.thumb}`,
     ...(w.source ? { source: w.source } : {}),
+    // an album or a single, a game's system
+    ...(museum === "albums" || museum === "games" ? { kind: w.type } : {}),
     ratio: w.width && w.height ? Math.round((w.width / w.height) * 1000) / 1000 : 1,
     museum,
     palette: (w.palette || []).map((c) => [c.hex.toLowerCase(), c.share]),
@@ -110,6 +112,7 @@ export const MUSEUMS = {
   "met-art": { name: "Metropolitan Museum of Art", url: "https://www.metmuseum.org/hubs/open-access" },
   "pdia-art": { name: "Public Domain Image Archive", url: "https://pdimagearchive.org" },
   albums: { name: "Cover Art Archive", url: "https://coverartarchive.org" },
+  games: { name: "libretro thumbnails", url: "https://github.com/libretro-thumbnails" },
 };
 
 export function creditHTML(works) {
