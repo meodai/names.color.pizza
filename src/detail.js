@@ -622,9 +622,27 @@ function layoutGallery() {
   strip.tiles = new Map();
   const title = document.createElement("h2");
   title.className = "display gallery__title";
-  title.innerHTML = `${escapeHTML(current.name)},<br />in pictures.`;
+  title.innerHTML = `<span class="gallery__swatch" aria-hidden="true">
+      <span class="swatchcard" style="${cardStyle(current.hex)}">
+        <span class="swatchcard__upper"><i class="swatchcard__swatch"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i></span>
+        <span class="swatchcard__label"><span class="swatchcard__info">
+          <span class="swatchcard__row1">${current.hex}</span>
+          <span class="swatchcard__row2">${escapeHTML(current.name)}</span>
+        </span></span>
+      </span>
+    </span>
+    <span class="gallery__name">${escapeHTML(current.name)},<br />in pictures.</span>`;
   page.art.append(title);
   strip.title = title;
+  const shown = new IntersectionObserver(
+    ([e]) => {
+      if (!e.isIntersecting) return;
+      shown.disconnect();
+      title.querySelector(".swatchcard").classList.add("swatchcard--visible");
+    },
+    { threshold: 0.3 },
+  );
+  shown.observe(title);
   measureStrip(rows);
   strip.offset = strip.titleWidth / 2 - page.art.clientWidth / 2;
   drawStrip();
@@ -637,8 +655,14 @@ function measureStrip(rows = strip.rows) {
   strip.gap = gap;
   strip.middle = Math.floor((rows.length - 1) / 2);
   strip.title.style.height = `${row}px`;
+  strip.title.style.gap = `${gap}px`;
+  // the swatch card is as tall as a row, like a picture
+  const swatch = strip.title.querySelector(".gallery__swatch");
+  swatch.style.width = "100px";
+  swatch.style.width = `${(row * 100) / swatch.offsetHeight}px`;
   strip.title.style.width = "max-content";
-  strip.titleWidth = strip.title.offsetWidth;
+  strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + gap + row * 2.8);
+  strip.title.style.width = `${strip.titleWidth}px`;
   strip.rows = rows.map((r, k) => {
     let x = 0;
     const tiles = r.items.map((it) => {

@@ -510,9 +510,25 @@ a:hover {
   display: flex;
   align-items: flex-start;
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   text-align: left;
   pointer-events: none;
+}
+
+.gallery__swatch {
+  container-type: inline-size;
+  flex: none;
+  align-self: stretch;
+}
+
+.gallery__swatch .swatchcard {
+  inline-size: 100%;
+  font-size: 20.5cqi;
+}
+
+.slide:not(.slide--invert) .gallery__swatch .swatchcard__info {
+  color: var(--paper);
+  background: var(--ink);
 }
 
 .gallery .tile {
