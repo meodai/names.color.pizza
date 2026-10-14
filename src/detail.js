@@ -13,7 +13,7 @@ import {
   tidySenses,
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
-import { paletteHTML, creditHTML, MEDIA } from "./art.js";
+import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import outline from "./favicon-outline.svg?raw";
 
@@ -409,6 +409,7 @@ async function render(hex) {
   page.wiki.replaceChildren();
   page.wordsSlide.hidden = true;
   gallery = [];
+  closePicture(true);
   page.meaningSlide.hidden = true;
   page.artSlide.hidden = true;
   page.art.replaceChildren();
@@ -544,6 +545,7 @@ async function render(hex) {
       title: img.alt,
       by: "On Wikipedia",
       credit: img.credit,
+      palette: img.palette,
       link: img.link,
     })),
   );
@@ -561,6 +563,7 @@ async function showPictures(hex, terms, saved) {
       title: p.title,
       by: `${Math.round(p.share * 100)}% close to ${hex}, on Wikimedia Commons`,
       credit: p.credit,
+      palette: p.palette,
       link: p.link,
     })),
   );
@@ -585,14 +588,12 @@ async function showArt(hex, saved) {
 
 let gallery = [];
 const KINDS = ["art", "picture", "wiki"];
-const galleryRows = () => (innerWidth < 700 ? 2 : 3);
+const galleryRows = () => 6;
 
 function addToGallery(hex, items) {
   items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`));
   if (current?.hex !== hex || !items.length) return;
   gallery = [...gallery, ...items].sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
-  page.artTitle.textContent = `${current.name}, in pictures.`;
-  page.artCredit.innerHTML = creditHTML(gallery.filter((it) => it.work).map((it) => it.work));
   // shown first: a hidden strip has no width to measure
   if (page.artSlide.hidden) {
     page.artSlide.hidden = false;
@@ -601,70 +602,195 @@ function addToGallery(hex, items) {
   layoutGallery();
 }
 
-// rows filled shortest first, then each topped up with its own pictures to
-// the longest one's length; drawn several times over, the strip wraps around
-// a set's width, so it has no ends
+// An endless strip: each row repeats its own pictures at its own length, so
+// there are no blocks; only the tiles near the window are drawn. The title
+// sits once in a middle row, which runs on from it both ways.
+const strip = { offset: 0, rows: [], title: null, tiles: new Map(), frame: 0 };
+
 function layoutGallery() {
-  const rows = Array.from({ length: galleryRows() }, () => ({ width: 0, items: [] }));
+  const n = galleryRows();
+  const rows = Array.from({ length: n }, () => ({ width: 0, items: [] }));
   for (const it of gallery) {
     const row = rows.reduce((a, b) => (b.width < a.width ? b : a));
     row.width += it.ratio || 1;
     row.items.push(it);
   }
-  const span = Math.max(...rows.map((r) => r.width));
-  for (const r of rows) {
-    for (let i = 0; r.items.length && r.width < span; i++) {
-      r.items.push(r.items[i]);
-      r.width += r.items[i].ratio || 1;
-    }
+  rows.forEach((r, k) => {
+    if (!r.items.length) r.items.push(gallery[k % gallery.length]);
+  });
+  page.art.replaceChildren();
+  strip.tiles = new Map();
+  const title = document.createElement("h2");
+  title.className = "display gallery__title";
+  title.innerHTML = `${escapeHTML(current.name)},<br />in pictures.`;
+  page.art.append(title);
+  strip.title = title;
+  measureStrip(rows);
+  strip.offset = strip.titleWidth / 2 - page.art.clientWidth / 2;
+  drawStrip();
+}
+
+function measureStrip(rows = strip.rows) {
+  const gap = parseFloat(getComputedStyle(page.art).rowGap) || 16;
+  const row = (page.art.clientHeight - (rows.length - 1) * gap) / rows.length;
+  strip.row = row;
+  strip.gap = gap;
+  strip.middle = Math.floor((rows.length - 1) / 2);
+  strip.title.style.height = `${row}px`;
+  strip.title.style.width = "max-content";
+  strip.titleWidth = strip.title.offsetWidth;
+  strip.rows = rows.map((r, k) => {
+    let x = 0;
+    const tiles = r.items.map((it) => {
+      const w = (it.ratio || 1) * row;
+      const t = { it, x, w };
+      x += w + gap;
+      return t;
+    });
+    // rows start out of step, so their seams don't line up
+    return { tiles, period: x, phase: k === strip.middle ? 0 : (k * 0.37 * x) % x };
+  });
+  strip.title.style.top = `${strip.middle * (row + gap)}px`;
+}
+
+// the tiles of one row between world x a and b; the middle row runs from the
+// title's end to the right and from its start to the left
+function* rowTiles(r, k, a, b) {
+  const { period, tiles, phase } = r;
+  if (!period) return;
+  if (k !== strip.middle) {
+    for (let c = Math.floor((a - phase) / period) - 1; c * period + phase < b; c++)
+      for (const [i, t] of tiles.entries()) yield [`${k}:${c}:${i}`, t, c * period + phase + t.x];
+    return;
   }
-  const draw = (copies) =>
-    rows
-      .map((r) => {
-        const set = `<div class="gallery__set">${r.items.map(tileHTML).join("")}</div>`;
-        return `<div class="gallery__row">${set.repeat(copies)}</div>`;
-      })
-      .join("");
-  page.art.style.setProperty("--span", span.toFixed(3));
-  page.art.innerHTML = draw(1);
-  const first = page.art.querySelector(".gallery__set");
-  const width = first ? first.offsetWidth + parseFloat(getComputedStyle(first).marginInlineEnd) : 1;
-  page.art.innerHTML = draw(Math.ceil(page.art.clientWidth / width) + 3);
-  page.art.dataset.rows = rows.length;
-  page.art.scrollLeft = width * (1 + Math.random() * 0.6);
+  const right = strip.titleWidth + strip.gap;
+  for (let c = Math.max(0, Math.floor((a - right) / period) - 1); c * period + right < b; c++)
+    for (const [i, t] of tiles.entries()) yield [`${k}:r${c}:${i}`, t, right + c * period + t.x];
+  for (let c = Math.max(0, Math.floor(-b / period) - 1); -(c + 1) * period > a - period; c++)
+    for (const [i, t] of tiles.entries()) yield [`${k}:l${c}:${i}`, t, -(c + 1) * period + t.x];
 }
 
-const setWidth = () => {
-  const first = page.art.querySelector(".gallery__set");
-  return first ? first.offsetWidth + parseFloat(getComputedStyle(first).marginInlineEnd) : 0;
-};
-
-function wrapGallery() {
-  const width = setWidth();
-  if (width < 50) return;
-  if (page.art.scrollLeft < width * 0.5) page.art.scrollLeft += width;
-  else if (page.art.scrollLeft > width * 1.5) page.art.scrollLeft -= width;
+function drawStrip() {
+  const a = strip.offset - strip.row * 3;
+  const b = strip.offset + page.art.clientWidth + strip.row * 3;
+  const seen = new Set();
+  strip.rows.forEach((r, k) => {
+    for (const [key, t, x] of rowTiles(r, k, a, b)) {
+      if (x + t.w < a || x > b) continue;
+      seen.add(key);
+      let el = strip.tiles.get(key);
+      if (!el) {
+        el = document.createElement("figure");
+        el.className = "tile";
+        el.innerHTML = tileHTML(t.it, gallery.indexOf(t.it));
+        el.style.cssText = `top:${k * (strip.row + strip.gap)}px;width:${t.w}px;height:${strip.row}px`;
+        page.art.append(el);
+        strip.tiles.set(key, el);
+      }
+      el.style.transform = `translateX(${x - strip.offset}px)`;
+    }
+  });
+  for (const [key, el] of strip.tiles) {
+    if (seen.has(key) || opened?.tile === el) continue;
+    el.remove();
+    strip.tiles.delete(key);
+  }
+  strip.title.style.transform = `translateX(${-strip.offset}px)`;
 }
 
-const creditLine = ({ artist, license, licenseUrl }) => {
-  const terms =
-    license && licenseUrl
-      ? `<a href="${escapeHTML(licenseUrl)}" target="_blank" rel="noopener">${escapeHTML(license)}</a>`
-      : escapeHTML(license || "");
-  return `<span class="tile__by">${[artist && escapeHTML(artist), terms].filter(Boolean).join(", ")}</span>`;
-};
+function moveStrip(dx) {
+  strip.offset += dx;
+  if (!strip.frame)
+    strip.frame = requestAnimationFrame(() => {
+      strip.frame = 0;
+      drawStrip();
+    });
+}
 
-const tileHTML = (it) => `<figure class="tile"${it.ratio ? ` style="--ratio:${it.ratio}"` : ""}>
-    <button type="button" class="tile__open" aria-expanded="false" aria-label="${escapeHTML(it.title || "Picture")}">
-      <img src="${escapeHTML(it.image)}"${it.srcset ? ` srcset="${escapeHTML(it.srcset)}"` : ""} alt="${escapeHTML(it.title)}" loading="lazy" decoding="async" />
-    </button>
-    <figcaption class="tile__info">
-      ${it.palette ? paletteHTML(it.palette, it.color) : ""}
-      <a class="tile__title" href="${escapeHTML(it.link)}" target="_blank" rel="noopener">${escapeHTML(it.title || "Untitled")}</a>
-      ${it.by ? `<span class="tile__by">${escapeHTML(it.by)}</span>` : ""}
-      ${it.credit ? creditLine(it.credit) : ""}
+const tileHTML = (
+  it,
+  i,
+) => `<button type="button" class="tile__open" data-i="${i}" aria-label="${escapeHTML(it.title || "Picture")}">
+    <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />
+  </button>`;
+
+const link = (href, text) =>
+  href ? `<a href="${escapeHTML(href)}" target="_blank" rel="noopener">${escapeHTML(text)}</a>` : escapeHTML(text);
+
+function sourceHTML(it) {
+  if (it.work) {
+    const museum = MUSEUMS[it.work.museum];
+    return museum ? link(museum.url, museum.name) : "";
+  }
+  const where = it.kind === "wiki" ? "Wikipedia" : "Wikimedia Commons";
+  const { artist, license, licenseUrl } = it.credit || {};
+  return [artist && escapeHTML(artist), license && link(licenseUrl, license), where].filter(Boolean).join(", ");
+}
+
+const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" aria-label="Close"></button>
+  <figure class="lightbox__figure">
+    <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
+    <figcaption class="lightbox__info">
+      ${link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ')}
+      ${it.by ? `<span>${escapeHTML(it.by)}</span>` : ""}
+      ${it.palette?.length ? paletteHTML(it.palette, it.color) : ""}
+      <span class="lightbox__source">${sourceHTML(it)}</span>
     </figcaption>
   </figure>`;
+
+const EASE = "cubic-bezier(0.3, 0.7, 0, 1)";
+let opened = null;
+
+// grows from the tile it was clicked in, and shrinks back into it
+function openPicture(tile, it) {
+  closePicture(true);
+  const box = document.createElement("div");
+  box.className = "lightbox";
+  box.innerHTML = pictureHTML(it);
+  (page.embedded ? page.root : document.body).append(box);
+  const img = box.querySelector("img");
+  const fly = () => {
+    const from = tile.getBoundingClientRect();
+    const to = img.getBoundingClientRect();
+    const scale = Math.max(from.width / to.width, from.height / to.height);
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    return [{ transform: `translate(${dx}px, ${dy}px) scale(${scale})` }, { transform: "none" }];
+  };
+  const go = () => {
+    tile.style.visibility = "hidden";
+    page.art.classList.add("is-behind");
+    img.animate(fly(), { duration: 520, easing: EASE });
+    box.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: "ease-out" });
+    box.querySelector(".lightbox__info").animate(
+      [
+        { opacity: 0, transform: "translateY(0.6rem)" },
+        { opacity: 1, transform: "none" },
+      ],
+      { duration: 400, delay: 220, easing: EASE, fill: "backwards" },
+    );
+  };
+  if (img.complete) go();
+  else img.addEventListener("load", go, { once: true });
+  box.querySelector(".lightbox__backdrop").addEventListener("click", () => closePicture());
+  opened = { box, tile, img, fly };
+}
+
+function closePicture(now = false) {
+  if (!opened) return;
+  const { box, tile, img, fly } = opened;
+  opened = null;
+  page.art.classList.remove("is-behind");
+  const done = () => {
+    box.remove();
+    tile.style.visibility = "";
+  };
+  if (now) return done();
+  img.animate([...fly()].reverse(), { duration: 420, easing: EASE, fill: "forwards" });
+  box
+    .animate([{ opacity: 1 }, { opacity: 0 }], { duration: 420, easing: "ease-in", fill: "forwards" })
+    .finished.then(done);
+}
 
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
 
@@ -705,8 +831,6 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     meaningTitle: q("[data-meaning-title]"),
     art: q("[data-art]"),
     artSlide: q("[data-art-slide]"),
-    artTitle: q("[data-art-title]"),
-    artCredit: q("[data-art-credit]"),
     pageLink: q("[data-page-link]"),
     outro: q("[data-outro]"),
   });
@@ -773,62 +897,92 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     },
     { capture: true, signal },
   );
-  page.art.addEventListener("scroll", wrapGallery, { passive: true, signal });
-  // a mouse drags the strip; a drag isn't a click
+  // wheel sideways (or with shift), drag with a mouse, swipe on touch
+  page.art.addEventListener(
+    "wheel",
+    (e) => {
+      const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+      if (!dx) return;
+      e.preventDefault();
+      moveStrip(dx);
+    },
+    { passive: false, signal },
+  );
   let drag = null;
+  let coast = 0;
   page.art.addEventListener(
     "pointerdown",
     (e) => {
-      if (e.pointerType === "mouse" && e.button === 0) drag = { x: e.clientX, last: e.clientX, moved: false };
+      if (e.button) return;
+      cancelAnimationFrame(coast);
+      drag = { id: e.pointerId, x: e.clientX, last: e.clientX, t: performance.now(), v: 0, moved: false };
     },
     { signal },
   );
-  window.addEventListener(
+  page.art.addEventListener(
     "pointermove",
     (e) => {
-      if (!drag) return;
-      if (Math.abs(e.clientX - drag.x) > 4) drag.moved = true;
-      if (drag.moved) {
-        page.art.scrollLeft -= e.clientX - drag.last;
+      if (!drag || e.pointerId !== drag.id) return;
+      if (!drag.moved && Math.abs(e.clientX - drag.x) > 5) {
+        drag.moved = true;
+        page.art.setPointerCapture(e.pointerId);
         page.art.classList.add("is-dragging");
       }
+      if (!drag.moved) return;
+      const now = performance.now();
+      const dx = drag.last - e.clientX;
+      drag.v = dx / Math.max(1, now - drag.t);
       drag.last = e.clientX;
+      drag.t = now;
+      moveStrip(dx);
     },
     { signal },
   );
-  window.addEventListener(
-    "pointerup",
-    () => {
-      if (!drag) return;
-      const moved = drag.moved;
-      drag = null;
-      page.art.classList.remove("is-dragging");
-      if (moved) page.art.addEventListener("click", (e) => e.stopPropagation(), { capture: true, once: true });
-    },
-    { signal },
-  );
+  const release = () => {
+    if (!drag) return;
+    const { moved, v } = drag;
+    drag = null;
+    page.art.classList.remove("is-dragging");
+    if (!moved) return;
+    page.art.addEventListener("click", (e) => e.stopPropagation(), { capture: true, once: true });
+    let speed = v * 16;
+    const glide = () => {
+      speed *= 0.94;
+      if (Math.abs(speed) < 0.3) return;
+      moveStrip(speed);
+      coast = requestAnimationFrame(glide);
+    };
+    coast = requestAnimationFrame(glide);
+  };
+  page.art.addEventListener("pointerup", release, { signal });
+  page.art.addEventListener("pointercancel", release, { signal });
   page.art.addEventListener(
     "click",
     (e) => {
       const open = e.target.closest(".tile__open");
-      if (!open) return;
-      const tile = open.parentElement;
-      const was = tile.classList.contains("is-open");
-      for (const t of page.art.querySelectorAll(".tile.is-open")) {
-        t.classList.remove("is-open");
-        t.firstElementChild.setAttribute("aria-expanded", "false");
-      }
-      tile.classList.toggle("is-open", !was);
-      open.setAttribute("aria-expanded", String(!was));
+      if (open) openPicture(open.parentElement, gallery[+open.dataset.i]);
     },
     { signal },
   );
+  window.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "Escape" || !opened) return;
+      e.stopImmediatePropagation();
+      closePicture();
+    },
+    { capture: true, signal },
+  );
+  signal?.addEventListener("abort", () => closePicture(true));
 
   window.addEventListener(
     "resize",
     () => {
       if (page.name.textContent) fitTitle();
-      if (gallery.length && +page.art.dataset.rows !== galleryRows()) layoutGallery();
+      if (gallery.length && strip.title) {
+        measureStrip();
+        drawStrip();
+      }
     },
     { signal },
   );
