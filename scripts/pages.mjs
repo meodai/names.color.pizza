@@ -121,6 +121,7 @@ const fileTitle = (link = "") =>
     .replace(/_/g, " ")
     .replace(/^(File|Image):/i, "File:");
 const credit = (w) => ({ artist: w.artist, license: w.license, licenseUrl: w.licenseUrl });
+const paletteOf = (w) => (w.palette || []).map((c) => [c.hex.toLowerCase(), c.share]);
 
 const fileLink = (src = "") => {
   const m = src.match(/upload\.wikimedia\.org\/wikipedia\/(commons|en)\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/?#]+)/);
@@ -137,12 +138,23 @@ function hosted(looked) {
     entries: (looked.entries || []).map(({ image, ...e }) => e),
     pictures: (looked.pictures || []).flatMap((p) => {
       const w = copy(p);
-      return w ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w) }] : [];
+      return w
+        ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w), palette: paletteOf(w) }]
+        : [];
     }),
     images: [...leads, ...(looked.images || [])].flatMap((img) => {
       const w = copy(img);
       return w
-        ? [{ ...img, src: `${MEDIA}/${w.thumb}`, srcset: "", ratio: w.width / w.height, credit: credit(w) }]
+        ? [
+            {
+              ...img,
+              src: `${MEDIA}/${w.thumb}`,
+              srcset: "",
+              ratio: w.width / w.height,
+              credit: credit(w),
+              palette: paletteOf(w),
+            },
+          ]
         : [];
     }),
   };
