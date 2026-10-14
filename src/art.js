@@ -9,19 +9,23 @@ export const ART_COUNT = 12;
 // colors: [L, A, B, share, hex]
 export const MEDIA = "https://media.color.pizza";
 
-// only works with a copy on media.color.pizza
+// album covers stay with the Cover Art Archive
+export const COVERS = "https://coverartarchive.org/";
+
+// only works with a copy on media.color.pizza, or a cover
 export function unpackWork(w, museum) {
   const colors = (w.palette || [])
     .filter((c) => c.share / 100 >= MIN_SHARE && /^#[0-9a-f]{6}$/i.test(c.hex))
     .map((c) => [...rgbToOklab(hexToRgb(c.hex)), c.share / 100, c.hex.toLowerCase()]);
-  if (!w.thumb || !colors.length) return null;
+  const image = w.thumb ? `${MEDIA}/${w.thumb}` : w.image?.startsWith(COVERS) ? w.image : null;
+  if (!image || !colors.length) return null;
   return {
     id: w.id,
     title: w.title || "",
     artist: (w.artist || "").replace(/\s*\(.*$/, ""),
     date: w.date || "",
     url: w.url,
-    image: `${MEDIA}/${w.thumb}`,
+    image,
     ...(w.source ? { source: w.source } : {}),
     ratio: w.width && w.height ? Math.round((w.width / w.height) * 1000) / 1000 : 1,
     museum,
@@ -97,14 +101,20 @@ export const MUSEUMS = {
   "cleveland-art": { name: "Cleveland Museum of Art", url: "https://www.clevelandart.org/open-access" },
   "met-art": { name: "Metropolitan Museum of Art", url: "https://www.metmuseum.org/hubs/open-access" },
   "pdia-art": { name: "Public Domain Image Archive", url: "https://pdimagearchive.org" },
+  albums: { name: "Cover Art Archive", url: "https://coverartarchive.org" },
 };
 
 export function creditHTML(works) {
-  const museums = Object.entries(MUSEUMS).filter(([folder]) => works.some((w) => w.museum === folder));
-  if (!museums.length) return "";
+  const museums = Object.entries(MUSEUMS).filter(
+    ([folder]) => folder !== "albums" && works.some((w) => w.museum === folder),
+  );
+  const covers = works.some((w) => w.museum === "albums")
+    ? ` Album covers from the <a href="${MUSEUMS.albums.url}" target="_blank" rel="noopener">Cover Art Archive</a>.`
+    : "";
+  if (!museums.length) return covers.trim();
   const links = museums.map(
     ([, m]) => `the <a href="${m.url}" target="_blank" rel="noopener">${escapeHTML(m.name)}</a>`,
   );
   const list = links.length > 1 ? `${links.slice(0, -1).join(", ")} and ${links.at(-1)}` : links[0];
-  return `From the open-access collection${museums.length > 1 ? "s" : ""} of ${list}.`;
+  return `From the open-access collection${museums.length > 1 ? "s" : ""} of ${list}.${covers}`;
 }
