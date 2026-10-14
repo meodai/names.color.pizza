@@ -19860,10 +19860,7 @@
     "hidden": "Beignet sounds like 'beignut' but also 'beg net'",
     "reference": "French fried dough pastry",
     "description": "Powdered sugar dusts this fried pastry, a sweet New Orleans morning.",
-    "model": "describer",
-    "review": [
-      "The joke is \"Beignet sounds like 'beignut' but also 'beg net'\"; make the sentence play on it."
-    ]
+    "model": "describer"
   },
   {
     "name": "Beijing Blue",
@@ -43757,10 +43754,7 @@
     "kind": "thing",
     "reference": "celadon pottery",
     "description": "Vivid blue, not like the pale green glaze on celadon pottery, but its bold opposite.",
-    "model": "describer",
-    "review": [
-      "It isn't green; it looks vivid blue."
-    ]
+    "model": "describer"
   },
   {
     "name": "Celadon Glaze",
@@ -95800,10 +95794,7 @@
     "kind": "reference",
     "reference": "Gentle Giant, the band",
     "description": "Pale blue mist, like the quiet before a prog rock storm.",
-    "model": "describer",
-    "review": [
-      "It isn't blue; it looks pale blue."
-    ]
+    "model": "describer"
   },
   {
     "name": "Gentle Glow",
@@ -210522,10 +210513,7 @@
     "kind": "thing",
     "reference": "a social scandal",
     "description": "Faded blue, like a whispered secret in a crowded room.",
-    "model": "describer",
-    "review": [
-      "It isn't blue; it looks pale blue."
-    ]
+    "model": "describer"
   },
   {
     "name": "Scandalous Rose",
