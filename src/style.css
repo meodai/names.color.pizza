@@ -497,6 +497,8 @@ a:hover {
   overflow: hidden;
   touch-action: pan-y;
   cursor: grab;
+  perspective: 900px;
+  perspective-origin: 50% 50%;
 }
 
 .gallery.is-dragging {
@@ -540,16 +542,16 @@ a:hover {
   overflow: hidden;
   will-change: transform;
   opacity: 0;
-  scale: 0.82;
+  translate: 0 0 -1400px;
   transition:
-    opacity 0.32s ease-out var(--d, 0ms),
-    scale 0.42s cubic-bezier(0.3, 0.7, 0, 1) var(--d, 0ms),
+    opacity 0.4s ease-out var(--d, 0ms),
+    translate 0.9s cubic-bezier(0.2, 0.75, 0, 1) var(--d, 0ms),
     filter 0.5s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
 .gallery.is-in .tile {
   opacity: 1;
-  scale: 1;
+  translate: 0 0 0;
 }
 
 .gallery.is-in.is-behind .tile {
@@ -765,7 +767,7 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   .gallery .tile {
     opacity: 1;
-    scale: 1;
+    translate: none;
   }
   .tile__open img {
     transition: none;
