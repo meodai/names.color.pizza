@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
 import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
+import { cardURL } from "./cards.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const arg = (name, fallback) => {
@@ -185,7 +186,7 @@ const structured = ({ name, hex, url, description, lines }) => ({
   url,
   name: `${name} (${hex})`,
   description,
-  primaryImageOfPage: { "@type": "ImageObject", url: `${url}card.png`, width: 600, height: 315 },
+  primaryImageOfPage: { "@type": "ImageObject", url: cardURL({ name, hex }), width: 1200, height: 630 },
   isPartOf: { "@type": "WebSite", name: "Color Names", url: SITE },
   about: {
     "@type": "DefinedTerm",
@@ -232,9 +233,9 @@ for (const [i, { name, hex }] of items.entries()) {
     meta("property", "og:description", description),
     meta("property", "og:url", url),
     meta("property", "og:site_name", "Color Names"),
-    meta("property", "og:image", `${url}card.png`),
-    meta("property", "og:image:width", "600"),
-    meta("property", "og:image:height", "315"),
+    meta("property", "og:image", `${cardURL({ name, hex })}`),
+    meta("property", "og:image:width", "1200"),
+    meta("property", "og:image:height", "630"),
     meta("property", "og:image:alt", `${name}, ${hex}: a swatch of the color`),
     meta("name", "twitter:card", "summary_large_image"),
     meta("name", "theme-color", hex),

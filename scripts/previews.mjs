@@ -1,27 +1,25 @@
-// Each name's link preview, dist/color/<slug>/card.png, cached in
-// .cache/previews by name and hex.
+// Each name's link preview, uploaded to media.color.pizza (UPLOAD_URL and
+// UPLOAD_KEY), cached in .cache/previews by name and hex. The cache keeps a
+// list of what's uploaded, so each is uploaded once.
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { slugsOf } from "../src/names.js";
+import { cardKey as keyOf } from "./cards.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const DIST = resolve(here, "../dist");
 const CACHE = resolve(here, "../.cache/previews");
 const LIST = resolve(here, "../color-names/src/colornames.csv");
 const FONTS = join(here, "fonts");
-const DESIGN = 2; // bump to remake every preview
 
-const W = 600;
-const H = 315;
-const STRIP = 85;
-const PAD = 28;
-const GAP = 7;
-const LOGO = 46;
+const W = 1200;
+const H = 630;
+const STRIP = 170;
+const PAD = 56;
+const GAP = 14;
+const LOGO = 92;
 
 const items = readFileSync(LIST, "utf8")
   .split("\n")
@@ -31,7 +29,6 @@ const items = readFileSync(LIST, "utf8")
     const [name, hex] = line.split(",");
     return { name, hex: hex.toLowerCase() };
   });
-const slugs = slugsOf(items);
 
 const page = readFileSync(resolve(here, "../color/index.html"), "utf8");
 const [, viewBox, logo] = page.match(/<svg class="brand__logo" viewBox="([^"]+)"[^>]*>([\s\S]*?)<\/svg\s*>/);
@@ -66,8 +63,8 @@ async function line(text, weight, size, width) {
 }
 
 async function preview({ name, hex }, file) {
-  const code = await line(hex, "Bold", 32);
-  const label = await line(name, "Light", 17, W - 3 * PAD - markWidth);
+  const code = await line(hex, "Bold", 64);
+  const label = await line(name, "Light", 34, W - 3 * PAD - markWidth);
   const top = H - STRIP + Math.round((STRIP - (code.height + GAP + label.height)) / 2);
   await sharp({ create: { width: W, height: H, channels: 3, background: hex } })
     .composite([
@@ -81,7 +78,6 @@ async function preview({ name, hex }, file) {
 }
 
 mkdirSync(CACHE, { recursive: true });
-const keyOf = ({ name, hex }) => createHash("sha1").update(`${DESIGN}|${name}|${hex}`).digest("hex");
 const todo = items.filter((it) => !existsSync(join(CACHE, `${keyOf(it)}.png`)));
 
 let next = 0;
@@ -98,25 +94,50 @@ if (todo.length) {
   try {
     const files = todo.map((it) => join(CACHE, `${keyOf(it)}.png`));
     for (let i = 0; i < files.length; i += 500) {
-      execFileSync("oxipng", ["-q", "-o", "max", "--strip", "safe", ...files.slice(i, i + 500)]);
+      execFileSync("oxipng", ["-q", "-o", "2", "--strip", "safe", ...files.slice(i, i + 500)]);
     }
   } catch (error) {
     console.log(`previews.mjs: not optimized (${error.code === "ENOENT" ? "no oxipng" : error.message})`);
   }
 }
 
-const keep = new Set();
-for (const it of items) {
-  const key = keyOf(it);
-  keep.add(`${key}.png`);
-  const dir = join(DIST, "color", slugs.get(it.name));
-  if (existsSync(dir)) copyFileSync(join(CACHE, `${key}.png`), join(dir, "card.png"));
-}
+const UPLOADED = join(CACHE, "uploaded.txt");
+const uploaded = new Set(existsSync(UPLOADED) ? readFileSync(UPLOADED, "utf8").split("\n").filter(Boolean) : []);
+const keep = new Set(["uploaded.txt"]);
+for (const it of items) keep.add(`${keyOf(it)}.png`);
 let gone = 0;
 for (const file of readdirSync(CACHE)) {
   if (!keep.has(file)) {
     unlinkSync(join(CACHE, file));
+    uploaded.delete(file);
     gone++;
   }
 }
-console.log(`previews.mjs: ${items.length} previews (${todo.length} made, ${gone} dropped from the cache)`);
+
+const { UPLOAD_URL, UPLOAD_KEY } = process.env;
+const send = UPLOAD_URL && UPLOAD_KEY ? [...keep].filter((f) => f !== "uploaded.txt" && !uploaded.has(f)) : [];
+let sent = 0;
+await Promise.all(
+  Array.from({ length: 16 }, async () => {
+    while (send.length) {
+      const file = send.pop();
+      for (let attempt = 1; attempt <= 4; attempt++) {
+        const res = await fetch(`${UPLOAD_URL}/cards/${file}`, {
+          method: "PUT",
+          headers: { authorization: `Bearer ${UPLOAD_KEY}`, "content-type": "image/png" },
+          body: readFileSync(join(CACHE, file)),
+        }).catch(() => null);
+        if (res?.ok) {
+          uploaded.add(file);
+          sent++;
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 2000 * attempt));
+      }
+    }
+  }),
+);
+writeFileSync(UPLOADED, [...uploaded].join("\n"));
+console.log(
+  `previews.mjs: ${items.length} previews (${todo.length} made, ${gone} dropped from the cache, ${sent} uploaded${UPLOAD_URL ? "" : "; no UPLOAD_URL, none uploaded"})`,
+);
