@@ -37,7 +37,7 @@ const slugs = slugsOf(items);
 const DESCRIPTIONS = resolve(here, "..", arg("descriptions", ".descriptions"), "descriptions.json");
 const descriptions = existsSync(DESCRIPTIONS)
   ? JSON.parse(readFileSync(DESCRIPTIONS, "utf8"))
-      .filter((d) => d.description)
+      .filter((d) => d.description && slugs.has(d.name))
       .map(({ name, hex, description }) => ({ name, hex, description }))
   : [];
 writeFileSync(join(DIST, "descriptions.json"), JSON.stringify(descriptions));
