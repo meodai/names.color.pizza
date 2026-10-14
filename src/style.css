@@ -1809,7 +1809,6 @@ a:hover {
   object-fit: contain;
   object-position: top;
   background: var(--fg);
-  transform: translate(var(--nudge, 0), calc(var(--nudge, 0) * -0.5)) rotate(var(--tilt, 0deg));
 }
 
 .wiki-index__text {

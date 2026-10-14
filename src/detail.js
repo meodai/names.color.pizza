@@ -300,11 +300,7 @@ function indexHTML(words, entries) {
       ${
         article
           ? `<div class="wiki-index__body">
-        ${
-          image
-            ? `<img class="wiki-index__picture" src="${escapeHTML(image)}" alt="" loading="lazy" style="--tilt:${between(-4, 4).toFixed(1)}deg;--nudge:${between(-0.6, 0.6).toFixed(2)}rem" />`
-            : ""
-        }
+        ${image ? `<img class="wiki-index__picture" src="${escapeHTML(image)}" alt="" loading="lazy" />` : ""}
         <div class="wiki-index__text">${article}</div>
       </div>`
           : ""
