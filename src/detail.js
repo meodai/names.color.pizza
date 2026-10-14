@@ -13,7 +13,7 @@ import {
   tidySenses,
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
-import { paletteHTML, creditHTML, MEDIA, COVERS } from "./art.js";
+import { paletteHTML, creditHTML, MEDIA } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import outline from "./favicon-outline.svg?raw";
 
@@ -588,7 +588,7 @@ const KINDS = ["art", "picture", "wiki"];
 const galleryRows = () => (innerWidth < 700 ? 2 : 3);
 
 function addToGallery(hex, items) {
-  items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`) || it.image?.startsWith(COVERS));
+  items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`));
   if (current?.hex !== hex || !items.length) return;
   gallery = [...gallery, ...items].sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
   layoutGallery();

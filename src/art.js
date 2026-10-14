@@ -9,23 +9,19 @@ export const ART_COUNT = 12;
 // colors: [L, A, B, share, hex]
 export const MEDIA = "https://media.color.pizza";
 
-// album covers stay with the Cover Art Archive
-export const COVERS = "https://coverartarchive.org/";
-
-// only works with a copy on media.color.pizza, or a cover
+// only works with a copy on media.color.pizza
 export function unpackWork(w, museum) {
   const colors = (w.palette || [])
     .filter((c) => c.share / 100 >= MIN_SHARE && /^#[0-9a-f]{6}$/i.test(c.hex))
     .map((c) => [...rgbToOklab(hexToRgb(c.hex)), c.share / 100, c.hex.toLowerCase()]);
-  const image = w.thumb ? `${MEDIA}/${w.thumb}` : w.image?.startsWith(COVERS) ? w.image : null;
-  if (!image || !colors.length) return null;
+  if (!w.thumb || !colors.length) return null;
   return {
     id: w.id,
     title: w.title || "",
     artist: (w.artist || "").replace(/\s*\(.*$/, ""),
     date: w.date || "",
     url: w.url,
-    image,
+    image: `${MEDIA}/${w.thumb}`,
     ...(w.source ? { source: w.source } : {}),
     ratio: w.width && w.height ? Math.round((w.width / w.height) * 1000) / 1000 : 1,
     museum,
