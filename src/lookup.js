@@ -181,9 +181,9 @@ const fileOf = (url) => {
     .toLowerCase();
 };
 
-async function wikiImages(titles, limit = 8, skip = []) {
+async function wikiImages(titles, limit = 8) {
   const lists = await Promise.all(titles.map(wikiMedia));
-  const seen = new Set(skip.map(fileOf));
+  const seen = new Set();
   const images = [];
   for (const list of lists) {
     for (const item of list?.items || []) {
@@ -404,7 +404,6 @@ export async function lookupName(name) {
       ? wikiImages(
           entries.map((e) => e.title),
           8,
-          entries.map((e) => e.image).filter(Boolean),
         )
       : [],
     Promise.all(definitions.map(async (d) => [d.term, await pronunciations(d.term)])),

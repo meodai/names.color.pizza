@@ -143,21 +143,23 @@ function hosted(looked) {
         ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w), palette: paletteOf(w) }]
         : [];
     }),
-    images: [...leads, ...(looked.images || [])].flatMap((img) => {
-      const w = copy(img);
-      return w
-        ? [
-            {
-              ...img,
-              src: `${MEDIA}/${w.thumb}`,
-              srcset: "",
-              ratio: w.width / w.height,
-              credit: credit(w),
-              palette: paletteOf(w),
-            },
-          ]
-        : [];
-    }),
+    images: [...leads, ...(looked.images || [])]
+      .filter((img, i, all) => all.findIndex((o) => fileTitle(o.link) === fileTitle(img.link)) === i)
+      .flatMap((img) => {
+        const w = copy(img);
+        return w
+          ? [
+              {
+                ...img,
+                src: `${MEDIA}/${w.thumb}`,
+                srcset: "",
+                ratio: w.width / w.height,
+                credit: credit(w),
+                palette: paletteOf(w),
+              },
+            ]
+          : [];
+      }),
   };
 }
 
