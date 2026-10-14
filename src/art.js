@@ -26,8 +26,8 @@ export function unpackWork(w, museum) {
     url: w.url,
     image: `${MEDIA}/${w.thumb}`,
     ...(w.source ? { source: w.source } : {}),
-    // an album or a single, a game's system
-    ...(museum === "albums" || museum === "games" ? { kind: w.type } : {}),
+    // an album or a single, a game's system, a film's category
+    ...(COVERS[coverKind(museum)] ? { kind: w.type } : {}),
     ratio: w.width && w.height ? Math.round((w.width / w.height) * 1000) / 1000 : 1,
     museum,
     palette: (w.palette || []).map((c) => [c.hex.toLowerCase(), c.share]),
@@ -113,15 +113,29 @@ export const MUSEUMS = {
   "pdia-art": { name: "Public Domain Image Archive", url: "https://pdimagearchive.org" },
   albums: { name: "Cover Art Archive", url: "https://coverartarchive.org" },
   games: { name: "libretro thumbnails", url: "https://github.com/libretro-thumbnails" },
+  movies: { name: "TMDB", url: "https://www.themoviedb.org" },
+  "movies-japan": { name: "TMDB", url: "https://www.themoviedb.org" },
+  "movies-b": { name: "TMDB", url: "https://www.themoviedb.org" },
+  "movies-italian": { name: "TMDB", url: "https://www.themoviedb.org" },
+  "movies-hongkong": { name: "TMDB", url: "https://www.themoviedb.org" },
+  "movies-horror": { name: "TMDB", url: "https://www.themoviedb.org" },
 };
 
+// what isn't a museum's: the credit for each kind of cover
+const COVERS = {
+  albums: (m) => `Album covers from the <a href="${m.url}" target="_blank" rel="noopener">Cover Art Archive</a>.`,
+  games: (m) => `Box art from <a href="${m.url}" target="_blank" rel="noopener">libretro thumbnails</a>.`,
+  movies: (m) =>
+    `Posters from <a href="${m.url}" target="_blank" rel="noopener">TMDB</a>; this site uses the TMDB API but is not endorsed or certified by TMDB.`,
+};
+const coverKind = (folder) => folder.replace(/-.*/, "");
+
 export function creditHTML(works) {
-  const museums = Object.entries(MUSEUMS).filter(
-    ([folder]) => folder !== "albums" && works.some((w) => w.museum === folder),
-  );
-  const covers = works.some((w) => w.museum === "albums")
-    ? ` Album covers from the <a href="${MUSEUMS.albums.url}" target="_blank" rel="noopener">Cover Art Archive</a>.`
-    : "";
+  const used = Object.entries(MUSEUMS).filter(([folder]) => works.some((w) => w.museum === folder));
+  const museums = used.filter(([folder]) => !COVERS[coverKind(folder)]);
+  const covers = [...new Map(used.filter(([f]) => COVERS[coverKind(f)]).map(([f, m]) => [coverKind(f), m]))]
+    .map(([kind, m]) => ` ${COVERS[kind](m)}`)
+    .join("");
   if (!museums.length) return covers.trim();
   const links = museums.map(
     ([, m]) => `the <a href="${m.url}" target="_blank" rel="noopener">${escapeHTML(m.name)}</a>`,
