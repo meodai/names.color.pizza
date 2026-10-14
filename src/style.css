@@ -477,30 +477,45 @@ a:hover {
 }
 
 .gallery {
-  --row: clamp(8rem, 21svh, 13rem);
+  --row: clamp(9rem, 24svh, 15rem);
+  --gap: 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--gap);
   margin-inline: calc(var(--gutter) * -1);
-  padding: 0 var(--gutter) var(--space-xs);
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--fg) transparent;
+  scrollbar-width: none;
+  cursor: grab;
+}
+
+.gallery::-webkit-scrollbar {
+  display: none;
+}
+
+.gallery.is-dragging {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .gallery__row {
   display: flex;
-  gap: var(--space-xs);
   block-size: var(--row);
+}
+
+.gallery__set {
+  display: flex;
+  flex: none;
+  gap: var(--gap);
+  inline-size: calc(var(--row) * var(--span));
+  margin-inline-end: var(--gap);
 }
 
 .tile {
   position: relative;
-  flex: none;
+  flex: var(--ratio, 1) 1 0;
+  min-inline-size: 0;
   block-size: 100%;
-  min-inline-size: calc(var(--row) * 0.5);
-  aspect-ratio: var(--ratio, auto);
   margin: 0;
   overflow: hidden;
   background: color-mix(in srgb, var(--bg) 90%, var(--fg));
@@ -508,6 +523,7 @@ a:hover {
 
 .tile__open {
   display: block;
+  inline-size: 100%;
   block-size: 100%;
   padding: 0;
   border: 0;
@@ -517,9 +533,10 @@ a:hover {
 
 .tile__open img {
   display: block;
+  inline-size: 100%;
   block-size: 100%;
-  inline-size: auto;
-  max-inline-size: none;
+  object-fit: cover;
+  -webkit-user-drag: none;
   transition: transform 0.45s cubic-bezier(0.3, 0.7, 0, 1);
 }
 

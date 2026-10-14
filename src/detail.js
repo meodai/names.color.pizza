@@ -600,16 +600,45 @@ function addToGallery(hex, items) {
   }
 }
 
-// rows filled shortest first, so they end about together
+// rows filled shortest first, then each topped up with its own pictures to
+// the longest one's length; drawn several times over, the strip wraps around
+// a set's width, so it has no ends
 function layoutGallery() {
-  const rows = Array.from({ length: galleryRows() }, () => ({ width: 0, tiles: [] }));
+  const rows = Array.from({ length: galleryRows() }, () => ({ width: 0, items: [] }));
   for (const it of gallery) {
     const row = rows.reduce((a, b) => (b.width < a.width ? b : a));
     row.width += it.ratio || 1;
-    row.tiles.push(tileHTML(it));
+    row.items.push(it);
   }
-  page.art.innerHTML = rows.map((r) => `<div class="gallery__row">${r.tiles.join("")}</div>`).join("");
+  const span = Math.max(...rows.map((r) => r.width));
+  for (const r of rows) {
+    for (let i = 0; r.items.length && r.width < span; i++) {
+      r.items.push(r.items[i]);
+      r.width += r.items[i].ratio || 1;
+    }
+  }
+  const draw = (copies) =>
+    rows
+      .map((r) => {
+        const set = `<div class="gallery__set">${r.items.map(tileHTML).join("")}</div>`;
+        return `<div class="gallery__row">${set.repeat(copies)}</div>`;
+      })
+      .join("");
+  page.art.style.setProperty("--span", span.toFixed(3));
+  page.art.innerHTML = draw(1);
+  const first = page.art.querySelector(".gallery__set");
+  const width = first ? first.offsetWidth + parseFloat(getComputedStyle(first).marginInlineEnd) : 1;
+  page.art.innerHTML = draw(Math.ceil(page.art.clientWidth / width) + 3);
   page.art.dataset.rows = rows.length;
+  page.art.dataset.set = width;
+  page.art.scrollLeft = width * (1 + Math.random() * 0.6);
+}
+
+function wrapGallery() {
+  const width = +page.art.dataset.set;
+  if (!width) return;
+  if (page.art.scrollLeft < width * 0.5) page.art.scrollLeft += width;
+  else if (page.art.scrollLeft > width * 1.5) page.art.scrollLeft -= width;
 }
 
 const creditLine = ({ artist, license, licenseUrl }) => {
@@ -732,10 +761,46 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     "error",
     (e) => {
       if (e.target.tagName !== "IMG") return;
+      const before = gallery.length;
       gallery = gallery.filter((it) => it.image !== e.target.getAttribute("src"));
-      e.target.closest(".tile")?.remove();
+      if (gallery.length !== before)
+        requestAnimationFrame(() => (gallery.length ? layoutGallery() : (page.artSlide.hidden = true)));
     },
     { capture: true, signal },
+  );
+  page.art.addEventListener("scroll", wrapGallery, { passive: true, signal });
+  // a mouse drags the strip; a drag isn't a click
+  let drag = null;
+  page.art.addEventListener(
+    "pointerdown",
+    (e) => {
+      if (e.pointerType === "mouse" && e.button === 0) drag = { x: e.clientX, last: e.clientX, moved: false };
+    },
+    { signal },
+  );
+  window.addEventListener(
+    "pointermove",
+    (e) => {
+      if (!drag) return;
+      if (Math.abs(e.clientX - drag.x) > 4) drag.moved = true;
+      if (drag.moved) {
+        page.art.scrollLeft -= e.clientX - drag.last;
+        page.art.classList.add("is-dragging");
+      }
+      drag.last = e.clientX;
+    },
+    { signal },
+  );
+  window.addEventListener(
+    "pointerup",
+    () => {
+      if (!drag) return;
+      const moved = drag.moved;
+      drag = null;
+      page.art.classList.remove("is-dragging");
+      if (moved) page.art.addEventListener("click", (e) => e.stopPropagation(), { capture: true, once: true });
+    },
+    { signal },
   );
   page.art.addEventListener(
     "click",
