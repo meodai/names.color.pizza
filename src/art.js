@@ -4,6 +4,8 @@ import { hexToRgb, rgbToOklab } from "./names.js";
 const CLOSE = 0.05;
 const SHARE = 0.05;
 const MIN_SHARE = 0.03;
+const STRONG = 0.15;
+const ENOUGH = 30;
 export const ART_COUNT = 100;
 
 // colors: [L, A, B, share, hex]
@@ -81,9 +83,13 @@ export function pickArt(near, hex, count = ART_COUNT) {
     if (!s.best || d < s.best.d) s.best = { d, hex: c[4] };
     byWork.set(w, s);
   }
-  return [...byWork.values()]
-    .filter((s) => s.share >= SHARE)
-    .sort((x, y) => y.share - x.share || x.best.d - y.best.d)
+  // a closer match counts for a little more
+  const scored = [...byWork.values()]
+    .map((s) => ({ ...s, score: s.share * (1 - (0.5 * s.best.d) / CLOSE) }))
+    .sort((x, y) => y.score - x.score);
+  // with enough works full of the color, the ones with only a little of it stay out
+  const strong = scored.filter((s) => s.share >= STRONG);
+  return (strong.length >= ENOUGH ? strong : scored.filter((s) => s.share >= SHARE))
     .slice(0, count)
     .map(({ w: { colors: _colors, ...work }, share, best }) => ({
       ...work,

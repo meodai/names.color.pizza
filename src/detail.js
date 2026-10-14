@@ -571,6 +571,7 @@ async function showPictures(hex, terms, saved) {
       ratio: p.ratio,
       title: p.title,
       by: `${Math.round(p.share * 100)}% close to ${hex}, on Wikimedia Commons`,
+      share: p.share,
       credit: p.credit,
       palette: p.palette,
       link: p.link,
@@ -595,19 +596,20 @@ async function showArt(hex, saved) {
       link: w.url,
       palette: w.palette,
       color: w.color,
+      share: w.share,
       work: w,
     })),
   );
 }
 
 let gallery = [];
-const KINDS = ["art", "picture", "wiki"];
 const galleryRows = () => 6;
 
 function addToGallery(hex, items) {
   items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`));
   if (current?.hex !== hex || !items.length) return;
-  gallery = [...gallery, ...items].sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
+  // most of the color first, whatever the source
+  gallery = [...gallery, ...items].sort((a, b) => (b.share ?? -1) - (a.share ?? -1));
   // shown first: a hidden strip has no width to measure
   if (page.artSlide.hidden) {
     page.artSlide.hidden = false;
@@ -635,6 +637,13 @@ function layoutGallery() {
   inner.forEach((r, k) => {
     if (!r.items.length) r.items.push(gallery[k % gallery.length]);
   });
+  // the strongest at each row's start and end, so on both sides of the title
+  for (const r of inner) {
+    const head = [];
+    const tail = [];
+    r.items.forEach((it, i) => (i % 2 ? tail : head).push(it));
+    r.items = [...head, ...tail.reverse()];
+  }
   const rotate = (items, by) => [...items.slice(by % items.length), ...items.slice(0, by % items.length)];
   rows[0].items = rotate(inner.at(-1).items, 2);
   rows.at(-1).items = rotate(inner[0].items, 3);
@@ -704,8 +713,7 @@ function measureStrip(rows = strip.rows) {
       x += w + gap;
       return t;
     });
-    // rows start out of step, so their seams don't line up
-    return { tiles, period: x, phase: k === strip.middle ? 0 : (k * 0.37 * x) % x };
+    return { tiles, period: x, phase: 0 };
   });
   strip.title.style.top = `${strip.middle * (row + gap)}px`;
 }
@@ -861,7 +869,7 @@ function openPicture(tile, it) {
       a.setAttribute("aria-label", `${name}, ${a.getAttribute("aria-label")}`);
       a.insertAdjacentHTML(
         "beforeend",
-        `<span class="art__square"><span class="art__name">${escapeHTML(name)}</span></span>`,
+        `<span class="art__square"><span class="art__name"><span>${escapeHTML(name)}</span></span></span>`,
       );
     }
   });

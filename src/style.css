@@ -634,6 +634,94 @@ a:hover {
   block-size: auto;
 }
 
+.lightbox__palette {
+  position: relative;
+  margin-top: 2px;
+  pointer-events: auto;
+}
+
+/* one swatch per color, as wide as its share, all the same height and top-aligned */
+.art__palette {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.art__palette > a {
+  position: relative;
+  flex-basis: 0;
+  min-inline-size: 0.6rem;
+  block-size: 1.2rem;
+  transform-origin: top;
+}
+
+/* the page's own color hangs lower */
+.art__palette > a.is-match {
+  block-size: 1.8rem;
+}
+
+.art__palette > a:is(:hover, :focus-visible) {
+  z-index: 1;
+  outline: none;
+}
+
+/* the swatch keeps its place; over it, a square in its color grows out of it
+   and its closest name slides in at the bottom */
+.art__square {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  inline-size: 100%;
+  min-inline-size: 0;
+  block-size: 100%;
+  overflow: hidden;
+  background: inherit;
+  translate: -50% 0;
+  pointer-events: none;
+  transition:
+    block-size 0.34s cubic-bezier(0.3, 0.7, 0, 1),
+    min-inline-size 0.34s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.art__palette > a:is(:hover, :focus-visible) .art__square {
+  min-inline-size: 4.5rem;
+  block-size: 4.5rem;
+}
+
+.art__name {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 0.3rem 0.35rem;
+  font-size: 0.65rem;
+  line-height: 1.15;
+  color: var(--paper);
+  background: var(--ink);
+  translate: 0 101%;
+  transition: translate 0.22s ease-in;
+}
+
+.art__name > span {
+  display: block;
+  opacity: 0;
+  translate: 0 0.4rem;
+  transition:
+    opacity 0.15s,
+    translate 0.15s;
+}
+
+.art__palette > a:is(:hover, :focus-visible) .art__name {
+  translate: 0 0;
+  transition: translate 0.3s cubic-bezier(0.3, 0.7, 0, 1) 0.12s;
+}
+
+.art__palette > a:is(:hover, :focus-visible) .art__name > span {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 0.25s ease-out 0.24s,
+    translate 0.3s cubic-bezier(0.3, 0.7, 0, 1) 0.24s;
+}
+
 .lightbox__info {
   padding: var(--space-xs);
   background: var(--paper);
@@ -660,82 +748,6 @@ a:hover {
   text-decoration: none;
 }
 
-.lightbox__palette {
-  position: relative;
-  margin-top: var(--space-xs);
-}
-
-.lightbox__palette .art__palette {
-  block-size: 1.2rem;
-  margin: 0;
-}
-
-.lightbox__palette {
-  pointer-events: auto;
-}
-
-.lightbox__palette .art__palette {
-  align-items: flex-start;
-}
-
-.lightbox__palette .art__palette > a {
-  position: relative;
-  min-inline-size: 0.6rem;
-  block-size: 100%;
-  transform-origin: center;
-  transition:
-    transform 0.35s cubic-bezier(0.3, 0.7, 0, 1),
-    flex-basis 0.35s cubic-bezier(0.3, 0.7, 0, 1),
-    block-size 0.35s cubic-bezier(0.3, 0.7, 0, 1);
-  transition-delay: 0ms;
-}
-
-.lightbox__palette .art__palette > a,
-.lightbox__palette .art__palette:hover > a {
-  transform: none;
-}
-
-.lightbox__palette .art__palette > a.is-match {
-  block-size: 1.9rem;
-}
-
-.lightbox__palette .art__palette > a:is(:hover, :focus-visible) {
-  z-index: 1;
-}
-
-/* the swatch keeps its place; a square in its color opens over it, with its closest name */
-.art__square {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  inline-size: 4.5rem;
-  block-size: 4.5rem;
-  background: inherit;
-  translate: -50% 0;
-  scale: 0.2 0.25;
-  transform-origin: top;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    scale 0.3s cubic-bezier(0.3, 0.7, 0, 1),
-    opacity 0.15s;
-}
-
-.lightbox__palette .art__palette > a:is(:hover, :focus-visible) .art__square {
-  scale: 1;
-  opacity: 1;
-}
-
-.art__name {
-  position: absolute;
-  inset: auto 0 0;
-  padding: 0.3rem 0.35rem;
-  font-size: 0.65rem;
-  line-height: 1.15;
-  color: var(--paper);
-  background: var(--ink);
-}
-
 .lightbox__source {
   opacity: 0.7;
 }
@@ -750,38 +762,12 @@ a:hover {
   }
 }
 
-.art__palette {
-  display: flex;
-  gap: 2px;
-  margin-top: 0.3rem;
-  block-size: 0.6rem;
-}
-
-.art__palette > a {
-  flex-basis: 0;
-  transform-origin: top;
-  transition: transform 0.35s cubic-bezier(0.3, 0.7, 0, 1);
-  transition-delay: calc(var(--i, 0) * 40ms);
-}
-
-.art__palette > a.is-match,
-.art__palette:hover > a,
-.art__palette:focus-within > a {
-  transform: translateY(0.15rem) scaleY(2.2);
-}
-
-.art__palette > a:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .gallery .tile {
     opacity: 1;
     scale: 1;
   }
-  .tile__open img,
-  .art__palette > a {
+  .tile__open img {
     transition: none;
   }
 }
