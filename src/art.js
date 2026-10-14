@@ -6,6 +6,7 @@ const SHARE = 0.05;
 const MIN_SHARE = 0.03;
 const STRONG = 0.15;
 const ENOUGH = 30;
+const FEW = 12;
 export const ART_COUNT = 100;
 
 // colors: [L, A, B, share, hex]
@@ -59,12 +60,12 @@ export function bucketed(works) {
     }
   }
   for (const [k, list] of cells) cells.set(k, list.sort((x, y) => y[0][3] - x[0][3]).slice(0, TOP));
-  return (L, A, B) => {
+  return (L, A, B, reach = 1) => {
     const [l, a, b] = [L, A, B].map((v) => Math.floor(v / CLOSE));
     const found = [];
-    for (let i = -1; i <= 1; i++)
-      for (let j = -1; j <= 1; j++)
-        for (let k = -1; k <= 1; k++) {
+    for (let i = -reach; i <= reach; i++)
+      for (let j = -reach; j <= reach; j++)
+        for (let k = -reach; k <= reach; k++) {
           const list = cells.get(`${l + i},${a + j},${b + k}`);
           if (list) found.push(...list);
         }
@@ -72,30 +73,35 @@ export function bucketed(works) {
   };
 }
 
+// works with the most of the color; a color few works have reaches a little
+// further, until there are enough
 export function pickArt(near, hex, count = ART_COUNT) {
   const [L, A, B] = rgbToOklab(hexToRgb(hex));
-  const byWork = new Map();
-  for (const [c, w] of near(L, A, B)) {
-    const d = Math.hypot(c[0] - L, c[1] - A, c[2] - B);
-    if (d >= CLOSE) continue;
-    const s = byWork.get(w) || { w, share: 0, best: null };
-    s.share += c[3];
-    if (!s.best || d < s.best.d) s.best = { d, hex: c[4] };
-    byWork.set(w, s);
+  let picked = [];
+  for (const radius of [CLOSE, CLOSE * 1.6, CLOSE * 2.4]) {
+    const byWork = new Map();
+    for (const [c, w] of near(L, A, B, Math.ceil(radius / CLOSE))) {
+      const d = Math.hypot(c[0] - L, c[1] - A, c[2] - B);
+      if (d >= radius) continue;
+      const s = byWork.get(w) || { w, share: 0, best: null };
+      s.share += c[3];
+      if (!s.best || d < s.best.d) s.best = { d, hex: c[4] };
+      byWork.set(w, s);
+    }
+    // a closer match counts for a little more
+    const scored = [...byWork.values()]
+      .map((s) => ({ ...s, score: s.share * (1 - (0.5 * s.best.d) / radius) }))
+      .sort((x, y) => y.score - x.score);
+    // with enough works full of the color, the ones with only a little of it stay out
+    const strong = scored.filter((s) => s.share >= STRONG);
+    picked = strong.length >= ENOUGH ? strong : scored.filter((s) => s.share >= SHARE);
+    if (picked.length >= FEW) break;
   }
-  // a closer match counts for a little more
-  const scored = [...byWork.values()]
-    .map((s) => ({ ...s, score: s.share * (1 - (0.5 * s.best.d) / CLOSE) }))
-    .sort((x, y) => y.score - x.score);
-  // with enough works full of the color, the ones with only a little of it stay out
-  const strong = scored.filter((s) => s.share >= STRONG);
-  return (strong.length >= ENOUGH ? strong : scored.filter((s) => s.share >= SHARE))
-    .slice(0, count)
-    .map(({ w: { colors: _colors, ...work }, share, best }) => ({
-      ...work,
-      share: Math.round(share * 100) / 100,
-      color: best.hex,
-    }));
+  return picked.slice(0, count).map(({ w: { colors: _colors, ...work }, share, best }) => ({
+    ...work,
+    share: Math.round(share * 100) / 100,
+    color: best.hex,
+  }));
 }
 
 export const MUSEUMS = {
