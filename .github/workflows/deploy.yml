@@ -1,0 +1,75 @@
+# Builds the site and deploys it to names.color.pizza (GitHub Pages). The
+# list and its history come from the names repo, the nightly copies from
+# the data branch, the descriptions from the descriptions branch.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: meodai/color-names
+          path: color-names
+          fetch-depth: 0 # added.mjs reads the list's whole history
+      - uses: actions/checkout@v4
+        with:
+          ref: data
+          path: .data
+      - uses: actions/checkout@v4
+        with:
+          ref: descriptions
+          path: .descriptions
+      - uses: actions/checkout@v4
+        with:
+          repository: meodai/art-colors
+          path: .data/art-colors
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install oxipng
+        run: |
+          curl -sSL https://github.com/oxipng/oxipng/releases/download/v10.2.1/oxipng-10.2.1-x86_64-unknown-linux-musl.tar.gz \
+            | sudo tar -xz --strip-components=1 -C /usr/local/bin oxipng-10.2.1-x86_64-unknown-linux-musl/oxipng \
+            || echo "no oxipng; previews stay unoptimized"
+      - uses: actions/cache@v4
+        with:
+          path: .cache/previews
+          key: previews-${{ github.run_id }}
+          restore-keys: previews-
+      - name: Build
+        env:
+          UPLOAD_URL: ${{ vars.UPLOAD_URL }}
+          UPLOAD_KEY: ${{ secrets.UPLOAD_KEY }}
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

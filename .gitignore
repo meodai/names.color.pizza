@@ -5,10 +5,13 @@ dist
 
 # generated from the git history (scripts/added.mjs)
 public/added.json
-.data/
-.descriptions/
+.data
+.descriptions
 .data-fill.log
 .data-pictures.log
 
 # the previews made so far, by name and hex (scripts/previews.mjs)
 .cache/
+
+# the names repo, checked out (or linked) for the list and its history
+color-names

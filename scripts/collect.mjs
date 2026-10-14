@@ -1,4 +1,4 @@
-// node scripts/collect.mjs [--data ../.data] [--list ../../src/colornames.csv]
+// node scripts/collect.mjs [--data .data] [--list color-names/src/colornames.csv]
 //   [--minutes 330] [--rate N] [--parallel N] [--all] [--limit N] [--with-pictures | --pictures]
 
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -17,7 +17,7 @@ const arg = (name, fallback) => {
   return k > 0 ? process.argv[k + 1] : fallback;
 };
 const DATA = resolve(here, "..", arg("data", ".data"));
-const LIST = resolve(here, "..", arg("list", "../src/colornames.csv"));
+const LIST = resolve(here, "..", arg("list", "color-names/src/colornames.csv"));
 const MINUTES = +arg("minutes", 330);
 const local = resolve(here, "../.env.local");
 const TOKEN =

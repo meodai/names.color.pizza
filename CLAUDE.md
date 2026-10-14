@@ -11,7 +11,7 @@ copy.
 
 This is the upstream project the microsite promotes:
 
-- Live page: https://meodai.github.io/color-names/
+- Live page: https://names.color.pizza/
 - API: `api.color.pizza` (e.g. `api.color.pizza/v1/?values=00f,f00&list=bestOf`)
 - Package: `npm install color-name-list`
 - Lists: Full · Best Of · Short. License: MIT.

@@ -12,7 +12,7 @@ import { slugsOf } from "../src/names.js";
 const here = dirname(fileURLToPath(import.meta.url));
 const DIST = resolve(here, "../dist");
 const CACHE = resolve(here, "../.cache/previews");
-const LIST = resolve(here, "../../src/colornames.csv");
+const LIST = resolve(here, "../color-names/src/colornames.csv");
 const FONTS = join(here, "fonts");
 const DESIGN = 2; // bump to remake every preview
 

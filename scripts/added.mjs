@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repo = resolve(here, "../..");
+const repo = resolve(here, "../color-names");
 const out = resolve(here, "../public/added.json");
 const CSV = "src/colornames.csv";
 const MARK = "\u0001commit ";

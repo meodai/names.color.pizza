@@ -1,6 +1,6 @@
 import Fuse from "fuse.js";
 import { Filter } from "bad-words";
-import protectedTargets from "../../tests/protected-targets.json";
+import protectedTargets from "../color-names/tests/protected-targets.json";
 import { UNNAMED, hexToRgb, rgbToHex, rgbToOklab, normalizeHex, getList, nearestIndex } from "./names.js";
 
 const ISSUE_URL = "https://github.com/meodai/color-names/issues/new";

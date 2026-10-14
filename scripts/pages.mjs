@@ -1,7 +1,7 @@
 // A page per name (color/<slug>/), hex forwards (color/<hex>/), 404.html,
 // sitemap.xml and robots.txt, after the build.
 //
-//   node scripts/pages.mjs [--data .data] [--descriptions .descriptions] [--art ../../art-colors] [--site https://meodai.github.io/color-names/]
+//   node scripts/pages.mjs [--data .data] [--descriptions .descriptions] [--art ../../art-colors] [--site https://names.color.pizza/]
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -17,8 +17,8 @@ const arg = (name, fallback) => {
 };
 const DIST = resolve(here, "../dist");
 const DATA = resolve(here, "..", arg("data", ".data"));
-const LIST = resolve(here, "../../src/colornames.csv");
-const SITE = (process.env.SITE_URL || arg("site", "https://meodai.github.io/color-names/")).replace(/\/?$/, "/");
+const LIST = resolve(here, "../color-names/src/colornames.csv");
+const SITE = (process.env.SITE_URL || arg("site", "https://names.color.pizza/")).replace(/\/?$/, "/");
 
 const escapeHTML = (s) =>
   String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
