@@ -659,7 +659,20 @@ function layoutGallery() {
   shown.observe(title);
   measureStrip(rows);
   strip.offset = strip.titleWidth / 2 - page.art.clientWidth / 2;
+  strip.entered = false;
+  page.art.classList.remove("is-in");
   drawStrip();
+  // the pictures come in from the back once the strip is in view, outward from the title
+  const seen = new IntersectionObserver(
+    ([e]) => {
+      if (!e.isIntersecting) return;
+      seen.disconnect();
+      page.art.classList.add("is-in");
+      setTimeout(() => (strip.entered = true), 700);
+    },
+    { threshold: 0.25 },
+  );
+  seen.observe(page.art);
 }
 
 function measureStrip(rows = strip.rows) {
@@ -721,7 +734,9 @@ function drawStrip() {
         el = document.createElement("figure");
         el.className = "tile";
         el.innerHTML = tileHTML(t.it, gallery.indexOf(t.it));
-        el.style.cssText = `top:${k * (strip.row + strip.gap)}px;width:${t.w}px;height:${strip.row}px`;
+        const reach = Math.hypot(x - strip.offset - page.art.clientWidth / 2, (k - strip.middle) * strip.row);
+        const delay = strip.entered ? 0 : Math.round(Math.min(1, reach / page.art.clientWidth) * 360);
+        el.style.cssText = `top:${k * (strip.row + strip.gap)}px;width:${t.w}px;height:${strip.row}px;--d:${delay}ms`;
         page.art.append(el);
         strip.tiles.set(key, el);
       }
@@ -767,7 +782,10 @@ function sourceHTML(it) {
 
 const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" aria-label="Close"></button>
   <figure class="lightbox__figure">
-    <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
+    <div class="lightbox__frame">
+      <span class="lightbox__mat"></span>
+      <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
+    </div>
     <figcaption class="lightbox__info">
       ${link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ')}
       ${it.by ? `<span>${escapeHTML(it.by)}</span>` : ""}
@@ -779,14 +797,18 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
 const EASE = "cubic-bezier(0.3, 0.7, 0, 1)";
 let opened = null;
 
-// grows from the tile it was clicked in, and shrinks back into it
+// grows from the tile it was clicked in, a frame settling round it just
+// before it lands; shrinks back into it
 function openPicture(tile, it) {
   closePicture(true);
   const box = document.createElement("div");
   box.className = "lightbox";
   box.innerHTML = pictureHTML(it);
   (page.embedded ? page.root : document.body).append(box);
-  const img = box.querySelector("img");
+  const frame = box.querySelector(".lightbox__frame");
+  const img = frame.querySelector("img");
+  const mat = frame.querySelector(".lightbox__mat");
+  const info = box.querySelector(".lightbox__info");
   const fly = () => {
     const from = tile.getBoundingClientRect();
     const to = img.getBoundingClientRect();
@@ -798,36 +820,42 @@ function openPicture(tile, it) {
   const go = () => {
     tile.style.visibility = "hidden";
     page.art.classList.add("is-behind");
-    img.animate(fly(), { duration: 520, easing: EASE });
-    box.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: "ease-out" });
-    box.querySelector(".lightbox__info").animate(
+    frame.animate(fly(), { duration: 560, easing: EASE });
+    mat.animate(
+      [
+        { opacity: 0, transform: "scale(0.94)" },
+        { opacity: 1, transform: "none" },
+      ],
+      { duration: 380, delay: 300, easing: EASE, fill: "backwards" },
+    );
+    info.animate(
       [
         { opacity: 0, transform: "translateY(0.6rem)" },
         { opacity: 1, transform: "none" },
       ],
-      { duration: 400, delay: 220, easing: EASE, fill: "backwards" },
+      { duration: 400, delay: 360, easing: EASE, fill: "backwards" },
     );
   };
   if (img.complete) go();
   else img.addEventListener("load", go, { once: true });
   box.querySelector(".lightbox__backdrop").addEventListener("click", () => closePicture());
-  opened = { box, tile, img, fly };
+  opened = { box, tile, frame, mat, info, fly };
 }
 
 function closePicture(now = false) {
   if (!opened) return;
-  const { box, tile, img, fly } = opened;
+  const { box, tile, frame, mat, info, fly } = opened;
   opened = null;
   page.art.classList.remove("is-behind");
   const done = () => {
-    box.remove();
     tile.style.visibility = "";
+    box.remove();
   };
   if (now) return done();
-  img.animate([...fly()].reverse(), { duration: 420, easing: EASE, fill: "forwards" });
-  box
-    .animate([{ opacity: 1 }, { opacity: 0 }], { duration: 420, easing: "ease-in", fill: "forwards" })
-    .finished.then(done);
+  const fade = [{ opacity: 1 }, { opacity: 0 }];
+  mat.animate(fade, { duration: 160, easing: "ease-in", fill: "forwards" });
+  info.animate(fade, { duration: 160, easing: "ease-in", fill: "forwards" });
+  frame.animate([...fly()].reverse(), { duration: 460, delay: 80, easing: EASE, fill: "forwards" }).finished.then(done);
 }
 
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
