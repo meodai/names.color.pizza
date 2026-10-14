@@ -73,12 +73,12 @@ export function bucketed(works) {
   };
 }
 
-// works with the most of the color; a color few works have reaches a little
-// further, until there are enough
+// works with the most of the color, as close to it as there are enough of:
+// first works full of it, from the tightest match outward, then works with
+// only a little of it
 export function pickArt(near, hex, count = ART_COUNT) {
   const [L, A, B] = rgbToOklab(hexToRgb(hex));
-  let picked = [];
-  for (const radius of [CLOSE, CLOSE * 1.6, CLOSE * 2.4]) {
+  const tiers = [CLOSE * 0.6, CLOSE, CLOSE * 1.6, CLOSE * 2.4].map((radius) => {
     const byWork = new Map();
     for (const [c, w] of near(L, A, B, Math.ceil(radius / CLOSE))) {
       const d = Math.hypot(c[0] - L, c[1] - A, c[2] - B);
@@ -89,14 +89,14 @@ export function pickArt(near, hex, count = ART_COUNT) {
       byWork.set(w, s);
     }
     // a closer match counts for a little more
-    const scored = [...byWork.values()]
+    return [...byWork.values()]
       .map((s) => ({ ...s, score: s.share * (1 - (0.5 * s.best.d) / radius) }))
       .sort((x, y) => y.score - x.score);
-    // with enough works full of the color, the ones with only a little of it stay out
-    const strong = scored.filter((s) => s.share >= STRONG);
-    picked = strong.length >= ENOUGH ? strong : scored.filter((s) => s.share >= SHARE);
-    if (picked.length >= FEW) break;
-  }
+  });
+  const picked =
+    tiers.map((t) => t.filter((s) => s.share >= STRONG)).find((t) => t.length >= ENOUGH) ||
+    tiers.map((t) => t.filter((s) => s.share >= SHARE)).find((t) => t.length >= FEW) ||
+    tiers.at(-1).filter((s) => s.share >= SHARE);
   return picked.slice(0, count).map(({ w: { colors: _colors, ...work }, share, best }) => ({
     ...work,
     share: Math.round(share * 100) / 100,
