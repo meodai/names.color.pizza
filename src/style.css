@@ -542,10 +542,10 @@ a:hover {
   overflow: hidden;
   will-change: transform;
   opacity: 0;
-  translate: 0 0 -1400px;
+  translate: 0 0 -320px;
   transition:
     opacity 0.4s ease-out var(--d, 0ms),
-    translate 0.9s cubic-bezier(0.2, 0.75, 0, 1) var(--d, 0ms),
+    translate 0.7s cubic-bezier(0.2, 0.75, 0, 1) var(--d, 0ms),
     filter 0.5s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
