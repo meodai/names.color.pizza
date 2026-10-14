@@ -29,7 +29,7 @@ export function unpackWork(w, museum) {
 const escapeHTML = (s) =>
   String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
-const paletteHTML = (palette = [], match) =>
+export const paletteHTML = (palette = [], match) =>
   palette.length
     ? `<span class="art__palette">${palette
         .map(
@@ -38,18 +38,6 @@ const paletteHTML = (palette = [], match) =>
         )
         .join("")}</span>`
     : "";
-
-export const workHTML = (w, style = "") => {
-  const museum = `href="${escapeHTML(w.url)}" target="_blank" rel="noopener"`;
-  return `<div class="art__work" style="${style}">
-    <span class="art__frame"><a class="art__picture" ${museum}><img src="${escapeHTML(w.image)}" alt="${escapeHTML(w.title)}"
-      loading="lazy" decoding="async" style="aspect-ratio:${w.ratio}" /></a>${paletteHTML(w.palette, w.color)}</span>
-    <a class="art__caption" ${museum}>
-      <span class="art__title"><span class="art__dot" style="background:${w.color}"></span>${escapeHTML(w.title)}</span>
-      <span class="art__by">${escapeHTML([w.artist, w.date].filter(Boolean).join(", "))}</span>
-    </a>
-  </div>`;
-};
 
 // OKLab grid of cells CLOSE wide, each capped to the TOP largest shares
 // (grays are in most works)
@@ -98,20 +86,6 @@ export function pickArt(near, hex, count = ART_COUNT) {
       share: Math.round(share * 100) / 100,
       color: best.hex,
     }));
-}
-
-// an unnamed color borrows the nearest name's works that have it too
-export function artNear(works, hex) {
-  const [L, A, B] = rgbToOklab(hexToRgb(hex));
-  return works.flatMap((w) => {
-    let best = null;
-    for (const [h] of w.palette || []) {
-      const [l, a, b] = rgbToOklab(hexToRgb(h));
-      const d = Math.hypot(l - L, a - A, b - B);
-      if (d < CLOSE && (!best || d < best.d)) best = { d, hex: h };
-    }
-    return best ? [{ ...w, color: best.hex }] : [];
-  });
 }
 
 export const MUSEUMS = {

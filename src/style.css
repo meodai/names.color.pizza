@@ -476,42 +476,90 @@ a:hover {
   max-width: 34ch;
 }
 
-.art {
-  columns: 3 16rem;
-  column-gap: var(--space-m);
-  max-width: 72rem;
-}
-
-.art__work {
+.gallery {
+  --row: clamp(8rem, 21svh, 13rem);
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  break-inside: avoid;
-  margin-bottom: var(--space-l);
+  margin-inline: calc(var(--gutter) * -1);
+  padding: 0 var(--gutter) var(--space-xs);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fg) transparent;
 }
 
-.art__frame {
+.gallery__row {
+  display: flex;
+  gap: var(--space-xs);
+  block-size: var(--row);
+}
+
+.tile {
+  position: relative;
+  flex: none;
+  block-size: 100%;
+  min-inline-size: calc(var(--row) * 0.5);
+  aspect-ratio: var(--ratio, auto);
+  margin: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bg) 90%, var(--fg));
+}
+
+.tile__open {
   display: block;
-  padding: 0.5rem;
-  background: var(--paper);
-  transform: rotate(var(--tilt, 0deg));
+  block-size: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.tile__open img {
+  display: block;
+  block-size: 100%;
+  inline-size: auto;
+  max-inline-size: none;
   transition: transform 0.45s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
-.art__work:hover .art__frame,
-.art__work:focus-within .art__frame {
-  transform: rotate(0deg) scale(1.02);
+.tile:hover .tile__open img {
+  transform: scale(1.03);
 }
 
-.art__picture {
-  display: block;
+.tile__open:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
 }
 
-.art__frame img {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
-  background: color-mix(in srgb, var(--paper) 92%, var(--ink));
+.tile__info {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  max-block-size: 100%;
+  padding: 0.6rem;
+  overflow: auto;
+  color: var(--fg);
+  background: var(--bg);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  transform: translateY(101%);
+  transition: transform 0.35s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.tile.is-open .tile__info {
+  transform: none;
+}
+
+.tile__title {
+  color: inherit;
+  font-weight: var(--weight-label);
+}
+
+.tile__info .art__palette {
+  margin: 0 0 0.3rem;
 }
 
 .art__palette {
@@ -539,30 +587,6 @@ a:hover {
   outline-offset: 2px;
 }
 
-.art__caption {
-  display: flex;
-  color: inherit;
-  text-decoration: none;
-  flex-direction: column;
-  gap: 0.15em;
-  font-size: var(--text-xs);
-  line-height: 1.3;
-}
-
-.art__title {
-  font-weight: var(--weight-label);
-}
-
-.art__dot {
-  display: inline-block;
-  inline-size: 0.7em;
-  block-size: 0.7em;
-  margin-inline-end: 0.45em;
-  border-radius: 50%;
-  vertical-align: -0.02em;
-  box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 30%, transparent);
-}
-
 .color-art__credit {
   margin: var(--space-l) 0 0;
   font-size: var(--text-xs);
@@ -573,7 +597,8 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .art__frame,
+  .tile__open img,
+  .tile__info,
   .art__palette > a {
     transition: none;
   }
@@ -1664,83 +1689,6 @@ a:hover {
   margin-bottom: var(--space-2xs);
 }
 
-/* --x, --y, --h, --rot and --z are set by detail.js */
-.color-page .has-pile {
-  position: relative;
-  z-index: 2;
-  padding-bottom: 0;
-}
-
-/* half the tallest print (12.5rem / 2) plus a spacing step */
-.picture-pile {
-  --half: 6.5rem;
-  position: relative;
-  height: 0;
-  margin-top: calc(var(--space-l) + var(--half));
-}
-
-/* --pile-gap is measured by detail.js */
-.color-page .has-pile + .slide,
-.color-page .has-pile + .slide[hidden] + .slide {
-  padding-top: calc(var(--space-l) + var(--pile-gap, 8rem));
-}
-
-.picture-pile a {
-  position: absolute;
-  top: var(--y);
-  left: var(--x);
-  z-index: var(--z);
-  height: var(--h);
-  padding: 0.35rem;
-  background: var(--paper);
-  transform: translate(calc(-50% + var(--push, 0rem)), -50%) rotate(calc(var(--rot) + var(--lean, 0deg)));
-  transition: transform 0.45s cubic-bezier(0.3, 0.7, 0, 1);
-}
-
-.picture-pile img {
-  display: block;
-  block-size: 100%;
-  inline-size: auto;
-  max-inline-size: none;
-}
-
-.picture-pile a:hover,
-.picture-pile a:focus-visible {
-  z-index: 50;
-  transform: translate(-50%, -50%) translateY(-1.25rem) rotate(0deg) scale(1.1);
-}
-
-.picture-pile a:is(:hover, :focus-visible) ~ a {
-  --push: 1.25rem;
-  --lean: 2deg;
-}
-
-.picture-pile a:is(:hover, :focus-visible) + a {
-  --push: 2.5rem;
-  --lean: 4deg;
-}
-
-.picture-pile a:has(~ a:is(:hover, :focus-visible)) {
-  --push: -1.25rem;
-  --lean: -2deg;
-}
-
-.picture-pile a:has(+ a:is(:hover, :focus-visible)) {
-  --push: -2.5rem;
-  --lean: -4deg;
-}
-
-.picture-pile a:focus-visible {
-  outline: var(--line) solid var(--paper);
-  outline-offset: 4px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .picture-pile a {
-    transition: none;
-  }
-}
-
 @media (max-width: 640px) {
   .wiki-index__row {
     --inset: 0px !important;
@@ -1760,140 +1708,10 @@ a:hover {
   .wiki-index__words + .wiki-index__body {
     margin-inline-start: var(--space-s);
   }
-  .picture-pile {
-    --half: 4rem;
-  }
-  .picture-pile a {
-    height: calc(var(--h) * 0.6);
-  }
 }
 
 .color-page {
   position: relative;
-}
-
-.peeks {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-}
-
-/* the link stays put and widens on hover so the print can't slip out from under the pointer */
-.peek {
-  --show: 0.26;
-  position: absolute;
-  top: var(--top);
-  display: flex;
-  inline-size: calc(var(--w) * var(--show));
-  color: var(--ink);
-  text-decoration: none;
-  pointer-events: auto;
-}
-
-.peek--left {
-  left: 0;
-}
-
-.peek--right {
-  right: 0;
-  justify-content: flex-end;
-}
-
-.peek:hover,
-.peek:focus-visible {
-  z-index: 1;
-  inline-size: calc(var(--w) + var(--space-s));
-  outline: none;
-}
-
-.peek__print {
-  flex: none;
-  inline-size: var(--w);
-  padding: 0.35rem;
-  background: var(--paper);
-  transition: transform 0.6s cubic-bezier(0.3, 1.35, 0.5, 1);
-}
-
-.peek--left .peek__print {
-  transform: translateX(calc((var(--show) - 1) * 100%)) rotate(var(--rot));
-}
-
-.peek--right .peek__print {
-  transform: translateX(calc((1 - var(--show)) * 100%)) rotate(var(--rot));
-}
-
-.peek--left:not(.is-in) .peek__print {
-  transform: translateX(calc(-100% - 2rem)) rotate(var(--rot));
-}
-
-.peek--right:not(.is-in) .peek__print {
-  transform: translateX(calc(100% + 2rem)) rotate(var(--rot));
-}
-
-.peek:not(.is-in) {
-  pointer-events: none;
-}
-
-.peek--left:hover .peek__print,
-.peek--left:focus-visible .peek__print {
-  transform: translateX(var(--space-s)) rotate(0deg);
-}
-
-.peek--right:hover .peek__print,
-.peek--right:focus-visible .peek__print {
-  transform: translateX(calc(-1 * var(--space-s))) rotate(0deg);
-}
-
-.peek img {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
-}
-
-.peek__caption {
-  display: grid;
-  grid-template-rows: 0fr;
-  font-size: var(--text-xs);
-  line-height: 1.3;
-  transition: grid-template-rows 0.4s ease;
-}
-
-.peek__caption > span {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-block-size: 0;
-}
-
-.peek:hover .peek__caption,
-.peek:focus-visible .peek__caption {
-  grid-template-rows: 1fr;
-}
-
-.peek__title {
-  padding-block-start: 0.45rem;
-  font-weight: var(--weight-label);
-}
-
-@media (max-width: 640px) {
-  .peek__print {
-    inline-size: calc(var(--w) * 0.65);
-  }
-  .peek {
-    inline-size: calc(var(--w) * 0.65 * var(--show));
-  }
-  .peek:hover,
-  .peek:focus-visible {
-    inline-size: calc(var(--w) * 0.65 + var(--space-s));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .peek__print,
-  .peek__caption {
-    transition: none;
-  }
 }
 
 .neighbors {

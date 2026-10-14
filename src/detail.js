@@ -13,7 +13,7 @@ import {
   tidySenses,
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
-import { workHTML, artNear, creditHTML } from "./art.js";
+import { paletteHTML, creditHTML } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import outline from "./favicon-outline.svg?raw";
 
@@ -93,27 +93,6 @@ function neighbors(data, hex, count = 12) {
     .slice(0, count)
     .map(({ it }) => it);
 }
-
-const peeksHTML = (pictures, hex) => {
-  const perSide = Math.ceil(pictures.length / 2);
-  return pictures
-    .map((p, i) => {
-      const side = i % 2 ? "right" : "left";
-      const k = Math.floor(i / 2);
-      const vars = [`--w:${between(11, 16).toFixed(1)}rem`, `--rot:${between(-9, 9).toFixed(1)}deg`].join(";");
-      // the link holds still and takes the hover; the print inside it moves
-      return `<a class="peek peek--${side}" data-k="${(k + 0.5) / perSide + between(-0.03, 0.03)}" href="${escapeHTML(p.link)}" target="_blank" rel="noopener" style="${vars}">
-        <span class="peek__print">
-          <img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.title)}" decoding="async" style="aspect-ratio:${p.ratio.toFixed(3)}" />
-          <span class="peek__caption"><span>
-            <span class="peek__title">${escapeHTML(p.title)}</span>
-            <span class="peek__where">${Math.round(p.share * 100)}% close to ${hex}, on Wikimedia Commons</span>
-          </span></span>
-        </span>
-      </a>`;
-    })
-    .join("");
-};
 
 function playButton(term, src) {
   const btn = document.createElement("button");
@@ -353,26 +332,6 @@ function indexHTML(words, entries) {
 }
 
 const between = (a, b) => a + Math.random() * (b - a);
-const imagesHTML = (images) =>
-  `<div class="picture-pile">` +
-  images
-    .map((img, i) => {
-      const x = ((i + 0.5) / images.length) * 100 + between(-4, 4);
-      const vars = [
-        `--x:${x.toFixed(1)}%`,
-        `--y:${between(-1.5, 1.5).toFixed(2)}rem`,
-        `--h:${between(8.5, 12.5).toFixed(2)}rem`,
-        `--rot:${between(-9, 9).toFixed(1)}deg`,
-        `--z:${Math.floor(between(1, 20))}`,
-      ].join(";");
-      return `<a href="${escapeHTML(img.link)}" target="_blank" rel="noopener" style="${vars}">
-        <img srcset="${escapeHTML(img.srcset)}" src="${escapeHTML(img.src)}"
-          alt="${escapeHTML(img.alt)}" />
-      </a>`;
-    })
-    .join("") +
-  `</div>`;
-
 async function copy(text, btn, done) {
   try {
     await navigator.clipboard.writeText(text);
@@ -389,82 +348,6 @@ function alternate() {
   [...page.root.querySelectorAll("[data-slide]")]
     .filter((el) => !el.hidden)
     .forEach((el, i) => el.classList.toggle("slide--invert", i % 2 === 0));
-}
-
-function placePeeks() {
-  const peeks = [...page.peeks.children];
-  if (!peeks.length) return;
-  const main = page.peeks.parentElement;
-  const top = main.getBoundingClientRect().top;
-  const span = (el) => {
-    const r = el.getBoundingClientRect();
-    return [r.top - top, r.bottom - top];
-  };
-  // placed by their middles: keep half the tallest (+24px) clear at each end
-  const half = Math.max(...peeks.map((el) => el.firstElementChild.offsetHeight)) / 2 + 24;
-  const start = span(page.root.querySelector(".color-hero"))[1];
-  const end = span(page.root.querySelector(".footer") || main)[0];
-  let free = [[start + half, end - half]];
-  const taken = [];
-  if (!page.meaningSlide.hidden) {
-    const [a, b] = span(page.meaningSlide);
-    const pile = page.root.querySelector(".picture-pile");
-    taken.push([a, pile?.childElementCount ? Math.max(b, span(pile)[1]) : b]);
-  }
-  if (!page.artSlide.hidden) taken.push(span(page.artSlide));
-  for (const [a, b] of taken) {
-    free = free.flatMap(([s, e]) =>
-      [
-        [s, Math.min(e, a - half)],
-        [Math.max(s, b + half), e],
-      ].filter(([x, y]) => y - x > 0),
-    );
-  }
-  const total = free.reduce((n, [s, e]) => n + e - s, 0);
-  if (total <= 0) return;
-  for (const el of peeks) {
-    let d = Math.min(0.999, Math.max(0, +el.dataset.k)) * total;
-    for (const [s, e] of free) {
-      if (d <= e - s) {
-        el.style.setProperty("--top", `${Math.round(s + d - el.firstElementChild.offsetHeight / 2)}px`);
-        break;
-      }
-      d -= e - s;
-    }
-  }
-}
-
-// not loading="lazy": they'd wait to be on screen, which they aren't until placed
-let peeksSeen;
-function revealPeeks() {
-  peeksSeen?.disconnect();
-  peeksSeen = new IntersectionObserver((seen) => {
-    for (const { target, isIntersecting } of seen) {
-      if (!isIntersecting) continue;
-      peeksSeen.unobserve(target);
-      const img = target.querySelector("img");
-      const show = () => requestAnimationFrame(() => target.classList.add("is-in"));
-      if (img.complete && img.naturalWidth) show();
-      else img.addEventListener("load", show, { once: true });
-    }
-  });
-  for (const el of page.peeks.children) peeksSeen.observe(el);
-}
-
-// the pile hangs into the next slide: push that slide below its lowest picture
-function pileGap() {
-  const pile = page.root.querySelector(".picture-pile");
-  let next = page.meaningSlide.nextElementSibling;
-  while (next?.hidden) next = next.nextElementSibling;
-  page.root.querySelectorAll("[data-slide]").forEach((el) => el !== next && el.style.removeProperty("--pile-gap"));
-  if (!next) return;
-  if (!pile || !page.meaningSlide.classList.contains("has-pile")) {
-    next.style.removeProperty("--pile-gap");
-    return;
-  }
-  const line = pile.getBoundingClientRect().top;
-  const low = Math.max(0, ...[...pile.children].map((a) => a.getBoundingClientRect().bottom - line));
-  next.style.setProperty("--pile-gap", `${Math.ceil(low)}px`);
 }
 
 function fitTitle() {
@@ -537,10 +420,8 @@ async function render(hex) {
   page.dictionary.replaceChildren();
   page.wiki.replaceChildren();
   page.wordsSlide.hidden = true;
-  peeksSeen?.disconnect();
-  page.peeks.replaceChildren();
+  gallery = [];
   page.meaningSlide.hidden = true;
-  page.meaningSlide.classList.remove("has-pile");
   page.artSlide.hidden = true;
   page.art.replaceChildren();
   alternate();
@@ -634,7 +515,7 @@ async function render(hex) {
   if (builtPage?.name !== current.name)
     saved.then((c) => c?.description && current?.hex === hex && describe(c.description));
   showPictures(hex, [current.name, lore.nouns[0]], saved);
-  showArt(hex, current.name, saved, false);
+  showArt(hex, saved);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
   page.complements.innerHTML = neighborsHTML(named(data, rampOf(complementHex(hex))), data);
   page.ramp.innerHTML = neighborsHTML(named(data, rampOf(hex)), data);
@@ -665,37 +546,90 @@ async function render(hex) {
   addPronunciations(whole ? page.dictionary : page.wiki, definitions, sounds, whole ? page.meaningTitle : null);
   page.meaningSlide.hidden = false;
   alternate();
-  if (!images.length) return;
-  page.wiki.insertAdjacentHTML("beforeend", imagesHTML(images));
-  page.meaningSlide.classList.add("has-pile");
-  pileGap();
-  // a tilted picture reaches lower once it has its width: measure again
-  page.wiki
-    .querySelectorAll(".picture-pile img")
-    .forEach((img) => img.addEventListener("load", pileGap, { once: true }));
+  addToGallery(
+    hex,
+    images.map((img) => ({
+      kind: "wiki",
+      image: img.src,
+      srcset: img.srcset,
+      title: img.alt,
+      by: "On Wikipedia",
+      link: img.link,
+    })),
+  );
 }
 
 async function showPictures(hex, terms, saved) {
   const pictures = (await saved)?.looked?.pictures ?? (await lookupPictures(hex, terms));
   if (current?.hex !== hex || !pictures.length) return;
-  page.peeks.innerHTML = peeksHTML(pictures, hex);
-  placePeeks();
-  revealPeeks();
+  addToGallery(
+    hex,
+    pictures.map((p) => ({
+      kind: "picture",
+      image: p.image,
+      ratio: p.ratio,
+      title: p.title,
+      by: `${Math.round(p.share * 100)}% close to ${hex}, on Wikimedia Commons`,
+      link: p.link,
+    })),
+  );
 }
 
-async function showArt(hex, title, saved, borrowed) {
-  const art = (await saved)?.art || [];
-  const works = borrowed ? artNear(art, hex) : art;
-  if (current?.hex !== hex || !works.length) return;
-  page.artTitle.textContent = `${title}, in art.`;
-  page.art.innerHTML = artHTML(works);
-  page.artCredit.innerHTML = creditHTML(works);
-  page.artSlide.hidden = false;
-  alternate();
-  pileGap();
+async function showArt(hex, saved) {
+  addToGallery(
+    hex,
+    ((await saved)?.art || []).map((w) => ({
+      kind: "art",
+      image: w.image,
+      ratio: w.ratio,
+      title: w.title,
+      by: [w.artist, w.date].filter(Boolean).join(", "),
+      link: w.url,
+      palette: w.palette,
+      color: w.color,
+      work: w,
+    })),
+  );
 }
 
-const artHTML = (works) => works.map((w) => workHTML(w, `--tilt:${between(-2.5, 2.5).toFixed(1)}deg`)).join("");
+let gallery = [];
+const KINDS = ["art", "picture", "wiki"];
+const galleryRows = () => (innerWidth < 700 ? 2 : 3);
+
+function addToGallery(hex, items) {
+  if (current?.hex !== hex || !items.length) return;
+  gallery = [...gallery, ...items].sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
+  layoutGallery();
+  page.artTitle.textContent = `${current.name}, in pictures.`;
+  page.artCredit.innerHTML = creditHTML(gallery.filter((it) => it.work).map((it) => it.work));
+  if (page.artSlide.hidden) {
+    page.artSlide.hidden = false;
+    alternate();
+  }
+}
+
+// rows filled shortest first, so they end about together
+function layoutGallery() {
+  const rows = Array.from({ length: galleryRows() }, () => ({ width: 0, tiles: [] }));
+  for (const it of gallery) {
+    const row = rows.reduce((a, b) => (b.width < a.width ? b : a));
+    row.width += it.ratio || 1;
+    row.tiles.push(tileHTML(it));
+  }
+  page.art.innerHTML = rows.map((r) => `<div class="gallery__row">${r.tiles.join("")}</div>`).join("");
+  page.art.dataset.rows = rows.length;
+}
+
+const tileHTML = (it) => `<figure class="tile"${it.ratio ? ` style="--ratio:${it.ratio}"` : ""}>
+    <button type="button" class="tile__open" aria-expanded="false" aria-label="${escapeHTML(it.title || "Picture")}">
+      <img src="${escapeHTML(it.image)}"${it.srcset ? ` srcset="${escapeHTML(it.srcset)}"` : ""} alt="${escapeHTML(it.title)}" loading="lazy" decoding="async" />
+    </button>
+    <figcaption class="tile__info">
+      ${it.palette ? paletteHTML(it.palette, it.color) : ""}
+      <a class="tile__title" href="${escapeHTML(it.link)}" target="_blank" rel="noopener">${escapeHTML(it.title || "Untitled")}</a>
+      ${it.by ? `<span class="tile__by">${escapeHTML(it.by)}</span>` : ""}
+    </figcaption>
+  </figure>`;
 
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
 
@@ -733,7 +667,6 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     dictionary: q("[data-dictionary]"),
     wiki: q("[data-wiki]"),
     meaningSlide: q("[data-meaning-slide]"),
-    peeks: q("[data-peeks]"),
     meaningTitle: q("[data-meaning-title]"),
     art: q("[data-art]"),
     artSlide: q("[data-art-slide]"),
@@ -794,19 +727,37 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     else if (!embedded) location.replace(siteURL());
   };
   window.addEventListener("hashchange", show, { signal });
-  let placing = 0;
-  const grows = new ResizeObserver(() => {
-    cancelAnimationFrame(placing);
-    placing = requestAnimationFrame(placePeeks);
-  });
-  grows.observe(page.peeks.parentElement);
-  signal?.addEventListener("abort", () => grows.disconnect());
+  page.art.addEventListener(
+    "error",
+    (e) => {
+      if (e.target.tagName !== "IMG") return;
+      gallery = gallery.filter((it) => it.image !== e.target.getAttribute("src"));
+      e.target.closest(".tile")?.remove();
+    },
+    { capture: true, signal },
+  );
+  page.art.addEventListener(
+    "click",
+    (e) => {
+      const open = e.target.closest(".tile__open");
+      if (!open) return;
+      const tile = open.parentElement;
+      const was = tile.classList.contains("is-open");
+      for (const t of page.art.querySelectorAll(".tile.is-open")) {
+        t.classList.remove("is-open");
+        t.firstElementChild.setAttribute("aria-expanded", "false");
+      }
+      tile.classList.toggle("is-open", !was);
+      open.setAttribute("aria-expanded", String(!was));
+    },
+    { signal },
+  );
 
   window.addEventListener(
     "resize",
     () => {
       if (page.name.textContent) fitTitle();
-      pileGap();
+      if (gallery.length && +page.art.dataset.rows !== galleryRows()) layoutGallery();
     },
     { signal },
   );
