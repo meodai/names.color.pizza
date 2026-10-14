@@ -6,6 +6,7 @@ dist
 # generated from the git history (scripts/added.mjs)
 public/added.json
 .data/
+.descriptions/
 .data-fill.log
 .data-pictures.log
 

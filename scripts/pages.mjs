@@ -1,7 +1,7 @@
 // A page per name (color/<slug>/), hex forwards (color/<hex>/), 404.html,
 // sitemap.xml and robots.txt, after the build.
 //
-//   node scripts/pages.mjs [--data .data] [--art ../../art-colors] [--site https://meodai.github.io/color-names/]
+//   node scripts/pages.mjs [--data .data] [--descriptions .descriptions] [--art ../../art-colors] [--site https://meodai.github.io/color-names/]
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -34,9 +34,14 @@ const items = readFileSync(LIST, "utf8")
     return { name, hex: hex.toLowerCase() };
   });
 const slugs = slugsOf(items);
-const described = new Map(
-  JSON.parse(readFileSync(resolve(here, "../public/descriptions.json"), "utf8")).map((d) => [d.name, d.description]),
-);
+const DESCRIPTIONS = resolve(here, "..", arg("descriptions", ".descriptions"), "descriptions.json");
+const descriptions = existsSync(DESCRIPTIONS)
+  ? JSON.parse(readFileSync(DESCRIPTIONS, "utf8"))
+      .filter((d) => d.description)
+      .map(({ name, hex, description }) => ({ name, hex, description }))
+  : [];
+writeFileSync(join(DIST, "descriptions.json"), JSON.stringify(descriptions));
+const described = new Map(descriptions.map((d) => [d.name, d.description]));
 
 // same as the page's own (detail.js), as links crawlers can follow
 const NEIGHBORS = 12;
