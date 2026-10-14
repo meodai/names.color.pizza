@@ -528,7 +528,7 @@ async function render(hex) {
   page.colophonColor.textContent = handedOver ? `${handoff.name} · ${hex}` : hex;
   // colors the scrollbar
   (page.embedded ? page.root : document.documentElement).style.setProperty("--page-color", hex);
-  page.ink.textContent = "";
+  page.ink.replaceChildren();
   page.mix.replaceChildren();
   page.about.replaceChildren();
   page.neighbors.replaceChildren();
@@ -583,9 +583,10 @@ async function render(hex) {
     kind && `${subject} is ${article} ${kind}${alt ? `, close to ${alt}` : ""}.`,
     `It can be described as ${lore.getDescriptiveList(false, 4)}.`,
   ].filter(Boolean);
-  page.intro.replaceChildren(
-    ...lines.map((t) => Object.assign(document.createElement("p"), { className: "lead", textContent: t })),
-  );
+  const leads = (texts) =>
+    texts.map((t) => Object.assign(document.createElement("p"), { className: "lead", textContent: t }));
+  const describe = (said) => page.intro.replaceChildren(...leads(said ? [said] : lines));
+  describe(builtPage?.name === current.name ? builtPage.description : null);
 
   const stats = [hex];
   if (unnamed) stats.push("Not named yet");
@@ -624,7 +625,9 @@ async function render(hex) {
   const ink = lore.bestContrast === "white" ? "#fff" : "#000";
   page.fill.style.setProperty("--fill-ink", ink);
   page.colophon.style.setProperty("--fill-ink", ink);
-  page.ink.textContent = `Set in ${lore.bestContrast}, because ${lore.bestContrast} reads best on it.`;
+  page.ink.replaceChildren(
+    ...leads([...lines, `Set in ${lore.bestContrast}, because ${lore.bestContrast} reads best on it.`]),
+  );
   const print = lore.percentageWords("cmyk");
   const light = lore.temperatureWords;
   page.mix.innerHTML = [
@@ -639,6 +642,8 @@ async function render(hex) {
   page.wordsTitle.textContent = wordsTitle(lore);
   page.words.innerHTML = wordsHTML(lore);
   const saved = exact ? savedLookup(current.name, slugFor(data, current.name)) : Promise.resolve(null);
+  if (exact && builtPage?.name !== current.name)
+    saved.then((c) => c?.description && current?.hex === hex && describe(c.description));
   showPictures(hex, [current.name, lore.nouns[0]], saved);
   showArt(hex, exact ? current.name : hex, exact ? saved : savedLookup(near.name, slugFor(data, near.name)), !exact);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);

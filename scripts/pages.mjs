@@ -34,6 +34,9 @@ const items = readFileSync(LIST, "utf8")
     return { name, hex: hex.toLowerCase() };
   });
 const slugs = slugsOf(items);
+const described = new Map(
+  JSON.parse(readFileSync(resolve(here, "../public/descriptions.json"), "utf8")).map((d) => [d.name, d.description]),
+);
 
 // same as the page's own (detail.js), as links crawlers can follow
 const NEIGHBORS = 12;
@@ -93,6 +96,11 @@ function intro(name, hex) {
     kind && `${name} is ${article} ${kind}${alt ? `, close to ${alt}` : ""}.`,
     `It can be described as ${lore.getDescriptiveList(false, 4)}.`,
   ].filter(Boolean);
+}
+
+function inkLines(hex, lines) {
+  const ink = new ColorDescription(hex).bestContrast;
+  return [...lines, `Set in ${ink}, because ${ink} reads best on it.`];
 }
 
 function summary(looked) {
@@ -168,8 +176,9 @@ for (const [i, { name, hex }] of items.entries()) {
   const art = artFor(hex);
   const url = `${SITE}color/${slug}/`;
   const lines = intro(name, hex);
+  const said = described.get(name) || "";
   const about = summary(looked);
-  const description = clip([lines.join(" "), about].filter(Boolean).join(" "), 158);
+  const description = clip([said || lines.join(" "), about].filter(Boolean).join(" "), 158);
   const title = `${name}: ${hex} — Color Names`;
 
   const head = [
@@ -197,12 +206,20 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(/(<h1[^>]*data-name[^>]*>)[\s\S]*?(<\/h1>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
     .replace(
       /(<div[^>]*data-intro[^>]*>)[\s\S]*?(<\/div>)/,
-      (_, open, close) => `${open}${lines.map((t) => `<p class="lead">${escapeHTML(t)}</p>`).join("")}${close}`,
+      (_, open, close) =>
+        `${open}${(said ? [said] : lines).map((t) => `<p class="lead">${escapeHTML(t)}</p>`).join("")}${close}`,
+    )
+    .replace(
+      /(<div[^>]*data-ink[^>]*>)[\s\S]*?(<\/div>)/,
+      (_, open, close) =>
+        `${open}${inkLines(hex, lines)
+          .map((t) => `<p class="lead">${escapeHTML(t)}</p>`)
+          .join("")}${close}`,
     )
     .replace(
       "</body>",
       () =>
-        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, fetched: copy?.fetched || null, looked, art })}</script>\n  </body>`,
+        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, art })}</script>\n  </body>`,
     );
   const meaning = meaningHTML(looked);
   if (meaning) {

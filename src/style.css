@@ -1316,6 +1316,12 @@ a:hover {
 }
 
 .color-fill__ink {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.color-fill__ink .lead {
   max-width: 34ch;
   font-weight: 400; /* hairline type fades on mid-tone colors */
 }
