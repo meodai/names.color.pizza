@@ -823,12 +823,17 @@ function openPicture(tile, it) {
   const img = frame.querySelector("img");
   const mat = frame.querySelector(".lightbox__mat");
   const info = box.querySelector(".lightbox__info");
+  // around the picture's center, not the frame's: the palette sits below it
   const fly = () => {
     const from = tile.getBoundingClientRect();
     const to = img.getBoundingClientRect();
+    const box = frame.getBoundingClientRect();
+    const cx = to.left + to.width / 2;
+    const cy = to.top + to.height / 2;
+    frame.style.transformOrigin = `${cx - box.left}px ${cy - box.top}px`;
     const scale = Math.max(from.width / to.width, from.height / to.height);
-    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
-    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    const dx = from.left + from.width / 2 - cx;
+    const dy = from.top + from.height / 2 - cy;
     return [{ transform: `translate(${dx}px, ${dy}px) scale(${scale})` }, { transform: "none" }];
   };
   const go = () => {
@@ -888,9 +893,19 @@ function closePicture(now = false) {
   };
   if (now) return done();
   const fade = [{ opacity: 1 }, { opacity: 0 }];
+  const swatches = [...box.querySelectorAll(".lightbox__palette .art__palette > a")].reverse();
+  swatches.forEach((swatch, i) =>
+    swatch.animate(
+      [
+        { opacity: 1, scale: "1 1" },
+        { opacity: 0, scale: "1 0" },
+      ],
+      { duration: 140, delay: i * 12, easing: "ease-in", fill: "forwards" },
+    ),
+  );
   mat.animate(fade, { duration: 160, easing: "ease-in", fill: "forwards" });
   info.animate(fade, { duration: 160, easing: "ease-in", fill: "forwards" });
-  frame.animate([...fly()].reverse(), { duration: 460, delay: 80, easing: EASE, fill: "forwards" }).finished.then(done);
+  frame.animate([...fly()].reverse(), { duration: 460, delay: 50, easing: EASE, fill: "forwards" }).finished.then(done);
 }
 
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
