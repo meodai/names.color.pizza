@@ -509,16 +509,18 @@ a:hover {
   left: 0;
   display: flex;
   align-items: flex-start;
+  pointer-events: none;
+}
+
+.gallery__name {
   margin: 0;
   font-size: var(--text-xl);
   text-align: left;
-  pointer-events: none;
 }
 
 .gallery__swatch {
   container-type: inline-size;
   flex: none;
-  align-self: stretch;
 }
 
 .gallery__swatch .swatchcard {

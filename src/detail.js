@@ -620,18 +620,18 @@ function layoutGallery() {
   });
   page.art.replaceChildren();
   strip.tiles = new Map();
-  const title = document.createElement("h2");
-  title.className = "display gallery__title";
-  title.innerHTML = `<span class="gallery__swatch" aria-hidden="true">
-      <span class="swatchcard" style="${cardStyle(current.hex)}">
-        <span class="swatchcard__upper"><i class="swatchcard__swatch"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i></span>
-        <span class="swatchcard__label"><span class="swatchcard__info">
+  const title = document.createElement("div");
+  title.className = "gallery__title";
+  title.innerHTML = `<div class="gallery__swatch" aria-hidden="true">
+      <div class="swatchcard" style="${cardStyle(current.hex)}">
+        <div class="swatchcard__upper"><i class="swatchcard__swatch"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i></div>
+        <div class="swatchcard__label"><div class="swatchcard__info">
           <span class="swatchcard__row1">${current.hex}</span>
           <span class="swatchcard__row2">${escapeHTML(current.name)}</span>
-        </span></span>
-      </span>
-    </span>
-    <span class="gallery__name">${escapeHTML(current.name)},<br />in pictures.</span>`;
+        </div></div>
+      </div>
+    </div>
+    <h2 class="display gallery__name">${escapeHTML(current.name)},<br />in pictures.</h2>`;
   page.art.append(title);
   strip.title = title;
   const shown = new IntersectionObserver(
@@ -659,7 +659,7 @@ function measureStrip(rows = strip.rows) {
   // the swatch card is as tall as a row, like a picture
   const swatch = strip.title.querySelector(".gallery__swatch");
   swatch.style.width = "100px";
-  swatch.style.width = `${(row * 100) / swatch.offsetHeight}px`;
+  swatch.style.width = `${(row * 100) / swatch.firstElementChild.offsetHeight}px`;
   strip.title.style.width = "max-content";
   strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + gap + row * 2.8);
   strip.title.style.width = `${strip.titleWidth}px`;
