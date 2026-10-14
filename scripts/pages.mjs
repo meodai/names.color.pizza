@@ -1,14 +1,14 @@
 // A page per name (color/<slug>/), hex forwards (color/<hex>/), 404.html,
 // sitemap.xml and robots.txt, after the build.
 //
-//   node scripts/pages.mjs [--data .data] [--descriptions .descriptions] [--art ../../art-colors] [--site https://names.color.pizza/]
+//   node scripts/pages.mjs [--data .data] [--descriptions .descriptions] [--site https://names.color.pizza/]
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
 import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
-import { bucketed, pickArt, unpackWork, MUSEUMS } from "../src/art.js";
+import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const arg = (name, fallback) => {
@@ -72,19 +72,24 @@ const copyOf = (slug) => {
   }
 };
 
-const ART = [arg("art"), join(DATA, "art-colors"), resolve(here, "../../../art-colors")].find(
-  (dir) => dir && existsSync(dir),
-);
+// palettes and credits of every collection, kept with the copies
+async function collection(name) {
+  try {
+    const res = await fetch(`${MEDIA}/data/${name}.json`);
+    return res.ok ? await res.json() : [];
+  } catch {
+    return [];
+  }
+}
 const works = [];
 for (const museum of Object.keys(MUSEUMS)) {
-  const file = ART && join(ART, museum, "works.json");
-  if (!file || !existsSync(file)) continue;
-  for (const w of JSON.parse(readFileSync(file, "utf8"))) {
+  for (const w of await collection(museum)) {
     const work = unpackWork(w, museum);
     if (work) works.push(work);
   }
 }
-if (!works.length) console.log("pages.mjs: no art-colors data; no page has art");
+const wikimedia = new Map((await collection("wikimedia-art")).filter((w) => w.thumb).map((w) => [w.accession, w]));
+if (!works.length) console.log("pages.mjs: no art data; no page has art");
 const near = works.length ? bucketed(works) : null;
 const artFor = (hex) => (near ? pickArt(near, hex) : null);
 
@@ -106,6 +111,38 @@ function intro(name, hex) {
 function inkLines(hex, lines) {
   const ink = new ColorDescription(hex).bestContrast;
   return [...lines, `Set in ${ink}, because ${ink} reads best on it.`];
+}
+
+const fileTitle = (link = "") =>
+  decodeURIComponent(link.split("/wiki/")[1] || "")
+    .replace(/_/g, " ")
+    .replace(/^(File|Image):/i, "File:");
+const credit = (w) => ({ artist: w.artist, license: w.license, licenseUrl: w.licenseUrl });
+
+const fileLink = (src = "") => {
+  const m = src.match(/upload\.wikimedia\.org\/wikipedia\/(commons|en)\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/?#]+)/);
+  return m ? `https://${m[1] === "commons" ? "commons.wikimedia.org" : "en.wikipedia.org"}/wiki/File:${m[2]}` : "";
+};
+
+// the pictures that have a copy, pointing at it; an article's lead picture joins the rest
+function hosted(looked) {
+  if (!looked) return looked;
+  const copy = (p) => wikimedia.get(fileTitle(p.link));
+  const leads = (looked.entries || []).filter((e) => e.image).map((e) => ({ link: fileLink(e.image), alt: e.title }));
+  return {
+    ...looked,
+    entries: (looked.entries || []).map(({ image, ...e }) => e),
+    pictures: (looked.pictures || []).flatMap((p) => {
+      const w = copy(p);
+      return w ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w) }] : [];
+    }),
+    images: [...leads, ...(looked.images || [])].flatMap((img) => {
+      const w = copy(img);
+      return w
+        ? [{ ...img, src: `${MEDIA}/${w.thumb}`, srcset: "", ratio: w.width / w.height, credit: credit(w) }]
+        : [];
+    }),
+  };
 }
 
 function summary(looked) {
@@ -177,7 +214,7 @@ for (const [i, { name, hex }] of items.entries()) {
   const slug = slugs.get(name);
   const copy = copyOf(slug);
   if (copy) withCopy++;
-  const looked = copy?.looked || null;
+  const looked = hosted(copy?.looked || null);
   const art = artFor(hex);
   const url = `${SITE}color/${slug}/`;
   const lines = intro(name, hex);

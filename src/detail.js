@@ -13,7 +13,7 @@ import {
   tidySenses,
 } from "./names.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
-import { paletteHTML, creditHTML } from "./art.js";
+import { paletteHTML, creditHTML, MEDIA } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import outline from "./favicon-outline.svg?raw";
 
@@ -294,21 +294,10 @@ const sensesHTML = (word) =>
 function indexHTML(words, entries) {
   const wordFor = new Map(words.map((w) => [w.term.toLowerCase(), w]));
   const placed = new Set();
-  const block = (title, term, word, image, article) => `<article class="wiki-index__row">
+  const block = (title, term, word, article) => `<article class="wiki-index__row">
       <h3${term ? ` data-term="${escapeHTML(term)}"` : ""}><span>${escapeHTML(title)}</span></h3>
       ${word ? `<div class="wiki-index__words">${sensesHTML(word)}</div>` : ""}
-      ${
-        article
-          ? `<div class="wiki-index__body">
-        ${
-          image
-            ? `<img class="wiki-index__picture" src="${escapeHTML(image)}" alt="" loading="lazy" style="--tilt:${between(-4, 4).toFixed(1)}deg;--nudge:${between(-0.6, 0.6).toFixed(2)}rem" />`
-            : ""
-        }
-        <div class="wiki-index__text">${article}</div>
-      </div>`
-          : ""
-      }
+      ${article ? `<div class="wiki-index__body"><div class="wiki-index__text">${article}</div></div>` : ""}
     </article>`;
   const rows = entries.map((e) => {
     const word = wordFor.get(baseTitle(e.title));
@@ -319,14 +308,13 @@ function indexHTML(words, entries) {
       e.title,
       mine?.term,
       mine,
-      e.image,
       (opening ? blocksHTML([opening]) : "") +
         (e.link ? `<a href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>` : ""),
     );
   });
   for (const word of words) {
     if (placed.has(word)) continue;
-    rows.push(block(capital(word.term), word.term, word, null, ""));
+    rows.push(block(capital(word.term), word.term, word, ""));
   }
   return rows.length ? `<div class="wiki-index">${rows.join("")}</div>` : "";
 }
@@ -552,8 +540,10 @@ async function render(hex) {
       kind: "wiki",
       image: img.src,
       srcset: img.srcset,
+      ratio: img.ratio,
       title: img.alt,
       by: "On Wikipedia",
+      credit: img.credit,
       link: img.link,
     })),
   );
@@ -570,6 +560,7 @@ async function showPictures(hex, terms, saved) {
       ratio: p.ratio,
       title: p.title,
       by: `${Math.round(p.share * 100)}% close to ${hex}, on Wikimedia Commons`,
+      credit: p.credit,
       link: p.link,
     })),
   );
@@ -583,7 +574,7 @@ async function showArt(hex, saved) {
       image: w.image,
       ratio: w.ratio,
       title: w.title,
-      by: [w.artist, w.date].filter(Boolean).join(", "),
+      by: [w.artist, w.date, w.source && `via ${w.source}`].filter(Boolean).join(", "),
       link: w.url,
       palette: w.palette,
       color: w.color,
@@ -597,6 +588,7 @@ const KINDS = ["art", "picture", "wiki"];
 const galleryRows = () => (innerWidth < 700 ? 2 : 3);
 
 function addToGallery(hex, items) {
+  items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`));
   if (current?.hex !== hex || !items.length) return;
   gallery = [...gallery, ...items].sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
   layoutGallery();
@@ -620,6 +612,14 @@ function layoutGallery() {
   page.art.dataset.rows = rows.length;
 }
 
+const creditLine = ({ artist, license, licenseUrl }) => {
+  const terms =
+    license && licenseUrl
+      ? `<a href="${escapeHTML(licenseUrl)}" target="_blank" rel="noopener">${escapeHTML(license)}</a>`
+      : escapeHTML(license || "");
+  return `<span class="tile__by">${[artist && escapeHTML(artist), terms].filter(Boolean).join(", ")}</span>`;
+};
+
 const tileHTML = (it) => `<figure class="tile"${it.ratio ? ` style="--ratio:${it.ratio}"` : ""}>
     <button type="button" class="tile__open" aria-expanded="false" aria-label="${escapeHTML(it.title || "Picture")}">
       <img src="${escapeHTML(it.image)}"${it.srcset ? ` srcset="${escapeHTML(it.srcset)}"` : ""} alt="${escapeHTML(it.title)}" loading="lazy" decoding="async" />
@@ -628,6 +628,7 @@ const tileHTML = (it) => `<figure class="tile"${it.ratio ? ` style="--ratio:${it
       ${it.palette ? paletteHTML(it.palette, it.color) : ""}
       <a class="tile__title" href="${escapeHTML(it.link)}" target="_blank" rel="noopener">${escapeHTML(it.title || "Untitled")}</a>
       ${it.by ? `<span class="tile__by">${escapeHTML(it.by)}</span>` : ""}
+      ${it.credit ? creditLine(it.credit) : ""}
     </figcaption>
   </figure>`;
 

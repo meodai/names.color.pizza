@@ -7,18 +7,22 @@ const MIN_SHARE = 0.03;
 export const ART_COUNT = 12;
 
 // colors: [L, A, B, share, hex]
+export const MEDIA = "https://media.color.pizza";
+
+// only works with a copy on media.color.pizza
 export function unpackWork(w, museum) {
   const colors = (w.palette || [])
     .filter((c) => c.share / 100 >= MIN_SHARE && /^#[0-9a-f]{6}$/i.test(c.hex))
     .map((c) => [...rgbToOklab(hexToRgb(c.hex)), c.share / 100, c.hex.toLowerCase()]);
-  if (!w.image || !colors.length) return null;
+  if (!w.thumb || !colors.length) return null;
   return {
     id: w.id,
     title: w.title || "",
     artist: (w.artist || "").replace(/\s*\(.*$/, ""),
     date: w.date || "",
     url: w.url,
-    image: w.image,
+    image: `${MEDIA}/${w.thumb}`,
+    ...(w.source ? { source: w.source } : {}),
     ratio: w.width && w.height ? Math.round((w.width / w.height) * 1000) / 1000 : 1,
     museum,
     palette: (w.palette || []).map((c) => [c.hex.toLowerCase(), c.share]),
@@ -92,6 +96,7 @@ export const MUSEUMS = {
   "chicago-art": { name: "Art Institute of Chicago", url: "https://www.artic.edu/open-access/open-access-images" },
   "cleveland-art": { name: "Cleveland Museum of Art", url: "https://www.clevelandart.org/open-access" },
   "met-art": { name: "Metropolitan Museum of Art", url: "https://www.metmuseum.org/hubs/open-access" },
+  "pdia-art": { name: "Public Domain Image Archive", url: "https://pdimagearchive.org" },
 };
 
 export function creditHTML(works) {
