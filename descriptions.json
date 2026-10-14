@@ -112595,15 +112595,6 @@
     "model": "describer"
   },
   {
-    "name": "Hillary",
-    "hex": "#a7a07e",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Hillary Clinton",
-    "description": "Sandy olive-beige, sensible and steady, built for a long day's work.",
-    "model": "claude"
-  },
-  {
     "name": "Hills of Ireland",
     "hex": "#417b42",
     "ai": true,
@@ -137208,15 +137199,6 @@
     "kind": "plain",
     "description": "Soft, gentle pink, like a ribbon tied in a bow.",
     "model": "describer"
-  },
-  {
-    "name": "Little Boy Blu",
-    "hex": "#c7d8db",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Little Boy atomic bomb",
-    "description": "Little Boy Blue gone pale in the wash, a nursery rhyme in morning fog.",
-    "model": "claude"
   },
   {
     "name": "Little Boy Blue",
@@ -217140,15 +217122,6 @@
     "model": "describer"
   },
   {
-    "name": "Shylock",
-    "hex": "#5ab9a4",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Shakespeare's The Merchant of Venice",
-    "description": "Venetian canal teal, from Shakespeare's most argued-over play.",
-    "model": "claude"
-  },
-  {
     "name": "Shyness",
     "hex": "#f3f3d9",
     "ai": true,
@@ -259588,15 +259561,6 @@
     "model": "claude"
   },
   {
-    "name": "Watusi",
-    "hex": "#f2cdbb",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Tutsi people, Rwanda and Burundi",
-    "description": "Pale peach for a 1960s dance-floor craze, all hips and shoulders.",
-    "model": "claude"
-  },
-  {
     "name": "Wave",
     "hex": "#a5ced5",
     "ai": true,
@@ -269036,15 +269000,6 @@
     "model": "describer"
   },
   {
-    "name": "Young Turk",
-    "hex": "#c9afa9",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Young Turks movement",
-    "description": "Soft taupe-pink for the brash newcomer who shakes up the old guard.",
-    "model": "claude"
-  },
-  {
     "name": "Young Wheat",
     "hex": "#dcdf9d",
     "ai": true,
@@ -270291,15 +270246,6 @@
     "kind": "mood",
     "reference": "Gothic fiction genre",
     "description": "Midnight in a ruined abbey, ivy crawling up stone walls.",
-    "model": "describer"
-  },
-  {
-    "name": "Medusa",
-    "hex": "#559260",
-    "ai": true,
-    "kind": "reference",
-    "reference": "mythological Medusa",
-    "description": "Snake-haired green, like the moss that grows in a Gorgon's gaze.",
     "model": "describer"
   }
 ]
