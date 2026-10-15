@@ -9,6 +9,8 @@ const FULL = 0.3;
 const ENOUGH = 30;
 const FEW = 12;
 export const ART_COUNT = 100;
+// as many again when the two closest distances already have enough
+const CLOSE_COUNT = 200;
 
 // colors: [L, A, B, share, hex]
 export const MEDIA = "https://media.color.pizza";
@@ -97,8 +99,11 @@ export function pickArt(near, hex, count = ART_COUNT) {
       .sort((x, y) => y.score - x.score);
   });
   // at each distance, works mostly of the color if there are enough of them
+  const strong = tiers.flatMap((t) => [FULL, STRONG].map((min) => t.filter((s) => s.share >= min)));
+  const at = strong.findIndex((t) => t.length >= ENOUGH);
+  if (at >= 0 && at < 4) count = Math.max(count, CLOSE_COUNT);
   const picked =
-    tiers.flatMap((t) => [FULL, STRONG].map((min) => t.filter((s) => s.share >= min))).find((t) => t.length >= ENOUGH) ||
+    strong[at] ||
     tiers.map((t) => t.filter((s) => s.share >= SHARE)).find((t) => t.length >= FEW) ||
     tiers.at(-1).filter((s) => s.share >= SHARE);
   return picked.slice(0, count).map(({ w: { colors: _colors, ...work }, share, best }) => ({
