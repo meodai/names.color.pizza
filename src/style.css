@@ -629,7 +629,6 @@ a:hover {
   color: #fff;
   background: rgb(40 40 40 / 0.45);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 @media (hover: hover) {
@@ -3347,10 +3346,27 @@ html.is-arriving {
   z-index: 4;
 }
 
+/* the models and the lists sit together on one frosted pill over the colors */
 .wall__dock {
+  --glass: rgb(255 255 255 / 0.22);
   position: absolute;
   inset: auto auto var(--space-s) 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background: var(--glass);
+  backdrop-filter: blur(16px) saturate(1.4);
   transform: translateX(-50%);
+  transition:
+    opacity 0.35s ease,
+    translate 0.55s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.wall.is-opening .wall__dock {
+  opacity: 0;
+  translate: 0 calc(100% + var(--space-s) + 1rem);
 }
 
 .wall__models {
@@ -3363,9 +3379,7 @@ html.is-arriving {
 }
 
 .wall__pick-list {
-  position: absolute;
-  inset-block: 0;
-  left: calc(100% + 0.4rem);
+  position: relative;
   display: flex;
   align-items: center;
 }
@@ -3476,7 +3490,7 @@ html.is-arriving {
 
 .wall__lists {
   position: absolute;
-  inset: auto auto calc(100% + 0.6rem) 0;
+  inset: auto 0 calc(100% + 0.6rem) auto;
   display: grid;
   gap: 0.2rem;
   min-inline-size: 13rem;
@@ -3694,19 +3708,31 @@ html.is-arriving {
     display: contents;
   }
 
-  .wall__models {
+  /* only the models get the frosted ring on a phone */
+  .wall__tabs {
     position: absolute;
     z-index: 2;
     top: var(--space-2xs);
     right: calc(1rem + 2.5rem + 0.4rem);
+    display: flex;
     max-inline-size: calc(100% - 2 * (1rem + 2.5rem + 0.4rem));
     block-size: 2.5rem;
+    padding: 0.2rem;
     box-sizing: border-box;
+    border-radius: 999px;
+    background: var(--glass);
+    backdrop-filter: blur(16px) saturate(1.4);
   }
 
   .wall__models {
+    min-inline-size: 0;
+    padding: 0.15rem;
     overflow-x: auto;
     scrollbar-width: none;
+  }
+
+  .wall__models button {
+    padding-block: 0.3rem;
   }
 
   .wall__models::-webkit-scrollbar {
@@ -3786,7 +3812,7 @@ html.is-arriving {
     max-inline-size: none;
   }
 
-  .wall__models {
+  .wall__tabs {
     clip-path: inset(0 round 999px);
     transition:
       clip-path 0.45s cubic-bezier(0.3, 0.7, 0, 1),
@@ -3817,7 +3843,7 @@ html.is-arriving {
     --menu-out: 0ms;
   }
 
-  .wall:not(:has([data-menu][aria-expanded="true"])) .wall__models {
+  .wall:not(:has([data-menu][aria-expanded="true"])) .wall__tabs {
     clip-path: inset(0 0 0 calc(100% - 2.5rem) round 999px);
     opacity: 0;
     visibility: hidden;
