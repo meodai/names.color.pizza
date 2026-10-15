@@ -2971,6 +2971,7 @@ html.is-arriving {
 }
 
 .wall__picker {
+  box-shadow: inset 0 0 0 2px #000;
   animation: wheel 20s linear infinite;
 }
 
