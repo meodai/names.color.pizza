@@ -1658,6 +1658,7 @@ export async function initWall(root) {
     showResults();
     showClear();
     dropSpot();
+    colorPicker.parentElement.style.background = "";
     search.focus();
   });
 
@@ -1684,6 +1685,10 @@ export async function initWall(root) {
   let pickTimer = 0;
   colorPicker.addEventListener("input", () => {
     clearTimeout(pickTimer);
+    search.value = colorPicker.value;
+    found = [];
+    showResults();
+    showClear();
     pickTimer = setTimeout(() => !busy && focusCard(nearest(colorPicker.value)), 180);
   });
 
