@@ -1659,6 +1659,7 @@ export async function initWall(root) {
     showClear();
     dropSpot();
     colorPicker.parentElement.style.background = "";
+    goHome();
     search.focus();
   });
 
