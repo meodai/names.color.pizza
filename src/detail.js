@@ -761,9 +761,11 @@ function drawStrip() {
         el.className = "tile";
         el.innerHTML = tileHTML(t.it, gallery.indexOf(t.it));
         const reach = Math.hypot(x - strip.offset - page.art.clientWidth / 2, (k - strip.middle) * strip.row);
-        const delay = strip.entered ? 0 : 600 + Math.round(Math.min(1, reach / page.art.clientWidth) * 360);
+        const delay = strip.entered ? 0 : 400 + Math.round(Math.min(1, reach / page.art.clientWidth) * 900);
         el.style.cssText = `top:${k * (strip.row + strip.gap)}px;width:${t.w}px;height:${strip.row}px;--d:${delay}ms`;
         page.art.append(el);
+        const img = el.querySelector("img");
+        if (img.complete && img.naturalWidth) img.classList.add("is-loaded");
         strip.tiles.set(key, el);
       }
       el.style.transform = `translateX(${x - strip.offset}px)`;
@@ -789,8 +791,10 @@ function moveStrip(dx) {
 const tileHTML = (
   it,
   i,
-) => `<button type="button" class="tile__open" data-i="${i}" aria-label="${escapeHTML(it.title || "Picture")}">
+) => `<button type="button" class="tile__open" data-i="${i}" aria-label="${escapeHTML(it.title || "Picture")}" style="--wash:${it.palette?.[0]?.[0] || it.color || "transparent"}">
     <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />
+    ${it.title ? `<span class="tile__name">${escapeHTML(it.title)}</span>` : ""}
+    ${it.share ? `<span class="tile__share">${Math.round(it.share * 100)}%</span>` : ""}
   </button>`;
 
 const link = (href, text) =>
@@ -1014,6 +1018,13 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     else if (!embedded) location.replace(siteURL());
   };
   window.addEventListener("hashchange", show, { signal });
+  page.art.addEventListener(
+    "load",
+    (e) => {
+      if (e.target.tagName === "IMG") e.target.classList.add("is-loaded");
+    },
+    { capture: true, signal },
+  );
   page.art.addEventListener(
     "error",
     (e) => {
