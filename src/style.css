@@ -2738,6 +2738,10 @@ html.is-arriving {
   text-decoration: none;
 }
 
+.wall__burger {
+  display: none;
+}
+
 .wall__nav {
   display: flex;
   grid-column: 3;
@@ -3479,21 +3483,100 @@ html.is-arriving {
 
 @media (max-width: 40rem) {
   .wall__bar {
+    inset: 0;
     grid-template-columns: 1fr auto;
-    grid-template-rows: var(--brand-h, 2.5rem) auto;
+    grid-template-rows: 2.5rem 1fr auto;
     gap: var(--space-2xs) var(--space-s);
-    padding: var(--space-2xs) 1rem;
+    padding: var(--space-2xs) 1rem calc(1rem + env(safe-area-inset-bottom));
   }
 
   .wall__nav {
+    display: none;
+  }
+
+  .wall__burger {
+    position: relative;
+    display: block;
     grid-row: 1;
     grid-column: 2;
-    align-self: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: var(--ink);
+    background: var(--paper);
+    cursor: pointer;
+  }
+
+  .wall__burger span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    inline-size: 1.1rem;
+    block-size: 2px;
+    margin: -1px 0 0 -0.55rem;
+    border-radius: 2px;
+    background: currentColor;
+    transition:
+      translate 0.2s ease 0.18s,
+      rotate 0.2s ease;
+  }
+
+  .wall__burger span:first-child {
+    translate: 0 -0.22rem;
+  }
+
+  .wall__burger span:last-child {
+    translate: 0 0.22rem;
+  }
+
+  .wall__burger[aria-expanded="true"] span {
+    translate: 0 0;
+    transition:
+      translate 0.2s ease,
+      rotate 0.3s cubic-bezier(0.3, 0.7, 0, 1.4) 0.18s;
+  }
+
+  .wall__burger[aria-expanded="true"] span:first-child {
+    rotate: 45deg;
+  }
+
+  .wall__burger[aria-expanded="true"] span:last-child {
+    rotate: -45deg;
+  }
+
+  .wall__burger:focus-visible {
+    outline: 3px solid var(--paper);
+    outline-offset: 2px;
   }
 
   .wall__find {
-    grid-row: 2;
+    grid-row: 3;
     grid-column: 1 / -1;
+  }
+
+  .wall__results {
+    inset: auto 0 calc(100% + 0.5rem);
+    max-block-size: 50svh;
+    overflow-y: auto;
+  }
+
+  .wall__find,
+  .wall__burger {
+    transition: translate 0.55s cubic-bezier(0.3, 0.7, 0, 1);
+  }
+
+  .wall.is-opening .wall__bar {
+    translate: none;
+  }
+
+  .wall.is-opening .wall__find {
+    translate: 0 calc(100% + 2rem);
+  }
+
+  .wall.is-opening .wall__burger {
+    translate: 0 -200%;
   }
 
   .brand {
@@ -3502,7 +3585,7 @@ html.is-arriving {
   }
 
   .wall__dock {
-    inset: auto 1rem 1rem auto;
+    inset: calc(var(--space-2xs) + 3.1rem) 1rem auto auto;
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -3514,16 +3597,46 @@ html.is-arriving {
   }
 
   .wall__lists {
-    inset: auto 0 calc(100% + 0.6rem) auto;
+    inset: calc(100% + 0.6rem) 0 auto auto;
   }
 
   .wall__zoom {
-    inset: auto 1rem calc(1rem + 2.6rem + 0.4rem) auto;
+    inset: calc(var(--space-2xs) + 3.1rem + 2.6rem + 0.4rem) 1rem auto auto;
+    flex-direction: row;
   }
 
   .wall__corner {
-    inset: auto 4.5rem calc(1rem + 2.6rem + 0.6rem) 1rem;
+    inset: auto 1rem calc(1rem + env(safe-area-inset-bottom) + var(--bar-h) + 0.6rem) 1rem;
     max-inline-size: none;
+  }
+
+  .wall__models,
+  .wall__pick-list,
+  .wall__zoom {
+    transition:
+      opacity 0.3s ease var(--menu-d, 0ms),
+      translate 0.45s cubic-bezier(0.3, 0.7, 0, 1) var(--menu-d, 0ms),
+      visibility 0s linear var(--menu-d, 0ms);
+  }
+
+  .wall__pick-list {
+    --menu-d: 40ms;
+  }
+
+  .wall__zoom {
+    --menu-d: 80ms;
+  }
+
+  .wall:not(:has([data-menu][aria-expanded="true"])) :is(.wall__models, .wall__pick-list, .wall__zoom) {
+    --menu-d: 0ms;
+    opacity: 0;
+    translate: 0 -0.75rem;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.2s ease,
+      translate 0.3s ease,
+      visibility 0s linear 0.3s;
   }
 }
 

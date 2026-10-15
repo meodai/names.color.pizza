@@ -1428,6 +1428,20 @@ export async function initWall(root) {
   });
   showListChoice();
 
+  // on a phone the models, lists and zoom sit behind this button
+  const menuButton = q("[data-menu]");
+  const menuOpen = () => menuButton.getAttribute("aria-expanded") === "true";
+  const toggleMenu = (open = !menuOpen()) => menuButton.setAttribute("aria-expanded", String(open));
+  menuButton.addEventListener("click", () => toggleMenu());
+  document.addEventListener("pointerdown", (e) => {
+    if (menuOpen() && !e.target.closest("[data-menu], .wall__dock, .wall__zoom")) toggleMenu(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !menuOpen() || !listMenu.hidden) return;
+    toggleMenu(false);
+    menuButton.focus();
+  });
+
   async function setList(key) {
     if (busy || key === listKey || !LISTS[key]) return;
     busy = true;
