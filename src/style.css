@@ -3607,6 +3607,35 @@ html.is-arriving {
     display: none;
   }
 
+  .wall__models::before,
+  .wall__models::after {
+    content: "";
+    position: sticky;
+    z-index: 2;
+    flex: none;
+    inline-size: 1.5rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .wall__models::before {
+    left: 0;
+    margin-inline-end: -1.5rem;
+    background: linear-gradient(to right, var(--paper), transparent);
+  }
+
+  .wall__models::after {
+    right: 0;
+    margin-inline-start: -1.5rem;
+    background: linear-gradient(to left, var(--paper), transparent);
+  }
+
+  .wall__models.has-before::before,
+  .wall__models.has-after::after {
+    opacity: 1;
+  }
+
   .wall__models button {
     flex: 1 0 auto;
     padding-inline: 0.6rem;

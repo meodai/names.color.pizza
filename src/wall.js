@@ -1620,7 +1620,17 @@ export async function initWall(root) {
   );
   showModel();
   // fonts loading and the phone layout resize the buttons
-  new ResizeObserver(showModel).observe(picker);
+  new ResizeObserver(() => {
+    showModel();
+    showModelEdges();
+  }).observe(picker);
+  // a fade on each side that has more models to scroll to
+  function showModelEdges() {
+    const rest = picker.scrollWidth - picker.clientWidth - picker.scrollLeft;
+    picker.classList.toggle("has-before", picker.scrollLeft > 1);
+    picker.classList.toggle("has-after", rest > 1);
+  }
+  picker.addEventListener("scroll", showModelEdges, { passive: true });
 
   let found = [];
   let active = 0;
