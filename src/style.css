@@ -2385,7 +2385,8 @@ a:hover {
 }
 
 /* bands of light at an angle, a second set across them, and grain */
-.swatchcard--holo::before {
+.swatchcard--holo::before,
+.holo-parrot {
   background-image:
     var(--grain),
     repeating-linear-gradient(
@@ -2430,30 +2431,23 @@ a:hover {
   opacity: 0;
 }
 
-/* the parrot in the foil: faint face on, bright when tilted */
+/* the parrot stamped in the same foil, its bands running the other way:
+   faint face on, bright when tilted */
 .holo-parrot {
   position: absolute;
   z-index: 2;
   bottom: 0.3em;
   left: 0.3em;
-  inline-size: 20%;
+  inline-size: 14%;
   aspect-ratio: 130 / 158;
   pointer-events: none;
-  background: repeating-linear-gradient(
-    calc(-24deg + var(--rx) * 2),
-    hsl(2 100% 80%) 0%,
-    hsl(52 100% 76%) 6%,
-    hsl(98 100% 76%) 12%,
-    hsl(176 100% 78%) 18%,
-    hsl(228 100% 82%) 24%,
-    hsl(286 100% 80%) 30%,
-    hsl(2 100% 80%) 36%
-  );
-  background-size: 200% 200%;
-  background-position: var(--mx) var(--my);
+  background-size: 4em, 300% 900%, 450% 450%;
+  background-position:
+    center,
+    0% calc(100% - var(--my)),
+    calc(100% - var(--mx)) calc(100% - var(--my));
+  filter: brightness(1) contrast(2.6) saturate(0.7);
   mask: var(--parrot) 0 0 / 100% 100% no-repeat;
-  mix-blend-mode: color-dodge;
-  opacity: 0;
 }
 
 /* the foil comes in last, once the card has built up, then follows the light */
