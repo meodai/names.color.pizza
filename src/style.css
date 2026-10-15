@@ -667,7 +667,7 @@ a:hover {
   display: grid;
   gap: var(--space-xs);
   margin: 0;
-  margin-inline-end: 1.8rem;
+  margin-inline-end: 2.2rem;
   color: var(--ink);
   pointer-events: none;
 }
@@ -714,7 +714,7 @@ a:hover {
 }
 
 .lightbox__palette .art__palette > a.is-match {
-  inline-size: 1.8rem;
+  inline-size: 2.2rem;
 }
 
 .lightbox__palette .art__square {
@@ -849,7 +849,7 @@ a:hover {
 
 @media (max-width: 700px) {
   .lightbox__frame img {
-    max-inline-size: calc(100vw - 2 * var(--gutter) - 1.8rem - 2 * var(--space-xs));
+    max-inline-size: calc(100vw - 2 * var(--gutter) - 2.2rem - 2 * var(--space-xs));
     max-block-size: min(56svh, 100svh - 16rem);
   }
 }
