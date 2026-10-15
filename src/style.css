@@ -2343,20 +2343,25 @@ a:hover {
 }
 
 /* an adopted color, 10+: a holo card that follows the pointer, or sways on its own */
-.swatchcard--holo {
-  --mx: 50%;
-  --my: 50%;
+/* every color's card leans towards the pointer, or with the phone */
+.swatchcard--tilt {
   --rx: 0deg;
   --ry: 0deg;
-  --shine: 0.55;
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
   transform: perspective(70em) rotateX(var(--ry)) rotateY(var(--rx));
   transition: transform 0.6s cubic-bezier(0.3, 0.7, 0, 1);
-  box-shadow: 0 1.4rem 3rem -1rem rgb(0 0 0 / 0.45);
+}
+
+.swatchcard--tilt.is-tilting {
+  transition: transform 0.12s ease-out;
 }
 
 .swatchcard--holo {
+  --mx: 50%;
+  --my: 50%;
+  --shine: 0.55;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
   z-index: 1;
+  box-shadow: 0 1.4rem 3rem -1rem rgb(0 0 0 / 0.45);
 }
 
 .holo-sparks {
@@ -2368,10 +2373,6 @@ a:hover {
 .holo-spark {
   position: absolute;
   clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
-}
-
-.swatchcard--holo.is-tilting {
-  transition: transform 0.12s ease-out;
 }
 
 .swatchcard--holo::before,
@@ -2474,7 +2475,7 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .swatchcard--holo {
+  .swatchcard--tilt {
     transform: none;
   }
 }

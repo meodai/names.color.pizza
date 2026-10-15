@@ -364,26 +364,33 @@ function fitTitle() {
   });
 }
 
-// an adopted color's holo card (?holo previews it): it tilts towards the
-// pointer, or the phone's tilt, and the light follows; sparks fly out from
-// behind it while it moves; left alone it sways a little
+// the color's card tilts towards the pointer, or with the phone; an adopted
+// color's holo card (?holo previews it) also catches the light, throws sparks
+// from behind while it moves, and left alone sways a little
 const holoPreview = new URLSearchParams(location.search).has("holo") || import.meta.env.VITE_HOLO === "all";
 const SPARK_COLORS = ["#fff", "hsl(2 100% 80%)", "hsl(52 100% 76%)", "hsl(176 100% 78%)", "hsl(286 100% 80%)"];
-function holoCard(card) {
-  const hero = card.closest("section") || card;
-  const place = card.parentElement;
-  const sparks = Object.assign(document.createElement("div"), { className: "holo-sparks" });
-  place.prepend(sparks);
-  // the parrot in the foil, its eye cut out
-  const [eye] = parrot.match(/<circle[^>]*>/);
-  const shape = parrot
-    .replace(/<circle[^>]*>/, "")
-    .replace(/<svg([^>]*)>/, `<svg$1><mask id="e"><rect x="0" y="0" width="200" height="200" fill="#fff"/>${eye.replace(/fill="[^"]*"/, 'fill="#000"')}</mask><g mask="url(#e)">`)
-    .replace("</svg>", "</g></svg>");
-  const art = Object.assign(document.createElement("div"), { className: "holo-parrot" });
-  art.style.setProperty("--parrot", `url("data:image/svg+xml,${encodeURIComponent(shape)}")`);
-  card.querySelector(".swatchcard__upper").append(art);
+function tiltCard(card, holo) {
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (calm && !holo) return () => {};
+  const hero = card.closest("section") || card;
+  card.classList.add("swatchcard--tilt");
+  card.classList.toggle("swatchcard--holo", holo);
+  const sparks = holo && Object.assign(document.createElement("div"), { className: "holo-sparks" });
+  const art = holo && Object.assign(document.createElement("div"), { className: "holo-parrot" });
+  if (holo) {
+    card.parentElement.prepend(sparks);
+    // the parrot in the foil, its eye cut out
+    const [eye] = parrot.match(/<circle[^>]*>/);
+    const shape = parrot
+      .replace(/<circle[^>]*>/, "")
+      .replace(
+        /<svg([^>]*)>/,
+        `<svg$1><mask id="e"><rect x="0" y="0" width="200" height="200" fill="#fff"/>${eye.replace(/fill="[^"]*"/, 'fill="#000"')}</mask><g mask="url(#e)">`,
+      )
+      .replace("</svg>", "</g></svg>");
+    art.style.setProperty("--parrot", `url("data:image/svg+xml,${encodeURIComponent(shape)}")`);
+    card.querySelector(".swatchcard__upper").append(art);
+  }
   let held = false;
   let frame = 0;
   let last = { px: 0.5, py: 0.5, t: 0 };
@@ -391,7 +398,7 @@ function holoCard(card) {
 
   // from behind an edge, out and away
   function spark() {
-    if (calm || sparks.childElementCount > 40) return;
+    if (!holo || calm || sparks.childElementCount > 40) return;
     const w = card.offsetWidth;
     const h = card.offsetHeight;
     const side = Math.floor(Math.random() * 4);
@@ -455,6 +462,7 @@ function holoCard(card) {
     if (e.pointerType !== "mouse") return;
     held = false;
     card.classList.remove("is-tilting");
+    if (!holo) set(0.5, 0.5, 0);
   });
 
   // the phone's tilt, from how it was held when it started
@@ -473,12 +481,14 @@ function holoCard(card) {
       once: true,
     });
 
-  if (!calm) frame = requestAnimationFrame(sway);
+  if (holo && !calm) frame = requestAnimationFrame(sway);
   return () => {
     cancelAnimationFrame(frame);
     removeEventListener("deviceorientation", tilted);
-    sparks.remove();
-    art.remove();
+    if (holo) {
+      sparks.remove();
+      art.remove();
+    }
   };
 }
 
@@ -1130,11 +1140,8 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     pageLink: q("[data-page-link]"),
     outro: q("[data-outro]"),
   });
-  if (holoPreview) {
-    page.card.classList.add("swatchcard--holo");
-    const stop = holoCard(page.card);
-    signal?.addEventListener("abort", stop);
-  }
+  const untilt = tiltCard(page.card, holoPreview);
+  signal?.addEventListener("abort", untilt);
 
   q("[data-share]").addEventListener("click", async () => {
     const url = page.pageLink.href;
