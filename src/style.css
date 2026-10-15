@@ -2821,6 +2821,7 @@ html.is-arriving {
 
 .wall__find {
   position: relative;
+  isolation: isolate;
   grid-column: 2;
 }
 
@@ -3061,9 +3062,25 @@ html.is-arriving {
   opacity: 1;
 }
 
+/* focused, the search gets the same frosted ring as the controls */
+.wall__find::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -0.3rem;
+  border-radius: 999px;
+  backdrop-filter: blur(16px) saturate(1.4);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.wall__find:has(.wall__search:focus-visible)::before {
+  opacity: 1;
+}
+
 .wall__search:focus-visible {
-  outline: 3px solid var(--paper);
-  outline-offset: 3px;
+  outline: none;
 }
 
 .wall__results {
@@ -3348,7 +3365,7 @@ html.is-arriving {
 
 /* the models and the lists sit together on one frosted pill over the colors */
 .wall__dock {
-  --glass: rgb(255 255 255 / 0.22);
+  --glass: transparent;
   position: absolute;
   inset: auto auto var(--space-s) 50%;
   display: flex;
@@ -3446,10 +3463,13 @@ html.is-arriving {
 
 .wall__zoom {
   position: absolute;
-  inset: auto var(--space-s) var(--space-s) auto;
+  inset: auto calc(var(--space-s) - 0.3rem) calc(var(--space-s) - 0.3rem) auto;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  backdrop-filter: blur(16px) saturate(1.4);
 }
 
 .wall__zoom [data-home] {
@@ -3791,6 +3811,9 @@ html.is-arriving {
 
   .wall__zoom {
     top: calc(var(--space-2xs) + 2 * (2.5rem + 0.4rem));
+    bottom: auto;
+    padding: 0;
+    backdrop-filter: none;
   }
 
   .wall__pick-list > button,
