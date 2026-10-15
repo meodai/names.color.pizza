@@ -404,7 +404,8 @@ async function render(hex) {
   if (handedOver) {
     card.classList.add("swatchcard--reset", "swatchcard--visible");
     document.documentElement.classList.add("is-arriving");
-    requestAnimationFrame(() => requestAnimationFrame(arrived));
+    // the text comes in once its description is there, so it doesn't move after
+    arriving = setTimeout(arrive, 1000);
   }
   // the name as soon as it's known: handed over, this page's own, or from the list loaded before
   let known = handedOver ? handoff.name : builtPage?.hex === hex ? builtPage.name : "";
@@ -490,8 +491,11 @@ async function render(hex) {
   ].filter(Boolean);
   const leads = (texts) =>
     texts.map((t) => Object.assign(document.createElement("p"), { className: "lead", textContent: t }));
-  const describe = (said) => page.intro.replaceChildren(...leads(said ? [said] : lines));
-  describe(builtPage?.name === current.name ? builtPage.description : null);
+  const describe = (said) => {
+    page.intro.replaceChildren(...leads(said ? [said] : lines));
+    if (arriving) arrive();
+  };
+  if (builtPage?.name === current.name) describe(builtPage.description);
 
   page.stats.replaceChildren(Object.assign(document.createElement("span"), { textContent: hex }));
   // "by" is only set when someone other than the list's maintainer added it
@@ -538,8 +542,16 @@ async function render(hex) {
   page.wordsTitle.textContent = wordsTitle(lore);
   page.words.innerHTML = wordsHTML(lore);
   const saved = savedLookup(current.name, slugFor(data, current.name));
-  if (builtPage?.name !== current.name)
-    saved.then((c) => c?.description && current?.hex === hex && describe(c.description));
+  // the written description, or the made-up one if it's slow or missing: once, so the hero doesn't jump
+  if (builtPage?.name !== current.name) {
+    const late = setTimeout(() => current?.hex === hex && describe(null), 800);
+    saved.then((c) => {
+      clearTimeout(late);
+      if (current?.hex !== hex) return;
+      if (c?.description) describe(c.description);
+      else if (!page.intro.childElementCount) describe(null);
+    });
+  }
   showPictures(hex, [current.name, lore.nouns[0]], saved);
   showArt(hex, saved);
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
@@ -955,6 +967,12 @@ function closePicture(now = false) {
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
 
 const arrived = () => document.documentElement.classList.remove("is-arriving");
+let arriving = 0;
+function arrive() {
+  clearTimeout(arriving);
+  arriving = 0;
+  requestAnimationFrame(() => requestAnimationFrame(arrived));
+}
 
 export function initDetailPage(root = document, { embedded = false, signal, onClose } = {}) {
   page.root = root;
