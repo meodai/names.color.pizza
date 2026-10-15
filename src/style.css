@@ -3584,25 +3584,54 @@ html.is-arriving {
     left: 1rem;
   }
 
-  .wall__dock {
-    inset: calc(var(--space-2xs) + 3.1rem) 1rem auto auto;
+  .wall__dock:not(:has(.wall__models:empty)) {
+    display: contents;
+  }
+
+  .wall__models {
+    position: absolute;
+    z-index: 2;
+    top: var(--space-2xs);
+    right: calc(1rem + 2.5rem + 0.4rem);
+    left: calc(1rem + 2.5rem + 0.4rem);
+    block-size: 2.5rem;
+    box-sizing: border-box;
+  }
+
+  .wall__models button {
+    flex: 1;
+    padding-inline: 0.4rem;
+  }
+
+  .wall__pick-list,
+  .wall__zoom {
+    position: absolute;
+    z-index: 2;
+    right: 1rem;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.4rem;
-    transform: none;
   }
 
   .wall__pick-list {
-    position: static;
-  }
-
-  .wall__lists {
-    inset: calc(100% + 0.6rem) 0 auto auto;
+    z-index: 4;
+    top: calc(var(--space-2xs) + 2.5rem + 0.4rem);
+    bottom: auto;
+    left: auto;
   }
 
   .wall__zoom {
-    inset: calc(var(--space-2xs) + 3.1rem + 2.6rem + 0.4rem) 1rem auto auto;
-    flex-direction: row;
+    top: calc(var(--space-2xs) + 2 * (2.5rem + 0.4rem));
+  }
+
+  .wall__pick-list > button,
+  .wall__zoom button {
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+  }
+
+  .wall__lists {
+    inset: 0 calc(100% + 0.4rem) auto auto;
   }
 
   .wall__corner {
@@ -3610,7 +3639,14 @@ html.is-arriving {
     max-inline-size: none;
   }
 
-  .wall__models,
+  .wall__models {
+    clip-path: inset(0 round 999px);
+    transition:
+      clip-path 0.45s cubic-bezier(0.3, 0.7, 0, 1),
+      opacity 0.2s ease,
+      visibility 0s linear;
+  }
+
   .wall__pick-list,
   .wall__zoom {
     transition:
@@ -3620,15 +3656,25 @@ html.is-arriving {
   }
 
   .wall__pick-list {
-    --menu-d: 40ms;
+    --menu-d: 60ms;
   }
 
   .wall__zoom {
-    --menu-d: 80ms;
+    --menu-d: 110ms;
   }
 
-  .wall:not(:has([data-menu][aria-expanded="true"])) :is(.wall__models, .wall__pick-list, .wall__zoom) {
-    --menu-d: 0ms;
+  .wall:not(:has([data-menu][aria-expanded="true"])) .wall__models {
+    clip-path: inset(0 0 0 calc(100% - 2.5rem) round 999px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      clip-path 0.3s ease,
+      opacity 0.2s ease 0.1s,
+      visibility 0s linear 0.3s;
+  }
+
+  .wall:not(:has([data-menu][aria-expanded="true"])) :is(.wall__pick-list, .wall__zoom) {
     opacity: 0;
     translate: 0 -0.75rem;
     visibility: hidden;
@@ -3637,6 +3683,32 @@ html.is-arriving {
       opacity 0.2s ease,
       translate 0.3s ease,
       visibility 0s linear 0.3s;
+  }
+
+  .wall__brand span {
+    display: inline-block;
+    max-inline-size: 8rem;
+    overflow: hidden;
+    white-space: nowrap;
+    transition:
+      max-inline-size 0.4s cubic-bezier(0.3, 0.7, 0, 1),
+      opacity 0.25s ease;
+  }
+
+  .wall__brand {
+    transition:
+      padding 0.4s cubic-bezier(0.3, 0.7, 0, 1),
+      gap 0.4s cubic-bezier(0.3, 0.7, 0, 1);
+  }
+
+  .wall:has([data-menu][aria-expanded="true"]) .wall__brand {
+    gap: 0;
+    padding-inline: calc((2.5rem - 1.45rem * 130 / 158) / 2);
+  }
+
+  .wall:has([data-menu][aria-expanded="true"]) .wall__brand span {
+    max-inline-size: 0;
+    opacity: 0;
   }
 }
 
