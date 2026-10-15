@@ -819,13 +819,13 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
     <span class="lightbox__mat"></span>
     <div class="lightbox__frame">
       <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
-      ${it.palette?.length ? `<div class="lightbox__palette">${paletteHTML(it.palette, it.color)}</div>` : ""}
     </div>
     <figcaption class="lightbox__info">
       ${link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ')}
       ${it.by ? `<span>${escapeHTML(it.by)}</span>` : ""}
       <span class="lightbox__source">${sourceHTML(it)}</span>
     </figcaption>
+    ${it.palette?.length ? `<div class="lightbox__palette">${paletteHTML(it.palette, it.color)}</div>` : ""}
   </figure>`;
 
 const EASE = "cubic-bezier(0.3, 0.7, 0, 1)";
@@ -843,7 +843,7 @@ function openPicture(tile, it) {
   const img = frame.querySelector("img");
   const mat = box.querySelector(".lightbox__mat");
   const info = box.querySelector(".lightbox__info");
-  // around the picture's center, not the frame's: the palette sits below it
+  // around the picture's center, not the frame's
   const fly = () => {
     const from = tile.getBoundingClientRect();
     const to = img.getBoundingClientRect();
@@ -878,7 +878,7 @@ function openPicture(tile, it) {
     box.querySelectorAll(".lightbox__palette .art__palette > a").forEach((swatch, i) =>
       swatch.animate(
         [
-          { opacity: 0, scale: "1 0" },
+          { opacity: 0, scale: "0 1" },
           { opacity: 1, scale: "1 1" },
         ],
         { duration: 320, delay: 620 + i * 45, easing: EASE, fill: "backwards" },
@@ -918,7 +918,7 @@ function closePicture(now = false) {
     swatch.animate(
       [
         { opacity: 1, scale: "1 1" },
-        { opacity: 0, scale: "1 0" },
+        { opacity: 0, scale: "0 1" },
       ],
       { duration: 140, delay: i * 12, easing: "ease-in", fill: "forwards" },
     ),

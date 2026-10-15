@@ -661,12 +661,13 @@ a:hover {
   cursor: zoom-out;
 }
 
-/* one white mount round the picture, its palette and its plaque */
+/* one white mount round the picture and its plaque */
 .lightbox__figure {
   position: relative;
   display: grid;
   gap: var(--space-xs);
   margin: 0;
+  margin-inline-end: 1.8rem;
   color: var(--ink);
   pointer-events: none;
 }
@@ -691,10 +692,46 @@ a:hover {
   block-size: auto;
 }
 
+/* hung on the mount's right edge, as tall as it, a swatch per color by its share */
 .lightbox__palette {
-  position: relative;
-  margin-top: 2px;
+  position: absolute;
+  inset-block: calc(var(--space-xs) * -1);
+  left: calc(100% + var(--space-xs));
   pointer-events: auto;
+}
+
+.lightbox__palette .art__palette {
+  flex-direction: column;
+  block-size: 100%;
+}
+
+.lightbox__palette .art__palette > a {
+  inline-size: 1.2rem;
+  min-inline-size: 0;
+  block-size: auto;
+  min-block-size: 0.6rem;
+  transform-origin: left;
+}
+
+.lightbox__palette .art__palette > a.is-match {
+  inline-size: 1.8rem;
+}
+
+.lightbox__palette .art__square {
+  top: 50%;
+  left: 0;
+  min-block-size: 0;
+  translate: 0 -50%;
+  transition:
+    inline-size 0.34s cubic-bezier(0.3, 0.7, 0, 1),
+    min-block-size 0.34s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.lightbox__palette .art__palette > a:is(:hover, :focus-visible) .art__square {
+  inline-size: 4.5rem;
+  min-inline-size: 0;
+  block-size: 100%;
+  min-block-size: 4.5rem;
 }
 
 /* one swatch per color, as wide as its share, all the same height and top-aligned */
@@ -812,7 +849,7 @@ a:hover {
 
 @media (max-width: 700px) {
   .lightbox__frame img {
-    max-inline-size: 100%;
+    max-inline-size: calc(100vw - 2 * var(--gutter) - 1.8rem - 2 * var(--space-xs));
     max-block-size: min(56svh, 100svh - 16rem);
   }
 }
