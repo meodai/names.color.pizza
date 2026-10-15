@@ -1740,6 +1740,10 @@ a:hover {
   margin-top: var(--space-l);
 }
 
+.color-dictionary:empty + .color-wiki {
+  margin-top: 0;
+}
+
 .wiki-index {
   display: flex;
   flex-direction: column;
