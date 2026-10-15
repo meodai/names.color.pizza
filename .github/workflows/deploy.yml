@@ -56,6 +56,11 @@ jobs:
           path: .cache/previews
           key: previews-${{ github.run_id }}
           restore-keys: previews-
+      - uses: actions/cache@v4
+        with:
+          path: .cache/lists
+          key: lists-${{ github.run_id }}
+          restore-keys: lists-
       - name: Build
         env:
           UPLOAD_URL: ${{ vars.UPLOAD_URL }}
