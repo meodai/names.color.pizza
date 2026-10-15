@@ -8,6 +8,8 @@ const STRONG = 0.15;
 const FULL = 0.3;
 const ENOUGH = 30;
 const FEW = 12;
+// fewer than this repeat too much in the strip: topped up from further out
+const FILL = 60;
 export const ART_COUNT = 100;
 // as many again when the two closest distances already have enough
 const CLOSE_COUNT = 200;
@@ -102,10 +104,22 @@ export function pickArt(near, hex, count = ART_COUNT) {
   const strong = tiers.flatMap((t) => [FULL, STRONG].map((min) => t.filter((s) => s.share >= min)));
   const at = strong.findIndex((t) => t.length >= ENOUGH);
   if (at >= 0 && at < 4) count = Math.max(count, CLOSE_COUNT);
-  const picked =
-    strong[at] ||
-    tiers.map((t) => t.filter((s) => s.share >= SHARE)).find((t) => t.length >= FEW) ||
-    tiers.at(-1).filter((s) => s.share >= SHARE);
+  const picked = [
+    ...(strong[at] ||
+      tiers.map((t) => t.filter((s) => s.share >= SHARE)).find((t) => t.length >= FEW) ||
+      tiers.at(-1).filter((s) => s.share >= SHARE)),
+  ];
+  if (at >= 0 && picked.length < FILL) {
+    // measured at the close distance, so they line up after the close ones
+    const close = new Map(tiers[Math.floor(at / 2)].map((s) => [s.w, s.share]));
+    const have = new Set(picked.map((s) => s.w));
+    for (const s of strong.slice(at + 1).flat()) {
+      if (picked.length >= FILL) break;
+      if (have.has(s.w)) continue;
+      have.add(s.w);
+      picked.push({ ...s, share: close.get(s.w) ?? 0 });
+    }
+  }
   return picked.slice(0, count).map(({ w: { colors: _colors, ...work }, share, best }) => ({
     ...work,
     share: Math.round(share * 100) / 100,
