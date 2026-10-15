@@ -430,6 +430,14 @@ export async function initWall(root) {
     dist: START_DIST,
   };
 
+  // away from the whole view: the button back to it shows
+  let away = false;
+  function setAway(on) {
+    if (on === away) return;
+    away = on;
+    root.classList.toggle("is-away", on);
+  }
+
   function update() {
     cam.center = middleOf(model);
     cam.pitch = clamp(cam.pitch, -Math.PI / 2 + 0.02, Math.PI / 2 - 0.02);
@@ -555,6 +563,7 @@ export async function initWall(root) {
         done?.();
       }
     } else if (moving()) {
+      setAway(true);
       // damped like three.js OrbitControls
       const f = reduceMotion ? 1 : 1 - Math.pow(1 - DAMPING, dt / 16.7);
       cam.yaw += delta.yaw * f;
@@ -727,9 +736,11 @@ export async function initWall(root) {
   resize();
 
   function flyTo(to, duration = 1100, done, easing = ease) {
+    setAway(!to.home);
     stopMoving();
     stopIdle();
-    const target = { target: cam.target, dist: cam.dist, yaw: cam.yaw, pitch: cam.pitch, ...to };
+    const { home: _home, ...dest } = to;
+    const target = { target: cam.target, dist: cam.dist, yaw: cam.yaw, pitch: cam.pitch, ...dest };
     // turn the short way round
     target.yaw = cam.yaw + ((((target.yaw - cam.yaw) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
     if (reduceMotion || !duration) {
@@ -1133,7 +1144,7 @@ export async function initWall(root) {
     const radius = Math.hypot(...sub(hi, lo)) / 2;
     const half = Math.min(FOV / 2, Math.atan(Math.tan(FOV / 2) * (view.w / view.h)));
     const dist = clamp((radius / Math.sin(half)) * 0.92, MIN_DIST * 10, MAX_DIST);
-    return { target: scale(add(lo, hi), 0.5), dist, pitch: 0.32 };
+    return { target: scale(add(lo, hi), 0.5), dist, pitch: 0.32, home: true };
   }
 
   canvas.addEventListener("pointerdown", (e) => {
@@ -1757,7 +1768,7 @@ export async function initWall(root) {
     };
   }
 
-  const saveable = () => ({ target: cam.target, yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist });
+  const saveable = () => ({ target: cam.target, yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist, home: !away });
   addEventListener("pagehide", () => {
     if (busy) return; // opening a card already saved the view from before the click
     try {
@@ -1781,7 +1792,9 @@ export async function initWall(root) {
   }
 
   if (saved && Number.isFinite(saved.dist) && saved.target?.length === 3) {
-    Object.assign(cam, saved);
+    const { home: wasHome, ...restored } = saved;
+    Object.assign(cam, restored);
+    setAway(!wasHome);
     if (new URLSearchParams(location.search).get("view") === "cells") setCells(true);
     idle = false;
     if (start) {

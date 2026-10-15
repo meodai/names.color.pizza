@@ -3359,6 +3359,26 @@ html.is-arriving {
   gap: 0.4rem;
 }
 
+.wall__zoom [data-home] {
+  transition:
+    opacity 0.3s ease,
+    translate 0.45s cubic-bezier(0.3, 0.7, 0, 1),
+    margin 0.45s cubic-bezier(0.3, 0.7, 0, 1),
+    visibility 0s linear;
+}
+
+.wall:not(.is-away) .wall__zoom [data-home] {
+  margin-block-start: calc(-2.6rem - 0.4rem);
+  opacity: 0;
+  translate: calc(100% + var(--space-s)) 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    translate 0.35s ease,
+    margin 0.35s ease 0.1s,
+    visibility 0s linear 0.35s;
+}
+
 .wall__zoom svg {
   display: block;
   inline-size: 1.1rem;
@@ -3482,6 +3502,13 @@ html.is-arriving {
 }
 
 @media (max-width: 40rem) {
+  .brand {
+    top: var(--space-2xs);
+    left: 1rem;
+  }
+}
+
+@media (max-width: 56rem) {
   .wall__bar {
     inset: 0;
     grid-template-columns: 1fr auto;
@@ -3579,7 +3606,7 @@ html.is-arriving {
     translate: 0 -200%;
   }
 
-  .brand {
+  .wall__brand {
     top: var(--space-2xs);
     left: 1rem;
   }
@@ -3666,6 +3693,10 @@ html.is-arriving {
   .wall__zoom button {
     inline-size: 2.5rem;
     block-size: 2.5rem;
+  }
+
+  .wall:not(.is-away) .wall__zoom [data-home] {
+    margin-block-start: calc(-2.5rem - 0.4rem);
   }
 
   .wall__lists {
