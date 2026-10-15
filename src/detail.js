@@ -367,7 +367,7 @@ function fitTitle() {
 // the color's card tilts towards the pointer, or with the phone; an adopted
 // color's card (10 or more) is holo: it catches the light in its own kind of
 // foil, throws sparks from behind while it moves, and left alone sways a little
-const SHINES = ["prism", "galaxy", "classic", "sheen", "aurora"];
+const SHINES = ["prism", "galaxy", "classic", "radiant", "aurora"];
 const previewing = new URLSearchParams(location.search).get("holo");
 // ?holo or ?holo=<kind> previews one, VITE_HOLO=all every color, the kind then by the hex
 function previewShine(hex) {

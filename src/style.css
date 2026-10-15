@@ -2425,64 +2425,91 @@ a:hover {
   --fy: var(--my);
 }
 
-/* dodging white or black changes nothing: on the lightest colors the foil
-   prints its streaks in, on the darkest it shines them on */
-.swatchcard--holo[data-tone="light"]::before,
-.swatchcard--holo[data-tone="light"] .holo-parrot {
-  filter: invert(1) hue-rotate(180deg) brightness(1.08) contrast(1.5) saturate(1.1);
-  mix-blend-mode: multiply;
-}
-
-.swatchcard--holo[data-tone="dark"]::before,
-.swatchcard--holo[data-tone="dark"] .holo-parrot {
-  mix-blend-mode: screen;
-}
-
-.swatchcard--holo[data-tone="light"].swatchcard--visible::before {
-  opacity: calc(var(--shine) * 0.55);
-}
-
-.swatchcard--holo[data-tone="dark"].swatchcard--visible::before {
-  opacity: calc(var(--shine) * 0.7);
-}
 
 /* four more kinds of foil, all built like the prism: mostly dark, so the
    color stays itself, with narrow streaks where the light catches */
-/* the old holo cards: fine upright bars of rainbow that slide sideways */
+/* the classic holo: hue-stepped bars, a rainbow racing across them,
+   wide glints at two speeds and a round glare */
 .swatchcard--holo[data-shine="classic"]::before,
 .swatchcard--holo[data-shine="classic"] .holo-parrot {
   background-image:
-    var(--grain),
     repeating-linear-gradient(
       90deg,
-      hsl(2 100% 73%) 0%,
-      hsl(52 100% 69%) 3%,
-      hsl(98 100% 70%) 6%,
-      hsl(176 100% 72%) 9%,
-      hsl(228 100% 74%) 12%,
-      hsl(286 100% 73%) 15%,
-      hsl(2 100% 73%) 18%
+      hsl(0 70% 50%) 0px 2px,
+      #000 2px 4px,
+      hsl(21 70% 50%) 4px 6px,
+      #000 6px 8px,
+      hsl(42 70% 50%) 8px 10px,
+      #000 10px 12px,
+      hsl(63 70% 50%) 12px 14px,
+      #000 14px 16px,
+      hsl(84 70% 50%) 16px 18px,
+      #000 18px 20px,
+      hsl(105 70% 50%) 20px 22px,
+      #000 22px 24px,
+      hsl(126 70% 50%) 24px 26px,
+      #000 26px 28px,
+      hsl(147 70% 50%) 28px 30px,
+      #000 30px 32px,
+      hsl(168 70% 50%) 32px 34px,
+      #000 34px 36px,
+      hsl(189 70% 50%) 36px 38px,
+      #000 38px 40px,
+      hsl(210 70% 50%) 40px 42px,
+      #000 42px 44px,
+      hsl(231 70% 50%) 44px 46px,
+      #000 46px 48px,
+      hsl(252 70% 50%) 48px 50px,
+      #000 50px 52px,
+      hsl(273 70% 50%) 52px 54px,
+      #000 54px 56px,
+      hsl(294 70% 50%) 56px 58px,
+      #000 58px 60px,
+      hsl(315 70% 50%) 60px 62px,
+      #000 62px 64px
     ),
     repeating-linear-gradient(
       90deg,
-      hsl(228 50% 12%) 0%,
-      hsl(228 50% 12%) 0.8%,
-      hsl(190 22% 56%) 1.8%,
-      hsl(185 32% 70%) 2.2%,
-      hsl(190 22% 56%) 2.6%,
-      hsl(228 50% 12%) 3.6%,
-      hsl(228 50% 12%) 4.4%
+      hsl(286 85% 56%),
+      hsl(193 90% 48%),
+      hsl(150 80% 52%),
+      hsl(57 88% 50%),
+      hsl(332 94% 51%),
+      hsl(286 85% 56%)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(10 10 10) 0 48px,
+      rgb(255 255 255 / 0.6) 72px,
+      rgb(10 10 10) 84px,
+      rgb(255 255 255 / 0.6) 96px,
+      rgb(10 10 10) 120px,
+      rgb(10 10 10) 288px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(10 10 10) 0 48px,
+      rgb(255 255 255 / 0.6) 72px,
+      rgb(10 10 10) 84px,
+      rgb(255 255 255 / 0.6) 96px,
+      rgb(10 10 10) 120px,
+      rgb(10 10 10) 216px
+    ),
+    radial-gradient(
+      farthest-corner circle at var(--mx) var(--my),
+      rgb(230 230 230 / 0.85) 0%,
+      rgb(200 200 200 / 0.1) 25%,
+      rgb(0 0 0) 90%
     );
-  background-size: 18em, 300% 100%, 200% 100%;
+  background-blend-mode: soft-light, soft-light, screen, overlay;
+  background-size: 100% 100%, 200% 200%, 237% 237%, 195% 195%, 120% 120%;
   background-position:
     center,
-    var(--fx) 0,
-    calc(100% - var(--fx)) 0;
-}
-
-/* the bars only flare where the light falls */
-.swatchcard--holo[data-shine="classic"]::before {
-  mask: radial-gradient(farthest-corner circle at var(--mx) var(--my), #000 0%, rgb(0 0 0 / 0.5) 30%, transparent 65%);
+    calc((50% - var(--fx)) * 25 + 50%) center,
+    calc(var(--fx) * -1.2) var(--fy),
+    var(--fx) var(--fy),
+    center;
+  filter: brightness(calc((var(--tilt, 0) + 0.7) * 0.7)) contrast(3.2) saturate(0.66);
 }
 
 .swatchcard--holo[data-shine="galaxy"]::before,
@@ -2509,31 +2536,60 @@ a:hover {
   background-size: 11em, 200% 640%, 320% 320%;
 }
 
-.swatchcard--holo[data-shine="sheen"]::before,
-.swatchcard--holo[data-shine="sheen"] .holo-parrot {
+/* radiant: crossed bars of grey that cut the light into a sparkle, over a pastel rainbow */
+.swatchcard--holo[data-shine="radiant"]::before,
+.swatchcard--holo[data-shine="radiant"] .holo-parrot {
+  --bar: 0.7%;
   background-image:
-    var(--grain),
     repeating-linear-gradient(
-      -24deg,
-      hsl(2 100% 73%) 0%,
-      hsl(52 100% 69%) 5%,
-      hsl(98 100% 70%) 10%,
-      hsl(176 100% 72%) 15%,
-      hsl(228 100% 74%) 20%,
-      hsl(286 100% 73%) 25%,
-      hsl(2 100% 73%) 30%
+      55deg,
+      hsl(2 100% 81%) 0%,
+      hsl(207 100% 67%) 9%,
+      hsl(30 100% 79%) 18%,
+      hsl(160 100% 75%) 27%,
+      hsl(310 95% 83%) 36%,
+      hsl(190 100% 79%) 45%,
+      hsl(2 100% 81%) 54%
     ),
-    linear-gradient(
-      128deg,
-      hsl(228 50% 12%) 0%,
-      hsl(228 50% 12%) 38%,
-      hsl(190 22% 62%) 47%,
-      hsl(185 32% 72%) 50%,
-      hsl(190 22% 62%) 53%,
-      hsl(228 50% 12%) 62%,
-      hsl(228 50% 12%) 100%
+    repeating-linear-gradient(
+      45deg,
+      hsl(0 0% 8%) calc(var(--bar) * 0) calc(var(--bar) * 1),
+      hsl(0 0% 8%) calc(var(--bar) * 1) calc(var(--bar) * 2),
+      hsl(0 0% 10%) calc(var(--bar) * 2) calc(var(--bar) * 3),
+      hsl(0 0% 18%) calc(var(--bar) * 3) calc(var(--bar) * 4),
+      hsl(0 0% 70%) calc(var(--bar) * 4) calc(var(--bar) * 5),
+      hsl(0 0% 18%) calc(var(--bar) * 5) calc(var(--bar) * 6),
+      hsl(0 0% 10%) calc(var(--bar) * 6) calc(var(--bar) * 7),
+      hsl(0 0% 8%) calc(var(--bar) * 7) calc(var(--bar) * 8),
+      hsl(0 0% 8%) calc(var(--bar) * 8) calc(var(--bar) * 9),
+      hsl(0 0% 6%) calc(var(--bar) * 9) calc(var(--bar) * 10)
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      hsl(0 0% 8%) calc(var(--bar) * 0) calc(var(--bar) * 1),
+      hsl(0 0% 8%) calc(var(--bar) * 1) calc(var(--bar) * 2),
+      hsl(0 0% 10%) calc(var(--bar) * 2) calc(var(--bar) * 3),
+      hsl(0 0% 18%) calc(var(--bar) * 3) calc(var(--bar) * 4),
+      hsl(0 0% 70%) calc(var(--bar) * 4) calc(var(--bar) * 5),
+      hsl(0 0% 18%) calc(var(--bar) * 5) calc(var(--bar) * 6),
+      hsl(0 0% 10%) calc(var(--bar) * 6) calc(var(--bar) * 7),
+      hsl(0 0% 8%) calc(var(--bar) * 7) calc(var(--bar) * 8),
+      hsl(0 0% 8%) calc(var(--bar) * 8) calc(var(--bar) * 9),
+      hsl(0 0% 6%) calc(var(--bar) * 9) calc(var(--bar) * 10)
     );
-  background-size: 18em, 200% 640%, 260% 260%;
+  background-blend-mode: hue, darken;
+  background-size: 400% 400%, 210% 210%, 210% 210%;
+  background-position:
+    calc((var(--fx) - 50%) * -2.5 + 50%) calc((var(--fy) - 50%) * -2.5 + 50%),
+    calc((var(--fx) - 50%) * 1.5 + 50%) calc((var(--fy) - 50%) * 1.5 + 50%),
+    calc((var(--fx) - 50%) * 1.5 + 50%) calc((var(--fy) - 50%) * 1.5 + 50%);
+  filter: brightness(0.85) contrast(2.6) saturate(0.9);
+}
+
+/* faint face on, it sparkles as the card turns */
+.swatchcard--holo[data-shine="radiant"].swatchcard--visible::before,
+.swatchcard--holo[data-shine="radiant"][data-tone].swatchcard--visible::before {
+  opacity: var(--shine);
 }
 
 /* barely a rainbow: a fine printed texture, a faint pastel wash and a strong shine */
@@ -2569,6 +2625,27 @@ a:hover {
 
 .swatchcard--holo[data-shine="aurora"].swatchcard--visible::after {
   opacity: calc(var(--shine) * 1.4);
+}
+
+/* dodging white or black changes nothing: on the lightest colors the foil
+   prints its streaks in, on the darkest it shines them on */
+.swatchcard--holo[data-tone="light"]:not([data-shine="aurora"])::before,
+.swatchcard--holo[data-tone="light"]:not([data-shine="aurora"]) .holo-parrot {
+  filter: invert(1) hue-rotate(180deg) brightness(1.08) contrast(1.5) saturate(1.1);
+  mix-blend-mode: multiply;
+}
+
+.swatchcard--holo[data-tone="dark"]::before,
+.swatchcard--holo[data-tone="dark"] .holo-parrot {
+  mix-blend-mode: screen;
+}
+
+.swatchcard--holo[data-tone="light"]:not([data-shine="aurora"]).swatchcard--visible::before {
+  opacity: calc(var(--shine) * 0.55);
+}
+
+.swatchcard--holo[data-tone="dark"]:not([data-shine="aurora"]).swatchcard--visible::before {
+  opacity: calc(var(--shine) * 0.7);
 }
 
 /* where the light catches */
