@@ -2522,35 +2522,39 @@ a:hover {
   background-size: 18em, 200% 640%, 260% 260%;
 }
 
+/* barely a rainbow: a fine printed texture, a faint pastel wash and a strong shine */
 .swatchcard--holo[data-shine="aurora"]::before,
 .swatchcard--holo[data-shine="aurora"] .holo-parrot {
   background-image:
+    repeating-linear-gradient(35deg, rgb(255 255 255 / 0.16) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-55deg, rgb(255 255 255 / 0.1) 0 1px, transparent 1px 3px),
     var(--grain),
     repeating-linear-gradient(
-      -24deg,
-      hsl(2 100% 73%) 0%,
-      hsl(52 100% 69%) 5%,
-      hsl(98 100% 70%) 10%,
-      hsl(176 100% 72%) 15%,
-      hsl(228 100% 74%) 20%,
-      hsl(286 100% 73%) 25%,
-      hsl(2 100% 73%) 30%
-    ),
-    repeating-radial-gradient(
-      circle at calc(var(--fx) * 1.4 - 140%) calc(var(--fy) * 1.4 + 60%),
-      hsl(228 50% 12%) 0%,
-      hsl(228 50% 12%) 15%,
-      hsl(190 22% 56%) 19%,
-      hsl(185 32% 70%) 20.5%,
-      hsl(190 22% 56%) 22%,
-      hsl(228 50% 12%) 26%,
-      hsl(228 50% 12%) 34%
+      -20deg,
+      hsl(282 50% 61% / 0.75) 0%,
+      hsl(2 70% 59% / 0.75) 4.5%,
+      hsl(52 70% 54% / 0.75) 9%,
+      hsl(95 55% 52% / 0.75) 13.5%,
+      hsl(176 45% 50% / 0.75) 18%,
+      hsl(228 100% 76% / 0.75) 22.5%,
+      hsl(282 50% 61% / 0.75) 27%
     );
-  background-size: 18em, 200% 640%, 100% 100%;
+  background-blend-mode: normal, normal, soft-light;
+  background-size: auto, auto, 18em, 210% 420%;
   background-position:
+    0 0,
+    0 0,
     center,
-    0% var(--fy),
-    center;
+    0% var(--fy);
+  filter: brightness(0.6) contrast(1.8) saturate(1);
+}
+
+.swatchcard--holo[data-shine="aurora"].swatchcard--visible::before {
+  opacity: calc(var(--shine) * 0.4);
+}
+
+.swatchcard--holo[data-shine="aurora"].swatchcard--visible::after {
+  opacity: calc(var(--shine) * 1.4);
 }
 
 /* where the light catches */
