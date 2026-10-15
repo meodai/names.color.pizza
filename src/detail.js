@@ -368,6 +368,13 @@ function fitTitle() {
 // color's holo card (?holo previews it) also catches the light, throws sparks
 // from behind while it moves, and left alone sways a little
 const holoPreview = new URLSearchParams(location.search).has("holo") || import.meta.env.VITE_HOLO === "all";
+// the kinds of foil; an adoption rolls one, the preview takes one by the hex or ?holo=<kind>
+const SHINES = ["prism", "galaxy", "gold", "sheen", "lattice"];
+const shineFor = (hex) => {
+  const asked = new URLSearchParams(location.search).get("holo");
+  if (SHINES.includes(asked)) return asked;
+  return SHINES[[...hex].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % SHINES.length];
+};
 const SPARK_COLORS = ["#fff", "hsl(2 100% 80%)", "hsl(52 100% 76%)", "hsl(176 100% 78%)", "hsl(286 100% 80%)"];
 function tiltCard(card, holo) {
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -521,6 +528,7 @@ async function render(hex) {
   void card.offsetWidth;
   card.classList.remove("swatchcard--reset");
   for (const [k, v] of Object.entries(cardVars(hex))) card.style.setProperty(k, v);
+  if (holoPreview) card.dataset.shine = shineFor(hex);
   // handed over from the wall: show it at once where it landed, so the page change doesn't show
   let handoff = null;
   try {
