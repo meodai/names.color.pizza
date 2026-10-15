@@ -405,10 +405,12 @@ async function render(hex) {
     document.documentElement.classList.add("is-arriving");
     requestAnimationFrame(() => requestAnimationFrame(arrived));
   }
+  // the name, when it's known before the list is: handed over, or this page's own
+  const known = handedOver ? handoff.name : builtPage?.hex === hex ? builtPage.name : "";
   current = { hex };
   page.value.textContent = hex;
-  page.cardName.textContent = handedOver ? handoff.name : "";
-  page.name.textContent = handedOver ? handoff.name : hex;
+  page.cardName.textContent = known;
+  page.name.textContent = known || hex;
   fitTitle();
   page.intro.replaceChildren();
   page.stats.replaceChildren();
@@ -416,7 +418,7 @@ async function render(hex) {
   page.fillHex.textContent = hex;
   page.fill.style.setProperty("--fill", hex);
   page.colophon.style.setProperty("--fill", hex);
-  page.colophonColor.textContent = handedOver ? `${handoff.name} · ${hex}` : hex;
+  page.colophonColor.textContent = known ? `${known} · ${hex}` : hex;
   // colors the scrollbar
   (page.embedded ? page.root : document.documentElement).style.setProperty("--page-color", hex);
   page.ink.replaceChildren();
@@ -435,7 +437,7 @@ async function render(hex) {
   page.artSlide.hidden = true;
   page.art.replaceChildren();
   alternate();
-  document.title = `${hex} — Color Names`;
+  document.title = known ? `${known}: ${hex} — Color Names` : `${hex} — Color Names`;
   document.querySelector('link[rel="icon"]').href =
     `data:image/svg+xml,${encodeURIComponent(parrot.replace(/fill="(?!#fff")[^"]*"/g, `fill="${hex}"`))}`;
 
@@ -812,8 +814,8 @@ function sourceHTML(it) {
 
 const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" aria-label="Close"></button>
   <figure class="lightbox__figure">
-    <div class="lightbox__frame">
     <span class="lightbox__mat"></span>
+    <div class="lightbox__frame">
       <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
       ${it.palette?.length ? `<div class="lightbox__palette">${paletteHTML(it.palette, it.color)}</div>` : ""}
     </div>
