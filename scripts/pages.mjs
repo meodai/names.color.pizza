@@ -275,11 +275,8 @@ for (const [i, { name, hex }] of items.entries()) {
   const day = addedDay(name);
   documents.push({ key: documentKey(slug, day), slug, name, hex, day, description });
 
-  const head = [
-    `<title>${escapeHTML(title)}</title>`,
-    meta("name", "description", description),
-    `<link rel="canonical" href="${url}" />`,
-    `<link rel="site.standard.document" href="${documentURI(slug, day)}" />`,
+  // the link preview, on the page and on its hex forward
+  const preview = [
     meta("property", "og:type", "website"),
     meta("property", "og:title", `${name} (${hex})`),
     meta("property", "og:description", description),
@@ -290,6 +287,13 @@ for (const [i, { name, hex }] of items.entries()) {
     meta("property", "og:image:height", "630"),
     meta("property", "og:image:alt", `${name}, ${hex}: a swatch of the color`),
     meta("name", "twitter:card", "summary_large_image"),
+  ];
+  const head = [
+    `<title>${escapeHTML(title)}</title>`,
+    meta("name", "description", description),
+    `<link rel="canonical" href="${url}" />`,
+    `<link rel="site.standard.document" href="${documentURI(slug, day)}" />`,
+    ...preview,
     meta("name", "theme-color", hex),
     `<script type="application/ld+json">${scriptJSON(structured({ name, hex, url, description, lines }))}</script>`,
   ].join("\n    ");
@@ -297,6 +301,7 @@ for (const [i, { name, hex }] of items.entries()) {
   // replacement functions throughout: "$'" or "$`" in a name would be a pattern
   let html = template
     .replace(/<title>[\s\S]*?<\/title>/, "")
+    .replace(/\s*<meta\s+(?:property|name)="(?:og|twitter):[^>]*>/g, "")
     .replace(/<meta\s+name="description"[\s\S]*?\/>/, () => head)
     .replace(/(<h1[^>]*data-name[^>]*>)[\s\S]*?(<\/h1>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
     .replace(
@@ -351,6 +356,7 @@ for (const [i, { name, hex }] of items.entries()) {
 <title>${escapeHTML(name)} — Color Names</title>
 <link rel="canonical" href="${url}" />
 <meta name="robots" content="noindex" />
+${preview.join("\n")}
 <meta http-equiv="refresh" content="0; url=../${slug}/" />
 <script>location.replace("../${slug}/" + location.hash)</script>
 <a href="../${slug}/">${escapeHTML(name)}</a>
