@@ -1660,6 +1660,11 @@ export async function initWall(root) {
     dropSpot();
     colorPicker.parentElement.style.background = "";
     goHome();
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete("c");
+      history.replaceState(null, "", url);
+    } catch {}
     search.focus();
   });
 
@@ -1725,6 +1730,10 @@ export async function initWall(root) {
   });
 
   const start = normalizeHex(new URLSearchParams(location.search).get("c") || "");
+  if (start) {
+    search.value = start;
+    showClear();
+  }
   // the camera is restored only when coming back from a color page
   const nav = performance.getEntriesByType("navigation")[0]?.type;
   let fromColorPage = false;
