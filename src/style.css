@@ -2355,6 +2355,21 @@ a:hover {
   box-shadow: 0 1.4rem 3rem -1rem rgb(0 0 0 / 0.45);
 }
 
+.swatchcard--holo {
+  z-index: 1;
+}
+
+.holo-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.holo-spark {
+  position: absolute;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
 .swatchcard--holo.is-tilting {
   transition: transform 0.12s ease-out;
 }
@@ -2434,7 +2449,7 @@ a:hover {
   background-size: 200% 200%;
   background-position: var(--mx) var(--my);
   /* in the corner, as far in as the label's text */
-  mask: url("/logo/cockatoo-fill.svg") left 0.3em bottom 0.3em / 26% no-repeat;
+  mask: url("/logo/cockatoo-fill.svg") left 0.19em bottom 0.245em / 20% no-repeat;
   mix-blend-mode: color-dodge;
   opacity: 0;
 }
