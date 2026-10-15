@@ -2,6 +2,7 @@ import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM } from "./shines.js";
+import { adopterBadge, handle, longDate } from "./adopter.js";
 
 const toLab = converter("lab");
 const shade = (hex, amount) => {
@@ -67,7 +68,8 @@ export async function initAdoptPage() {
   const mine = adopted[slug];
   if (mine?.amount >= ADOPT_FROM) {
     q("[data-name]").textContent = `${it.name} is adopted.`;
-    q("[data-lead]").textContent = `@${mine.by.replace(/^@/, "")} adopted it on ${new Date(`${mine.at}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })}. Every color has one adopter: pick another one.`;
+    q("[data-lead]").textContent = `${handle(mine.by)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
+    q("[data-place]").append(adopterBadge(mine));
     q("[data-tiers]").hidden = true;
     const cta = q(".adopt__cta");
     cta.textContent = "See the supporters";
