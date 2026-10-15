@@ -2522,8 +2522,8 @@ a:hover {
   background-size: 18em, 200% 640%, 260% 260%;
 }
 
-.swatchcard--holo[data-shine="lattice"]::before,
-.swatchcard--holo[data-shine="lattice"] .holo-parrot {
+.swatchcard--holo[data-shine="aurora"]::before,
+.swatchcard--holo[data-shine="aurora"] .holo-parrot {
   background-image:
     var(--grain),
     repeating-linear-gradient(
@@ -2536,25 +2536,21 @@ a:hover {
       hsl(286 100% 73%) 25%,
       hsl(2 100% 73%) 30%
     ),
-    repeating-linear-gradient(
-      45deg,
-      transparent 0 1.7%,
-      hsl(190 22% 46%) 1.7% 1.95%,
-      transparent 1.95% 4%
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      hsl(228 50% 12%) 0 1.7%,
-      hsl(190 22% 46%) 1.7% 1.95%,
-      hsl(228 50% 12%) 1.95% 4%
+    repeating-radial-gradient(
+      circle at calc(var(--fx) * 1.4 - 140%) calc(var(--fy) * 1.4 + 60%),
+      hsl(228 50% 12%) 0%,
+      hsl(228 50% 12%) 15%,
+      hsl(190 22% 56%) 19%,
+      hsl(185 32% 70%) 20.5%,
+      hsl(190 22% 56%) 22%,
+      hsl(228 50% 12%) 26%,
+      hsl(228 50% 12%) 34%
     );
-  background-blend-mode: screen, hue, lighten, hard-light;
-  background-size: 18em, 200% 640%, 160% 160%, 160% 160%;
+  background-size: 18em, 200% 640%, 100% 100%;
   background-position:
     center,
     0% var(--fy),
-    var(--fx) var(--fy),
-    var(--fx) var(--fy);
+    center;
 }
 
 /* where the light catches */
