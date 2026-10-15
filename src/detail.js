@@ -710,13 +710,12 @@ function measureStrip(rows = strip.rows) {
   strip.middle = Math.floor((rows.length - 1) / 2);
   strip.title.style.height = `${row}px`;
   strip.title.style.gap = `${gap}px`;
-  // twice the room of a picture around the title: its own padding and the gap
-  strip.title.style.padding = `${gap}px`;
+  // the swatch card is as tall as a row, like a picture
   const swatch = strip.title.querySelector(".gallery__swatch");
   swatch.style.width = "100px";
-  swatch.style.width = `${((row - 2 * gap) * 100) / swatch.firstElementChild.offsetHeight}px`;
+  swatch.style.width = `${(row * 100) / swatch.firstElementChild.offsetHeight}px`;
   strip.title.style.width = "max-content";
-  strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + 3 * gap + row * 2.8);
+  strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + gap + row * 2.8);
   strip.title.style.width = `${strip.titleWidth}px`;
   strip.rows = rows.map((r, k) => {
     let x = 0;
