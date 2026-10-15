@@ -2883,7 +2883,7 @@ html.is-arriving {
 
 .wall__picker {
   position: absolute;
-  inset: 50% auto auto 0.55rem;
+  inset: 50% auto auto calc((var(--bar-h) - 1.7rem) / 2);
   z-index: 1;
   inline-size: 1.7rem;
   block-size: 1.7rem;
@@ -2911,7 +2911,7 @@ html.is-arriving {
 .wall__search {
   block-size: var(--bar-h);
   inline-size: 100%;
-  padding: 0.7rem 2.9rem 0.7rem 2.75rem;
+  padding: 0.7rem 2.9rem 0.7rem 2.95rem;
   border: 0;
   border-radius: 999px;
   color: var(--ink);
