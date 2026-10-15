@@ -3620,7 +3620,7 @@ html.is-arriving {
     z-index: 2;
     top: var(--space-2xs);
     right: calc(1rem + 2.5rem + 0.4rem);
-    left: calc(1rem + 2.5rem + 0.4rem);
+    max-inline-size: calc(100% - 2 * (1rem + 2.5rem + 0.4rem));
     block-size: 2.5rem;
     box-sizing: border-box;
   }
@@ -3664,8 +3664,7 @@ html.is-arriving {
   }
 
   .wall__models button {
-    flex: 1 0 auto;
-    padding-inline: 0.6rem;
+    flex: none;
   }
 
   .wall__pick-list,
@@ -3716,20 +3715,27 @@ html.is-arriving {
       visibility 0s linear;
   }
 
-  .wall__pick-list,
-  .wall__zoom {
+  :is(.wall__pick-list > button, .wall__zoom button, .wall__zoom [data-home]) {
     transition:
-      opacity 0.3s ease var(--menu-d, 0ms),
-      translate 0.45s cubic-bezier(0.3, 0.7, 0, 1) var(--menu-d, 0ms),
-      visibility 0s linear var(--menu-d, 0ms);
+      opacity 0.3s ease var(--menu-in),
+      translate 0.45s cubic-bezier(0.3, 0.7, 0, 1) var(--menu-in),
+      margin 0.45s cubic-bezier(0.3, 0.7, 0, 1),
+      visibility 0s linear var(--menu-in);
   }
 
-  .wall__pick-list {
-    --menu-d: 60ms;
+  .wall__pick-list > button {
+    --menu-in: 60ms;
+    --menu-out: 80ms;
   }
 
-  .wall__zoom {
-    --menu-d: 110ms;
+  .wall__zoom [data-cells] {
+    --menu-in: 110ms;
+    --menu-out: 40ms;
+  }
+
+  .wall__zoom [data-home] {
+    --menu-in: 160ms;
+    --menu-out: 0ms;
   }
 
   .wall:not(:has([data-menu][aria-expanded="true"])) .wall__models {
@@ -3743,15 +3749,16 @@ html.is-arriving {
       visibility 0s linear 0.3s;
   }
 
-  .wall:not(:has([data-menu][aria-expanded="true"])) :is(.wall__pick-list, .wall__zoom) {
+  .wall:not(:has([data-menu][aria-expanded="true"])) :is(.wall__pick-list > button, .wall__zoom button) {
     opacity: 0;
     translate: 0 -0.75rem;
     visibility: hidden;
     pointer-events: none;
     transition:
-      opacity 0.2s ease,
-      translate 0.3s ease,
-      visibility 0s linear 0.3s;
+      opacity 0.2s ease var(--menu-out),
+      translate 0.3s ease var(--menu-out),
+      margin 0.3s ease,
+      visibility 0s linear calc(0.3s + var(--menu-out));
   }
 
   .wall__brand span {
