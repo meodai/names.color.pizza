@@ -374,15 +374,28 @@ function holoCard(card) {
   const place = card.parentElement;
   const sparks = Object.assign(document.createElement("div"), { className: "holo-sparks" });
   place.prepend(sparks);
-  // the parrot, a facet per piece of the logo, its eye cut out
-  const [, ex, ey, er] = parrot.match(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/);
+  // the parrot, a facet per piece of the logo, each with its own light; its eye cut out
+  const [eye] = parrot.match(/<circle[^>]*>/);
+  const facets = [...parrot.matchAll(/<path d="([^"]+)"/g)].map(([, d], i) => ({
+    d,
+    angle: (i * 137.5) % 360,
+    k: (i % 2 ? -1 : 1) * (0.7 + (i % 4) * 0.28),
+  }));
+  const stops = [
+    ["--c-shade0", 0],
+    ["--c-color", 0.3],
+    ["#fff", 0.46],
+    ["--c-color", 0.56],
+    ["--c-shade1", 0.78],
+    ["--c-color", 1],
+  ]
+    .map(([c, o]) => `<stop offset="${o}" style="stop-color:${c.startsWith("--") ? `var(${c})` : c}"/>`)
+    .join("");
   const art = Object.assign(document.createElement("div"), { className: "holo-parrot" });
-  [...parrot.matchAll(/<path d="([^"]+)"/g)].forEach(([, d], i) => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 12 130 158"><mask id="e"><rect width="200" height="200" fill="#fff"/><circle cx="${ex}" cy="${ey}" r="${er}"/></mask><path d="${d}" mask="url(#e)"/></svg>`;
-    const facet = Object.assign(document.createElement("i"), { className: "holo-facet" });
-    facet.style.cssText = `--m:url("data:image/svg+xml,${encodeURIComponent(svg)}");--a:${((i * 137.5) % 360).toFixed(1)}deg;--k:${((i % 2 ? -1 : 1) * (1.4 + (i % 4) * 0.55)).toFixed(2)}`;
-    art.append(facet);
-  });
+  art.innerHTML = `<svg viewBox="20 12 130 158" aria-hidden="true"><defs><mask id="holo-eye"><rect x="0" y="0" width="200" height="200" fill="#fff"/>${eye.replace(/fill="[^"]*"/, 'fill="#000"')}</mask>${facets
+    .map((f, i) => `<linearGradient id="holo-${i}" gradientUnits="objectBoundingBox">${stops}</linearGradient>`)
+    .join("")}</defs><g mask="url(#holo-eye)">${facets.map((f, i) => `<path d="${f.d}" fill="url(#holo-${i})"/>`).join("")}</g></svg>`;
+  const lights = facets.map((f, i) => art.querySelector(`#holo-${i}`));
   card.querySelector(".swatchcard__upper").append(art);
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let held = false;
@@ -431,6 +444,10 @@ function holoCard(card) {
     card.style.setProperty("--ry", `${((0.5 - py) * 26).toFixed(2)}deg`);
     card.style.setProperty("--shine", shine);
     card.style.setProperty("--tilt", Math.min(1, Math.hypot(px - 0.5, py - 0.5) * 2).toFixed(3));
+    facets.forEach((f, i) => {
+      const shift = ((px - 0.5) + (py - 0.5)) * f.k;
+      lights[i].setAttribute("gradientTransform", `rotate(${f.angle} .5 .5) translate(${shift.toFixed(3)} 0)`);
+    });
   };
   // moved by hand or by tilt: the faster, the more sparks
   const move = (px, py) => {

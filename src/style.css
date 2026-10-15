@@ -2442,23 +2442,10 @@ a:hover {
   opacity: 0;
 }
 
-.holo-facet {
-  position: absolute;
-  inset: 0;
-  mask: var(--m) 0 0 / 100% 100% no-repeat;
-  background: linear-gradient(
-    var(--a),
-    var(--c-shade0) 0%,
-    var(--c-color) 26%,
-    #fff 43%,
-    var(--c-color) 52%,
-    var(--c-shade1) 72%,
-    var(--c-color) 100%
-  );
-  background-size: 260% 260%;
-  background-position:
-    calc(50% + (var(--mx) - 50%) * var(--k))
-    calc(50% + (var(--my) - 50%) * var(--k));
+.holo-parrot svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 /* the foil comes in last, once the card has built up, then follows the light */
