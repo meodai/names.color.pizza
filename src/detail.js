@@ -364,6 +364,41 @@ function fitTitle() {
   });
 }
 
+// an adopted color's holo card (?holo previews it): it tilts towards the
+// pointer and the light follows; without one it sways a little on its own
+const holoPreview = new URLSearchParams(location.search).has("holo");
+function holoCard(card) {
+  const hero = card.closest("section") || card;
+  let pointer = false;
+  let frame = 0;
+  const set = (px, py, shine) => {
+    card.style.setProperty("--mx", `${(px * 100).toFixed(1)}%`);
+    card.style.setProperty("--my", `${(py * 100).toFixed(1)}%`);
+    card.style.setProperty("--rx", `${((px - 0.5) * 26).toFixed(2)}deg`);
+    card.style.setProperty("--ry", `${((0.5 - py) * 26).toFixed(2)}deg`);
+    card.style.setProperty("--shine", shine);
+    card.style.setProperty("--tilt", Math.min(1, Math.hypot(px - 0.5, py - 0.5) * 2).toFixed(3));
+  };
+  const sway = (t) => {
+    if (!pointer) set(0.5 + 0.32 * Math.sin(t / 1700), 0.5 + 0.22 * Math.cos(t / 2300), 0.7);
+    frame = requestAnimationFrame(sway);
+  };
+  hero.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    const r = card.getBoundingClientRect();
+    const clamp = (v) => Math.min(1, Math.max(0, v));
+    pointer = true;
+    card.classList.add("is-tilting");
+    set(clamp((e.clientX - r.left) / r.width), clamp((e.clientY - r.top) / r.height), 0.95);
+  });
+  hero.addEventListener("pointerleave", () => {
+    pointer = false;
+    card.classList.remove("is-tilting");
+  });
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) frame = requestAnimationFrame(sway);
+  return () => cancelAnimationFrame(frame);
+}
+
 function placeCard(place = cardPlace()) {
   page.place.style.setProperty("--x", place.x.toFixed(3));
   page.place.style.setProperty("--y", place.y.toFixed(3));
@@ -1012,6 +1047,11 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     pageLink: q("[data-page-link]"),
     outro: q("[data-outro]"),
   });
+  if (holoPreview) {
+    page.card.classList.add("swatchcard--holo");
+    const stop = holoCard(page.card);
+    signal?.addEventListener("abort", stop);
+  }
 
   q("[data-share]").addEventListener("click", async () => {
     const url = page.pageLink.href;

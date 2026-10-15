@@ -2342,6 +2342,127 @@ a:hover {
     calc(var(--anim-appear-delay, 0ms) + var(--anim-appear-duration) * 0.15);
 }
 
+/* an adopted color, 10+: a holo card that follows the pointer, or sways on its own */
+.swatchcard--holo {
+  --mx: 50%;
+  --my: 50%;
+  --rx: 0deg;
+  --ry: 0deg;
+  --shine: 0.55;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+  transform: perspective(70em) rotateX(var(--ry)) rotateY(var(--rx));
+  transition: transform 0.6s cubic-bezier(0.3, 0.7, 0, 1);
+  box-shadow: 0 1.4rem 3rem -1rem rgb(0 0 0 / 0.45);
+}
+
+.swatchcard--holo.is-tilting {
+  transition: transform 0.12s ease-out;
+}
+
+.swatchcard--holo::before,
+.swatchcard--holo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* bands of light at an angle, a second set across them, and grain */
+.swatchcard--holo::before {
+  background-image:
+    var(--grain),
+    repeating-linear-gradient(
+      -24deg,
+      hsl(2 100% 73%) 0%,
+      hsl(52 100% 69%) 5%,
+      hsl(98 100% 70%) 10%,
+      hsl(176 100% 72%) 15%,
+      hsl(228 100% 74%) 20%,
+      hsl(286 100% 73%) 25%,
+      hsl(2 100% 73%) 30%
+    ),
+    repeating-linear-gradient(
+      128deg,
+      hsl(228 50% 12%) 0%,
+      hsl(190 22% 62%) 3.5%,
+      hsl(185 32% 70%) 4.4%,
+      hsl(190 22% 62%) 5.4%,
+      hsl(228 50% 12%) 9.5%,
+      hsl(228 50% 12%) 12%
+    );
+  background-blend-mode: screen, hue, hard-light;
+  background-size: 18em, 200% 640%, 320% 320%;
+  background-position:
+    center,
+    0% var(--my),
+    var(--mx) var(--my);
+  filter: brightness(0.85) contrast(2.6) saturate(0.6);
+  mix-blend-mode: color-dodge;
+  opacity: 0;
+}
+
+/* where the light catches */
+.swatchcard--holo::after {
+  background: radial-gradient(
+    farthest-corner circle at var(--mx) var(--my),
+    rgb(255 255 255 / 0.55) 0%,
+    rgb(255 255 255 / 0.12) 28%,
+    rgb(0 0 0 / 0.28) 90%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0;
+}
+
+/* the parrot in the foil: faint face on, bright when tilted */
+.swatchcard--holo .swatchcard__upper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    calc(-24deg + var(--rx) * 2),
+    hsl(2 100% 80%) 0%,
+    hsl(52 100% 76%) 6%,
+    hsl(98 100% 76%) 12%,
+    hsl(176 100% 78%) 18%,
+    hsl(228 100% 82%) 24%,
+    hsl(286 100% 80%) 30%,
+    hsl(2 100% 80%) 36%
+  );
+  background-size: 200% 200%;
+  background-position: var(--mx) var(--my);
+  /* in the corner, as far in as the label's text */
+  mask: url("/logo/cockatoo-fill.svg") right 0.3em bottom 0.3em / 26% no-repeat;
+  mix-blend-mode: color-dodge;
+  opacity: 0;
+}
+
+/* the foil comes in last, once the card has built up, then follows the light */
+.swatchcard--holo.swatchcard--visible::before,
+.swatchcard--holo.swatchcard--visible::after {
+  opacity: var(--shine);
+  animation: holo-in 0.7s ease calc(var(--anim-appear-duration) * 0.85) backwards;
+}
+
+.swatchcard--holo.swatchcard--visible .swatchcard__upper::after {
+  opacity: calc(var(--shine) * (0.18 + var(--tilt, 0) * 1.1));
+  animation: holo-in 0.7s ease calc(var(--anim-appear-duration) * 0.95) backwards;
+}
+
+@keyframes holo-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swatchcard--holo {
+    transform: none;
+  }
+}
+
 .swatchcard--reset,
 .swatchcard--reset * {
   transition: none !important;
