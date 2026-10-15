@@ -2727,7 +2727,9 @@ html.is-arriving {
 }
 
 .wall__nav a {
-  padding: 0.35rem 0.8rem;
+  display: inline-block;
+  padding: 0 1.1rem;
+  line-height: 2.5rem;
   border-radius: 999px;
   color: var(--paper);
   background: var(--ink);
