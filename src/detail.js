@@ -367,7 +367,7 @@ function fitTitle() {
 // an adopted color's holo card (?holo previews it): it tilts towards the
 // pointer, or the phone's tilt, and the light follows; sparks fly out from
 // behind it while it moves; left alone it sways a little
-const holoPreview = new URLSearchParams(location.search).has("holo");
+const holoPreview = new URLSearchParams(location.search).has("holo") || import.meta.env.VITE_HOLO === "all";
 const SPARK_COLORS = ["#fff", "hsl(2 100% 80%)", "hsl(52 100% 76%)", "hsl(176 100% 78%)", "hsl(286 100% 80%)"];
 function holoCard(card) {
   const hero = card.closest("section") || card;
