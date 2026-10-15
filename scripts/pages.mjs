@@ -384,8 +384,18 @@ writeFileSync(
   `<!doctype html>
 <html lang="en">
 <meta charset="utf-8" />
-<title>Not found — Color Names</title>
+<title>Color Names</title>
 <meta name="robots" content="noindex" />
+${[
+  meta("property", "og:type", "website"),
+  meta("property", "og:title", "Color Names"),
+  meta("property", "og:description", "31,935 colors, each named by a person: wander through them, hanging where their color is."),
+  meta("property", "og:site_name", "Color Names"),
+  meta("property", "og:image", `${SITE}og.jpg`),
+  meta("property", "og:image:width", "1200"),
+  meta("property", "og:image:height", "630"),
+  meta("name", "twitter:card", "summary_large_image"),
+].join("\n")}
 <script>
   (() => {
     const m = location.pathname.match(/^(.*\\/)color\\/#?([0-9a-f]{3}|[0-9a-f]{6})\\/?$/i);
