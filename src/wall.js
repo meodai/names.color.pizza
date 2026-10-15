@@ -353,6 +353,7 @@ export async function initWall(root) {
   const status = q("[data-status]");
   const search = q("[data-search]");
   const colorPicker = q("[data-picker]");
+  const clearButton = q("[data-clear]");
   const results = q("[data-results]");
   const intro = q("[data-intro]");
 
@@ -814,15 +815,27 @@ export async function initWall(root) {
   function focusCard(i) {
     marked = i;
     spot = { i, on: true, t: performance.now() };
-    colorPicker.value = items[i].hex;
-    colorPicker.parentElement.style.background = items[i].hex;
     flyTo({ target: posOf(i), dist: distFor(FOCUS_PX) });
+  }
+
+  // the color asked for: the search's dot, its × and the address all follow it
+  let chosen = null;
+  let chosenText = "";
+  function choose(hex, text) {
+    chosen = hex;
+    if (hex) colorPicker.value = hex;
+    colorPicker.parentElement.style.background = hex || "";
+    if (text !== undefined) search.value = text;
+    chosenText = search.value;
+    showClear();
     try {
       const url = new URL(location.href);
-      url.searchParams.set("c", items[i].hex.slice(1));
-      history.replaceState(null, "", url);
+      if (hex) url.searchParams.set("c", hex.slice(1));
+      else url.searchParams.delete("c");
+      history.replaceState(history.state, "", url);
     } catch {}
   }
+  const showClear = () => (clearButton.hidden = !search.value && !chosen);
 
   // measured on a hidden copy, so it follows the color page's own CSS
   function slotOf(place) {
@@ -1430,9 +1443,10 @@ export async function initWall(root) {
       const url = new URL(location.href);
       if (key === "default") url.searchParams.delete("list");
       else url.searchParams.set("list", key);
-      url.searchParams.delete("c"); // that color may not be on this list
       history.replaceState(history.state, "", url);
     } catch {}
+    // that color may not be on this list
+    choose(null, "");
 
     if (cellsMix > 0) cellsFade = { from: cellsMix, to: 0, t0: performance.now() };
     request();
@@ -1645,26 +1659,18 @@ export async function initWall(root) {
 
   function pick(k) {
     if (!found[k] || busy) return;
+    choose(items[found[k].i].hex);
     focusCard(found[k].i);
     found = [];
     showResults();
   }
 
-  const clearButton = q("[data-clear]");
-  const showClear = () => (clearButton.hidden = !search.value);
   clearButton.addEventListener("click", () => {
-    search.value = "";
     found = [];
     showResults();
-    showClear();
+    choose(null, "");
     dropSpot();
-    colorPicker.parentElement.style.background = "";
     goHome();
-    try {
-      const url = new URL(location.href);
-      url.searchParams.delete("c");
-      history.replaceState(null, "", url);
-    } catch {}
     search.focus();
   });
 
@@ -1681,7 +1687,8 @@ export async function initWall(root) {
       active = (active + (e.key === "ArrowDown" ? 1 : found.length - 1)) % found.length;
       showResults();
     } else if (e.key === "Escape") {
-      search.value = "";
+      e.preventDefault();
+      search.value = chosenText;
       showClear();
       found = [];
       showResults();
@@ -1691,10 +1698,9 @@ export async function initWall(root) {
   let pickTimer = 0;
   colorPicker.addEventListener("input", () => {
     clearTimeout(pickTimer);
-    search.value = colorPicker.value;
     found = [];
     showResults();
-    showClear();
+    choose(colorPicker.value, colorPicker.value);
     pickTimer = setTimeout(() => !busy && focusCard(nearest(colorPicker.value)), 180);
   });
 
@@ -1730,10 +1736,7 @@ export async function initWall(root) {
   });
 
   const start = normalizeHex(new URLSearchParams(location.search).get("c") || "");
-  if (start) {
-    search.value = start;
-    showClear();
-  }
+  if (start) choose(start, start);
   // the camera is restored only when coming back from a color page
   const nav = performance.getEntriesByType("navigation")[0]?.type;
   let fromColorPage = false;
