@@ -17,6 +17,7 @@ import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
+import { SHINES, HOLO_FROM } from "./shines.js";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -367,7 +368,6 @@ function fitTitle() {
 // the color's card tilts towards the pointer, or with the phone; an adopted
 // color's card (10 or more) is holo: it catches the light in its own kind of
 // foil, throws sparks from behind while it moves, and left alone sways a little
-const SHINES = ["prism", "galaxy", "classic", "radiant", "aurora"];
 const previewing = new URLSearchParams(location.search).get("holo");
 // ?holo or ?holo=<kind> previews one, VITE_HOLO=all every color, the kind then by the hex
 function previewShine(hex) {
@@ -554,7 +554,8 @@ async function render(hex) {
   const glow = wcagLuminance(hex);
   card.dataset.tone = glow > 0.8 ? "light" : glow < 0.04 ? "dark" : "mid";
   // holo when adopted with 10 or more, else as previewed; the adoption shows below once it's known
-  const adoption = (adopted) => page.tilt.holo(adopted?.amount >= 10 ? adopted.shine : previewShine(hex));
+  const adoption = (adopted) =>
+    page.tilt.holo(adopted?.amount >= HOLO_FROM && adopted.shine ? adopted.shine : previewShine(hex));
   adoption(builtPage?.hex === hex ? builtPage.adopted : null);
   // handed over from the wall: show it at once where it landed, so the page change doesn't show
   let handoff = null;
