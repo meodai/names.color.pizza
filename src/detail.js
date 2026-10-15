@@ -845,7 +845,10 @@ let opened = null;
 function openPicture(tile, it) {
   closePicture(true);
   const box = document.createElement("div");
-  box.className = "lightbox";
+  const wide = (it.ratio || 1) > 1;
+  // wider than tall: the palette along the top, else down the right
+  box.className = wide ? "lightbox lightbox--wide" : "lightbox";
+  const grow = wide ? "1 0" : "0 1";
   box.innerHTML = pictureHTML(it);
   (page.embedded ? page.root : document.body).append(box);
   const frame = box.querySelector(".lightbox__frame");
@@ -887,7 +890,7 @@ function openPicture(tile, it) {
     box.querySelectorAll(".lightbox__palette .art__palette > a").forEach((swatch, i) =>
       swatch.animate(
         [
-          { opacity: 0, scale: "0 1" },
+          { opacity: 0, scale: grow },
           { opacity: 1, scale: "1 1" },
         ],
         { duration: 320, delay: 620 + i * 45, easing: EASE, fill: "backwards" },
@@ -927,7 +930,7 @@ function closePicture(now = false) {
     swatch.animate(
       [
         { opacity: 1, scale: "1 1" },
-        { opacity: 0, scale: "0 1" },
+        { opacity: 0, scale: box.classList.contains("lightbox--wide") ? "1 0" : "0 1" },
       ],
       { duration: 140, delay: i * 12, easing: "ease-in", fill: "forwards" },
     ),

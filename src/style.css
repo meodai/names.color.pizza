@@ -752,6 +752,56 @@ a:hover {
   min-block-size: 4.5rem;
 }
 
+/* wider than tall: the palette along the mount's top edge instead */
+.lightbox--wide .lightbox__figure {
+  margin-inline-end: 0;
+  margin-block-start: 2.2rem;
+}
+
+.lightbox--wide .lightbox__palette {
+  inset: auto calc(var(--space-xs) * -1) calc(100% + var(--space-xs));
+}
+
+.lightbox--wide .lightbox__palette .art__palette {
+  flex-direction: row;
+  align-items: flex-end;
+  block-size: auto;
+}
+
+.lightbox--wide .lightbox__palette .art__palette > a {
+  inline-size: auto;
+  min-inline-size: 0.6rem;
+  block-size: 1.2rem;
+  min-block-size: 0;
+  transform-origin: bottom;
+}
+
+.lightbox--wide .lightbox__palette .art__palette > a.is-match {
+  inline-size: auto;
+  block-size: 2.2rem;
+}
+
+.lightbox--wide .lightbox__palette .art__square {
+  top: auto;
+  bottom: 0;
+  left: 50%;
+  inline-size: 100%;
+  min-inline-size: 0;
+  block-size: 100%;
+  min-block-size: 0;
+  translate: -50% 0;
+  transition:
+    block-size 0.34s cubic-bezier(0.3, 0.7, 0, 1),
+    min-inline-size 0.34s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.lightbox--wide .lightbox__palette .art__palette > a:is(:hover, :focus-visible) .art__square {
+  inline-size: 100%;
+  min-inline-size: 4.5rem;
+  block-size: 4.5rem;
+  min-block-size: 0;
+}
+
 /* one swatch per color, as wide as its share, all the same height and top-aligned */
 .art__palette {
   display: flex;
@@ -866,6 +916,9 @@ a:hover {
 }
 
 @media (max-width: 700px) {
+  .lightbox--wide .lightbox__frame img {
+    max-inline-size: calc(100vw - 2 * var(--gutter) - 2 * var(--space-xs));
+  }
   .lightbox__frame img {
     max-inline-size: calc(100vw - 2 * var(--gutter) - 2.2rem - 2 * var(--space-xs));
     max-block-size: min(56svh, 100svh - 16rem);
