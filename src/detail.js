@@ -669,7 +669,6 @@ function layoutGallery() {
         <div class="swatchcard__upper"><i class="swatchcard__swatch"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i></div>
         <div class="swatchcard__label"><div class="swatchcard__info">
           <span class="swatchcard__row1">${current.hex}</span>
-          <span class="swatchcard__row2">${escapeHTML(current.name)}</span>
         </div></div>
       </div>
     </div>
@@ -711,12 +710,13 @@ function measureStrip(rows = strip.rows) {
   strip.middle = Math.floor((rows.length - 1) / 2);
   strip.title.style.height = `${row}px`;
   strip.title.style.gap = `${gap}px`;
-  // the swatch card is as tall as a row, like a picture
+  // twice the room of a picture around the title: its own padding and the gap
+  strip.title.style.padding = `${gap}px`;
   const swatch = strip.title.querySelector(".gallery__swatch");
   swatch.style.width = "100px";
-  swatch.style.width = `${(row * 100) / swatch.firstElementChild.offsetHeight}px`;
+  swatch.style.width = `${((row - 2 * gap) * 100) / swatch.firstElementChild.offsetHeight}px`;
   strip.title.style.width = "max-content";
-  strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + gap + row * 2.8);
+  strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + 3 * gap + row * 2.8);
   strip.title.style.width = `${strip.titleWidth}px`;
   strip.rows = rows.map((r, k) => {
     let x = 0;
