@@ -1,3 +1,10 @@
 {
-  "crisis-red": { "by": "meodai", "on": "github", "amount": 10, "shine": "classic", "at": "2026-10-15" }
+  "crisis-red": {
+    "by": "meodai",
+    "on": "github",
+    "amount": 10,
+    "shine": "classic",
+    "at": "2026-10-15",
+    "avatar": "https://github.com/meodai.png?size=96"
+  }
 }

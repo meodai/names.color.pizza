@@ -17,7 +17,7 @@ import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
-import { SHINES, HOLO_FROM } from "./shines.js";
+import { SHINES, HOLO_FROM, ADOPT_FROM } from "./shines.js";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -522,6 +522,30 @@ function tiltCard(card) {
   };
 }
 
+const PROFILES = {
+  bluesky: (by) => `https://bsky.app/profile/${by}`,
+  github: (by) => `https://github.com/${by}`,
+  x: (by) => `https://x.com/${by}`,
+};
+const longDate = (day) =>
+  new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+
+// "Adopted <date> by" their avatar, or their initial, and handle
+function adoptedHTML({ by, on, at, avatar }) {
+  const a = Object.assign(document.createElement("a"), {
+    href: PROFILES[on]?.(by) || "#",
+    target: "_blank",
+    rel: "noopener",
+    className: "hero__adopter",
+  });
+  const face = avatar
+    ? Object.assign(document.createElement("img"), { src: avatar, alt: "", loading: "lazy" })
+    : Object.assign(document.createElement("span"), { textContent: by.replace(/^@/, "")[0]?.toUpperCase() || "?" });
+  face.className = "hero__avatar";
+  a.append(face, `@${by.replace(/^@/, "")}`);
+  return [`Adopted ${longDate(at)} by `, a];
+}
+
 function placeCard(place = cardPlace()) {
   page.place.style.setProperty("--x", place.x.toFixed(3));
   page.place.style.setProperty("--y", place.y.toFixed(3));
@@ -554,8 +578,12 @@ async function render(hex) {
   const glow = wcagLuminance(hex);
   card.dataset.tone = glow > 0.8 ? "light" : glow < 0.04 ? "dark" : "mid";
   // holo when adopted with 10 or more, else as previewed; the adoption shows below once it's known
-  const adoption = (adopted) =>
+  // who adopted it, under the title, and its foil when it's 10 or more
+  const adoptedLine = Object.assign(document.createElement("span"), { className: "hero__adopted" });
+  const adoption = (adopted) => {
     page.tilt.holo(adopted?.amount >= HOLO_FROM && adopted.shine ? adopted.shine : previewShine(hex));
+    adoptedLine.replaceChildren(...(adopted?.amount >= ADOPT_FROM ? adoptedHTML(adopted) : []));
+  };
   adoption(builtPage?.hex === hex ? builtPage.adopted : null);
   // handed over from the wall: show it at once where it landed, so the page change doesn't show
   let handoff = null;
@@ -661,7 +689,8 @@ async function render(hex) {
   };
   if (builtPage?.name === current.name) describe(builtPage.description);
 
-  page.stats.replaceChildren(Object.assign(document.createElement("span"), { textContent: hex }));
+  const createdLine = document.createElement("span");
+  page.stats.replaceChildren(Object.assign(document.createElement("span"), { textContent: hex }), createdLine, adoptedLine);
   // "by" is only set when someone other than the list's maintainer added it
   addedOn(current.name).then((added) => {
     if (!added || current?.hex !== hex) return;
@@ -673,7 +702,7 @@ async function render(hex) {
         target: "_blank",
         rel: "noopener",
       });
-    const line = document.createElement("span");
+    const line = createdLine;
     line.append(
       link(`https://github.com/meodai/color-names/commit/${added.hash}`, `Added ${added.date}`, `Commit ${added.hash}`),
     );
@@ -683,7 +712,6 @@ async function render(hex) {
         added.github ? link(`https://github.com/${added.github}`, added.by, `@${added.github} on GitHub`) : added.by,
       );
     }
-    page.stats.append(line);
   });
 
   const ink = lore.bestContrast === "white" ? "#fff" : "#000";

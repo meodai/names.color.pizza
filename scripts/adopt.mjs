@@ -26,6 +26,14 @@ if (!slug || !by || !["bluesky", "github", "x"].includes(on) || !(amount > 0))
   throw new Error("node scripts/adopt.mjs <slug> --by <handle> --on bluesky|github|x --amount <n>");
 if (!existsSync(resolve(here, "../dist/color", slug))) console.warn(`no built page for ${slug}: check the slug`);
 
+// their picture, looked up once: Bluesky's profile, GitHub's avatar; X has none to ask for
+async function avatarOf(handle, where) {
+  if (where === "github") return `https://github.com/${handle}.png?size=96`;
+  if (where !== "bluesky") return undefined;
+  const res = await fetch(`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(handle)}`);
+  return res.ok ? (await res.json()).avatar : undefined;
+}
+
 const adopted = existsSync(FILE) ? JSON.parse(readFileSync(FILE, "utf8")) : {};
 const had = adopted[slug];
 if (had && had.by !== by) throw new Error(`${slug} is already adopted by ${had.by}`);
@@ -37,6 +45,7 @@ adopted[slug] = {
   // the foil is rolled once, the first time it reaches HOLO_FROM
   ...(total >= HOLO_FROM ? { shine: had?.shine || SHINES[randomInt(SHINES.length)] } : {}),
   at: had?.at || new Date().toISOString().slice(0, 10),
+  avatar: had?.avatar || (await avatarOf(by, on)),
 };
 writeFileSync(FILE, `${JSON.stringify(adopted, null, 2)}\n`);
 console.log(`${slug}: ${by} (${on}), ${total}${adopted[slug].shine ? `, ${adopted[slug].shine}` : ""}`);

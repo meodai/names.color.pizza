@@ -173,6 +173,30 @@ a:hover {
   text-decoration-thickness: 2px;
 }
 
+.hero__adopted:empty {
+  display: none;
+}
+
+.hero__adopter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  vertical-align: middle;
+  text-transform: none;
+}
+
+.hero__avatar {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.9em;
+  block-size: 1.9em;
+  border-radius: 50%;
+  object-fit: cover;
+  color: var(--ink);
+  background: var(--paper);
+  font-weight: var(--weight-display);
+}
+
 .figure {
   font-size: var(--text-mega);
   font-weight: var(--weight-display);
