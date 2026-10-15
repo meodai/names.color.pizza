@@ -2425,6 +2425,27 @@ a:hover {
   --fy: var(--my);
 }
 
+/* dodging white or black changes nothing: on the lightest colors the foil
+   prints its streaks in, on the darkest it shines them on */
+.swatchcard--holo[data-tone="light"]::before,
+.swatchcard--holo[data-tone="light"] .holo-parrot {
+  filter: invert(1) hue-rotate(180deg) brightness(1.08) contrast(1.5) saturate(1.1);
+  mix-blend-mode: multiply;
+}
+
+.swatchcard--holo[data-tone="dark"]::before,
+.swatchcard--holo[data-tone="dark"] .holo-parrot {
+  mix-blend-mode: screen;
+}
+
+.swatchcard--holo[data-tone="light"].swatchcard--visible::before {
+  opacity: calc(var(--shine) * 0.55);
+}
+
+.swatchcard--holo[data-tone="dark"].swatchcard--visible::before {
+  opacity: calc(var(--shine) * 0.7);
+}
+
 /* four more kinds of foil, all built like the prism: mostly dark, so the
    color stays itself, with narrow streaks where the light catches */
 .swatchcard--holo[data-shine="gold"]::before,

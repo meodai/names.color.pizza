@@ -551,6 +551,8 @@ async function render(hex) {
   void card.offsetWidth;
   card.classList.remove("swatchcard--reset");
   for (const [k, v] of Object.entries(cardVars(hex))) card.style.setProperty(k, v);
+  const glow = wcagLuminance(hex);
+  card.dataset.tone = glow > 0.8 ? "light" : glow < 0.04 ? "dark" : "mid";
   // holo when adopted with 10 or more, else as previewed; the adoption shows below once it's known
   const adoption = (adopted) => page.tilt.holo(adopted?.amount >= 10 ? adopted.shine : previewShine(hex));
   adoption(builtPage?.hex === hex ? builtPage.adopted : null);
