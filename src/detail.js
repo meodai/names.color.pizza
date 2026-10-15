@@ -365,39 +365,36 @@ function fitTitle() {
 }
 
 // the color's card tilts towards the pointer, or with the phone; an adopted
-// color's holo card (?holo previews it) also catches the light, throws sparks
-// from behind while it moves, and left alone sways a little
-const holoPreview = new URLSearchParams(location.search).has("holo") || import.meta.env.VITE_HOLO === "all";
-// the kinds of foil; an adoption rolls one, the preview takes one by the hex or ?holo=<kind>
+// color's card (10 or more) is holo: it catches the light in its own kind of
+// foil, throws sparks from behind while it moves, and left alone sways a little
 const SHINES = ["prism", "galaxy", "gold", "sheen", "lattice"];
-const shineFor = (hex) => {
-  const asked = new URLSearchParams(location.search).get("holo");
-  if (SHINES.includes(asked)) return asked;
+const previewing = new URLSearchParams(location.search).get("holo");
+// ?holo or ?holo=<kind> previews one, VITE_HOLO=all every color, the kind then by the hex
+function previewShine(hex) {
+  if (previewing == null && import.meta.env.VITE_HOLO !== "all") return null;
+  if (SHINES.includes(previewing)) return previewing;
   return SHINES[[...hex].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % SHINES.length];
-};
+}
 const SPARK_COLORS = ["#fff", "hsl(2 100% 80%)", "hsl(52 100% 76%)", "hsl(176 100% 78%)", "hsl(286 100% 80%)"];
-function tiltCard(card, holo) {
+const PARROT_MASK = (() => {
+  const [eye] = parrot.match(/<circle[^>]*>/);
+  const shape = parrot
+    .replace(/<circle[^>]*>/, "")
+    .replace(
+      /<svg([^>]*)>/,
+      `<svg$1><mask id="e"><rect x="0" y="0" width="200" height="200" fill="#fff"/>${eye.replace(/fill="[^"]*"/, 'fill="#000"')}</mask><g mask="url(#e)">`,
+    )
+    .replace("</svg>", "</g></svg>");
+  return `url("data:image/svg+xml,${encodeURIComponent(shape)}")`;
+})();
+
+function tiltCard(card) {
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (calm && !holo) return () => {};
   const hero = card.closest("section") || card;
-  card.classList.add("swatchcard--tilt");
-  card.classList.toggle("swatchcard--holo", holo);
-  const sparks = holo && Object.assign(document.createElement("div"), { className: "holo-sparks" });
-  const art = holo && Object.assign(document.createElement("div"), { className: "holo-parrot" });
-  if (holo) {
-    card.parentElement.prepend(sparks);
-    // the parrot in the foil, its eye cut out
-    const [eye] = parrot.match(/<circle[^>]*>/);
-    const shape = parrot
-      .replace(/<circle[^>]*>/, "")
-      .replace(
-        /<svg([^>]*)>/,
-        `<svg$1><mask id="e"><rect x="0" y="0" width="200" height="200" fill="#fff"/>${eye.replace(/fill="[^"]*"/, 'fill="#000"')}</mask><g mask="url(#e)">`,
-      )
-      .replace("</svg>", "</g></svg>");
-    art.style.setProperty("--parrot", `url("data:image/svg+xml,${encodeURIComponent(shape)}")`);
-    card.querySelector(".swatchcard__upper").append(art);
-  }
+  card.classList.toggle("swatchcard--tilt", !calm);
+  let kind = null;
+  let sparks = null;
+  let art = null;
   let held = false;
   let frame = 0;
   let last = { px: 0.5, py: 0.5, t: 0 };
@@ -405,7 +402,7 @@ function tiltCard(card, holo) {
 
   // from behind an edge, out and away
   function spark() {
-    if (!holo || calm || sparks.childElementCount > 40) return;
+    if (!kind || calm || sparks.childElementCount > 40) return;
     const w = card.offsetWidth;
     const h = card.offsetHeight;
     const side = Math.floor(Math.random() * 4);
@@ -458,19 +455,21 @@ function tiltCard(card, holo) {
     frame = requestAnimationFrame(sway);
   };
 
-  hero.addEventListener("pointermove", (e) => {
-    if (e.pointerType !== "mouse") return;
-    const r = card.getBoundingClientRect();
-    held = true;
-    card.classList.add("is-tilting");
-    move(clamp((e.clientX - r.left) / r.width), clamp((e.clientY - r.top) / r.height));
-  });
-  hero.addEventListener("pointerleave", (e) => {
-    if (e.pointerType !== "mouse") return;
-    held = false;
-    card.classList.remove("is-tilting");
-    if (!holo) set(0.5, 0.5, 0);
-  });
+  if (!calm) {
+    hero.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse") return;
+      const r = card.getBoundingClientRect();
+      held = true;
+      card.classList.add("is-tilting");
+      move(clamp((e.clientX - r.left) / r.width), clamp((e.clientY - r.top) / r.height));
+    });
+    hero.addEventListener("pointerleave", (e) => {
+      if (e.pointerType !== "mouse") return;
+      held = false;
+      card.classList.remove("is-tilting");
+      if (!kind) set(0.5, 0.5, 0);
+    });
+  }
 
   // the phone's tilt, from how it was held when it started
   let level = null;
@@ -481,21 +480,45 @@ function tiltCard(card, holo) {
     card.classList.add("is-tilting");
     move(clamp(0.5 + e.gamma / 50), clamp(0.5 + (e.beta - level) / 50));
   };
-  addEventListener("deviceorientation", tilted);
+  if (!calm) addEventListener("deviceorientation", tilted);
   // iOS only sends it once asked, and asking needs a tap
-  if (typeof DeviceOrientationEvent?.requestPermission === "function")
+  if (!calm && typeof DeviceOrientationEvent?.requestPermission === "function")
     hero.addEventListener("pointerdown", () => DeviceOrientationEvent.requestPermission().catch(() => {}), {
       once: true,
     });
 
-  if (holo && !calm) frame = requestAnimationFrame(sway);
-  return () => {
-    cancelAnimationFrame(frame);
-    removeEventListener("deviceorientation", tilted);
-    if (holo) {
-      sparks.remove();
-      art.remove();
+  // a kind of foil, or null for a plain card
+  function holo(next) {
+    if (next === kind) return;
+    kind = next;
+    card.classList.toggle("swatchcard--holo", !!kind);
+    if (!kind) {
+      delete card.dataset.shine;
+      cancelAnimationFrame(frame);
+      frame = 0;
+      sparks?.remove();
+      art?.remove();
+      sparks = art = null;
+      if (!held) set(0.5, 0.5, 0);
+      return;
     }
+    card.dataset.shine = kind;
+    if (!sparks) {
+      sparks = Object.assign(document.createElement("div"), { className: "holo-sparks" });
+      card.parentElement.prepend(sparks);
+      art = Object.assign(document.createElement("div"), { className: "holo-parrot" });
+      art.style.setProperty("--parrot", PARROT_MASK);
+      card.querySelector(".swatchcard__upper").append(art);
+    }
+    if (!calm && !frame) frame = requestAnimationFrame(sway);
+  }
+
+  return {
+    holo,
+    stop() {
+      holo(null);
+      removeEventListener("deviceorientation", tilted);
+    },
   };
 }
 
@@ -528,7 +551,9 @@ async function render(hex) {
   void card.offsetWidth;
   card.classList.remove("swatchcard--reset");
   for (const [k, v] of Object.entries(cardVars(hex))) card.style.setProperty(k, v);
-  if (holoPreview) card.dataset.shine = shineFor(hex);
+  // holo when adopted with 10 or more, else as previewed; the adoption shows below once it's known
+  const adoption = (adopted) => page.tilt.holo(adopted?.amount >= 10 ? adopted.shine : previewShine(hex));
+  adoption(builtPage?.hex === hex ? builtPage.adopted : null);
   // handed over from the wall: show it at once where it landed, so the page change doesn't show
   let handoff = null;
   try {
@@ -678,6 +703,7 @@ async function render(hex) {
   page.wordsTitle.textContent = wordsTitle(lore);
   page.words.innerHTML = wordsHTML(lore);
   const saved = savedLookup(current.name, slugFor(data, current.name));
+  if (builtPage?.hex !== hex) saved.then((c) => current?.hex === hex && adoption(c?.adopted));
   // the written description, or the made-up one if it's slow or missing: once, so the hero doesn't jump
   if (builtPage?.name !== current.name) {
     const late = setTimeout(() => current?.hex === hex && describe(null), 800);
@@ -1148,8 +1174,8 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     pageLink: q("[data-page-link]"),
     outro: q("[data-outro]"),
   });
-  const untilt = tiltCard(page.card, holoPreview);
-  signal?.addEventListener("abort", untilt);
+  page.tilt = tiltCard(page.card);
+  signal?.addEventListener("abort", () => page.tilt.stop());
 
   q("[data-share]").addEventListener("click", async () => {
     const url = page.pageLink.href;

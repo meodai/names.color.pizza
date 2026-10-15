@@ -243,6 +243,9 @@ let written = 0;
 const added = existsSync(join(DIST, "added.json")) ? JSON.parse(readFileSync(join(DIST, "added.json"), "utf8")) : null;
 const addedDay = (name) => added?.commits[added.names[name]]?.[1] || FIRST_DAY;
 const documents = [];
+// who adopted which color: slug → { by, on, amount, shine, at }
+const ADOPTED = resolve(here, "../adopted.json");
+const adopted = existsSync(ADOPTED) ? JSON.parse(readFileSync(ADOPTED, "utf8")) : {};
 let withArt = 0;
 let withCopy = 0;
 // each name's art list lives on media.color.pizza (lists/<slug>.json), not in
@@ -319,7 +322,7 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(
       "</body>",
       () =>
-        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art?.length ? listURL(slug) : null })}</script>\n  </body>`,
+        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art?.length ? listURL(slug) : null, adopted: adopted[slug] })}</script>\n  </body>`,
     );
   const meaning = meaningHTML(looked);
   if (meaning) {
