@@ -80,7 +80,7 @@ export function bucketed(works) {
 // only a little of it
 export function pickArt(near, hex, count = ART_COUNT) {
   const [L, A, B] = rgbToOklab(hexToRgb(hex));
-  const tiers = [CLOSE * 0.6, CLOSE, CLOSE * 1.6, CLOSE * 2.4].map((radius) => {
+  const tiers = [CLOSE * 0.4, CLOSE * 0.6, CLOSE, CLOSE * 1.6, CLOSE * 2.4].map((radius) => {
     const byWork = new Map();
     for (const [c, w] of near(L, A, B, Math.ceil(radius / CLOSE))) {
       const d = Math.hypot(c[0] - L, c[1] - A, c[2] - B);
