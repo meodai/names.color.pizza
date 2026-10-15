@@ -1095,12 +1095,17 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   window.addEventListener(
     "keydown",
     (e) => {
-      if (e.key !== "Escape" || !opened) return;
-      e.stopImmediatePropagation();
-      closePicture();
+      if (!opened) return;
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        closePicture();
+      } else if ([" ", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.key)) e.preventDefault();
     },
     { capture: true, signal },
   );
+  // the page stays where it is while a picture is open
+  for (const type of ["wheel", "touchmove"])
+    window.addEventListener(type, (e) => opened && e.preventDefault(), { capture: true, passive: false, signal });
   signal?.addEventListener("abort", () => closePicture(true));
 
   window.addEventListener(
