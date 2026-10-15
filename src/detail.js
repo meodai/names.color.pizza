@@ -374,6 +374,16 @@ function holoCard(card) {
   const place = card.parentElement;
   const sparks = Object.assign(document.createElement("div"), { className: "holo-sparks" });
   place.prepend(sparks);
+  // the parrot, a facet per piece of the logo, its eye cut out
+  const [, ex, ey, er] = parrot.match(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/);
+  const art = Object.assign(document.createElement("div"), { className: "holo-parrot" });
+  [...parrot.matchAll(/<path d="([^"]+)"/g)].forEach(([, d], i) => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 12 130 158"><mask id="e"><rect width="200" height="200" fill="#fff"/><circle cx="${ex}" cy="${ey}" r="${er}"/></mask><path d="${d}" mask="url(#e)"/></svg>`;
+    const facet = Object.assign(document.createElement("i"), { className: "holo-facet" });
+    facet.style.cssText = `--m:url("data:image/svg+xml,${encodeURIComponent(svg)}");--a:${((i * 137.5) % 360).toFixed(1)}deg;--k:${((i % 2 ? -1 : 1) * (1.4 + (i % 4) * 0.55)).toFixed(2)}`;
+    art.append(facet);
+  });
+  card.querySelector(".swatchcard__upper").append(art);
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let held = false;
   let frame = 0;
@@ -469,6 +479,7 @@ function holoCard(card) {
     cancelAnimationFrame(frame);
     removeEventListener("deviceorientation", tilted);
     sparks.remove();
+    art.remove();
   };
 }
 
