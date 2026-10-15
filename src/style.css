@@ -913,6 +913,12 @@ a:hover {
   font-feature-settings: "tnum" 1;
 }
 
+@media (max-width: 40rem) {
+  .colophon {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .color-space {
   position: relative;
   overflow: hidden;
