@@ -2434,7 +2434,7 @@ a:hover {
   background-size: 200% 200%;
   background-position: var(--mx) var(--my);
   /* in the corner, as far in as the label's text */
-  mask: url("/logo/cockatoo-fill.svg") right 0.3em bottom 0.3em / 26% no-repeat;
+  mask: url("/logo/cockatoo-fill.svg") left 0.3em bottom 0.3em / 26% no-repeat;
   mix-blend-mode: color-dodge;
   opacity: 0;
 }
