@@ -11,6 +11,7 @@ import ColorDescription from "color-description";
 import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
 import { cardURL } from "./cards.mjs";
+import { documentURI, documentKey, FIRST_DAY } from "../src/standard-site.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const arg = (name, fallback) => {
@@ -238,6 +239,10 @@ const structured = ({ name, hex, url, description, lines }) => ({
 const meta = (attr, key, value) => `<meta ${attr}="${key}" content="${escapeHTML(value)}" />`;
 
 let written = 0;
+// the day each name was added, for its Standard.site record
+const added = existsSync(join(DIST, "added.json")) ? JSON.parse(readFileSync(join(DIST, "added.json"), "utf8")) : null;
+const addedDay = (name) => added?.commits[added.names[name]]?.[1] || FIRST_DAY;
+const documents = [];
 let withArt = 0;
 let withCopy = 0;
 // each name's art list lives on media.color.pizza (lists/<slug>.json), not in
@@ -267,11 +272,14 @@ for (const [i, { name, hex }] of items.entries()) {
   const about = summary(looked);
   const description = clip([said || lines.join(" "), about].filter(Boolean).join(" "), 158);
   const title = `${name}: ${hex} — Color Names`;
+  const day = addedDay(name);
+  documents.push({ key: documentKey(slug, day), slug, name, hex, day, description });
 
   const head = [
     `<title>${escapeHTML(title)}</title>`,
     meta("name", "description", description),
     `<link rel="canonical" href="${url}" />`,
+    `<link rel="site.standard.document" href="${documentURI(slug, day)}" />`,
     meta("property", "og:type", "website"),
     meta("property", "og:title", `${name} (${hex})`),
     meta("property", "og:description", description),
@@ -419,6 +427,12 @@ if (UPLOAD_URL && UPLOAD_KEY && toUpload.length) {
   mkdirSync(LISTS, { recursive: true });
   writeFileSync(join(LISTS, "uploaded.json"), JSON.stringify(listed));
 }
+// what scripts/standard-site.mjs publishes, kept out of the site
+if (!ONLY) {
+  mkdirSync(resolve(here, "../.cache"), { recursive: true });
+  writeFileSync(resolve(here, "../.cache/standard-site.json"), JSON.stringify(documents));
+}
+
 console.log(
   `pages.mjs: ${written} color pages (${withCopy} with the nightly copy, ${withArt} with art, ${uploaded} art lists uploaded${toUpload.length ? `, ${toUpload.length} not` : ""}), ${written} hex forwards, sitemap`,
 );
