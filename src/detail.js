@@ -636,7 +636,7 @@ function addToGallery(hex, items) {
 // An endless strip: each row repeats its own pictures at its own length, so
 // there are no blocks; only the tiles near the window are drawn. The title
 // sits once in a middle row, which runs on from it both ways.
-const strip = { offset: 0, rows: [], title: null, tiles: new Map(), frame: 0 };
+const strip = { offset: 0, source: [], rows: [], title: null, tiles: new Map(), frame: 0 };
 
 function layoutGallery() {
   const n = galleryRows();
@@ -704,7 +704,9 @@ function layoutGallery() {
   seen.observe(page.art);
 }
 
-function measureStrip(rows = strip.rows) {
+// the rows of pictures, measured into tiles at the current size
+function measureStrip(rows = strip.source) {
+  strip.source = rows;
   const gap = parseFloat(getComputedStyle(page.art).rowGap) || 16;
   const row = (page.art.clientHeight - (rows.length - 1) * gap) / rows.length;
   strip.row = row;
