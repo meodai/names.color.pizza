@@ -2955,19 +2955,35 @@ html.is-arriving {
   translate: 0 -50%;
   cursor: pointer;
   background: conic-gradient(
-      hsl(0 50% 50%) 0deg 30deg,
-      hsl(30 50% 50%) 30deg 60deg,
-      hsl(60 50% 50%) 60deg 90deg,
-      hsl(90 50% 50%) 90deg 120deg,
-      hsl(120 50% 50%) 120deg 150deg,
-      hsl(150 50% 50%) 150deg 180deg,
-      hsl(180 50% 50%) 180deg 210deg,
-      hsl(210 50% 50%) 210deg 240deg,
-      hsl(240 50% 50%) 240deg 270deg,
-      hsl(270 50% 50%) 270deg 300deg,
-      hsl(300 50% 50%) 300deg 330deg,
-      hsl(330 50% 50%) 330deg 360deg
+      hsl(0 60% 50%) 0deg 30deg,
+      hsl(30 60% 50%) 30deg 60deg,
+      hsl(60 60% 50%) 60deg 90deg,
+      hsl(90 60% 50%) 90deg 120deg,
+      hsl(120 60% 50%) 120deg 150deg,
+      hsl(150 60% 50%) 150deg 180deg,
+      hsl(180 60% 50%) 180deg 210deg,
+      hsl(210 60% 50%) 210deg 240deg,
+      hsl(240 60% 50%) 240deg 270deg,
+      hsl(270 60% 50%) 270deg 300deg,
+      hsl(300 60% 50%) 300deg 330deg,
+      hsl(330 60% 50%) 330deg 360deg
     );
+}
+
+.wall__picker {
+  animation: wheel 20s linear infinite;
+}
+
+@keyframes wheel {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall__picker {
+    animation: none;
+  }
 }
 
 .wall__picker input {
