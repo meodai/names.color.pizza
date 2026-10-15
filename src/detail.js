@@ -636,7 +636,8 @@ function addToGallery(hex, items) {
 // An endless strip: each row repeats its own pictures at its own length, so
 // there are no blocks; only the tiles near the window are drawn. The title
 // sits once in a middle row, which runs on from it both ways.
-const strip = { offset: 0, source: [], rows: [], title: null, tiles: new Map(), frame: 0 };
+// the tiles and the title ride one track, so a drag moves a single layer
+const strip = { offset: 0, source: [], rows: [], track: null, title: null, tiles: new Map(), frame: 0 };
 
 function layoutGallery() {
   const n = galleryRows();
@@ -663,6 +664,10 @@ function layoutGallery() {
   rows[0].items = rotate(inner.at(-1).items, 2);
   rows.at(-1).items = rotate(inner[0].items, 3);
   page.art.replaceChildren();
+  page.art.classList.remove("is-settled");
+  strip.track = document.createElement("div");
+  strip.track.className = "gallery__track";
+  page.art.append(strip.track);
   strip.tiles = new Map();
   const title = document.createElement("div");
   title.className = "gallery__title";
@@ -675,7 +680,7 @@ function layoutGallery() {
       </div>
     </div>
     <h2 class="display gallery__name">${escapeHTML(current.name)},<br />in pictures.</h2>`;
-  page.art.append(title);
+  strip.track.append(title);
   strip.title = title;
   const shown = new IntersectionObserver(
     ([e]) => {
@@ -697,7 +702,11 @@ function layoutGallery() {
       if (!e.isIntersecting) return;
       seen.disconnect();
       page.art.classList.add("is-in");
-      setTimeout(() => (strip.entered = true), 1300);
+      // landed: flat again, the tiles no longer layers of their own
+      setTimeout(() => {
+        strip.entered = true;
+        page.art.classList.add("is-settled");
+      }, 2100);
     },
     { threshold: 0.25 },
   );
@@ -752,8 +761,8 @@ function* rowTiles(r, k, a, b) {
 }
 
 function drawStrip() {
-  const a = strip.offset - strip.row * 3;
-  const b = strip.offset + page.art.clientWidth + strip.row * 3;
+  const a = strip.offset - strip.row;
+  const b = strip.offset + page.art.clientWidth + strip.row;
   const seen = new Set();
   strip.rows.forEach((r, k) => {
     for (const [key, t, x] of rowTiles(r, k, a, b)) {
@@ -767,12 +776,12 @@ function drawStrip() {
         const reach = Math.hypot(x - strip.offset - page.art.clientWidth / 2, (k - strip.middle) * strip.row);
         const delay = strip.entered ? 0 : 400 + Math.round(Math.min(1, reach / page.art.clientWidth) * 900);
         el.style.cssText = `top:${k * (strip.row + strip.gap)}px;width:${t.w}px;height:${strip.row}px;--d:${delay}ms`;
-        page.art.append(el);
+        el.style.transform = `translateX(${x}px)`;
+        strip.track.append(el);
         const img = el.querySelector("img");
         if (img.complete && img.naturalWidth) img.classList.add("is-loaded");
         strip.tiles.set(key, el);
       }
-      el.style.transform = `translateX(${x - strip.offset}px)`;
     }
   });
   for (const [key, el] of strip.tiles) {
@@ -780,7 +789,7 @@ function drawStrip() {
     el.remove();
     strip.tiles.delete(key);
   }
-  strip.title.style.transform = `translateX(${-strip.offset}px)`;
+  strip.track.style.transform = `translateX(${-strip.offset}px)`;
 }
 
 function moveStrip(dx) {
@@ -1129,6 +1138,11 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       if (page.name.textContent) fitTitle();
       if (gallery.length && strip.title) {
         measureStrip();
+        for (const [key, el] of strip.tiles) {
+          if (opened?.tile === el) continue;
+          el.remove();
+          strip.tiles.delete(key);
+        }
         drawStrip();
       }
     },

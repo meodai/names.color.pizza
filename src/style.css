@@ -512,9 +512,6 @@ a:hover {
   display: flex;
   align-items: center;
   pointer-events: none;
-  transition:
-    opacity 0.5s cubic-bezier(0.3, 0.7, 0, 1),
-    filter 0.5s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
 .gallery__name {
@@ -538,18 +535,34 @@ a:hover {
   background: var(--ink);
 }
 
+.gallery__track {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition:
+    opacity 0.5s cubic-bezier(0.3, 0.7, 0, 1),
+    filter 0.5s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.gallery.is-settled {
+  perspective: none;
+}
+
+.gallery.is-settled .gallery__track {
+  transform-style: flat;
+}
+
 .gallery .tile {
   position: absolute;
   left: 0;
   margin: 0;
   overflow: hidden;
-  will-change: transform;
   opacity: 0;
   translate: 0 0 -160px;
   transition:
     opacity 0.4s ease-out calc(var(--d, 0ms) + 120ms),
-    translate 0.7s cubic-bezier(0.2, 0.75, 0, 1) var(--d, 0ms),
-    filter 0.5s cubic-bezier(0.3, 0.7, 0, 1);
+    translate 0.7s cubic-bezier(0.2, 0.75, 0, 1) var(--d, 0ms);
 }
 
 .gallery.is-in .tile {
@@ -557,11 +570,13 @@ a:hover {
   translate: 0 0 0;
 }
 
-.gallery.is-in.is-behind .tile,
-.gallery.is-behind .gallery__title {
+.gallery.is-settled .tile {
+  translate: none;
+}
+
+.gallery.is-behind .gallery__track {
   filter: blur(10px);
   opacity: 0.55;
-  transition-delay: 0ms;
 }
 
 .tile__open {
