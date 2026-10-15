@@ -441,6 +441,8 @@ function tiltCard(card) {
     card.style.setProperty("--ry", `${((0.5 - py) * 26).toFixed(2)}deg`);
     card.style.setProperty("--shine", shine);
     card.style.setProperty("--tilt", Math.min(1, Math.hypot(px - 0.5, py - 0.5) * 2).toFixed(3));
+    card.parentElement.style.setProperty("--lean-x", `${((px - 0.5) * 8).toFixed(1)}px`);
+    card.parentElement.style.setProperty("--lean-y", `${((py - 0.5) * 8).toFixed(1)}px`);
   };
   // moved by hand or by tilt: the faster, the more sparks
   const move = (px, py) => {
@@ -530,20 +532,32 @@ const PROFILES = {
 const longDate = (day) =>
   new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 
-// "Adopted <date> by" their avatar, or their initial, and handle
-function adoptedHTML({ by, on, at, avatar }) {
-  const a = Object.assign(document.createElement("a"), {
+const handle = (by) => `@${by.replace(/^@/, "")}`;
+const profileLink = ({ by, on }, className) =>
+  Object.assign(document.createElement("a"), {
     href: PROFILES[on]?.(by) || "#",
     target: "_blank",
     rel: "noopener",
-    className: "hero__adopter",
+    className,
   });
-  const face = avatar
-    ? Object.assign(document.createElement("img"), { src: avatar, alt: "", loading: "lazy" })
-    : Object.assign(document.createElement("span"), { textContent: by.replace(/^@/, "")[0]?.toUpperCase() || "?" });
-  face.className = "hero__avatar";
-  a.append(face, `@${by.replace(/^@/, "")}`);
-  return [`Adopted ${longDate(at)} by `, a];
+
+// "Adopted <date> by @handle"
+function adoptedHTML(adopted) {
+  const a = profileLink(adopted, "hero__adopter");
+  a.textContent = handle(adopted.by);
+  return [`Adopted ${longDate(adopted.at)} by `, a];
+}
+
+// their avatar, or their initial, pinned to the card's corner
+function adopterBadge(adopted) {
+  const a = profileLink(adopted, "card-badge");
+  a.setAttribute("aria-label", `Adopted by ${handle(adopted.by)}`);
+  a.append(
+    adopted.avatar
+      ? Object.assign(document.createElement("img"), { src: adopted.avatar, alt: "", loading: "lazy" })
+      : Object.assign(document.createElement("span"), { textContent: handle(adopted.by)[1]?.toUpperCase() || "?" }),
+  );
+  return a;
 }
 
 function placeCard(place = cardPlace()) {
@@ -582,7 +596,10 @@ async function render(hex) {
   const adoptedLine = Object.assign(document.createElement("span"), { className: "hero__adopted" });
   const adoption = (adopted) => {
     page.tilt.holo(adopted?.amount >= HOLO_FROM && adopted.shine ? adopted.shine : previewShine(hex));
-    adoptedLine.replaceChildren(...(adopted?.amount >= ADOPT_FROM ? adoptedHTML(adopted) : []));
+    const shown = adopted?.amount >= ADOPT_FROM;
+    adoptedLine.replaceChildren(...(shown ? adoptedHTML(adopted) : []));
+    card.parentElement.querySelector(".card-badge")?.remove();
+    if (shown) card.parentElement.append(adopterBadge(adopted));
   };
   adoption(builtPage?.hex === hex ? builtPage.adopted : null);
   // handed over from the wall: show it at once where it landed, so the page change doesn't show
