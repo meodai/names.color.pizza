@@ -211,6 +211,24 @@ a:hover {
   object-fit: cover;
 }
 
+/* pressed on last, once the card and its foil are in */
+.card-badge {
+  animation: badge-in 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) 1.8s backwards;
+}
+
+@keyframes badge-in {
+  from {
+    opacity: 0;
+    scale: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-badge {
+    animation: none;
+  }
+}
+
 .figure {
   font-size: var(--text-mega);
   font-weight: var(--weight-display);
