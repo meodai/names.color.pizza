@@ -5,6 +5,7 @@ const CLOSE = 0.05;
 const SHARE = 0.05;
 const MIN_SHARE = 0.03;
 const STRONG = 0.15;
+const FULL = 0.3;
 const ENOUGH = 30;
 const FEW = 12;
 export const ART_COUNT = 100;
@@ -95,8 +96,9 @@ export function pickArt(near, hex, count = ART_COUNT) {
       .map((s) => ({ ...s, score: s.share * (1 - (0.5 * s.best.d) / radius) }))
       .sort((x, y) => y.score - x.score);
   });
+  // at each distance, works mostly of the color if there are enough of them
   const picked =
-    tiers.map((t) => t.filter((s) => s.share >= STRONG)).find((t) => t.length >= ENOUGH) ||
+    tiers.flatMap((t) => [FULL, STRONG].map((min) => t.filter((s) => s.share >= min))).find((t) => t.length >= ENOUGH) ||
     tiers.map((t) => t.filter((s) => s.share >= SHARE)).find((t) => t.length >= FEW) ||
     tiers.at(-1).filter((s) => s.share >= SHARE);
   return picked.slice(0, count).map(({ w: { colors: _colors, ...work }, share, best }) => ({
