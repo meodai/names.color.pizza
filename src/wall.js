@@ -815,6 +815,7 @@ export async function initWall(root) {
     marked = i;
     spot = { i, on: true, t: performance.now() };
     colorPicker.value = items[i].hex;
+    colorPicker.parentElement.style.background = items[i].hex;
     flyTo({ target: posOf(i), dist: distFor(FOCUS_PX) });
     try {
       const url = new URL(location.href);

@@ -2891,6 +2891,17 @@ html.is-arriving {
   overflow: hidden;
   translate: 0 -50%;
   cursor: pointer;
+  background:
+    radial-gradient(closest-side, #fff, rgb(255 255 255 / 0) 45%, rgb(0 0 0 / 0) 60%, #000 140%),
+    conic-gradient(
+      hsl(0 50% 50%),
+      hsl(60 50% 50%),
+      hsl(120 50% 50%),
+      hsl(180 50% 50%),
+      hsl(240 50% 50%),
+      hsl(300 50% 50%),
+      hsl(360 50% 50%)
+    );
 }
 
 .wall__picker input {
@@ -2900,6 +2911,7 @@ html.is-arriving {
   block-size: calc(100% + 1rem);
   padding: 0;
   border: 0;
+  opacity: 0;
   cursor: pointer;
 }
 
