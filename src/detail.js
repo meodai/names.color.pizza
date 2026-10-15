@@ -540,7 +540,7 @@ async function render(hex) {
   const own = exact && import.meta.env.PROD ? new URL(siteURL(`color/${slugFor(data, current.name)}/`)) : location;
   page.pageLink.href = own.href;
   page.pageLink.textContent = `${own.host}${own.pathname}${own.hash}`;
-  page.outro.textContent = "Share it.";
+  page.outro.textContent = "Use it, share it.";
   alternate();
 
   requestAnimationFrame(() =>
