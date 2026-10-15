@@ -3,7 +3,7 @@
   it: 5 or more shows them on the color's page, 10 or more makes its card holo
   in one of the foils, rolled once and kept.
 
-    node scripts/adopt.mjs <slug> --by <handle> --on bluesky|github|x --amount <n>
+    node scripts/adopt.mjs <slug> --by <handle> --on bluesky|github|x|name --amount <n>
 */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -22,8 +22,8 @@ const [slug] = process.argv.slice(2);
 const by = arg("by");
 const on = arg("on");
 const amount = Number(arg("amount"));
-if (!slug || !by || !["bluesky", "github", "x"].includes(on) || !(amount > 0))
-  throw new Error("node scripts/adopt.mjs <slug> --by <handle> --on bluesky|github|x --amount <n>");
+if (!slug || !by || !["bluesky", "github", "x", "name"].includes(on) || !(amount > 0))
+  throw new Error("node scripts/adopt.mjs <slug> --by <handle> --on bluesky|github|x|name --amount <n>");
 if (!existsSync(resolve(here, "../dist/color", slug))) console.warn(`no built page for ${slug}: check the slug`);
 
 // their picture, looked up once: Bluesky's profile, GitHub's avatar; X has none to ask for

@@ -45,7 +45,7 @@ export async function initAdoptPage() {
   const cta = q("[data-cta]");
   cta.href = `${cta.href.split("?")[0]}?client_reference_id=${slug}`;
   cta.textContent = `Adopt ${it.name}`;
-  q("[data-note]").textContent = "From 5, on Stripe. You'll be asked for your Bluesky, GitHub or X handle.";
+  q("[data-note]").textContent = "From 5, on Stripe. You'll be asked how to show you: Bluesky, GitHub, X or just a name.";
   q("[data-close]").href = siteURL(`color/${slug}/`);
 
   const dark = wcagLuminance(it.hex) < 0.5;
@@ -70,7 +70,7 @@ export async function initAdoptPage() {
   const mine = adopted[slug];
   if (mine?.amount >= ADOPT_FROM) {
     q("[data-name]").textContent = `${it.name} is adopted.`;
-    q("[data-lead]").textContent = `${handle(mine.by)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
+    q("[data-lead]").textContent = `${handle(mine.by, mine.on)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
     q("[data-place]").append(adopterBadge(mine));
     q("[data-tiers]").hidden = true;
     cta.textContent = "See the supporters";

@@ -1,5 +1,24 @@
 {
-  "crisis-red": { "by": "meodai", "on": "github", "amount": 10, "shine": "classic", "at": "2026-10-15", "avatar": "https://github.com/meodai.png?size=96" },
-  "aztec-jade": { "by": "meodai", "on": "github", "amount": 5, "at": "2026-10-15", "avatar": "https://github.com/meodai.png?size=96" },
-  "cedar-ridge": { "by": "color.pizza", "on": "bluesky", "amount": 25, "shine": "radiant", "at": "2026-10-14" }
+  "crisis-red": {
+    "by": "meodai",
+    "on": "github",
+    "amount": 10,
+    "shine": "classic",
+    "at": "2026-10-15",
+    "avatar": "https://github.com/meodai.png?size=96"
+  },
+  "aztec-jade": {
+    "by": "Rainbow Pirate",
+    "on": "name",
+    "amount": 12,
+    "shine": "galaxy",
+    "at": "2026-10-15"
+  },
+  "cedar-ridge": {
+    "by": "color.pizza",
+    "on": "bluesky",
+    "amount": 25,
+    "shine": "radiant",
+    "at": "2026-10-14"
+  }
 }

@@ -26,11 +26,14 @@ export async function initSupportersPage() {
   const rows = [...people.values()].sort((x, y) => y.total - x.total);
   list.innerHTML = rows
     .map((p) => {
-      const handle = `@${p.by.replace(/^@/, "")}`;
-      const face = p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" />` : `<span>${esc(handle[1]?.toUpperCase() || "?")}</span>`;
+      const handle = p.on === "name" ? p.by : `@${p.by.replace(/^@/, "")}`;
+      const href = PROFILES[p.on]?.(p.by);
+      const wrap = (cls, inner) =>
+        href ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener">${inner}</a>` : `<span class="${cls}">${inner}</span>`;
+      const face = p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" />` : `<span>${esc(handle.replace(/^@/, "")[0]?.toUpperCase() || "?")}</span>`;
       return `<li class="supporter">
-        <a class="card-badge supporter__face" href="${esc(PROFILES[p.on]?.(p.by) || "#")}" target="_blank" rel="noopener">${face}</a>
-        <a class="supporter__name" href="${esc(PROFILES[p.on]?.(p.by) || "#")}" target="_blank" rel="noopener">${esc(handle)}</a>
+        ${wrap("card-badge supporter__face", face)}
+        ${wrap("supporter__name", esc(handle))}
         <span class="supporter__colors">${p.colors
           .map((c) => `<a class="supporter__color" href="${esc(siteURL(`color/${c.slug}/`))}" style="--c:${esc(c.hex)}">${esc(c.name)}</a>`)
           .join("")}</span>
