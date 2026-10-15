@@ -17,7 +17,7 @@ import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
-import { HOLO_FROM, ADOPT_FROM } from "./shines.js";
+import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
 import { tiltCard, previewShine } from "./tilt.js";
 import { adoptedHTML, adopterBadge } from "./adopter.js";
 
@@ -413,6 +413,9 @@ async function render(hex) {
     if (shown) card.parentElement.append(adopterBadge(adopted));
   };
   adoption(builtPage?.hex === hex ? builtPage.adopted : null);
+  // the bucket knows about adoptions since the last build
+  const slugNow = builtPage?.hex === hex ? builtPage.slug : null;
+  if (slugNow) loadAdoptions().then((all) => current?.hex === hex && all[slugNow] && adoption(all[slugNow]));
   // handed over from the wall: show it at once where it landed, so the page change doesn't show
   let handoff = null;
   try {

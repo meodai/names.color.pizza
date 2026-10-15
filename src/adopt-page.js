@@ -1,7 +1,7 @@
 import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
-import { SHINES, ADOPT_FROM, HOLO_FROM } from "./shines.js";
+import { SHINES, ADOPT_FROM, HOLO_FROM, loadAdoptions } from "./shines.js";
 import { adopterBadge, handle, longDate } from "./adopter.js";
 
 const toLab = converter("lab");
@@ -41,7 +41,11 @@ export async function initAdoptPage() {
   document.title = `Adopt ${it.name} — Color Names`;
   q("[data-name]").textContent = `Adopt ${it.name}.`;
   q("[data-tier5]").textContent = `your name and picture on ${it.name}, and in the README`;
-  q("[data-note]").textContent = `Mention ${it.name} (${it.hex}) in your message.`;
+  // Stripe hands the color back with the payment
+  const cta = q("[data-cta]");
+  cta.href = `${cta.href.split("?")[0]}?client_reference_id=${slug}`;
+  cta.textContent = `Adopt ${it.name}`;
+  q("[data-note]").textContent = "From 5, on Stripe. You'll be asked for your Bluesky, GitHub or X handle.";
   q("[data-close]").href = siteURL(`color/${slug}/`);
 
   const dark = wcagLuminance(it.hex) < 0.5;
@@ -62,16 +66,13 @@ export async function initAdoptPage() {
   requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("swatchcard--visible")));
 
   // taken already: who has it, and where everyone else is
-  const adopted = await fetch(siteURL("adopted.json"))
-    .then((r) => (r.ok ? r.json() : {}))
-    .catch(() => ({}));
+  const adopted = await loadAdoptions();
   const mine = adopted[slug];
   if (mine?.amount >= ADOPT_FROM) {
     q("[data-name]").textContent = `${it.name} is adopted.`;
     q("[data-lead]").textContent = `${handle(mine.by)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
     q("[data-place]").append(adopterBadge(mine));
     q("[data-tiers]").hidden = true;
-    const cta = q(".adopt__cta");
     cta.textContent = "See the supporters";
     cta.href = siteURL("supporters/");
     cta.removeAttribute("target");

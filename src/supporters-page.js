@@ -1,4 +1,5 @@
-import { siteURL } from "./names.js";
+import { getList, siteURL, slugsOf } from "./names.js";
+import { loadAdoptions } from "./shines.js";
 
 const PROFILES = {
   bluesky: (by) => `https://bsky.app/profile/${by}`,
@@ -10,16 +11,16 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 // one row per person, by everything they gave, with the colors they adopted
 export async function initSupportersPage() {
   const list = document.querySelector("[data-supporters]");
-  const adopted = await fetch(siteURL("adopted.json"))
-    .then((r) => (r.ok ? r.json() : {}))
-    .catch(() => ({}));
+  const [adopted, data] = await Promise.all([loadAdoptions(), getList("default")]);
+  const slugs = slugsOf(data.items);
+  const names = Object.fromEntries(data.items.map((it) => [slugs.get(it.name), it]));
   const people = new Map();
   for (const [slug, a] of Object.entries(adopted)) {
     const key = `${a.on}:${a.by}`;
     const p = people.get(key) || { ...a, total: 0, colors: [] };
     p.total += a.amount;
     p.avatar ||= a.avatar;
-    p.colors.push({ slug, name: a.name || slug, hex: a.hex || "#888" });
+    p.colors.push({ slug, name: names[slug]?.name || slug, hex: names[slug]?.hex || "#888" });
     people.set(key, p);
   }
   const rows = [...people.values()].sort((x, y) => y.total - x.total);
