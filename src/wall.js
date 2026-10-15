@@ -916,14 +916,14 @@ export async function initWall(root) {
 
   let pending = null;
   let slugs = null;
-  // the name's own address, so a copied link previews; the hash keeps the color
-  const toOwnURL = (it) => {
+  // the closest name's own address, so a copied link previews; the hash keeps the color
+  const toOwnURL = (it, hex = it.hex) => {
     if (!import.meta.env.PROD) return;
     slugs ??= getList("default").then((d) => slugsOf(d.items));
     slugs.then((s) => {
       const slug = s.get(it.name);
-      if (slug && location.hash === `#${it.hex.slice(1)}`)
-        history.replaceState(history.state, "", `${new URL(`${slug}/`, colorPageURL).href}#${it.hex.slice(1)}`);
+      if (slug && location.hash === `#${hex.slice(1)}`)
+        history.replaceState(history.state, "", `${new URL(`${slug}/`, colorPageURL).href}#${hex.slice(1)}`);
     });
   };
 
@@ -1019,6 +1019,8 @@ export async function initWall(root) {
       history.replaceState({ colorDepth: colorPage.depth + 1 }, "");
     }
     colorPage.depth = history.state.colorDepth;
+    // a color picked on the page: its name in the address too
+    toOwnURL(items[nearest(colorPage.hex)], colorPage.hex);
   });
 
   function closeColorPage() {
