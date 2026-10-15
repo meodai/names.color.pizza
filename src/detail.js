@@ -813,7 +813,7 @@ function sourceHTML(it) {
 const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" aria-label="Close"></button>
   <figure class="lightbox__figure">
     <div class="lightbox__frame">
-      <span class="lightbox__mat"></span>
+    <span class="lightbox__mat"></span>
       <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
       ${it.palette?.length ? `<div class="lightbox__palette">${paletteHTML(it.palette, it.color)}</div>` : ""}
     </div>
@@ -837,7 +837,7 @@ function openPicture(tile, it) {
   (page.embedded ? page.root : document.body).append(box);
   const frame = box.querySelector(".lightbox__frame");
   const img = frame.querySelector("img");
-  const mat = frame.querySelector(".lightbox__mat");
+  const mat = box.querySelector(".lightbox__mat");
   const info = box.querySelector(".lightbox__info");
   // around the picture's center, not the frame's: the palette sits below it
   const fly = () => {
