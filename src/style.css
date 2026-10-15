@@ -512,6 +512,9 @@ a:hover {
   display: flex;
   align-items: center;
   pointer-events: none;
+  transition:
+    opacity 0.5s cubic-bezier(0.3, 0.7, 0, 1),
+    filter 0.5s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
 .gallery__name {
@@ -554,7 +557,8 @@ a:hover {
   translate: 0 0 0;
 }
 
-.gallery.is-in.is-behind .tile {
+.gallery.is-in.is-behind .tile,
+.gallery.is-behind .gallery__title {
   filter: blur(10px);
   opacity: 0.55;
   transition-delay: 0ms;
