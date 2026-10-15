@@ -1597,6 +1597,12 @@ export async function initWall(root) {
       if (on) {
         thumb.style.setProperty("--x", `${b.offsetLeft}px`);
         thumb.style.setProperty("--w", `${b.offsetWidth}px`);
+        // too narrow for every model: the chosen one in the middle, its neighbors in reach
+        if (picker.scrollWidth > picker.clientWidth)
+          picker.scrollTo({
+            left: b.offsetLeft + b.offsetWidth / 2 - picker.clientWidth / 2,
+            behavior: reduceMotion ? "auto" : "smooth",
+          });
       }
     });
   }

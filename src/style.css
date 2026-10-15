@@ -3598,9 +3598,18 @@ html.is-arriving {
     box-sizing: border-box;
   }
 
+  .wall__models {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .wall__models::-webkit-scrollbar {
+    display: none;
+  }
+
   .wall__models button {
-    flex: 1;
-    padding-inline: 0.4rem;
+    flex: 1 0 auto;
+    padding-inline: 0.6rem;
   }
 
   .wall__pick-list,
