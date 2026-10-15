@@ -5,6 +5,7 @@ import {
   rgbToOklab,
   oklchString,
   normalizeHex,
+  loadedList,
   getList,
   siteURL,
   cardPlace,
@@ -405,11 +406,22 @@ async function render(hex) {
     document.documentElement.classList.add("is-arriving");
     requestAnimationFrame(() => requestAnimationFrame(arrived));
   }
-  // the name, when it's known before the list is: handed over, or this page's own
-  const known = handedOver ? handoff.name : builtPage?.hex === hex ? builtPage.name : "";
+  // the name as soon as it's known: handed over, this page's own, or from the list loaded before
+  let known = handedOver ? handoff.name : builtPage?.hex === hex ? builtPage.name : "";
+  let approx = false;
+  const loaded = !known && loadedList("default");
+  if (loaded) {
+    const exact = loaded.byHex.get(hex);
+    known = (exact || closestAny(loaded, hex).item).name;
+    approx = !exact;
+  } else if (!known && builtPage && !page.embedded) {
+    // an unnamed color is sent to its closest name's page
+    known = builtPage.name;
+    approx = true;
+  }
   current = { hex };
   page.value.textContent = hex;
-  page.cardName.textContent = known;
+  page.cardName.textContent = known && approx ? `≈ ${known}` : known;
   page.name.textContent = known || hex;
   fitTitle();
   page.intro.replaceChildren();

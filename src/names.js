@@ -156,10 +156,19 @@ function prepare(colors) {
 }
 
 const prepared = new Map();
+const ready = new Map();
 export const getList = (key) => {
-  if (!prepared.has(key)) prepared.set(key, loadList(key).then(prepare));
+  if (!prepared.has(key))
+    prepared.set(
+      key,
+      loadList(key)
+        .then(prepare)
+        .then((d) => (ready.set(key, d), d)),
+    );
   return prepared.get(key);
 };
+// the list if it has loaded already, so a name can show without waiting a frame
+export const loadedList = (key) => ready.get(key);
 
 // own cell first, then only neighbors that could still hold something closer
 const NEIGHBORS = [0, -1, 1];
