@@ -2429,8 +2429,7 @@ a:hover {
   opacity: 0;
 }
 
-/* the parrot in the foil, a piece of it per facet, each catching the light
-   at its own angle in the card's own color; faint face on, bright tilted */
+/* the parrot in the foil: faint face on, bright when tilted */
 .holo-parrot {
   position: absolute;
   z-index: 2;
@@ -2439,13 +2438,21 @@ a:hover {
   inline-size: 20%;
   aspect-ratio: 130 / 158;
   pointer-events: none;
+  background: repeating-linear-gradient(
+    calc(-24deg + var(--rx) * 2),
+    hsl(2 100% 80%) 0%,
+    hsl(52 100% 76%) 6%,
+    hsl(98 100% 76%) 12%,
+    hsl(176 100% 78%) 18%,
+    hsl(228 100% 82%) 24%,
+    hsl(286 100% 80%) 30%,
+    hsl(2 100% 80%) 36%
+  );
+  background-size: 200% 200%;
+  background-position: var(--mx) var(--my);
+  mask: var(--parrot) 0 0 / 100% 100% no-repeat;
+  mix-blend-mode: color-dodge;
   opacity: 0;
-}
-
-.holo-parrot svg {
-  display: block;
-  inline-size: 100%;
-  block-size: 100%;
 }
 
 /* the foil comes in last, once the card has built up, then follows the light */
@@ -2456,7 +2463,7 @@ a:hover {
 }
 
 .swatchcard--holo.swatchcard--visible .holo-parrot {
-  opacity: calc(var(--shine) * (0.35 + var(--tilt, 0)));
+  opacity: calc(var(--shine) * (0.18 + var(--tilt, 0) * 1.1));
   animation: holo-in 0.7s ease calc(var(--anim-appear-duration) * 0.95) backwards;
 }
 
