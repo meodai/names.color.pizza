@@ -446,6 +446,31 @@ if (UPLOAD_URL && UPLOAD_KEY && toUpload.length) {
   mkdirSync(LISTS, { recursive: true });
   writeFileSync(join(LISTS, "uploaded.json"), JSON.stringify(listed));
 }
+// the adoptions with each color's name and hex, for the adopt and supporters pages
+const bySlug = new Map(items.map(({ name, hex }) => [slugs.get(name), { name, hex }]));
+writeFileSync(
+  join(DIST, "adopted.json"),
+  JSON.stringify(Object.fromEntries(Object.entries(adopted).map(([slug, a]) => [slug, { ...a, ...bySlug.get(slug) }]))),
+);
+
+// the adopt page's numbers as they are at build time, worded loosely when a source doesn't answer
+const ADOPT_PAGE = join(DIST, "adopt", "index.html");
+if (existsSync(ADOPT_PAGE)) {
+  const json = (url) =>
+    fetch(url, { headers: { "user-agent": "names.color.pizza build" } })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
+  const stars = (await json("https://api.github.com/repos/meodai/color-names"))?.stargazers_count;
+  const npm = (await json("https://api.npmjs.org/downloads/point/last-year/color-name-list"))?.downloads;
+  const millions = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(/\.0$/, "")} million` : n.toLocaleString("en-US"));
+  writeFileSync(
+    ADOPT_PAGE,
+    readFileSync(ADOPT_PAGE, "utf8")
+      .replaceAll("{{stars}}", stars ? stars.toLocaleString("en-US") : "Thousands of")
+      .replaceAll("{{npmYear}}", npm ? millions(npm) : "Millions of"),
+  );
+}
+
 // what scripts/standard-site.mjs publishes, kept out of the site
 if (!ONLY) {
   mkdirSync(resolve(here, "../.cache"), { recursive: true });
