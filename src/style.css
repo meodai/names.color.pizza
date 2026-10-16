@@ -489,6 +489,25 @@ a:hover {
   background: var(--fg);
 }
 
+/* a section's link, beside its heading once you're over it */
+.color-page [id] {
+  scroll-margin-top: var(--space-m);
+}
+
+.anchor {
+  margin-inline-start: 0.25em;
+  color: inherit;
+  font-weight: 300;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+h2:hover > .anchor,
+.anchor:focus-visible {
+  opacity: 0.35;
+}
+
 .color-page .footer .footer__about {
   max-width: 34ch;
 }

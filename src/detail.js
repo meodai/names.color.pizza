@@ -974,12 +974,39 @@ function arrive() {
   requestAnimationFrame(() => requestAnimationFrame(arrived));
 }
 
+// every section a place to link to: a # beside its heading, and a link with one
+// scrolls there once that section has its content (most arrive a moment later)
+function anchors(root, signal) {
+  for (const el of root.querySelectorAll("section[id], footer[id], h2[id]")) {
+    const h = el.matches("h2") ? el : el.querySelector("h2");
+    if (!h) continue;
+    // headings whose text is set later lose it, so it comes back each time
+    const add = () =>
+      h.querySelector(".anchor") ||
+      h.append(Object.assign(document.createElement("a"), { className: "anchor", href: `#${el.id}`, textContent: "#", ariaLabel: "Link to this part" }));
+    add();
+    const keep = new MutationObserver(add);
+    keep.observe(h, { childList: true });
+    signal?.addEventListener("abort", () => keep.disconnect());
+  }
+  const id = decodeURIComponent(location.hash.slice(1));
+  const target = /^[a-z-]+$/.test(id) && root.querySelector(`#${id}`);
+  if (!target) return;
+  const go = () => !target.closest("[hidden]") && (target.scrollIntoView({ block: "start" }), true);
+  if (go()) return;
+  const watch = new MutationObserver(() => go() && watch.disconnect());
+  watch.observe(root.body || root, { attributes: true, attributeFilter: ["hidden"], subtree: true });
+  setTimeout(() => watch.disconnect(), 8000);
+  signal?.addEventListener("abort", () => watch.disconnect());
+}
+
 export function initDetailPage(root = document, { embedded = false, signal, onClose } = {}) {
   page.root = root;
   page.embedded = embedded;
 
   const q = (s) => root.querySelector(s);
   showVersion(root);
+  anchors(root, signal);
   Object.assign(page, {
     card: q("[data-card]"),
     place: q("[data-place]"),
