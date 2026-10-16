@@ -659,14 +659,16 @@ a:hover {
   text-overflow: ellipsis;
 }
 
+/* the label sits in the middle of its strip */
 .supporter__color b {
-  padding-block-start: 0.3em;
+  margin-block-start: auto;
   font-size: 0.62rem;
   font-weight: 700;
   font-feature-settings: "tnum" 1;
 }
 
 .supporter__color span {
+  margin-block-end: auto;
   font-size: 0.45rem;
   font-weight: 300;
 }
