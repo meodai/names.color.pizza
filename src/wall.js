@@ -106,6 +106,10 @@ const NEAR_MS = 260;
 const NEAR_SLOTS = 16;
 // a card's name strip slides out under it, then its name fades in
 const STRIP_MS = 200;
+// camera speed (share of its distance moved, plus radians turned, per second) past which
+// names stay away until it has been slower for CALM_MS
+const RUSH = 1.2;
+const CALM_MS = 160;
 const FOCUS_PX = 230;
 
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
@@ -593,6 +597,22 @@ export async function initWall(root) {
   const showing = new Set();
   const stripAnim = new Map();
   let hoverI = -1;
+  let lastEye = null;
+  let lastFwd = null;
+  let calmSince = 0;
+  let rushing = false;
+  function trackSpeed(time, dt) {
+    if (lastEye && dt > 0) {
+      const move = Math.hypot(...sub(cam.eye, lastEye)) / Math.max(cam.dist, MIN_DIST);
+      const turn = Math.acos(clamp(dot(cam.fwd, lastFwd), -1, 1));
+      if (((move + turn) * 1000) / dt > RUSH) {
+        rushing = true;
+        calmSince = time;
+      } else if (rushing && time - calmSince > CALM_MS) rushing = false;
+    }
+    lastEye = cam.eye;
+    lastFwd = cam.fwd;
+  }
   let stripsOf = draw;
   function trackStrips(time) {
     if (stripsOf !== draw) {
@@ -654,7 +674,7 @@ export async function initWall(root) {
   const delta = { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0 };
   const moving = () =>
     Math.abs(delta.yaw) + Math.abs(delta.pitch) + Math.abs(delta.zoom) > 1e-5 || Math.hypot(...delta.pan) > 1e-4;
-  const stopMoving = () => Object.assign(delta, { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0, anchor: null, dir: null });
+  const stopMoving = () => Object.assign(delta, { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0 });
   let idle = !reduceMotion;
   let lastTime = 0;
   let marked = -1;
@@ -775,12 +795,13 @@ export async function initWall(root) {
     }
 
     update();
+    trackSpeed(time, dt);
     const fadingNear = trackNear(time);
     const stripping = textInGL() && trackStrips(time);
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping) request();
+    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing) request();
     else lastTime = 0;
   }
 
@@ -1283,32 +1304,15 @@ export async function initWall(root) {
     delta.pan = add(delta.pan, add(scale(cam.right, -dx * k), scale(cam.up, dy * k)));
   }
 
-  // toward what's under the cursor (or between the fingers): the card there, else the
-  // point at the target's depth
-  const zoom = (logFactor, sx, sy) => {
+  const zoom = (logFactor) => {
     delta.zoom += logFactor;
-    if (sx === undefined) return;
-    const x = (sx - view.w / 2) / cam.fpx;
-    const y = (view.h / 2 - sy) / cam.fpx;
-    const dir = norm(add(cam.fwd, add(scale(cam.right, x), scale(cam.up, y))));
-    // with no card there, toward the middle as before
-    const i = cellsMix > 0.5 ? -1 : cardAt(sx, sy);
-    if (i < 0) {
-      delta.anchor = delta.dir = null;
-      return;
-    }
-    delta.anchor = add(cam.eye, scale(dir, dot(sub(posOf(i), cam.eye), cam.fwd) / dot(dir, cam.fwd)));
-    delta.dir = dir;
   };
-  // scaled around the anchor, so the point under the cursor stays put; at the closest
-  // the camera orbits from, it flies on through instead of stopping
+  // toward the middle of the view; at the closest the camera orbits from, it flies on
+  // through instead of stopping
   function zoomBy(k) {
-    // out, it backs straight away, so the shape comes back into the middle
-    const P = k < 1 ? (delta.anchor ?? cam.target) : cam.target;
     const kk = clamp(k, MIN_DIST / cam.dist, MAX_DIST / cam.dist);
-    cam.target = add(P, scale(sub(cam.target, P), kk));
     cam.dist *= kk;
-    if (k < kk) cam.target = add(cam.target, scale(delta.dir ?? cam.fwd, -Math.log(k / kk) * THROUGH));
+    if (k < kk) cam.target = add(cam.target, scale(cam.fwd, -Math.log(k / kk) * THROUGH));
     // never further out than a little past the shape
     const { lo, hi } = boundsOf(model);
     cam.target = cam.target.map((v, j) => clamp(v, lo[j] - 20, hi[j] + 20));
@@ -1373,8 +1377,7 @@ export async function initWall(root) {
       const mx = (a.x + b.x) / 2;
       const my = (a.y + b.y) / 2;
       pan(mx - pinch.x, my - pinch.y);
-      const rect = canvas.getBoundingClientRect();
-      zoom(Math.log(pinch.d / d), mx - rect.left, my - rect.top);
+      zoom(Math.log(pinch.d / d));
       Object.assign(pinch, { d, x: mx, y: my });
     }
     request();
@@ -1451,8 +1454,7 @@ export async function initWall(root) {
       dropSpot();
       tip.hidden = true;
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? view.h : 1;
-      const rect = canvas.getBoundingClientRect();
-      zoom(e.deltaY * unit * (e.ctrlKey ? 0.01 : 0.0015), e.clientX - rect.left, e.clientY - rect.top);
+      zoom(e.deltaY * unit * (e.ctrlKey ? 0.01 : 0.0015));
       request();
     },
     { passive: false },
@@ -1551,8 +1553,11 @@ export async function initWall(root) {
           textsFor = draw;
         }
         // a name stays a little below the size it came at, so it doesn't flicker at the edge
-        const named = onScreen(LABEL_PX * 0.85, texts.slots).filter((c) => c.x1 - c.x0 >= LABEL_PX || showing.has(c.i));
-        if (hoverI >= 0 && cellsMix <= 0.5 && !named.some((c) => c.i === hoverI)) named.unshift({ i: hoverI });
+        // a fast camera leaves the names away until it slows down
+        const named = rushing
+          ? []
+          : onScreen(LABEL_PX * 0.85, texts.slots).filter((c) => c.x1 - c.x0 >= LABEL_PX || showing.has(c.i));
+        if (hoverI >= 0 && !rushing && cellsMix <= 0.5 && !named.some((c) => c.i === hoverI)) named.unshift({ i: hoverI });
         texts.draw(cam, dpr, canvas, named, items, positions, { at: NEAR_AT, ids: nearIds, alphas: nearAlphas }, draw.strips);
       }
       if (leaving) leaving(cam, dpr, { clear: false, keepAll: listShift?.leave ?? 0 });
