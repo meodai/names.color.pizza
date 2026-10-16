@@ -1,5 +1,5 @@
 // Small drawings beside "On screen", "In print" and "As light", as tall as their label,
-// in the label's color: three bands for red, green and blue; four dithered dots for cyan,
+// in the label's color: three cells for red, green and blue; four dithered dots for cyan,
 // magenta, yellow and black; a thermometer for how warm the color is as light.
 
 // all three as wide as the four dots of print
@@ -7,16 +7,19 @@ const WIDTH = 51;
 const svg = (w, body) =>
   `<svg class="mix-viz" viewBox="0 0 ${w} 12" width="${w}" height="12" aria-hidden="true" shape-rendering="crispEdges">${body}</svg>`;
 
-// red, green and blue, 0–1 each: three long bands stacked without a gap, each filled from the left
+// red, green and blue, 0–1 each: three cells side by side in one box, a line between them,
+// each filled from its left edge
 export function screenViz(rgb) {
-  const len = WIDTH - 1;
+  const cell = (WIDTH - 1) / 3;
   return svg(
     WIDTH,
-    `<rect x="0.5" y="0.5" width="${len}" height="11" fill="none" stroke="currentColor"/>` +
+    `<rect x="0.5" y="0.5" width="${WIDTH - 1}" height="11" fill="none" stroke="currentColor"/>` +
+      `<path d="M${(cell + 0.5).toFixed(1)} 0v12M${(2 * cell + 0.5).toFixed(1)} 0v12" stroke="currentColor"/>` +
       rgb
         .map((v, i) => {
-          const w = Math.round(v * (len - 1));
-          return w ? `<rect x="1" y="${1 + i * 10 / 3}" width="${w}" height="${10 / 3}" fill="currentColor"/>` : "";
+          const x = Math.round(i * cell) + 1;
+          const w = Math.round(v * (Math.round((i + 1) * cell) - x));
+          return w ? `<rect x="${x}" y="1" width="${w}" height="10" fill="currentColor"/>` : "";
         })
         .join(""),
   );
