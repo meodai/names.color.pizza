@@ -20,6 +20,19 @@ export async function initSupportersPage() {
     people.set(key, p);
   }
   const rows = [...people.values()].sort((x, y) => y.total - x.total);
+  // nobody yet: the first place, waiting
+  if (!rows.length) {
+    document.querySelector("[data-lead]").textContent =
+      "Nobody yet. Become the honourable first patron: your name at the top of this list, and on the color you choose.";
+    document.querySelector("[data-cta]").textContent = "Be the first";
+    list.innerHTML = `<li class="supporter supporter--ghost" aria-hidden="true">
+        <span class="supporter__rank">#1</span>
+        <span class="card-badge supporter__face"><span>?</span></span>
+        <span class="supporter__name">You?</span>
+        <span class="supporter__colors">${[0.4, 1.3, 0.9].map((r) => `<i class="supporter__color" style="--r:${r}"><i></i></i>`).join("")}</span>
+      </li>`;
+    return;
+  }
   // a steady lean per color, so a reload doesn't reshuffle the stack
   const lean = (slug) => ([...slug].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % 1000) / 500;
   list.innerHTML = rows

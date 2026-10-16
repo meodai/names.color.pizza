@@ -544,6 +544,30 @@ a:hover {
   font-weight: 300;
 }
 
+/* the empty first place: outlines where a patron and their colors will be */
+.supporter--ghost .supporter__face {
+  border: 2px dashed currentColor;
+  background: transparent;
+  color: inherit;
+}
+
+.supporter--ghost .supporter__name {
+  opacity: 0.6;
+}
+
+.supporter--ghost .supporter__color {
+  block-size: 5.6rem;
+  margin-inline-end: -0.6rem;
+  border: 2px dashed rgb(255 255 255 / 0.5);
+  color: rgb(255 255 255 / 0.6);
+  background: transparent;
+  box-shadow: none;
+}
+
+.supporter--ghost .supporter__color i {
+  background: transparent;
+}
+
 .supporter__color:hover,
 .supporter__color:focus-visible {
   z-index: 1;
