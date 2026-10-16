@@ -17,7 +17,7 @@ import { foilSVG, seeded, SHARE, inkOn } from "../src/share-card.js";
 const here = dirname(fileURLToPath(import.meta.url));
 const FONTS = join(here, "fonts");
 const LIST = resolve(here, "../color-names/src/colornames.csv");
-const ADOPTED = process.env.ADOPTED_URL || "https://media.color.pizza/data/adopted.json";
+const ADOPTED = process.env.ADOPTED_URL || `https://media.color.pizza/data/adopted.json?t=${Date.now()}`;
 const { UPLOAD_URL, UPLOAD_KEY } = process.env;
 
 const { W, H, STRIP, PAD, GAP, LOGO, FACE } = SHARE;

@@ -247,7 +247,7 @@ const documents = [];
 // worker keeps it; adopted.json in the repo only when that can't be read
 const ADOPTED = resolve(here, "../adopted.json");
 const adopted =
-  (await fetch("https://media.color.pizza/data/adopted.json", { cache: "no-store" })
+  (await fetch(`https://media.color.pizza/data/adopted.json?t=${Date.now()}`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : r.status === 404 ? {} : null))
     .catch(() => null)) ?? (existsSync(ADOPTED) ? JSON.parse(readFileSync(ADOPTED, "utf8")) : {});
 // a color's link preview comes through the worker: its adopted card once there is one

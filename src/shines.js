@@ -20,6 +20,7 @@ export const ADOPTIONS = LIVE
   ? "https://media.color.pizza/data/adopted.json"
   : "https://color-names-upload.cloudflare-54bbeb.workers.dev/adoptions-test";
 export const loadAdoptions = () =>
-  fetch(ADOPTIONS, { cache: "no-cache" })
+  // the edge would serve an old copy for hours: a fresh address every few seconds
+  fetch(`${ADOPTIONS}${ADOPTIONS.includes("?") ? "&" : "?"}t=${Math.floor(Date.now() / 5000)}`, { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : {}))
     .catch(() => ({}));
