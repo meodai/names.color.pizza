@@ -5208,7 +5208,7 @@ html.is-arriving {
 
 /* the list runs under the header; only its start leaves room for it */
 .az__list {
-  --az-top: calc(var(--bar-h) + var(--space-s) * 2);
+  --az-top: calc(var(--bar-h) + var(--space-xs));
   position: relative;
   flex: 1;
   overflow-y: auto;
@@ -5226,7 +5226,7 @@ html.is-arriving {
 
 .az__row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-s);
   block-size: 64px;
@@ -5235,7 +5235,6 @@ html.is-arriving {
   color: var(--ink);
   background: var(--c);
   text-decoration: none;
-  line-height: 64px;
 }
 
 .az__row.is-dark {
@@ -5253,7 +5252,7 @@ html.is-arriving {
 
 .az__row span {
   flex: none;
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: var(--weight-label);
   font-feature-settings: "tnum" 1;
   text-transform: uppercase;
