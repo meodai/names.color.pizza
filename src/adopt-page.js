@@ -23,12 +23,67 @@ function closest(data, hex) {
   return best;
 }
 
-// the color comes as ?c=<slug> or #<hex>; its card shows one of the foils it could get
+const WORKER = "https://color-names-upload.cloudflare-54bbeb.workers.dev";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Stripe sends the buyer back with their checkout, its webhook may land a moment later
+async function adoptedBy(session) {
+  for (let i = 0; i < 15; i++) {
+    const found = await fetch(`${WORKER}/adopted?session=${encodeURIComponent(session)}`)
+      .then((r) => r.json())
+      .catch(() => ({}));
+    if (found.slug) return found;
+    await sleep(2000);
+  }
+  return null;
+}
+
+function shareRow(q, it, slug) {
+  const url = `https://names.color.pizza/color/${slug}/`;
+  const text = `I adopted ${it.name} on Color Names.`;
+  q("[data-share-bsky]").href = `https://bsky.app/intent/compose?text=${encodeURIComponent(`${text} ${url}`)}`;
+  q("[data-share-x]").href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  q("[data-share-page]").href = siteURL(`color/${slug}/`);
+  q("[data-share-row]").hidden = false;
+  const cta = q("[data-cta]");
+  cta.textContent = "Share it";
+  cta.href = url;
+  cta.removeAttribute("target");
+  cta.addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${it.name} — Color Names`, text, url });
+      } catch {} // dismissed
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      cta.textContent = "Link copied";
+      setTimeout(() => (cta.textContent = "Share it"), 1500);
+    } catch {} // clipboard blocked
+  });
+}
+
+// the color comes as ?c=<slug> or #<hex>, or after paying as ?session=<checkout>;
+// its card shows one of the foils it could get
 export async function initAdoptPage() {
   const q = (s) => document.querySelector(s);
-  const data = await getList("default");
+  const session = new URLSearchParams(location.search).get("session");
+  if (session) {
+    q("[data-name]").textContent = "Thank you.";
+    q("[data-lead]").textContent = "Finding your color…";
+    q("[data-tiers]").hidden = true;
+    q("[data-act]").hidden = true;
+  }
+  const [data, bought] = await Promise.all([getList("default"), session ? adoptedBy(session) : null]);
   const slugs = slugsOf(data.items);
-  const asked = new URLSearchParams(location.search).get("c");
+  if (session && !bought) {
+    q("[data-place]").hidden = true;
+    q("[data-lead]").textContent = "Your payment went through. Your color shows up on its page in a minute or two.";
+    return;
+  }
+  const asked = bought?.slug || new URLSearchParams(location.search).get("c");
   const hex = normalizeHex(location.hash.slice(1));
   const it = asked ? data.items.find((i) => slugs.get(i.name) === asked) : hex ? closest(data, hex) : null;
   const card = q("[data-card]");
@@ -66,17 +121,25 @@ export async function initAdoptPage() {
   requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("swatchcard--visible")));
 
   // taken already: who has it, and where everyone else is
-  const adopted = await loadAdoptions();
-  const mine = adopted[slug];
+  const mine = bought || (await loadAdoptions())[slug];
   if (mine?.amount >= ADOPT_FROM) {
-    q("[data-name]").textContent = `${it.name} is adopted.`;
-    q("[data-lead]").textContent = `${handle(mine.by, mine.on)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
     q("[data-place]").append(adopterBadge(mine));
     q("[data-tiers]").hidden = true;
+    q("[data-act]").hidden = false;
+    q("[data-note]").textContent = "";
+    tilt.holo(mine.amount >= HOLO_FROM && mine.shine ? mine.shine : null);
+    if (bought) {
+      q("[data-name]").textContent = `You adopted ${it.name}.`;
+      document.title = `You adopted ${it.name} — Color Names`;
+      q(".hero__stats").hidden = true;
+      q("[data-lead]").textContent = `Thank you! ${it.name} carries your name from today, for everyone to see.`;
+      shareRow(q, it, slug);
+      return;
+    }
+    q("[data-name]").textContent = `${it.name} is adopted.`;
+    q("[data-lead]").textContent = `${handle(mine.by, mine.on)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
     cta.textContent = "See the supporters";
     cta.href = siteURL("supporters/");
     cta.removeAttribute("target");
-    q("[data-note]").textContent = "";
-    tilt.holo(mine.amount >= HOLO_FROM && mine.shine ? mine.shine : null);
   }
 }

@@ -250,6 +250,35 @@ a:hover {
   scale: 1.04;
 }
 
+.adopt__share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: var(--space-s) 0 0;
+}
+
+.adopt__act[hidden],
+.adopt__share[hidden] {
+  display: none;
+}
+
+.adopt__share a {
+  padding: 0.55rem 1.1rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.adopt__share a:hover,
+.adopt__share a:focus-visible {
+  color: var(--ink);
+  background: var(--paper);
+}
+
 .adopt__note {
   font-size: var(--text-xs);
   opacity: 0.75;
