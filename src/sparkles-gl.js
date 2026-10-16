@@ -146,14 +146,25 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
       gl.uniform1f(u.glint, cam.glint || 0);
       gl.uniform1f(u.px, 30 * dpr);
       gl.uniform2f(u.corner, W * 0.42, H * 0.44);
+      // leave the GL as found: the cards and their names blend their own way
+      const was = {
+        blend: gl.isEnabled(gl.BLEND),
+        src: gl.getParameter(gl.BLEND_SRC_RGB),
+        dst: gl.getParameter(gl.BLEND_DST_RGB),
+        srcA: gl.getParameter(gl.BLEND_SRC_ALPHA),
+        dstA: gl.getParameter(gl.BLEND_DST_ALPHA),
+        depth: gl.getParameter(gl.DEPTH_FUNC),
+        mask: gl.getParameter(gl.DEPTH_WRITEMASK),
+      };
       gl.depthFunc(gl.LEQUAL);
       gl.depthMask(false);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE);
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, which.length);
-      gl.disable(gl.BLEND);
-      gl.depthMask(true);
-      gl.depthFunc(gl.LESS);
+      gl.blendFuncSeparate(was.src, was.dst, was.srcA, was.dstA);
+      if (!was.blend) gl.disable(gl.BLEND);
+      gl.depthMask(was.mask);
+      gl.depthFunc(was.depth);
       gl.bindVertexArray(null);
     },
   };
