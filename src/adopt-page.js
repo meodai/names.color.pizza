@@ -4,7 +4,7 @@ import { tiltCard } from "./tilt.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, loadAdoptions } from "./shines.js";
 import { UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
-import { PROJECTS, colorFor } from "./projects.js";
+import { PROJECTS, iconSVG } from "./projects.js";
 
 const toLab = converter("lab");
 const shade = (hex, amount) => {
@@ -178,28 +178,16 @@ function askWho(q, slugNow, place) {
 
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
-// the studio's other projects, as cards in colors from the list; the side card steps
+// the studio's other projects, each drawn small; the side card steps
 // aside while they're in view
 function moreProjects(q, data) {
-  q("[data-projects]").innerHTML = PROJECTS.map((p) => {
-    const it = colorFor(p, data.items);
-    const dark = wcagLuminance(it.hex) < 0.5;
-    const vars = `--c-color:${it.hex};--c-shade0:${shade(it.hex, dark ? 25 : -25)};--c-shade1:${shade(it.hex, dark ? 12 : -12)}`;
-    return `<a class="neighbor adopt-project" href="${esc(p.url)}" target="_blank" rel="noopener" title="${esc(p.about)}">
-        <div class="swatchcard swatchcard--visible" style="${vars}">
-          <div class="swatchcard__upper">
-            <i class="swatchcard__swatch" aria-hidden="true"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i>
-          </div>
-          <div class="swatchcard__label">
-            <div class="swatchcard__info">
-              <span class="swatchcard__row1">${esc(p.name)}</span>
-              <span class="swatchcard__row2">${p.year} · in ${esc(it.name)}</span>
-            </div>
-          </div>
-        </div>
+  q("[data-projects]").innerHTML = PROJECTS.map(
+    (p) => `<a class="adopt-project" href="${esc(p.url)}" target="_blank" rel="noopener">
+        <span class="adopt-project__icon">${iconSVG(p.icon)}</span>
+        <span class="adopt-project__name">${esc(p.name)} <small>${p.year}</small></span>
         <span class="adopt-project__about">${esc(p.about)}</span>
-      </a>`;
-  }).join("");
+      </a>`,
+  ).join("");
   const place = q("[data-place]");
   new IntersectionObserver(([e]) => place.classList.toggle("is-away", e.isIntersecting), { threshold: 0.05 }).observe(q("[data-more]"));
 }

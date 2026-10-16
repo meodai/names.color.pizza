@@ -1,3 +1,34 @@
+// what each one does, drawn small: 48 × 48, one line weight, in currentColor
+const ICONS = {
+  "Ray Color": "<circle cx=\"28\" cy=\"29\" r=\"12\"/><path d=\"M21 33a9 9 0 0 0 14 3\" opacity=\".5\"/><circle cx=\"11\" cy=\"11\" r=\"2.5\" fill=\"currentColor\"/><path d=\"M14 14l5 5M16 9l4 2M9 16l2 4\"/>",
+  "CuspHanger": "<path d=\"M7 41h34M7 41V7\"/><path d=\"M7 41C14 30 22 15 30 11c3 9 6 20 11 30\"/><circle cx=\"30\" cy=\"11\" r=\"2.5\" fill=\"currentColor\"/><path d=\"M14 30l4 3M20 22l5 4M36 24l-4 3\" opacity=\".6\"/>",
+  "nutelch": "<path d=\"M8 40h32\"/><path d=\"M8 40c6-18 18-30 32-32\" stroke-dasharray=\"3 3\"/><path d=\"M8 40l20-20\"/><circle cx=\"28\" cy=\"20\" r=\"3\" fill=\"currentColor\"/>",
+  "Color Names Timeline": "<path d=\"M6 40h36\"/><path d=\"M12 40v-3M24 40v-3M36 40v-3\"/><circle cx=\"12\" cy=\"30\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"20\" cy=\"25\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"17\" cy=\"20\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"27\" cy=\"18\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"31\" cy=\"11\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"36\" cy=\"16\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"25\" cy=\"27\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"37\" cy=\"24\" r=\"1.6\" fill=\"currentColor\"/>",
+  "Design Book": "<path d=\"M24 12c-5-3-11-4-17-3v29c6-1 12 0 17 3 5-3 11-4 17-3V9c-6-1-12 0-17 3z\"/><path d=\"M24 12v29\"/><path d=\"M11 17h8M11 23h5M29 17h8M33 23h4\"/>",
+  "Charcuterie": "<rect x=\"7\" y=\"7\" width=\"34\" height=\"34\" rx=\"2\"/><path d=\"M7 24h34M24 7v34\"/><path d=\"M12 19l3-8 3 8M13 17h4\" stroke-width=\"1.6\"/><path d=\"M29 12h5a2.5 2.5 0 0 1 0 5h-5zM29 17h6a2.5 2.5 0 0 1 0 5h-6z\" stroke-width=\"1.6\"/><path d=\"M15 31a3 3 0 1 0 0 6\" stroke-width=\"1.6\"/><path d=\"M30 30v8M30 34h6\" stroke-width=\"1.6\"/>",
+  "Heerich": "<path d=\"M24 8l10 5-10 5-10-5z\"/><path d=\"M14 13v10l10 5V18M34 13v10l-10 5\"/><path d=\"M14 23l-8 4v10l10 5 8-4M34 23l8 4v10l-10 5-8-4\"/><path d=\"M6 27l10 5 8-4M42 27l-10 5-8-4M16 32v10M32 32v10\"/>",
+  "Color Palette Shader": "<path d=\"M6 14c6-5 12 5 18 0s12-5 18 0\"/><path d=\"M6 22c6-5 12 5 18 0s12-5 18 0\" opacity=\".75\"/><path d=\"M6 30c6-5 12 5 18 0s12-5 18 0\" opacity=\".5\"/><path d=\"M6 38c6-5 12 5 18 0s12-5 18 0\" opacity=\".3\"/>",
+  "PickyPalette": "<rect x=\"7\" y=\"7\" width=\"34\" height=\"34\" rx=\"2\"/><circle cx=\"16\" cy=\"30\" r=\"2\" fill=\"currentColor\"/><circle cx=\"22\" cy=\"22\" r=\"2\" fill=\"currentColor\"/><circle cx=\"30\" cy=\"18\" r=\"2\" fill=\"currentColor\"/><circle cx=\"35\" cy=\"12\" r=\"4\"/><path d=\"M16 30l6-8 8-4\"/>",
+  "OKpalette": "<rect x=\"6\" y=\"9\" width=\"28\" height=\"22\" rx=\"2\"/><path d=\"M6 27l8-8 6 6 4-4 10 10\"/><circle cx=\"26\" cy=\"16\" r=\"2.5\"/><path d=\"M10 39h6M20 39h6M30 39h6\" stroke-width=\"5\"/>",
+  "DittoTones": "<circle cx=\"24\" cy=\"12\" r=\"5\" fill=\"currentColor\"/><path d=\"M24 18v6\"/><path d=\"M6 32h36\"/><circle cx=\"9\" cy=\"38\" r=\"3\"/><circle cx=\"17\" cy=\"38\" r=\"3\" opacity=\".8\"/><circle cx=\"24\" cy=\"38\" r=\"3\" fill=\"currentColor\"/><circle cx=\"31\" cy=\"38\" r=\"3\" opacity=\".8\"/><circle cx=\"39\" cy=\"38\" r=\"3\"/>",
+  "Pro Color Harmonies": "<circle cx=\"24\" cy=\"24\" r=\"16\"/><path d=\"M24 8l13.9 24H10.1z\"/><circle cx=\"24\" cy=\"8\" r=\"2.5\" fill=\"currentColor\"/><circle cx=\"37.9\" cy=\"32\" r=\"2.5\" fill=\"currentColor\"/><circle cx=\"10.1\" cy=\"32\" r=\"2.5\" fill=\"currentColor\"/>",
+  "Poline Orbits": "<circle cx=\"24\" cy=\"24\" r=\"16\" stroke-dasharray=\"2 3\"/><circle cx=\"24\" cy=\"24\" r=\"8\"/><circle cx=\"24\" cy=\"8\" r=\"3\" fill=\"currentColor\"/><circle cx=\"38\" cy=\"32\" r=\"3\" fill=\"currentColor\"/><circle cx=\"17\" cy=\"18\" r=\"2\" fill=\"currentColor\"/>",
+  "Color Router": "<rect x=\"6\" y=\"8\" width=\"12\" height=\"9\" rx=\"1.5\"/><rect x=\"30\" y=\"8\" width=\"12\" height=\"9\" rx=\"1.5\"/><rect x=\"18\" y=\"31\" width=\"12\" height=\"9\" rx=\"1.5\"/><path d=\"M12 17v6h24v-6M24 23v8\"/>",
+  "Verloop": "<path d=\"M24 12c-5-3-11-4-17-3v29c6-1 12 0 17 3 5-3 11-4 17-3V9c-6-1-12 0-17 3z\"/><path d=\"M24 12v29\"/><path d=\"M10 13v23M13 13v23M16 14v23M19 15v23\" opacity=\".25\"/><path d=\"M29 15v23M32 14v23M35 13v23M38 13v23\" opacity=\".6\"/>",
+  "RYBitten": "<circle cx=\"24\" cy=\"17\" r=\"10\"/><circle cx=\"17\" cy=\"29\" r=\"10\"/><circle cx=\"31\" cy=\"29\" r=\"10\"/>",
+  "Albers": "<rect x=\"6\" y=\"6\" width=\"36\" height=\"36\"/><rect x=\"11\" y=\"13\" width=\"26\" height=\"26\"/><rect x=\"16\" y=\"20\" width=\"16\" height=\"16\"/><rect x=\"20\" y=\"26\" width=\"8\" height=\"8\" fill=\"currentColor\"/>",
+  "Poline": "<circle cx=\"9\" cy=\"37\" r=\"4\" fill=\"currentColor\"/><circle cx=\"39\" cy=\"11\" r=\"4\" fill=\"currentColor\"/><path d=\"M9 37C14 20 30 32 39 11\" stroke-dasharray=\"1 5.5\"/><circle cx=\"17\" cy=\"27\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"24\" cy=\"26\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"31\" cy=\"21\" r=\"1.6\" fill=\"currentColor\"/>",
+  "Color Name API": "<path d=\"M15 9c-4 0-5 2-5 5v5c0 3-2 5-4 5 2 0 4 2 4 5v5c0 3 1 5 5 5M33 9c4 0 5 2 5 5v5c0 3 2 5 4 5-2 0-4 2-4 5v5c0 3-1 5-5 5\"/><rect x=\"18\" y=\"17\" width=\"12\" height=\"9\" fill=\"currentColor\"/><path d=\"M18 31h12\"/>",
+  "Rampensau": "<path d=\"M24 24m-3 0a3 3 0 1 1 6 0a7 7 0 1 1-14 0a11 11 0 1 1 22 0a15 15 0 1 1-30 0\"/><circle cx=\"9\" cy=\"24\" r=\"2.5\" fill=\"currentColor\"/>",
+  "Color Description": "<path d=\"M8 10h32v20H22l-8 8v-8H8z\"/><rect x=\"13\" y=\"15\" width=\"6\" height=\"10\" fill=\"currentColor\"/><path d=\"M23 17h12M23 23h8\"/>",
+  "Parrot": "<path d=\"M17 40V24a10 10 0 0 1 20 0v2h-8\"/><path d=\"M29 26a8 8 0 0 1-8 8\"/><path d=\"M17 24c-3-6-2-12 3-16M22 15c0-4 2-7 6-8\"/><circle cx=\"29\" cy=\"21\" r=\"1.8\" fill=\"currentColor\"/>",
+  "Farbvelo": "<circle cx=\"13\" cy=\"32\" r=\"8\"/><circle cx=\"35\" cy=\"32\" r=\"8\"/><path d=\"M13 32l7-12h10l5 12M20 20l-3-6h-3M27 32l3-12M30 14h4\"/><path d=\"M13 24v16M5 32h16M35 24v16M27 32h16\" opacity=\".35\"/>",
+  "Color Name Distribution": "<path d=\"M24 6l15 8v18l-15 8-15-8V14z\"/><path d=\"M24 22l15-8M24 22v18M24 22L9 14\" opacity=\".4\"/><circle cx=\"19\" cy=\"21\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"28\" cy=\"26\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"22\" cy=\"31\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"31\" cy=\"18\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"16\" cy=\"28\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"27\" cy=\"34\" r=\"1.6\" fill=\"currentColor\"/>",
+};
+
+export const iconSVG = (icon) =>
+  `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg>`;
+
 // What else a patron keeps going: the open projects of Elastiq GmbH, as on elastiq.ch
 export const PROJECTS = [
   ["Ray Color", 2026, "Palettes from a raytraced sphere: you light the room, not the colors", "https://meodai.github.io/ray-color/"],
@@ -24,13 +55,4 @@ export const PROJECTS = [
   ["Parrot", 2021, "A bot that posts random colors and collects the names people invent", "https://parrot.color.pizza/"],
   ["Farbvelo", 2020, "A generative cycle through color harmonies", "https://farbvelo.elastiq.ch/"],
   ["Color Name Distribution", 2017, "The list's names, plotted in 3D color models", "https://codepen.io/meodai/full/zdgXJj"],
-].map(([name, year, about, url]) => ({ name, year, about, url }));
-
-// a color from the list for each: one that shares a word with it, else one its name picks
-export function colorFor(project, items) {
-  const word = project.name.split(/\s+/)[0].toLowerCase();
-  const fits = word.length >= 4 && items.find((it) => it.name.toLowerCase().split(/[\s-]+/).includes(word));
-  if (fits) return fits;
-  const h = [...project.name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
-  return items[h % items.length];
-}
+].map(([name, year, about, url]) => ({ name, year, about, url, icon: ICONS[name] }));
