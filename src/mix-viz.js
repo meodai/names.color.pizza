@@ -3,7 +3,7 @@
 // magenta, yellow and black; a thermometer for how warm the color is as light.
 
 // all three the same width
-const WIDTH = 51;
+const WIDTH = 75;
 const svg = (w, body) =>
   `<svg class="mix-viz" viewBox="0 0 ${w} 12" width="${w}" height="12" aria-hidden="true" shape-rendering="crispEdges">${body}</svg>`;
 
