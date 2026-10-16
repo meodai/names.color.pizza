@@ -508,7 +508,9 @@ a:hover {
 }
 
 .supporter .supporter__face {
-  position: static;
+  position: relative;
+  right: auto;
+  bottom: auto;
   grid-row: span 2;
   transform: none;
   animation: none;
@@ -640,9 +642,52 @@ a:hover {
 }
 
 .card-badge--founding {
+  overflow: visible;
   box-shadow:
     0 0 0 4px #e9b52b,
     0 0.6rem 1.4rem rgb(0 0 0 / 0.35);
+}
+
+.card-badge--founding img,
+.card-badge--founding > span {
+  border-radius: 50%;
+}
+
+/* now and then a glint runs round the gold ring: one turning layer, masked to the ring */
+.card-badge--founding::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 66%, rgb(255 255 255 / 0.55) 76%, #fff 83%, rgb(255 255 255 / 0.55) 89%, transparent 97%);
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 4.5px), #000 calc(100% - 4px));
+  mask: radial-gradient(closest-side, transparent calc(100% - 4.5px), #000 calc(100% - 4px));
+  pointer-events: none;
+  animation: ring-glint 7s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+@keyframes ring-glint {
+  0%,
+  72% {
+    rotate: 0deg;
+    opacity: 0;
+  }
+  74% {
+    opacity: 1;
+  }
+  98% {
+    opacity: 1;
+  }
+  100% {
+    rotate: 1turn;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-badge--founding::after {
+    display: none;
+  }
 }
 
 .card-badge img {
