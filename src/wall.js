@@ -1999,7 +1999,14 @@ export async function initWall(root) {
     // names start under the parrot, hexes end under GitHub (on a phone, the menu)
     const box = list.getBoundingClientRect();
     const logo = q(".wall__brand .brand__logo")?.getBoundingClientRect();
-    const end = [q(".wall__nav a"), q("[data-menu]")].map((el) => el?.getBoundingClientRect()).find((b) => b?.width);
+    // the text's own edge, the last 0 of the version, not the link's padded box
+    const textBox = (el) => {
+      if (!el?.offsetWidth) return null;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return range.getBoundingClientRect();
+    };
+    const end = textBox(q(".wall__nav a")) || q("[data-menu]").getBoundingClientRect();
     if (logo?.width) list.style.setProperty("--az-left", `${Math.round(logo.left - box.left)}px`);
     if (end) list.style.setProperty("--az-right", `${Math.max(8, Math.round(box.left + list.clientWidth - end.right))}px`);
   };
