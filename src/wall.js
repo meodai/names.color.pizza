@@ -664,14 +664,13 @@ export async function initWall(root) {
     lastFwd = cam.fwd;
   }
   let stripsOf = draw;
-  function trackStrips(time) {
+  function trackStrips(time, ready) {
     if (stripsOf !== draw) {
       showing.clear();
       stripAnim.clear();
       stripsOf = draw;
     }
     const strips = draw.strips;
-    const ready = texts?.ready ?? new Set();
     const aim = (i, to) => {
       const a = stripAnim.get(i);
       if (a ? a.to === to : strips[i] === to) return;
@@ -870,7 +869,12 @@ export async function initWall(root) {
     trackSpeed(time, dt);
     const fadingNear = trackNear(time);
     const clearingWay = trackHoverClear(time, dt);
-    const stripping = textInGL() && trackStrips(time);
+    // while a card opens or comes back, only it keeps its name; the rest fold theirs away
+    const stripping = opening
+      ? trackStrips(time, new Set([opening.i]))
+      : textInGL()
+        ? trackStrips(time, texts.ready)
+        : false;
     render(time);
     placeLabels();
     placeMark();
