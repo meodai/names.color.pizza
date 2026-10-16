@@ -11,6 +11,7 @@ import ColorDescription from "color-description";
 import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
 import { cardURL } from "./cards.mjs";
+import { FORMATS } from "../src/formats.js";
 import { documentURI, documentKey, FIRST_DAY } from "../src/standard-site.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -279,6 +280,26 @@ const cached = existsSync(PICKS) ? JSON.parse(readFileSync(PICKS, "utf8")) : nul
 const picks = cached?.print === ART_PRINT ? cached.byHex : {};
 let picked = 0;
 const sitemap = [`<url><loc>${SITE}</loc></url>`];
+// the whole list as linked data, a color a line: what its page says, with Wikipedia and
+// Wiktionary only as titles and links
+const DATASET = "colornames.jsonld.ndjson";
+const CONTEXT = "colornames.context.jsonld";
+const dataset = [];
+function datasetLine({ name, hex, url, said, looked }) {
+  const lore = new ColorDescription(hex);
+  const some = (words) => (words || []).slice(0, 8);
+  return JSON.stringify({
+    "@context": `${SITE}${CONTEXT}`,
+    "@id": url,
+    name,
+    hex,
+    description: said || null,
+    formats: Object.fromEntries(Object.entries(FORMATS).filter(([k]) => k !== "hex").map(([k, f]) => [k, f.fn(hex)])),
+    words: { describe: some(lore.descriptiveWords), means: some(lore.meanings), makesYou: some(lore.effects), fits: some(lore.usage) },
+    meaning: (looked?.entries || []).map((e) => ({ title: e.title, wikipedia: e.link, ...(e.wikidata ? { wikidata: `https://www.wikidata.org/wiki/${e.wikidata}` } : {}) })),
+    definitions: (looked?.definitions || []).map((d) => ({ term: d.term, wiktionary: d.link })),
+  });
+}
 
 // ONLY=slug,slug: just those pages, for a quick local preview
 const ONLY = process.env.ONLY && new Set(process.env.ONLY.split(","));
@@ -407,9 +428,34 @@ ${preview.join("\n")}
     }
   }
   sitemap.push(`<url><loc>${url}</loc>${copy?.fetched ? `<lastmod>${copy.fetched}</lastmod>` : ""}</url>`);
+  dataset.push(datasetLine({ name, hex, url, said, looked: copy?.looked }));
   written++;
 }
 
+writeFileSync(join(DIST, DATASET), dataset.join("\n") + "\n");
+writeFileSync(
+  join(DIST, CONTEXT),
+  JSON.stringify(
+    {
+      "@context": {
+        "@vocab": `${SITE}${CONTEXT}#`,
+        schema: "https://schema.org/",
+        name: "schema:name",
+        description: "schema:description",
+        hex: "schema:color",
+        title: "schema:name",
+        term: "schema:name",
+        meaning: "schema:about",
+        definitions: "schema:subjectOf",
+        wikipedia: { "@id": "schema:sameAs", "@type": "@id" },
+        wiktionary: { "@id": "schema:sameAs", "@type": "@id" },
+        wikidata: { "@id": "schema:sameAs", "@type": "@id" },
+      },
+    },
+    null,
+    2,
+  ),
+);
 writeFileSync(
   join(DIST, "404.html"),
   `<!doctype html>

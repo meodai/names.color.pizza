@@ -305,6 +305,7 @@ function entriesOf(pages) {
       blocks: p.extract_html ? summaryBlocks(p.extract_html) : [{ text: p.extract }],
       image: p.thumbnail?.source,
       link: p.content_urls?.desktop?.page,
+      wikidata: p.wikibase_item,
     }));
 }
 
