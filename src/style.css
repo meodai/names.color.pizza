@@ -208,8 +208,7 @@ a:hover {
 
 .hero__stats a.adopt-cta {
   margin-block-start: var(--space-s);
-  font-size: var(--text-base);
-  text-transform: none;
+  padding: 0.6rem 1.1rem;
 }
 
 .hero__adopted:empty {
