@@ -85,6 +85,8 @@ const NEAR = 0.3;
 const FAR = 3000;
 const MIN_DIST = 2.5;
 const MAX_DIST = 860;
+// world units flown per unit of log zoom, once past MIN_DIST
+const THROUGH = 18;
 const DAMPING = 0.1; // share of the remaining motion per frame (OrbitControls: 0.05)
 const MORPH_MS = 1400;
 const BANG_MS = 2600;
@@ -119,6 +121,8 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const ease = (t) => 1 - Math.pow(1 - t, 4);
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+// an angle into -π…π
+const wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
 
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
@@ -492,13 +496,15 @@ export async function initWall(root) {
 
   function update() {
     cam.center = middleOf(model);
-    cam.pitch = clamp(cam.pitch, -Math.PI / 2 + 0.02, Math.PI / 2 - 0.02);
+    // over the top and on: past a pole the world's up turns over with the camera
+    cam.pitch = wrap(cam.pitch);
     cam.dist = clamp(cam.dist, MIN_DIST, MAX_DIST);
-    const cp = Math.cos(cam.pitch);
+    let cp = Math.cos(cam.pitch);
+    if (Math.abs(cp) < 1e-4) cp = cp < 0 ? -1e-4 : 1e-4;
     const back = [cp * Math.sin(cam.yaw), Math.sin(cam.pitch), cp * Math.cos(cam.yaw)];
     cam.eye = add(cam.target, scale(back, cam.dist));
     cam.fwd = scale(back, -1);
-    cam.right = norm(cross(cam.fwd, [0, 1, 0]));
+    cam.right = norm(cross(cam.fwd, [0, cp < 0 ? -1 : 1, 0]));
     cam.up = cross(cam.right, cam.fwd);
     cam.fpx = view.h / 2 / Math.tan(FOV / 2); // in CSS px
   }
@@ -648,7 +654,7 @@ export async function initWall(root) {
   const delta = { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0 };
   const moving = () =>
     Math.abs(delta.yaw) + Math.abs(delta.pitch) + Math.abs(delta.zoom) > 1e-5 || Math.hypot(...delta.pan) > 1e-4;
-  const stopMoving = () => Object.assign(delta, { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0 });
+  const stopMoving = () => Object.assign(delta, { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0, anchor: null, dir: null });
   let idle = !reduceMotion;
   let lastTime = 0;
   let marked = -1;
@@ -696,7 +702,7 @@ export async function initWall(root) {
       cam.yaw += delta.yaw * f;
       cam.pitch += delta.pitch * f;
       cam.target = add(cam.target, scale(delta.pan, f));
-      cam.dist *= Math.exp(delta.zoom * f);
+      zoomBy(Math.exp(delta.zoom * f));
       delta.yaw *= 1 - f;
       delta.pitch *= 1 - f;
       delta.pan = scale(delta.pan, 1 - f);
@@ -887,6 +893,7 @@ export async function initWall(root) {
     const target = { target: cam.target, dist: cam.dist, yaw: cam.yaw, pitch: cam.pitch, ...dest };
     // turn the short way round
     target.yaw = cam.yaw + ((((target.yaw - cam.yaw) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+    target.pitch = cam.pitch + wrap(target.pitch - cam.pitch);
     if (reduceMotion || !duration) {
       Object.assign(cam, target);
       request();
@@ -1266,7 +1273,8 @@ export async function initWall(root) {
 
   // a full screen height of drag is a full turn
   function rotate(dx, dy) {
-    delta.yaw -= (2 * Math.PI * dx) / view.h;
+    // upside down, a drag to the right still turns the view to the right
+    delta.yaw -= ((Math.cos(cam.pitch) < 0 ? -1 : 1) * 2 * Math.PI * dx) / view.h;
     delta.pitch += (2 * Math.PI * dy) / view.h;
   }
 
@@ -1275,9 +1283,36 @@ export async function initWall(root) {
     delta.pan = add(delta.pan, add(scale(cam.right, -dx * k), scale(cam.up, dy * k)));
   }
 
-  const zoom = (logFactor) => {
+  // toward what's under the cursor (or between the fingers): the card there, else the
+  // point at the target's depth
+  const zoom = (logFactor, sx, sy) => {
     delta.zoom += logFactor;
+    if (sx === undefined) return;
+    const x = (sx - view.w / 2) / cam.fpx;
+    const y = (view.h / 2 - sy) / cam.fpx;
+    const dir = norm(add(cam.fwd, add(scale(cam.right, x), scale(cam.up, y))));
+    // with no card there, toward the middle as before
+    const i = cellsMix > 0.5 ? -1 : cardAt(sx, sy);
+    if (i < 0) {
+      delta.anchor = delta.dir = null;
+      return;
+    }
+    delta.anchor = add(cam.eye, scale(dir, dot(sub(posOf(i), cam.eye), cam.fwd) / dot(dir, cam.fwd)));
+    delta.dir = dir;
   };
+  // scaled around the anchor, so the point under the cursor stays put; at the closest
+  // the camera orbits from, it flies on through instead of stopping
+  function zoomBy(k) {
+    // out, it backs straight away, so the shape comes back into the middle
+    const P = k < 1 ? (delta.anchor ?? cam.target) : cam.target;
+    const kk = clamp(k, MIN_DIST / cam.dist, MAX_DIST / cam.dist);
+    cam.target = add(P, scale(sub(cam.target, P), kk));
+    cam.dist *= kk;
+    if (k < kk) cam.target = add(cam.target, scale(delta.dir ?? cam.fwd, -Math.log(k / kk) * THROUGH));
+    // never further out than a little past the shape
+    const { lo, hi } = boundsOf(model);
+    cam.target = cam.target.map((v, j) => clamp(v, lo[j] - 20, hi[j] + 20));
+  }
 
   function home(key = model) {
     const p = placeAll(key);
@@ -1338,7 +1373,8 @@ export async function initWall(root) {
       const mx = (a.x + b.x) / 2;
       const my = (a.y + b.y) / 2;
       pan(mx - pinch.x, my - pinch.y);
-      zoom(Math.log(pinch.d / d));
+      const rect = canvas.getBoundingClientRect();
+      zoom(Math.log(pinch.d / d), mx - rect.left, my - rect.top);
       Object.assign(pinch, { d, x: mx, y: my });
     }
     request();
@@ -1415,7 +1451,8 @@ export async function initWall(root) {
       dropSpot();
       tip.hidden = true;
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? view.h : 1;
-      zoom(e.deltaY * unit * (e.ctrlKey ? 0.01 : 0.0015));
+      const rect = canvas.getBoundingClientRect();
+      zoom(e.deltaY * unit * (e.ctrlKey ? 0.01 : 0.0015), e.clientX - rect.left, e.clientY - rect.top);
       request();
     },
     { passive: false },
