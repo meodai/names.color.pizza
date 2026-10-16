@@ -161,11 +161,14 @@ a:hover {
   overflow: hidden;
 }
 
+/* the whole drawing turns, as one picture on the GPU: drawn once, not every frame */
 .not-found__wheel {
   position: absolute;
   inset: 50% auto auto 50%;
-  inline-size: max(100vmin, 34rem);
+  inline-size: max(100vw, 150vmin, 40rem);
   translate: -50% -50%;
+  will-change: rotate;
+  animation: not-found-spin 150s linear infinite;
   font-family: Inter, sans-serif;
   font-weight: 600;
   opacity: 0;
@@ -184,12 +187,6 @@ a:hover {
   text-decoration: underline;
 }
 
-.not-found__spin {
-  transform-box: view-box;
-  transform-origin: 50% 50%;
-  animation: not-found-spin 150s linear infinite;
-}
-
 @keyframes not-found-spin {
   to {
     rotate: 360deg;
@@ -197,7 +194,7 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .not-found__spin {
+  .not-found__wheel {
     animation: none;
   }
 }

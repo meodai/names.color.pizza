@@ -4,7 +4,7 @@ import { getList, slugsOf, siteURL, rgbToOklab } from "./names.js";
 // color sits on the hue wheel (hue around, lightness outwards), none used twice
 const SVG = "http://www.w3.org/2000/svg";
 const C = 500;
-const INNER = 210;
+const INNER = 160;
 const OUTER = 480;
 const SIZE = 22;
 const PITCH = SIZE * 1.18;
