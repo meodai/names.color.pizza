@@ -1149,10 +1149,22 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   });
 
   const close = q("[data-close]");
+  // opened from the wall's A–Z list as a page of its own: back to the list as it was
+  const fromWall = (() => {
+    try {
+      const left = JSON.parse(sessionStorage.getItem("az-view"));
+      return left?.page === location.pathname && Date.now() - left.at < 6 * 3600e3;
+    } catch {
+      return false;
+    }
+  })();
   close.addEventListener("click", (e) => {
     if (onClose) {
       e.preventDefault();
       onClose();
+    } else if (fromWall && history.length > 1) {
+      e.preventDefault();
+      history.back();
     }
   });
   // embedded, every link home closes too

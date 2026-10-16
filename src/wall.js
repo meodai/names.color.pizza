@@ -1642,7 +1642,7 @@ export async function initWall(root) {
     if (colorPage) history.go(-colorPage.depth);
     else goHome();
   });
-  q("[data-home]").addEventListener("click", goHome);
+  q("[data-home]").addEventListener("click", () => (azOn ? setAz(false) : goHome()));
   canvas.addEventListener("dblclick", (e) => {
     const rect = canvas.getBoundingClientRect();
     if (cardAt(e.clientX - rect.left, e.clientY - rect.top) < 0) goHome();
@@ -1795,7 +1795,10 @@ export async function initWall(root) {
     cellsFade = { from: cellsMix, to: on ? 1 : 0, t0: performance.now() };
     request();
   }
-  cellsButton.addEventListener("click", () => setCells(!cellsOn));
+  cellsButton.addEventListener("click", () => {
+    if (azOn) setAz(false);
+    setCells(!cellsOn);
+  });
 
   const listButton = q("[data-lists]");
   const listMenu = q("[data-list-menu]");
@@ -1943,7 +1946,7 @@ export async function initWall(root) {
     for (const l of pool) l.i = -1;
     showCount();
     markStars();
-    if (azOn) az?.open(items);
+    if (azOn) az?.open(items, search.value, 0);
   }
 
   async function ensureCells(key) {
@@ -1972,16 +1975,12 @@ export async function initWall(root) {
   let az = null;
   // pages are named by the full list's slugs, whichever list is shown
   let azSlugs = null;
-  async function setAz(on) {
+  // the chip, the address and the list follow at once; the list fills once its names are in
+  function setAz(on, restore = null) {
     if (on === azOn) return;
     azOn = on;
     root.classList.toggle("is-az", on);
     root.scrollLeft = 0;
-    if (on) azSlugs ||= slugsOf((await getList("default")).items);
-    az ||= createAz(q(".wall__dock"), { hrefOf: (it) => siteURL(`color/${azSlugs.get(it.name)}/`) });
-    if (!azOn) return az.close();
-    if (on) az.open(items);
-    else az.close();
     showModel();
     try {
       const url = new URL(location.href);
@@ -1989,7 +1988,30 @@ export async function initWall(root) {
       else if (url.searchParams.get("view") === "az") url.searchParams.delete("view");
       history.replaceState(history.state, "", url);
     } catch {}
-    if (!on) request();
+    if (!on) {
+      az?.close();
+      return request();
+    }
+    found = [];
+    showResults();
+    if (restore?.text) {
+      search.value = restore.text;
+      showClear();
+    }
+    getList("default").then((full) => {
+      if (!azOn) return;
+      azSlugs ||= slugsOf(full.items);
+      az ||= createAz(q(".wall__dock"), {
+        hrefOf: (it) => siteURL(`color/${azSlugs.get(it.name)}/`),
+        // where the list was, for coming back from the color page
+        onLeave: (scroll, href) => {
+          try {
+            sessionStorage.setItem("az-view", JSON.stringify({ text: search.value, scroll, page: new URL(href).pathname, at: Date.now() }));
+          } catch {}
+        },
+      });
+      az.open(items, search.value, restore?.scroll);
+    });
   }
 
   function setModel(key) {
@@ -2135,6 +2157,12 @@ export async function initWall(root) {
   }
 
   clearButton.addEventListener("click", () => {
+    if (azOn) {
+      search.value = "";
+      showClear();
+      az?.filter("");
+      return search.focus();
+    }
     found = [];
     showResults();
     choose(null, "");
@@ -2145,6 +2173,7 @@ export async function initWall(root) {
 
   search.addEventListener("input", () => {
     showClear();
+    if (azOn) return az?.filter(search.value);
     found = find(search.value);
     active = 0;
     showResults();
@@ -2166,6 +2195,11 @@ export async function initWall(root) {
   });
   let pickTimer = 0;
   colorPicker.addEventListener("input", () => {
+    if (azOn) {
+      search.value = colorPicker.value;
+      showClear();
+      return az?.closest(colorPicker.value);
+    }
     clearTimeout(pickTimer);
     found = [];
     showResults();
@@ -2175,6 +2209,7 @@ export async function initWall(root) {
 
   q("[data-find]").addEventListener("submit", (e) => {
     e.preventDefault();
+    if (azOn) return;
     if (!found.length) found = find(search.value);
     pick(active);
   });
@@ -2220,7 +2255,13 @@ export async function initWall(root) {
   }
 
   // a link to the A–Z list opens on it, whichever way the page was reached
-  if (new URLSearchParams(location.search).get("view") === "az") setAz(true);
+  if (new URLSearchParams(location.search).get("view") === "az") {
+    let was = null;
+    try {
+      if (nav === "back_forward" || fromColorPage) was = JSON.parse(sessionStorage.getItem("az-view"));
+    } catch {}
+    setAz(true, was);
+  }
   if (saved && Number.isFinite(saved.dist) && saved.target?.length === 3) {
     const { home: wasHome, ...restored } = saved;
     Object.assign(cam, restored);
