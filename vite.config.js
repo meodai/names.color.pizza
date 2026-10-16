@@ -21,6 +21,7 @@ export default defineConfig({
         color: resolve(import.meta.dirname, "color/index.html"),
         adopt: resolve(import.meta.dirname, "adopt/index.html"),
         supporters: resolve(import.meta.dirname, "supporters/index.html"),
+        legal: resolve(import.meta.dirname, "legal/index.html"),
       },
     },
   },
