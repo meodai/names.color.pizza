@@ -13,6 +13,7 @@ import {
   showVersion,
 } from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
+import { createLabelRenderer } from "./labels-gl.js";
 
 const W = 1;
 const H = 1.3; // square swatch over a 0.3 label strip
@@ -447,6 +448,15 @@ export async function initWall(root) {
     status.textContent = "This view needs WebGL, which this browser doesn’t offer.";
     return;
   }
+  // the names in the 3D view; without them the HTML labels stay
+  let texts = null;
+  let textsFor = draw;
+  try {
+    texts = createLabelRenderer(draw.gl, { W, H, NEAR, FAR, NEAR_SLOTS });
+  } catch (e) {
+    console.error(e);
+  }
+  const textInGL = () => texts && !opening && !spot && cellsMix <= 0 && !morph && !bang && !listShift;
   status.hidden = true;
 
   const view = { w: 1, h: 1 };
@@ -745,7 +755,9 @@ export async function initWall(root) {
         ? spot?.on
           ? one(spot.i)
           : []
-        : onScreen(LABEL_PX, MAX_LABELS * 3);
+        : textInGL()
+          ? []
+          : onScreen(LABEL_PX, MAX_LABELS * 3);
     const covers = [];
     for (const c of near) {
       const top = c.y0 + W * c.s;
@@ -1435,6 +1447,17 @@ export async function initWall(root) {
     }
     if (!cellsDraw || cellsMix <= 0) {
       draw(cam, dpr);
+      if (textInGL()) {
+        if (textsFor !== draw) {
+          texts.reset();
+          textsFor = draw;
+        }
+        texts.draw(cam, dpr, canvas, onScreen(LABEL_PX, texts.slots), items, positions, {
+          at: NEAR_AT,
+          ids: nearIds,
+          alphas: nearAlphas,
+        });
+      }
       if (leaving) leaving(cam, dpr, { clear: false, keepAll: listShift?.leave ?? 0 });
       return;
     }
