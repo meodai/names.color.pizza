@@ -1,7 +1,7 @@
 import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
-import { SHINES, ADOPT_FROM, HOLO_FROM, loadAdoptions } from "./shines.js";
+import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, loadAdoptions } from "./shines.js";
 import { adopterBadge, handle, longDate } from "./adopter.js";
 
 const toLab = converter("lab");
@@ -43,7 +43,7 @@ export async function initAdoptPage() {
   q("[data-tier5]").textContent = `your name and picture on ${it.name}, and in the README`;
   // Stripe hands the color back with the payment
   const cta = q("[data-cta]");
-  cta.href = `${cta.href.split("?")[0]}?client_reference_id=${slug}`;
+  cta.href = `${PAYMENT}?client_reference_id=${slug}`;
   cta.textContent = `Adopt ${it.name}`;
   q("[data-note]").textContent = "From 5, on Stripe. You'll be asked how to show you: Bluesky, GitHub, X or just a name.";
   q("[data-close]").href = siteURL(`color/${slug}/`);
