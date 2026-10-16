@@ -114,9 +114,21 @@
             <span>Millions of API requests</span>
           </p>
           <ul class="adopt__tiers" data-tiers>
-            <li><b>From 5</b> <span data-tier5>your name and picture on the color, and in the README</span></li>
-            <li><b>From 10</b> <span>its card turns holo, in one of five foils drawn for you</span></li>
+            <li><b>$5+</b> <span data-tier5
+                >your name and picture on the color, with the <a href="../supporters/">supporters</a> and in the
+                <a href="https://github.com/meodai/color-names#sponsors" target="_blank" rel="noopener">README</a></span
+              ></li>
+            <li>
+              <b>$10+</b>
+              <span>its card turns <i class="adopt__holo">holographic</i>, in one of five foils drawn for you</span>
+            </li>
           </ul>
+          <div class="adopt__pick" data-pick hidden>
+            <label class="wall__picker adopt__wheel" title="Pick a color">
+              <input type="color" data-picker aria-label="Pick a color to adopt" />
+            </label>
+            <span data-pick-name></span>
+          </div>
           <form class="adopt__who" data-who>
             <label class="label" for="adopt-by">Show me as</label>
             <div class="adopt__who-row">

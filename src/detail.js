@@ -18,6 +18,13 @@ import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
 import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
+
+// the heart in its own box, so the link's underline passes it by
+function adoptLink(hex) {
+  const a = Object.assign(document.createElement("a"), { href: siteURL(`adopt/#${hex.slice(1)}`), textContent: "Adopt this color " });
+  a.append(Object.assign(document.createElement("span"), { className: "hero__heart", textContent: "\u2665\uFE0E" }));
+  return a;
+}
 import { tiltCard, previewShine } from "./tilt.js";
 import { adoptedHTML, adopterBadge } from "./adopter.js";
 
@@ -407,7 +414,7 @@ async function render(hex) {
     adoptedLine.replaceChildren(
       ...(shown
         ? adoptedHTML(adopted)
-        : [Object.assign(document.createElement("a"), { href: siteURL(`adopt/#${hex.slice(1)}`), textContent: "Adopt this color \u2665\uFE0E" })]),
+        : [adoptLink(hex)]),
     );
     card.parentElement.querySelector(".card-badge")?.remove();
     if (shown) card.parentElement.append(adopterBadge(adopted));

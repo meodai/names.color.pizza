@@ -75,7 +75,7 @@ function reference(slug, on, by) {
 }
 
 // who they'll be on the card: asked before paying, kept only once Stripe says they paid
-function askWho(q, slug, place) {
+function askWho(q, slugNow, place) {
   const on = q("[data-on]");
   const by = q("[data-by]");
   const cta = q("[data-cta]");
@@ -93,7 +93,7 @@ function askWho(q, slug, place) {
     const name = cleanHandle(by.value, on.value);
     by.placeholder = on.value === "name" ? "Your name" : "@handle";
     cta.setAttribute("aria-disabled", String(!name));
-    cta.href = `${PAYMENT}?client_reference_id=${reference(slug, on.value, name)}`;
+    cta.href = `${PAYMENT}?client_reference_id=${reference(slugNow(), on.value, name)}`;
     clearTimeout(timer);
     asking?.abort();
     timer = setTimeout(async () => {
@@ -120,7 +120,7 @@ function askWho(q, slug, place) {
     e.preventDefault();
     by.focus();
   });
-  update();
+  return { update, clear: () => show(null) };
 }
 
 // the color comes as ?c=<slug> or #<hex>, or after paying as ?session=<checkout>;
@@ -144,63 +144,98 @@ export async function initAdoptPage() {
   }
   const asked = bought?.slug || new URLSearchParams(location.search).get("c");
   const hex = normalizeHex(location.hash.slice(1));
-  const it = asked ? data.items.find((i) => slugs.get(i.name) === asked) : hex ? closest(data, hex) : null;
+  const first = asked ? data.items.find((i) => slugs.get(i.name) === asked) : hex ? closest(data, hex) : null;
   const card = q("[data-card]");
-  if (!it) {
-    q("[data-place]").hidden = true;
-    q("[data-note]").textContent = "Pick a color first: every color page has an Adopt link.";
-    return;
-  }
-  const slug = slugs.get(it.name);
-  document.title = `Adopt ${it.name} — Color Names`;
-  q("[data-name]").textContent = `Adopt ${it.name}.`;
-  q("[data-tier5]").textContent = `your name and picture on ${it.name}, and in the README`;
-  // Stripe hands the color back with the payment
-  const cta = q("[data-cta]");
-  cta.textContent = `Adopt ${it.name}`;
-  q("[data-note]").textContent = "From 5, paid on Stripe.";
-  q("[data-close]").href = siteURL(`color/${slug}/`);
-
-  const dark = wcagLuminance(it.hex) < 0.5;
-  card.style.setProperty("--c-color", it.hex);
-  card.style.setProperty("--c-shade0", shade(it.hex, dark ? 25 : -25));
-  card.style.setProperty("--c-shade1", shade(it.hex, dark ? 12 : -12));
-  const glow = wcagLuminance(it.hex);
-  card.dataset.tone = glow > 0.8 ? "light" : glow < 0.04 ? "dark" : "mid";
-  q("[data-value]").textContent = it.hex;
-  q("[data-card-name]").textContent = it.name;
   const place = cardPlace();
   q("[data-place]").style.setProperty("--x", place.x.toFixed(3));
   q("[data-place]").style.setProperty("--y", place.y.toFixed(3));
   q("[data-place]").style.setProperty("--r", `${place.r.toFixed(1)}deg`);
   const tilt = tiltCard(card);
-  const teaser = SHINES[[...it.hex].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % SHINES.length];
-  tilt.holo(teaser);
-  requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("swatchcard--visible")));
+  const adopted = bought ? {} : await loadAdoptions();
+  const cta = q("[data-cta]");
+  let slug = null;
+  let who = null;
 
-  // taken already: who has it, and where everyone else is
-  const mine = bought || (await loadAdoptions())[slug];
-  if (mine?.amount >= ADOPT_FROM) {
-    q("[data-who]").hidden = true;
-    q("[data-place]").append(adopterBadge(mine));
-    q("[data-tiers]").hidden = true;
+  // one color on the page; picking another redoes it all
+  function show(it) {
+    slug = slugs.get(it.name);
+    q("[data-place]").querySelectorAll(".card-badge").forEach((b) => b.remove());
+    document.title = `Adopt ${it.name} — Color Names`;
+    q("[data-name]").textContent = `Adopt ${it.name}.`;
+    q("[data-lead]").textContent = "A symbolic gesture: it keeps the list, its API and these pages running, free for everyone.";
+    const readme = Object.assign(document.createElement("a"), {
+      href: "https://github.com/meodai/color-names#sponsors",
+      target: "_blank",
+      rel: "noopener",
+      textContent: "README",
+    });
+    const supporters = Object.assign(document.createElement("a"), { href: siteURL("supporters/"), textContent: "supporters" });
+    q("[data-tier5]").replaceChildren(`your name and picture on ${it.name}, with the `, supporters, " and in the ", readme);
+    q("[data-tiers]").hidden = false;
     q("[data-act]").hidden = false;
-    q("[data-note]").textContent = "";
-    tilt.holo(mine.amount >= HOLO_FROM && mine.shine ? mine.shine : null);
-    if (bought) {
-      q("[data-name]").textContent = `You adopted ${it.name}.`;
-      document.title = `You adopted ${it.name} — Color Names`;
-      q(".hero__stats").hidden = true;
-      q("[data-lead]").textContent = `Thank you! ${it.name} carries your name from today, for everyone to see.`;
-      shareRow(q, it, slug);
+    cta.textContent = `Adopt ${it.name}`;
+    q("[data-note]").textContent = "From 5, paid on Stripe.";
+    q("[data-close]").href = siteURL(`color/${slug}/`);
+
+    const dark = wcagLuminance(it.hex) < 0.5;
+    card.style.setProperty("--c-color", it.hex);
+    card.style.setProperty("--c-shade0", shade(it.hex, dark ? 25 : -25));
+    card.style.setProperty("--c-shade1", shade(it.hex, dark ? 12 : -12));
+    const glow = wcagLuminance(it.hex);
+    card.dataset.tone = glow > 0.8 ? "light" : glow < 0.04 ? "dark" : "mid";
+    q("[data-value]").textContent = it.hex;
+    q("[data-card-name]").textContent = it.name;
+    const teaser = SHINES[[...it.hex].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % SHINES.length];
+    tilt.holo(teaser);
+    requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("swatchcard--visible")));
+
+    // taken already: who has it, and where everyone else is
+    const mine = bought || adopted[slug];
+    if (mine?.amount >= ADOPT_FROM) {
+      who?.clear();
+      q("[data-who]").hidden = true;
+      q("[data-place]").append(adopterBadge(mine));
+      q("[data-tiers]").hidden = true;
+      q("[data-note]").textContent = "";
+      cta.removeAttribute("aria-disabled");
+      tilt.holo(mine.amount >= HOLO_FROM && mine.shine ? mine.shine : null);
+      if (bought) {
+        q("[data-name]").textContent = `You adopted ${it.name}.`;
+        document.title = `You adopted ${it.name} — Color Names`;
+        q(".hero__stats").hidden = true;
+        q("[data-lead]").textContent = `Thank you! ${it.name} carries your name from today, for everyone to see.`;
+        shareRow(q, it, slug);
+        return;
+      }
+      q("[data-name]").textContent = `${it.name} is adopted.`;
+      q("[data-lead]").textContent = `${handle(mine.by, mine.on)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
+      cta.textContent = "See the supporters";
+      cta.href = siteURL("supporters/");
+      cta.removeAttribute("target");
       return;
     }
-    q("[data-name]").textContent = `${it.name} is adopted.`;
-    q("[data-lead]").textContent = `${handle(mine.by, mine.on)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
-    cta.textContent = "See the supporters";
-    cta.href = siteURL("supporters/");
-    cta.removeAttribute("target");
+    q("[data-who]").hidden = false;
+    who ??= askWho(q, () => slug, q("[data-place]"));
+    who.update();
+  }
+
+  // no color asked for: the search's color wheel, and the name it lands on
+  if (!first) {
+    const row = q("[data-pick]");
+    const picker = q("[data-picker]");
+    const named = q("[data-pick-name]");
+    row.hidden = false;
+    const pick = (value) => {
+      const it = closest(data, value);
+      named.textContent = it.name;
+      row.style.setProperty("--picked", it.hex);
+      show(it);
+    };
+    picker.addEventListener("input", () => pick(picker.value));
+    const start = data.items[Math.floor(Math.random() * data.items.length)];
+    picker.value = start.hex;
+    pick(start.hex);
     return;
   }
-  askWho(q, slug, q("[data-place]"));
+  show(first);
 }
