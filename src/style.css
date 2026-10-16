@@ -258,6 +258,7 @@ a:hover {
 }
 
 .adopt__act[hidden],
+.hero__stats[hidden],
 .adopt__share[hidden] {
   display: none;
 }
