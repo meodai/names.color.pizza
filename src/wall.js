@@ -809,7 +809,8 @@ export async function initWall(root) {
   function trackGlint() {
     const moved = glintEye ? Math.hypot(...sub(cam.eye, glintEye)) / Math.max(cam.dist, 1e-6) : 0;
     glintEye = cam.eye.slice();
-    cam.glint = Math.max(Math.min(1, moved * 40), (cam.glint || 0) * 0.92);
+    // even the slow drift at the start counts in full
+    cam.glint = Math.max(Math.min(1, moved / 0.0005), (cam.glint || 0) * 0.92);
   }
 
   function frame(time) {
