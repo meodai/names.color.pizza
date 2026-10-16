@@ -459,6 +459,10 @@ a:hover {
   margin-inline: var(--gutter);
 }
 
+.supporters__stats {
+  margin-block-start: var(--space-s);
+}
+
 .supporters__list {
   display: grid;
   gap: var(--space-m);

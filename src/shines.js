@@ -2,6 +2,14 @@
 export const SHINES = ["prism", "galaxy", "classic", "radiant", "aurora"];
 export const ADOPT_FROM = 5;
 export const HOLO_FROM = 10;
+// the first this many patrons are founding patrons (as in the upload worker)
+export const FOUNDING = 50;
+// how many colors are adopted, by how many people (the anonymous each count), founding spots left
+export function counts(adopted) {
+  const kept = Object.entries(adopted).filter(([, a]) => a.amount >= ADOPT_FROM);
+  const people = new Set(kept.map(([slug, a]) => (a.on === "anonymous" ? `anonymous:${slug}` : `${a.on}:${a.by}`)));
+  return { colors: kept.length, patrons: people.size, founding: Math.max(0, FOUNDING - kept.length) };
+}
 // real payments only on the site itself; anywhere else (localhost) is Stripe's test mode
 const LIVE = location.hostname === "names.color.pizza";
 export const PAYMENT = LIVE

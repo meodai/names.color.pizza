@@ -1,5 +1,5 @@
 import { getList, siteURL, slugsOf } from "./names.js";
-import { loadAdoptions } from "./shines.js";
+import { counts, loadAdoptions } from "./shines.js";
 import { PROFILES, handle as handleOf } from "./adopter.js";
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -21,6 +21,14 @@ export async function initSupportersPage() {
     people.set(key, p);
   }
   const rows = [...people.values()].sort((x, y) => y.total - x.total);
+  const n = counts(adopted);
+  const stats = document.querySelector("[data-counts]");
+  const plural = (k, one, many) => `${k.toLocaleString("en-US")} ${k === 1 ? one : many}`;
+  stats.innerHTML = [
+    ...(n.colors ? [`<span>${plural(n.colors, "color", "colors")} adopted by ${plural(n.patrons, "patron", "patrons")}</span>`] : []),
+    `<span>${n.founding === 50 ? "All 50 founding spots open" : n.founding ? `${n.founding} of 50 founding spots left` : "All 50 founding spots taken"}</span>`,
+  ].join("");
+  stats.hidden = false;
   // nobody yet: the first place, waiting
   if (!rows.length) {
     document.querySelector("[data-lead]").textContent =

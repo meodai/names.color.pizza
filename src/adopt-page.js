@@ -1,7 +1,7 @@
 import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
-import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, loadAdoptions } from "./shines.js";
+import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, loadAdoptions } from "./shines.js";
 import { UNAVATAR, adopterBadge, cleanHandle, handle, longDate } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
 
@@ -238,7 +238,9 @@ export async function initAdoptPage() {
     // taken already: who has it, and where everyone else is
     const mine = bought || adopted[slug];
     state = bought ? "bought" : mine?.amount >= ADOPT_FROM ? "taken" : missed ? "missed" : "free";
-    q("[data-founding]").hidden = state !== "free" || Object.values(adopted).filter((a) => a.amount >= ADOPT_FROM).length >= 50;
+    const left = counts(adopted).founding;
+    q("[data-founding]").hidden = state !== "free" || !left;
+    q("[data-founding-left]").textContent = left === 1 ? "The last spot is open." : `${left} of 50 spots left.`;
     if (mine?.amount >= ADOPT_FROM) {
       who?.clear();
       q("[data-who]").hidden = true;
