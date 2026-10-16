@@ -201,6 +201,12 @@ a:hover {
   grid-column: 2;
 }
 
+.hero__stats a.adopt-cta {
+  margin-block-start: var(--space-2xs);
+  font-size: var(--text-base);
+  text-transform: none;
+}
+
 .hero__adopted:empty {
   display: none;
 }
@@ -1121,7 +1127,9 @@ a:hover {
   display: none;
 }
 
-.footer__adopt a {
+/* the adopt button, at the end of a color's page and under its title */
+.footer__adopt a,
+.hero__stats a.adopt-cta {
   display: inline-block;
   padding: 0.85rem 1.6rem;
   border-radius: 999px;
@@ -1133,7 +1141,9 @@ a:hover {
 }
 
 .footer__adopt a:hover,
-.footer__adopt a:focus-visible {
+.footer__adopt a:focus-visible,
+.hero__stats a.adopt-cta:hover,
+.hero__stats a.adopt-cta:focus-visible {
   scale: 1.04;
 }
 

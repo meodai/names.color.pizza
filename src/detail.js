@@ -24,6 +24,7 @@ function adoptLink(hex, name, approx) {
   // an unnamed hex can't be adopted: its closest name can, so the link says which
   const a = Object.assign(document.createElement("a"), {
     href: adoptHref(hex, name, approx),
+    className: "adopt-cta",
     textContent: approx && name ? `Adopt ${name} ` : "Adopt this color ",
   });
   a.append(Object.assign(document.createElement("span"), { className: "hero__heart", textContent: "\u2665\uFE0E" }));
