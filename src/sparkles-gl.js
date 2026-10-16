@@ -92,6 +92,8 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
   let data = new Float32Array(0);
 
   return {
+    // the cards' size, as the wall sets it for the list
+    scale: 1,
     // flashes: [{ i, flash, turn }]; positions and colors (bytes) of the whole list
     draw(cam, dpr, canvas, flashes, positions, colors) {
       if (!flashes.length) return;
@@ -112,7 +114,7 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
       gl.uniform2f(u.view, canvas.width, canvas.height);
       gl.uniform2f(u.clip, NEAR, FAR);
       gl.uniform1f(u.px, 30 * dpr);
-      gl.uniform2f(u.corner, W * 0.42, H * 0.44);
+      gl.uniform2f(u.corner, W * 0.42 * this.scale, H * 0.44 * this.scale);
       // leave the GL as found: the cards and their names blend their own way
       const was = {
         blend: gl.isEnabled(gl.BLEND),

@@ -17,8 +17,13 @@ import { createLabelRenderer } from "./labels-gl.js";
 import { loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
 
-const W = 1;
-const H = 1.3; // square swatch over a 0.3 label strip
+const CARD_W = 1;
+const CARD_H = 1.3; // square swatch over a 0.3 label strip
+// a short list's cards grow, so a handful don't drown in the space: as big as the
+// Short list's cards would be at the same density, up to 8 times
+let W = CARD_W;
+let H = CARD_H;
+const cardScale = (n) => Math.min(8, Math.max(1, Math.cbrt(3087 / Math.max(n, 1))));
 const LY = 180; // lightness → world height
 const R = 100;
 
@@ -485,6 +490,8 @@ export async function initWall(root) {
   }
   let items = list.items;
   let n = items.length;
+  W = CARD_W * cardScale(n);
+  H = CARD_H * cardScale(n);
   const showCount = () =>
     root.querySelectorAll("[data-count]").forEach((el) => {
       el.textContent = n.toLocaleString("en-US");
@@ -529,7 +536,8 @@ export async function initWall(root) {
   let texts = null;
   let textsFor = draw;
   try {
-    texts = createLabelRenderer(draw.gl, { W, H, NEAR, FAR, NEAR_SLOTS });
+    texts = createLabelRenderer(draw.gl, { W: CARD_W, H: CARD_H, NEAR, FAR, NEAR_SLOTS });
+    texts.scale = cardScale(n);
   } catch (e) {
     console.error(e);
   }
@@ -540,7 +548,8 @@ export async function initWall(root) {
   let glitter = [];
   let sparkles = null;
   try {
-    sparkles = createSparkleRenderer(draw.gl, { NEAR, FAR, W, H });
+    sparkles = createSparkleRenderer(draw.gl, { NEAR, FAR, W: CARD_W, H: CARD_H });
+    sparkles.scale = cardScale(n);
   } catch (e) {
     console.error(e);
   }
@@ -1907,6 +1916,10 @@ export async function initWall(root) {
     list = next;
     items = next.items;
     n = items.length;
+    W = CARD_W * cardScale(n);
+    H = CARD_H * cardScale(n);
+    if (texts) texts.scale = cardScale(n);
+    if (sparkles) sparkles.scale = cardScale(n);
     colors = colorsOf(items);
     for (const cache of [placed, middles, bounds, wholeDist, cellsData, building]) {
       for (const k of Object.keys(cache)) delete cache[k];

@@ -24,6 +24,7 @@ uniform int u_hover;
 uniform vec3 u_hoverPos;
 uniform float u_hoverClear;
 uniform float u_nearAt;
+uniform float u_scale; // the cards' size, as the wall sets it for the list
 uniform int u_nearIds[${NEAR_SLOTS}];
 uniform float u_nearAlpha[${NEAR_SLOTS}];
 out vec2 v_uv;
@@ -35,8 +36,8 @@ void main() {
   float z = dot(v, u_fwd);
   float px = max(z, 0.001) / u_fpx;
   // the strip under the swatch, as the card shader places it
-  vec2 local = vec2(a_corner.x * ${W.toFixed(1)}, ${W.toFixed(1)} + a_corner.y * ${(H - W).toFixed(4)});
-  vec2 p = vec2(dot(v, u_right), dot(v, u_up)) + vec2(local.x - ${(W / 2).toFixed(4)}, ${(H / 2).toFixed(4)} - local.y);
+  vec2 local = vec2(a_corner.x * ${W.toFixed(1)}, ${W.toFixed(1)} + a_corner.y * ${(H - W).toFixed(4)}) * u_scale;
+  vec2 p = vec2(dot(v, u_right), dot(v, u_up)) + vec2(local.x - ${(W / 2).toFixed(4)} * u_scale, ${(H / 2).toFixed(4)} * u_scale - local.y);
   float n = u_clip.x, f = u_clip.y;
   gl_Position = vec4(p.x * u_fpx / (u_view.x * 0.5), p.y * u_fpx / (u_view.y * 0.5), (z * (f + n) - 2.0 * f * n) / (f - n), z);
   // a hair in front of its own card, never in front of the next
@@ -44,7 +45,7 @@ void main() {
   float slot = a_label.w;
   vec2 cell = vec2(mod(slot, ${COLS.toFixed(1)}), floor(slot / ${COLS.toFixed(1)}));
   v_uv = (cell * vec2(${SLOT_W.toFixed(1)}, ${SLOT_H.toFixed(1)}) + a_corner * vec2(${SLOT_W.toFixed(1)}, ${(SLOT_W * (H - W) / W).toFixed(2)})) / vec2(${ATLAS.toFixed(1)}, ${TALL.toFixed(1)});
-  float near = ${W.toFixed(1)} / px / min(u_view.x, u_view.y) > u_nearAt ? 0.0 : 1.0;
+  float near = ${W.toFixed(1)} * u_scale / px / min(u_view.x, u_view.y) > u_nearAt ? 0.0 : 1.0;
   int card = int(a_card.x + 0.5);
   // the hex comes as the strip is nearly out, the name just after
   v_show = a_card.y;
@@ -56,7 +57,7 @@ void main() {
     float zh = dot(vh, u_fwd);
     if (z > 0.0 && z < zh) {
       vec2 d = abs(vec2(dot(v, u_right), dot(v, u_up)) / z - vec2(dot(vh, u_right), dot(vh, u_up)) / zh);
-      vec2 reach = vec2(${W.toFixed(1)}, ${H.toFixed(4)}) * 0.5 * (1.0 / z + 1.0 / zh);
+      vec2 reach = vec2(${W.toFixed(1)}, ${H.toFixed(4)}) * u_scale * 0.5 * (1.0 / z + 1.0 / zh);
       if (d.x < reach.x && d.y < reach.y) near *= 1.0 - u_hoverClear;
     }
   }
@@ -128,7 +129,7 @@ export function createLabelRenderer(gl, geo) {
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   const u = {};
-  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "nearAt", "nearIds", "nearAlpha", "atlas", "hover", "hoverPos", "hoverClear"])
+  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "nearAt", "nearIds", "nearAlpha", "atlas", "hover", "hoverPos", "hoverClear", "scale"])
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
 
   const vao = gl.createVertexArray();
@@ -188,6 +189,7 @@ export function createLabelRenderer(gl, geo) {
   return {
     slots: SLOTS,
     reset,
+    scale: 1,
     // the cards that have their name ready, for their strips to come out
     ready: new Set(),
     draw(cam, dpr, canvas, cards, items, positions, near, strips) {
@@ -242,6 +244,7 @@ export function createLabelRenderer(gl, geo) {
       gl.uniform2f(u.view, canvas.width, canvas.height);
       gl.uniform2f(u.clip, geo.NEAR, geo.FAR);
       gl.uniform1f(u.nearAt, near.at);
+      gl.uniform1f(u.scale, this.scale);
       gl.uniform1iv(u.nearIds, near.ids);
       gl.uniform1fv(u.nearAlpha, near.alphas);
       gl.uniform1i(u.hover, near.hover?.i ?? -1);
