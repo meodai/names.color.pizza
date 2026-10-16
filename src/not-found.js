@@ -9,6 +9,8 @@ const OUTER = 480;
 const SIZE = 22;
 const PITCH = SIZE * 1.18;
 const SEP = " —— ";
+// a little less saturated now and then, so the wheel picks other names each visit
+const SAT = 0.6 + Math.random() * 0.4;
 
 const missing = document.querySelector("[data-missing]");
 const asked = location.pathname.match(/\/color\/([^/]+)\/?$/);
@@ -69,7 +71,7 @@ async function wheel() {
   for (let pos = 0; pos < path.total && picks.length < 2000; ) {
     const [x, y] = path.point(Math.min(pos + ahead, path.total));
     const hue = ((Math.atan2(y - C, x - C) * 180) / Math.PI + 360) % 360;
-    const [L, A, B] = rgbToOklab(hslToRgb(hue, 1, Math.min(1, Math.hypot(x - C, y - C) / OUTER)));
+    const [L, A, B] = rgbToOklab(hslToRgb(hue, SAT, Math.min(1, Math.hypot(x - C, y - C) / OUTER)));
     let best = -1;
     let bd = Infinity;
     for (let i = 0; i < items.length; i++) {
