@@ -20,11 +20,17 @@ import parrot from "./favicon.svg?raw";
 import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
 
 // the heart in its own box, so the link's underline passes it by
-function adoptLink(hex) {
-  const a = Object.assign(document.createElement("a"), { href: siteURL(`adopt/#${hex.slice(1)}`), textContent: "Adopt this color " });
+function adoptLink(hex, name, approx) {
+  // an unnamed hex can't be adopted: its closest name can, so the link says which
+  const a = Object.assign(document.createElement("a"), {
+    href: adoptHref(hex, name, approx),
+    textContent: approx && name ? `Adopt ${name} ` : "Adopt this color ",
+  });
   a.append(Object.assign(document.createElement("span"), { className: "hero__heart", textContent: "\u2665\uFE0E" }));
   return a;
 }
+const adoptHref = (hex, name, approx) =>
+  approx && name ? siteURL(`adopt/?name=${encodeURIComponent(name)}`) : siteURL(`adopt/#${hex.slice(1)}`);
 import { tiltCard, previewShine } from "./tilt.js";
 import { adoptedHTML, adopterBadge } from "./adopter.js";
 
@@ -414,7 +420,7 @@ async function render(hex) {
     adoptedLine.replaceChildren(
       ...(shown
         ? adoptedHTML(adopted)
-        : [adoptLink(hex)]),
+        : [adoptLink(hex, known, approx)]),
     );
     card.parentElement.querySelector(".card-badge")?.remove();
     if (shown) card.parentElement.append(adopterBadge(adopted));
@@ -422,13 +428,10 @@ async function render(hex) {
     const again = page.root.querySelector("[data-footer-adopt]");
     if (again) {
       again.hidden = shown;
-      again.firstElementChild.href = siteURL(`adopt/#${hex.slice(1)}`);
+      again.firstElementChild.href = adoptHref(hex, known, approx);
+      again.firstElementChild.firstChild.textContent = approx && known ? `Adopt ${known} ` : "Adopt this color ";
     }
   };
-  adoption(builtPage?.hex === hex ? builtPage.adopted : null);
-  // the bucket knows about adoptions since the last build
-  const slugNow = builtPage?.hex === hex ? builtPage.slug : null;
-  if (slugNow) loadAdoptions().then((all) => current?.hex === hex && all[slugNow] && adoption(all[slugNow]));
   // handed over from the wall: show it at once where it landed, so the page change doesn't show
   let handoff = null;
   try {
@@ -456,6 +459,10 @@ async function render(hex) {
     known = builtPage.name;
     approx = true;
   }
+  adoption(builtPage?.hex === hex ? builtPage.adopted : null);
+  // the bucket knows about adoptions since the last build
+  const slugNow = builtPage?.hex === hex ? builtPage.slug : null;
+  if (slugNow) loadAdoptions().then((all) => current?.hex === hex && all[slugNow] && adoption(all[slugNow]));
   current = { hex };
   page.value.textContent = hex;
   page.cardName.textContent = known && approx ? `≈ ${known}` : known;

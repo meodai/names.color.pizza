@@ -175,9 +175,18 @@ export async function initAdoptPage() {
     q("[data-lead]").textContent = "Your payment went through. Your color shows up on its page in a minute or two.";
     return;
   }
-  const asked = bought?.slug || (missed ? null : new URLSearchParams(location.search).get("c"));
+  const params = new URLSearchParams(location.search);
+  const asked = bought?.slug || (missed ? null : params.get("c"));
+  const named = !missed && params.get("name");
   const hex = normalizeHex(location.hash.slice(1));
-  const first = asked ? data.items.find((i) => slugs.get(i.name) === asked) : hex ? closest(data, hex) : null;
+  // only named colors can be adopted: a hex goes to its closest name
+  const first = asked
+    ? data.items.find((i) => slugs.get(i.name) === asked)
+    : named
+      ? data.items.find((i) => i.name === named)
+      : hex
+        ? closest(data, hex)
+        : null;
   const card = q("[data-card]");
   const place = cardPlace();
   q("[data-place]").style.setProperty("--x", place.x.toFixed(3));
