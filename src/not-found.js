@@ -17,6 +17,7 @@ if (asked) {
     .replace(/[-_]+/g, " ")
     .replace(/\b\p{L}/gu, (c) => c.toUpperCase());
   missing.textContent = `No color is called “${name}” yet.`;
+  missing.hidden = false;
 }
 
 function hslToRgb(h, s, l) {
