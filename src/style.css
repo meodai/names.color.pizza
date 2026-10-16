@@ -454,6 +454,10 @@ a:hover {
   max-width: 40ch;
 }
 
+.adopt-more__about a {
+  color: inherit;
+}
+
 .adopt-projects {
   display: grid;
   gap: var(--space-s);
