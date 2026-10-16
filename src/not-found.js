@@ -96,6 +96,7 @@ async function wheel() {
   picks.forEach((it, k) => {
     const a = document.createElementNS(SVG, "a");
     a.setAttribute("href", siteURL(`color/${slugs.get(it.name)}/`));
+    a.style.setProperty("--k", k);
     const name = document.createElementNS(SVG, "tspan");
     name.setAttribute("fill", it.hex);
     name.textContent = it.name;
@@ -104,12 +105,14 @@ async function wheel() {
     if (k < picks.length - 1) {
       const sep = document.createElementNS(SVG, "tspan");
       sep.setAttribute("fill", it.hex);
+      sep.style.setProperty("--k", k);
       sep.textContent = SEP;
       along.append(sep);
     }
   });
   text.append(along);
   document.querySelector("[data-wheel-names]").append(text);
-  document.querySelector("[data-wheel]").classList.add("is-in");
+  // a frame later, so the names start hidden and come in one by one
+  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelector("[data-wheel]").classList.add("is-in")));
 }
 wheel();

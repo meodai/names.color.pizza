@@ -171,11 +171,17 @@ a:hover {
   animation: not-found-spin 150s linear infinite;
   font-family: Inter, sans-serif;
   font-weight: 600;
-  opacity: 0;
-  transition: opacity 1.2s ease;
 }
 
-.not-found__wheel.is-in {
+/* the names come in from the middle outwards, one every 50ms */
+.not-found__wheel a,
+.not-found__wheel textPath > tspan {
+  opacity: 0;
+  transition: opacity 0.5s ease calc(var(--k) * 50ms);
+}
+
+.not-found__wheel.is-in a,
+.not-found__wheel.is-in textPath > tspan {
   opacity: 1;
 }
 
@@ -196,6 +202,11 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   .not-found__wheel {
     animation: none;
+  }
+
+  .not-found__wheel a,
+  .not-found__wheel textPath > tspan {
+    transition: none;
   }
 }
 
