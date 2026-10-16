@@ -270247,5 +270247,14 @@
     "reference": "Gothic fiction genre",
     "description": "Midnight in a ruined abbey, ivy crawling up stone walls.",
     "model": "describer"
+  },
+  {
+    "name": "Cumulonimbus Night",
+    "hex": "#484c57",
+    "ai": true,
+    "kind": "thing",
+    "reference": "cumulonimbus cloud at night",
+    "description": "Stormcloud grey, just before the thunderclap.",
+    "model": "describer"
   }
 ]
