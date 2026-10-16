@@ -256,6 +256,13 @@ const adopted =
   (await fetch(`https://media.color.pizza/data/adopted.json?t=${Date.now()}`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : r.status === 404 ? {} : null))
     .catch(() => null)) ?? (existsSync(ADOPTED) ? JSON.parse(readFileSync(ADOPTED, "utf8")) : {});
+// pixel art of a color's name, by Retro Diffusion: slug -> { v, subject, verified }
+const pixels =
+  (await fetch(`https://media.color.pizza/data/pixel.json?t=${Date.now()}`, { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : {}))
+    .catch(() => ({}))) || {};
+const pixelOf = (slug) => pixels[slug] && { src: `https://media.color.pizza/pixel/${slug}.png?v=${pixels[slug].v}`, subject: pixels[slug].subject };
+
 // a color's link preview, straight from the bucket: its adopted card once there is one
 // (share.mjs makes it in this same build), else its plain card
 const previewOf = (slug, it) => {
@@ -285,7 +292,7 @@ const sitemap = [`<url><loc>${SITE}</loc></url>`];
 const DATASET = "colornames.jsonld.ndjson";
 const CONTEXT = "colornames.context.jsonld";
 const dataset = [];
-function datasetLine({ name, hex, url, said, looked }) {
+function datasetLine({ name, hex, url, said, looked, pixel }) {
   const lore = new ColorDescription(hex);
   const some = (words) => (words || []).slice(0, 8);
   return JSON.stringify({
@@ -298,6 +305,7 @@ function datasetLine({ name, hex, url, said, looked }) {
     words: { describe: some(lore.descriptiveWords), means: some(lore.meanings), makesYou: some(lore.effects), fits: some(lore.usage) },
     meaning: (looked?.entries || []).map((e) => ({ title: e.title, wikipedia: e.link, ...(e.wikidata ? { wikidata: `https://www.wikidata.org/wiki/${e.wikidata}` } : {}) })),
     definitions: (looked?.definitions || []).map((d) => ({ term: d.term, wiktionary: d.link })),
+    ...(pixel ? { pixelArt: { image: pixel.src, subject: pixel.subject, license: "https://creativecommons.org/licenses/by/4.0/", credit: "Pixel art by Retro Diffusion", creditUrl: "https://retrodiffusion.ai/" } } : {}),
   });
 }
 
@@ -368,7 +376,7 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(
       "</body>",
       () =>
-        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art === true || art?.length ? listURL(slug) : null, adopted: adopted[slug] })}</script>\n  </body>`,
+        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art === true || art?.length ? listURL(slug) : null, adopted: adopted[slug], pixel: pixelOf(slug) })}</script>\n  </body>`,
     );
   const meaning = meaningHTML(looked);
   if (meaning) {
@@ -428,7 +436,7 @@ ${preview.join("\n")}
     }
   }
   sitemap.push(`<url><loc>${url}</loc>${copy?.fetched ? `<lastmod>${copy.fetched}</lastmod>` : ""}</url>`);
-  dataset.push(datasetLine({ name, hex, url, said, looked: copy?.looked }));
+  dataset.push(datasetLine({ name, hex, url, said, looked: copy?.looked, pixel: pixelOf(slug) }));
   written++;
 }
 

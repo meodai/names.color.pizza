@@ -617,7 +617,9 @@ async function showPictures(hex, terms, saved) {
 }
 
 async function showArt(hex, saved) {
-  const list = (await saved)?.list;
+  const copy = await saved;
+  const list = copy?.list;
+  cardPixel = copy?.pixel ? { hex, pixel: copy.pixel } : null;
   let art = [];
   try {
     if (list) art = await (await fetch(new URL(list, location.href))).json();
@@ -637,6 +639,26 @@ async function showArt(hex, saved) {
       work: w,
     })),
   );
+  pixelOnCard();
+}
+
+// the color's name drawn as pixel art, over the art section's card, whichever is there first
+let cardPixel = null;
+function pixelOnCard() {
+  const upper = page.art.querySelector(".gallery__swatch .swatchcard__upper");
+  if (!upper || !cardPixel || cardPixel.hex !== current?.hex || upper.querySelector(".gallery__pixel")) return;
+  const { pixel } = cardPixel;
+  const credit = Object.assign(document.createElement("a"), {
+    className: "gallery__pixel",
+    href: "https://retrodiffusion.ai/",
+    target: "_blank",
+    rel: "noopener",
+    title: `${pixel.subject} Pixel art by Retro Diffusion`,
+  });
+  credit.append(Object.assign(document.createElement("img"), { src: pixel.src, alt: pixel.subject, width: 64, height: 64, decoding: "async" }));
+  upper.append(credit);
+  // a link now: no longer only decoration
+  upper.closest(".gallery__swatch").removeAttribute("aria-hidden");
 }
 
 let gallery = [];
@@ -709,6 +731,7 @@ function layoutGallery() {
     <h2 class="display gallery__name">${escapeHTML(current.name)},<br />in pictures.</h2>`;
   strip.track.append(title);
   strip.title = title;
+  pixelOnCard();
   const shown = new IntersectionObserver(
     ([e]) => {
       if (!e.isIntersecting) return;

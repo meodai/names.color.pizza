@@ -1317,6 +1317,21 @@ h2:hover > .anchor,
   text-align: left;
 }
 
+/* a color's name as pixel art, over the art section's card, its pixels kept sharp */
+.gallery__pixel {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+}
+
+.gallery__pixel img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  image-rendering: pixelated;
+}
+
 .gallery__swatch {
   container-type: inline-size;
   flex: none;
