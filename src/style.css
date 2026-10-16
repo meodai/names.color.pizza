@@ -2537,11 +2537,10 @@ h2:hover > .anchor,
   max-width: 30ch;
 }
 
-/* the drawing standing at the left of its title and text, as tall as both: the text sets
-   the height, the drawing follows */
+/* the drawing standing at the left of its title and text, one size whatever the text */
 .color-specs__pair {
   position: relative;
-  padding-inline-start: 1.6em;
+  padding-inline-start: 2.6em;
 }
 
 /* hovered or focused, each drawing in its real colors */
@@ -2593,9 +2592,9 @@ h2:hover > .anchor,
 
 .mix-viz {
   position: absolute;
-  inset-block: 0;
+  inset-block-start: 0.15em;
   inset-inline-start: 0;
-  block-size: 100%;
+  block-size: 5.2em;
   inline-size: auto;
   overflow: visible;
 }
