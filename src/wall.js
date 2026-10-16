@@ -113,6 +113,8 @@ const NEAR_MS = 260;
 const NEAR_SLOTS = 16;
 // a card's name strip slides out under it, then its name fades in
 const STRIP_MS = 200;
+// names come out from the middle of the view: the edge this much later
+const STRIP_SPREAD_MS = 350;
 // camera speed (share of its distance moved, plus radians turned, per second) past which
 // names stay away until it has been slower for CALM_MS
 const RUSH = 1.2;
@@ -753,10 +755,15 @@ export async function initWall(root) {
       stripsOf = draw;
     }
     const strips = draw.strips;
+    const fromMiddle = (i) => {
+      const p = project(posOf(i));
+      return Math.min(1, Math.hypot(p.x - view.w / 2, p.y - view.h / 2) / Math.hypot(view.w / 2, view.h / 2));
+    };
     const aim = (i, to) => {
       const a = stripAnim.get(i);
       if (a ? a.to === to : strips[i] === to) return;
-      stripAnim.set(i, { from: strips[i], to, t0: time });
+      const wait = to === 1 && !reduceMotion ? fromMiddle(i) * STRIP_SPREAD_MS : 0;
+      stripAnim.set(i, { from: strips[i], to, t0: time + wait });
     };
     for (const i of ready) {
       aim(i, 1);
