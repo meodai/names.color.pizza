@@ -16,6 +16,7 @@ import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from ".
 import { createLabelRenderer } from "./labels-gl.js";
 import { loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
+import { createAz } from "./az.js";
 
 const CARD_W = 1;
 const CARD_H = 1.3; // square swatch over a 0.3 label strip
@@ -1942,6 +1943,7 @@ export async function initWall(root) {
     for (const l of pool) l.i = -1;
     showCount();
     markStars();
+    if (azOn) az?.open(items);
   }
 
   async function ensureCells(key) {
@@ -1965,7 +1967,33 @@ export async function initWall(root) {
     }
   }
 
+  // A–Z: the list as one long column instead of the space; the model stays as it was
+  let azOn = false;
+  let az = null;
+  // pages are named by the full list's slugs, whichever list is shown
+  let azSlugs = null;
+  async function setAz(on) {
+    if (on === azOn) return;
+    azOn = on;
+    root.classList.toggle("is-az", on);
+    root.scrollLeft = 0;
+    if (on) azSlugs ||= slugsOf((await getList("default")).items);
+    az ||= createAz(q(".wall__dock"), { hrefOf: (it) => siteURL(`color/${azSlugs.get(it.name)}/`) });
+    if (!azOn) return az.close();
+    if (on) az.open(items);
+    else az.close();
+    showModel();
+    try {
+      const url = new URL(location.href);
+      if (on) url.searchParams.set("view", "az");
+      else if (url.searchParams.get("view") === "az") url.searchParams.delete("view");
+      history.replaceState(history.state, "", url);
+    } catch {}
+    if (!on) request();
+  }
+
   function setModel(key) {
+    if (azOn) setAz(false);
     if (key === model || !MODELS[key]) return;
     dropSpot();
     // cells can't morph: they dip into the dark and come back reshaped
@@ -2000,8 +2028,8 @@ export async function initWall(root) {
   thumb.className = "wall__models-thumb";
   thumb.setAttribute("aria-hidden", "true");
   function showModel() {
-    picker.querySelectorAll("[data-model]").forEach((b) => {
-      const on = b.dataset.model === model;
+    picker.querySelectorAll("[data-model], [data-az]").forEach((b) => {
+      const on = azOn ? b.hasAttribute("data-az") : b.dataset.model === model;
       b.setAttribute("aria-pressed", String(on));
       if (on) {
         thumb.style.setProperty("--x", `${b.offsetLeft}px`);
@@ -2026,7 +2054,9 @@ export async function initWall(root) {
       b.addEventListener("click", () => setModel(key));
       return b;
     }),
+    Object.assign(document.createElement("button"), { type: "button", textContent: "A–Z", title: "Every name, A to Z", onclick: () => setAz(true) }),
   );
+  picker.lastElementChild.dataset.az = "";
   showModel();
   // fonts loading and the phone layout resize the buttons
   new ResizeObserver(() => {
@@ -2189,6 +2219,8 @@ export async function initWall(root) {
     } catch {}
   }
 
+  // a link to the A–Z list opens on it, whichever way the page was reached
+  if (new URLSearchParams(location.search).get("view") === "az") setAz(true);
   if (saved && Number.isFinite(saved.dist) && saved.target?.length === 3) {
     const { home: wasHome, ...restored } = saved;
     Object.assign(cam, restored);
