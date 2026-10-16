@@ -8,7 +8,9 @@ export const PAYMENT = LIVE
   ? "https://buy.stripe.com/4gMdRa7YhgZ21FPbqI7N600"
   : "https://donate.stripe.com/test_8x25kEenHdR70p121M9k400";
 // written by the upload worker the moment Stripe says a color was adopted
-export const ADOPTIONS = `https://media.color.pizza/data/adopted${LIVE ? "" : "-test"}.json`;
+export const ADOPTIONS = LIVE
+  ? "https://media.color.pizza/data/adopted.json"
+  : "https://color-names-upload.cloudflare-54bbeb.workers.dev/adoptions-test";
 export const loadAdoptions = () =>
   fetch(ADOPTIONS, { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : {}))

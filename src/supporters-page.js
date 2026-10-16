@@ -1,11 +1,6 @@
 import { getList, siteURL, slugsOf } from "./names.js";
 import { loadAdoptions } from "./shines.js";
-
-const PROFILES = {
-  bluesky: (by) => `https://bsky.app/profile/${by}`,
-  github: (by) => `https://github.com/${by}`,
-  x: (by) => `https://x.com/${by}`,
-};
+import { PROFILES, handle as handleOf } from "./adopter.js";
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 // one row per person, by everything they gave, with the colors they adopted
@@ -16,7 +11,8 @@ export async function initSupportersPage() {
   const names = Object.fromEntries(data.items.map((it) => [slugs.get(it.name), it]));
   const people = new Map();
   for (const [slug, a] of Object.entries(adopted)) {
-    const key = `${a.on}:${a.by}`;
+    // the anonymous aren't one person
+    const key = a.on === "anonymous" ? `anonymous:${slug}` : `${a.on}:${a.by}`;
     const p = people.get(key) || { ...a, total: 0, colors: [] };
     p.total += a.amount;
     p.avatar ||= a.avatar;
@@ -26,11 +22,11 @@ export async function initSupportersPage() {
   const rows = [...people.values()].sort((x, y) => y.total - x.total);
   list.innerHTML = rows
     .map((p) => {
-      const handle = p.on === "name" ? p.by : `@${p.by.replace(/^@/, "")}`;
+      const handle = handleOf(p.by, p.on);
       const href = PROFILES[p.on]?.(p.by);
       const wrap = (cls, inner) =>
         href ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener">${inner}</a>` : `<span class="${cls}">${inner}</span>`;
-      const face = p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" />` : `<span>${esc(handle.replace(/^@/, "")[0]?.toUpperCase() || "?")}</span>`;
+      const face = p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" />` : `<span>${p.on === "anonymous" ? "\u2665\uFE0E" : esc(handle.replace(/^@/, "")[0]?.toUpperCase() || "?")}</span>`;
       return `<li class="supporter">
         ${wrap("card-badge supporter__face", face)}
         ${wrap("supporter__name", esc(handle))}

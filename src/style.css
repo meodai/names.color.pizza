@@ -415,6 +415,12 @@ a:hover {
   background: var(--paper);
 }
 
+.adopt__legal {
+  margin: var(--space-s) 0 0;
+  font-size: var(--text-xs);
+  opacity: 0.75;
+}
+
 .adopt__note {
   font-size: var(--text-xs);
   opacity: 0.75;
