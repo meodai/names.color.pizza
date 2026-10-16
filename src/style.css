@@ -211,6 +211,10 @@ a:hover {
   padding: 0.6rem 1.1rem;
 }
 
+.adopt-cta .hero__heart {
+  margin-inline-start: 0.25em;
+}
+
 .hero__adopted:empty {
   display: none;
 }
