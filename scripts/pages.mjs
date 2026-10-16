@@ -457,7 +457,8 @@ writeFileSync(
   ),
 );
 // any address that isn't there: the not-found page, with paths from the site's root; a
-// /color/<hex> goes on to that color first
+// /color/<hex> goes on to that color first, and a name written another way ("The New
+// Black", the_new_black) on to its slug, as names.js makes them
 const ROOT = new URL(SITE).pathname;
 writeFileSync(
   join(DIST, "404.html"),
@@ -469,8 +470,23 @@ writeFileSync(
       `<head>
     <script>
       (() => {
-        const m = location.pathname.match(/^(.*\\/)color\\/#?([0-9a-f]{3}|[0-9a-f]{6})\\/?$/i);
-        if (m) location.replace(m[1] + "color/#" + m[2].toLowerCase());
+        const path = location.pathname;
+        const m = path.match(/^(.*\\/)color\\/#?([0-9a-f]{3}|[0-9a-f]{6})\\/?$/i);
+        if (m) return location.replace(m[1] + "color/#" + m[2].toLowerCase());
+        const n = path.match(/^(.*\\/)color\\/([^/]+)\\/?$/);
+        if (!n) return;
+        let asked = n[2];
+        try {
+          asked = decodeURIComponent(asked);
+        } catch {}
+        const slug = asked
+          .normalize("NFKD")
+          .replace(/[\\u0300-\\u036f]/g, "")
+          .toLowerCase()
+          .replace(/&/g, " and ")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        if (slug && slug !== n[2]) location.replace(n[1] + "color/" + slug + "/" + location.hash);
       })();
     </script>`,
     ),
