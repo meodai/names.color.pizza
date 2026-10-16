@@ -12,7 +12,7 @@ const PER_FRAME = 24;
 const vert = ({ W, H, NEAR_SLOTS }, TALL) => `#version 300 es
 in vec2 a_corner;
 in vec4 a_label; // card position, slot
-in float a_card;
+in vec2 a_card; // card, how far its strip is out
 uniform vec3 u_eye;
 uniform vec3 u_right;
 uniform vec3 u_up;
@@ -25,6 +25,8 @@ uniform int u_nearIds[${NEAR_SLOTS}];
 uniform float u_nearAlpha[${NEAR_SLOTS}];
 out vec2 v_uv;
 out float v_near;
+out float v_show;
+out float v_y;
 void main() {
   vec3 v = a_label.xyz - u_eye;
   float z = dot(v, u_fwd);
@@ -40,7 +42,10 @@ void main() {
   vec2 cell = vec2(mod(slot, ${COLS.toFixed(1)}), floor(slot / ${COLS.toFixed(1)}));
   v_uv = (cell * vec2(${SLOT_W.toFixed(1)}, ${SLOT_H.toFixed(1)}) + a_corner * vec2(${SLOT_W.toFixed(1)}, ${(SLOT_W * (H - W) / W).toFixed(2)})) / vec2(${ATLAS.toFixed(1)}, ${TALL.toFixed(1)});
   float near = ${W.toFixed(1)} / px / min(u_view.x, u_view.y) > u_nearAt ? 0.0 : 1.0;
-  int card = int(a_card + 0.5);
+  int card = int(a_card.x + 0.5);
+  // the text comes once its strip is (nearly) out
+  v_show = smoothstep(0.6, 1.0, a_card.y);
+  v_y = a_corner.y / max(a_card.y, 0.001);
   for (int k = 0; k < ${NEAR_SLOTS}; k++) if (u_nearIds[k] == card) near = u_nearAlpha[k];
   v_near = near;
 }`;
@@ -49,12 +54,15 @@ const FRAG = `#version 300 es
 precision highp float;
 in vec2 v_uv;
 in float v_near;
+in float v_show;
+in float v_y;
 uniform sampler2D u_atlas;
 out vec4 o;
 void main() {
   // the same dither as the cards', so a dissolving card takes its name along
   if (v_near < 1.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) >= v_near) discard;
-  float a = texture(u_atlas, v_uv).r;
+  if (v_y > 1.0) discard;
+  float a = texture(u_atlas, v_uv).r * v_show;
   if (a < 0.01) discard;
   o = vec4(0.0, 0.0, 0.0, a);
 }`;
@@ -114,7 +122,7 @@ export function createLabelRenderer(gl, geo) {
   gl.enableVertexAttribArray(aCorner);
   gl.vertexAttribPointer(aCorner, 2, gl.FLOAT, false, 0, 0);
   const labelData = new Float32Array(SLOTS * 4);
-  const cardData = new Float32Array(SLOTS);
+  const cardData = new Float32Array(SLOTS * 2);
   const labelBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, labelBuf);
   gl.bufferData(gl.ARRAY_BUFFER, labelData.byteLength, gl.DYNAMIC_DRAW);
@@ -127,7 +135,7 @@ export function createLabelRenderer(gl, geo) {
   gl.bufferData(gl.ARRAY_BUFFER, cardData.byteLength, gl.DYNAMIC_DRAW);
   const aCard = gl.getAttribLocation(prog, "a_card");
   gl.enableVertexAttribArray(aCard);
-  gl.vertexAttribPointer(aCard, 1, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(aCard, 2, gl.FLOAT, false, 0, 0);
   gl.vertexAttribDivisor(aCard, 1);
   gl.bindVertexArray(null);
 
@@ -162,8 +170,12 @@ export function createLabelRenderer(gl, geo) {
   return {
     slots: SLOTS,
     reset,
-    draw(cam, dpr, canvas, cards, items, positions, near) {
+    // the cards that have their name ready, for their strips to come out
+    ready: new Set(),
+    draw(cam, dpr, canvas, cards, items, positions, near, strips) {
       tick++;
+      const ready = this.ready;
+      ready.clear();
       let drawn = 0;
       let count = 0;
       let painted = 0;
@@ -186,8 +198,11 @@ export function createLabelRenderer(gl, geo) {
           painted++;
         }
         wanted[slot] = tick;
+        ready.add(c.i);
+        if (strips[c.i] <= 0) continue;
         labelData.set([positions[c.i * 3], positions[c.i * 3 + 1], positions[c.i * 3 + 2], slot], count * 4);
-        cardData[count] = c.i;
+        cardData[count * 2] = c.i;
+        cardData[count * 2 + 1] = strips[c.i];
         count++;
       }
       if (painted) {
@@ -200,7 +215,7 @@ export function createLabelRenderer(gl, geo) {
       gl.bindBuffer(gl.ARRAY_BUFFER, labelBuf);
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, labelData, 0, count * 4);
       gl.bindBuffer(gl.ARRAY_BUFFER, cardBuf);
-      gl.bufferSubData(gl.ARRAY_BUFFER, 0, cardData, 0, count);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, cardData, 0, count * 2);
       gl.uniform3fv(u.eye, cam.eye);
       gl.uniform3fv(u.right, cam.right);
       gl.uniform3fv(u.up, cam.up);
