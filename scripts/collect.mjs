@@ -1,5 +1,6 @@
 // node scripts/collect.mjs [--data .data] [--list color-names/src/colornames.csv]
 //   [--minutes 330] [--rate N] [--parallel N] [--all] [--limit N] [--with-pictures | --pictures]
+//   [--names "Name,Name"]  (just these, fetched again: after a correction in src/references.js)
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync } from "node:fs";
@@ -35,6 +36,7 @@ const ALL = process.argv.includes("--all");
 const PICTURES_ONLY = process.argv.includes("--pictures");
 const WITH_PICTURES = PICTURES_ONLY || process.argv.includes("--with-pictures");
 const LIMIT = +arg("limit", Infinity);
+const NAMES = arg("names") && new Set(arg("names").split(",").map((n) => n.trim()));
 const CYCLE_DAYS = 180;
 const AGENT = `ColorNamesBot/1.0 (https://github.com/meodai/color-names) node/${process.versions.node}`;
 
@@ -244,7 +246,9 @@ const oldest = items
   .sort((a, b) => (fetched.get(slugs.get(a.name)) < fetched.get(slugs.get(b.name)) ? -1 : 1))
   .slice(0, renew);
 const todo = (
-  PICTURES_ONLY
+  NAMES
+    ? items.filter((it) => NAMES.has(it.name))
+    : PICTURES_ONLY
     ? // copies without their pictures yet
       items.filter((it) => fetched.has(slugs.get(it.name)) && !pictured.has(slugs.get(it.name)))
     : [...(ALL ? missing : missing.slice(0, Math.max(renew, 500))), ...oldest]

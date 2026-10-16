@@ -1,4 +1,5 @@
 import { hexToRgb, rgbToOklab, tidySenses } from "./names.js";
+import { REFERENCES } from "./references.js";
 
 // browsers can't set User-Agent; Wikimedia accepts Api-User-Agent instead
 const AGENT = "ColorNamesBot/1.0 (https://github.com/meodai/color-names) color-pages";
@@ -249,6 +250,7 @@ async function wikiSearch(query, limit = 2, what = "nearmatch") {
 const sentenceCase = (t) => t[0] + t.slice(1).toLowerCase();
 
 async function wikiEntries(name) {
+  if (REFERENCES[name]) return entriesOf(await Promise.all(REFERENCES[name].map(wikiSummary)));
   const sentence = sentenceCase(name);
   const [full, asSentence] = await Promise.all([wikiSummary(name), sentence !== name ? wikiSummary(sentence) : null]);
   const ambiguous = [full, asSentence].find((p) => p?.type === "disambiguation");
@@ -283,6 +285,10 @@ async function wikiEntries(name) {
     pages.splice(Math.max(own, 1), 0, ...extra);
   }
 
+  return entriesOf(pages);
+}
+
+function entriesOf(pages) {
   const seen = new Set();
   return pages
     .filter((p) => p && p.type !== "disambiguation" && p.extract)
