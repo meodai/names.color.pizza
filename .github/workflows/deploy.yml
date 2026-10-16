@@ -1,6 +1,8 @@
 # Builds the site and deploys it to names.color.pizza (GitHub Pages). The
 # list and its history come from the names repo, the nightly copies from
-# the data branch, the descriptions from the descriptions branch.
+# the data branch, the descriptions from the descriptions branch. Daily at
+# 05:45 UTC too, after the nightly data (03:17) and descriptions (05:17), so
+# what they bring goes live without a push.
 
 name: Deploy
 
@@ -8,6 +10,8 @@ on:
   push:
     branches: [main]
     paths-ignore: ["README.md", "docs/**", "CLAUDE.md"]
+  schedule:
+    - cron: "45 5 * * *"
   workflow_dispatch:
 
 permissions:
