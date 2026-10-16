@@ -190,6 +190,11 @@ a:hover {
   text-decoration-thickness: 2px;
 }
 
+/* who adopted it, on a line of its own */
+.hero__adopted {
+  flex-basis: 100%;
+}
+
 .hero__adopted:empty {
   display: none;
 }
