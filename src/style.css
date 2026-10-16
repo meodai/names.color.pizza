@@ -193,16 +193,21 @@ a:hover {
 /* on a color's page the hex, then when it was added and who adopted it, one under the other */
 .hero__stats[data-stats] {
   display: grid;
-  grid-template-columns: max-content auto;
-  justify-content: start;
+  grid-template-columns: max-content 1fr;
+  justify-items: start;
 }
 
 .hero__stats[data-stats] .hero__adopted {
   grid-column: 2;
 }
 
+/* the button starts the line, a little apart */
+.hero__stats[data-stats] .hero__adopted:has(.adopt-cta) {
+  grid-column: 1 / -1;
+}
+
 .hero__stats a.adopt-cta {
-  margin-block-start: var(--space-2xs);
+  margin-block-start: var(--space-s);
   font-size: var(--text-base);
   text-transform: none;
 }
