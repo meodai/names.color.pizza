@@ -162,7 +162,7 @@ export async function initAdoptPage() {
     q("[data-place]").querySelectorAll(".card-badge").forEach((b) => b.remove());
     document.title = `Adopt ${it.name} — Color Names`;
     q("[data-name]").textContent = `Adopt ${it.name}.`;
-    q("[data-lead]").textContent = "A symbolic gesture: it keeps the list, its API and these pages running, free for everyone.";
+    q("[data-lead]").textContent = `Be the proud patron of ${it.name}, and keep the list, its API and these pages running for everyone.`;
     const readme = Object.assign(document.createElement("a"), {
       href: "https://github.com/meodai/color-names#sponsors",
       target: "_blank",
