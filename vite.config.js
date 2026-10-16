@@ -19,6 +19,7 @@ export default defineConfig({
         main: resolve(import.meta.dirname, "index.html"),
         classic: resolve(import.meta.dirname, "classic/index.html"),
         color: resolve(import.meta.dirname, "color/index.html"),
+        legal: resolve(import.meta.dirname, "legal/index.html"),
       },
     },
   },

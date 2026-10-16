@@ -152,6 +152,23 @@ a:hover {
   margin: 0;
 }
 
+.legal__content {
+  inline-size: min(100%, 40rem);
+  margin-block: var(--space-l);
+}
+
+.legal__content .prose {
+  max-width: 60ch;
+}
+
+.legal__content .hero__title {
+  margin-block-end: var(--space-m);
+}
+
+.legal__content .label {
+  margin-block: var(--space-m) var(--space-2xs);
+}
+
 .hero__stats {
   display: flex;
   flex-wrap: wrap;
