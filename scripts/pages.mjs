@@ -78,7 +78,8 @@ const copyOf = (slug) => {
 // palettes and credits of every collection, kept with the copies
 // (and a fingerprint of all of it, with the code that picks from it)
 const artPrint = createHash("sha1").update(readFileSync(resolve(here, "../src/art.js")));
-async function collection(name) {
+// the picks rest on the museums alone: the Wikipedia copies only swap in pictures later
+async function collection(name, picked = true) {
   const local = process.env.ART_DATA && join(process.env.ART_DATA, `${name}.json`);
   let text = "[]";
   if (local && existsSync(local)) text = readFileSync(local, "utf8");
@@ -86,7 +87,7 @@ async function collection(name) {
     const res = await fetch(`${MEDIA}/data/${name}.json?t=${Date.now()}`).catch(() => null);
     if (res?.ok) text = await res.text();
   }
-  artPrint.update(name).update(text);
+  if (picked) artPrint.update(name).update(text);
   return JSON.parse(text);
 }
 const works = [];
@@ -96,7 +97,7 @@ for (const museum of Object.keys(MUSEUMS)) {
     if (work) works.push(work);
   }
 }
-const wikimedia = new Map((await collection("wikimedia-art")).filter((w) => w.thumb).map((w) => [w.accession, w]));
+const wikimedia = new Map((await collection("wikimedia-art", false)).filter((w) => w.thumb).map((w) => [w.accession, w]));
 if (!works.length) console.log("pages.mjs: no art data; no page has art");
 const near = works.length ? bucketed(works) : null;
 const artFor = (hex) => (near ? pickArt(near, hex) : null);
