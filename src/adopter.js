@@ -3,7 +3,31 @@ export const PROFILES = {
   bluesky: (by) => `https://bsky.app/profile/${by}`,
   github: (by) => `https://github.com/${by}`,
   x: (by) => `https://x.com/${by}`,
+  instagram: (by) => `https://www.instagram.com/${by}/`,
+  tiktok: (by) => `https://www.tiktok.com/@${by}`,
+  twitch: (by) => `https://www.twitch.tv/${by}`,
+  linkedin: (by) => `https://www.linkedin.com/in/${by}/`,
 };
+// where unavatar finds their picture; the upload worker keeps a copy once they've paid
+export const UNAVATAR = {
+  bluesky: (by) => `bluesky/${by}`,
+  github: (by) => `github/${by}`,
+  x: (by) => `x/${by}`,
+  instagram: (by) => `instagram/${by}`,
+  tiktok: (by) => `tiktok/${by}`,
+  twitch: (by) => `twitch/${by}`,
+  linkedin: (by) => `linkedin/user:${by}`,
+};
+// a handle however it was pasted: @name, a profile link, a name
+export const cleanHandle = (typed, on) =>
+  on === "name"
+    ? typed.trim().slice(0, 60)
+    : typed
+        .trim()
+        .replace(/^https?:\/\/[^/]+\/(profile\/|in\/)?/, "")
+        .replace(/^@/, "")
+        .replace(/[/?#].*$/, "")
+        .slice(0, 60);
 export const longDate = (day) =>
   new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 
@@ -26,10 +50,13 @@ export function adoptedHTML(adopted) {
 export function adopterBadge(adopted) {
   const a = profileLink(adopted, "card-badge");
   a.setAttribute("aria-label", `Adopted by ${handle(adopted.by, adopted.on)}`);
-  a.append(
-    adopted.avatar
-      ? Object.assign(document.createElement("img"), { src: adopted.avatar, alt: "", loading: "lazy" })
-      : Object.assign(document.createElement("span"), { textContent: handle(adopted.by, adopted.on).replace(/^@/, "")[0]?.toUpperCase() || "?" }),
-  );
+  const initial = () =>
+    Object.assign(document.createElement("span"), { textContent: handle(adopted.by, adopted.on).replace(/^@/, "")[0]?.toUpperCase() || "?" });
+  if (!adopted.avatar) a.append(initial());
+  else {
+    const img = Object.assign(document.createElement("img"), { src: adopted.avatar, alt: "", loading: "lazy" });
+    img.addEventListener("error", () => img.replaceWith(initial()), { once: true });
+    a.append(img);
+  }
   return a;
 }

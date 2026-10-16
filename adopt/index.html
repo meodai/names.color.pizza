@@ -117,6 +117,22 @@
             <li><b>From 5</b> <span data-tier5>your name and picture on the color, and in the README</span></li>
             <li><b>From 10</b> <span>its card turns holo, in one of five foils drawn for you</span></li>
           </ul>
+          <form class="adopt__who" data-who>
+            <label class="label" for="adopt-by">Show me as</label>
+            <div class="adopt__who-row">
+              <select data-on aria-label="Where you're known">
+                <option value="bluesky">Bluesky</option>
+                <option value="github">GitHub</option>
+                <option value="x">X</option>
+                <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
+                <option value="twitch">Twitch</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="name">Just a name</option>
+              </select>
+              <input id="adopt-by" data-by type="text" maxlength="80" autocomplete="off" spellcheck="false" placeholder="@handle" />
+            </div>
+          </form>
           <p class="adopt__act" data-act>
             <a class="adopt__cta" href="https://buy.stripe.com/4gMdRa7YhgZ21FPbqI7N600" data-cta>Adopt it</a>
             <span class="adopt__note" data-note></span>

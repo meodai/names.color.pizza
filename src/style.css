@@ -250,6 +250,49 @@ a:hover {
   scale: 1.04;
 }
 
+.adopt__who {
+  display: grid;
+  gap: var(--space-2xs);
+  margin: var(--space-m) 0 0;
+  max-inline-size: 28rem;
+}
+
+.adopt__who[hidden] {
+  display: none;
+}
+
+.adopt__who-row {
+  display: flex;
+  gap: var(--space-2xs);
+}
+
+.adopt__who select,
+.adopt__who input {
+  min-inline-size: 0;
+  padding: 0.7rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+
+.adopt__who select {
+  flex: none;
+}
+
+.adopt__who select option {
+  color: var(--ink);
+}
+
+.adopt__who input {
+  flex: 1;
+}
+
+.adopt__cta[aria-disabled="true"] {
+  opacity: 0.5;
+}
+
 .adopt__share {
   display: flex;
   flex-wrap: wrap;

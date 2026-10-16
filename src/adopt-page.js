@@ -2,7 +2,7 @@ import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, loadAdoptions } from "./shines.js";
-import { adopterBadge, handle, longDate } from "./adopter.js";
+import { UNAVATAR, adopterBadge, cleanHandle, handle, longDate } from "./adopter.js";
 
 const toLab = converter("lab");
 const shade = (hex, amount) => {
@@ -65,6 +65,51 @@ function shareRow(q, it, slug) {
   });
 }
 
+// [slug, platform, handle] for Stripe's client_reference_id, which takes letters, digits, - and _
+function reference(slug, on, by) {
+  for (let name = by; ; name = name.slice(0, -1)) {
+    const bytes = new TextEncoder().encode(JSON.stringify([slug, on, name]));
+    const id = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    if (id.length <= 200 || !name) return id;
+  }
+}
+
+// who they'll be on the card: asked before paying, kept only once Stripe says they paid
+function askWho(q, slug, place) {
+  const on = q("[data-on]");
+  const by = q("[data-by]");
+  const cta = q("[data-cta]");
+  let badge;
+  let timer;
+  const update = () => {
+    const name = cleanHandle(by.value, on.value);
+    by.placeholder = on.value === "name" ? "Your name" : "@handle";
+    cta.setAttribute("aria-disabled", String(!name));
+    cta.href = `${PAYMENT}?client_reference_id=${reference(slug, on.value, name)}`;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      badge?.remove();
+      badge = null;
+      if (!name) return;
+      const avatar = UNAVATAR[on.value] && `https://unavatar.io/${UNAVATAR[on.value](encodeURIComponent(name))}?fallback=false`;
+      badge = adopterBadge({ by: name, on: on.value, avatar });
+      place.append(badge);
+    }, 500);
+  };
+  on.addEventListener("change", update);
+  by.addEventListener("input", update);
+  q("[data-who]").addEventListener("submit", (e) => {
+    e.preventDefault();
+    cta.click();
+  });
+  cta.addEventListener("click", (e) => {
+    if (cta.getAttribute("aria-disabled") !== "true") return;
+    e.preventDefault();
+    by.focus();
+  });
+  update();
+}
+
 // the color comes as ?c=<slug> or #<hex>, or after paying as ?session=<checkout>;
 // its card shows one of the foils it could get
 export async function initAdoptPage() {
@@ -75,6 +120,7 @@ export async function initAdoptPage() {
     q("[data-lead]").textContent = "Finding your color…";
     q("[data-tiers]").hidden = true;
     q("[data-act]").hidden = true;
+    q("[data-who]").hidden = true;
   }
   const [data, bought] = await Promise.all([getList("default"), session ? adoptedBy(session) : null]);
   const slugs = slugsOf(data.items);
@@ -98,9 +144,8 @@ export async function initAdoptPage() {
   q("[data-tier5]").textContent = `your name and picture on ${it.name}, and in the README`;
   // Stripe hands the color back with the payment
   const cta = q("[data-cta]");
-  cta.href = `${PAYMENT}?client_reference_id=${slug}`;
   cta.textContent = `Adopt ${it.name}`;
-  q("[data-note]").textContent = "From 5, on Stripe. You'll be asked how to show you: Bluesky, GitHub, X or just a name.";
+  q("[data-note]").textContent = "From 5, paid on Stripe.";
   q("[data-close]").href = siteURL(`color/${slug}/`);
 
   const dark = wcagLuminance(it.hex) < 0.5;
@@ -123,6 +168,7 @@ export async function initAdoptPage() {
   // taken already: who has it, and where everyone else is
   const mine = bought || (await loadAdoptions())[slug];
   if (mine?.amount >= ADOPT_FROM) {
+    q("[data-who]").hidden = true;
     q("[data-place]").append(adopterBadge(mine));
     q("[data-tiers]").hidden = true;
     q("[data-act]").hidden = false;
@@ -141,5 +187,7 @@ export async function initAdoptPage() {
     cta.textContent = "See the supporters";
     cta.href = siteURL("supporters/");
     cta.removeAttribute("target");
+    return;
   }
+  askWho(q, slug, q("[data-place]"));
 }
