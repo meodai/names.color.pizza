@@ -654,11 +654,46 @@ function pixelOnCard() {
     className: "gallery__pixel",
     title: `${pixel.subject} Pixel art by Retro Diffusion, gifted to Color Names`,
   });
-  open.append(Object.assign(document.createElement("img"), { src: pixel.src, alt: pixel.subject, width: 64, height: 64, decoding: "async" }));
+  const canvas = Object.assign(document.createElement("canvas"), { width: 64, height: 64 });
+  canvas.setAttribute("role", "img");
+  canvas.setAttribute("aria-label", pixel.subject);
+  open.append(canvas);
   open.addEventListener("click", () => openPicture(open, { kind: "pixel", image: pixel.src, title: pixel.subject, ratio: 1 }));
   upper.append(open);
+  const img = new Image();
+  img.src = pixel.src;
+  img.decode().then(() => revealPixels(img, canvas, upper.closest(".swatchcard")), () => {});
   // a button now: no longer only decoration
   upper.closest(".gallery__swatch").removeAttribute("aria-hidden");
+}
+
+// once the card is in, the art comes up pixel by pixel from the bottom, each row a little
+// ragged; at once for those who'd rather not see things move
+const REVEAL_MS = 900;
+const REVEAL_RAGGED = 160;
+function revealPixels(img, canvas, card) {
+  const w = canvas.width;
+  const h = canvas.height;
+  const ctx = canvas.getContext("2d");
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return ctx.drawImage(img, 0, 0);
+  const due = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) due[y * w + x] = ((h - 1 - y) / (h - 1)) * (REVEAL_MS - REVEAL_RAGGED) + Math.random() * REVEAL_RAGGED;
+  }
+  const order = [...due.keys()].sort((a, b) => due[a] - due[b]);
+  let next = 0;
+  let start = 0;
+  const step = (time) => {
+    start ||= time;
+    for (; next < order.length && due[order[next]] <= time - start; next++) {
+      const i = order[next];
+      ctx.drawImage(img, i % w, (i / w) | 0, 1, 1, i % w, (i / w) | 0, 1, 1);
+    }
+    if (next < order.length && canvas.isConnected) requestAnimationFrame(step);
+  };
+  // after the card's own entrance, as the picture used to fade in
+  const wait = () => (card?.classList.contains("swatchcard--visible") ? setTimeout(() => requestAnimationFrame(step), 900) : requestAnimationFrame(wait));
+  wait();
 }
 
 let gallery = [];

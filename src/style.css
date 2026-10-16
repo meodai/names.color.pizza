@@ -1328,16 +1328,9 @@ h2:hover > .anchor,
   background: none;
   cursor: zoom-in;
   pointer-events: auto;
-  opacity: 0;
 }
 
-/* once the card has come in */
-.swatchcard--visible .gallery__pixel {
-  opacity: 1;
-  transition: opacity 0.5s ease 1s;
-}
-
-.gallery__pixel img {
+.gallery__pixel canvas {
   display: block;
   inline-size: 100%;
   block-size: 100%;
