@@ -692,7 +692,7 @@ function revealPixels(img, canvas, card) {
     if (next < order.length && canvas.isConnected) requestAnimationFrame(step);
   };
   // after the card's own entrance, as the picture used to fade in
-  const wait = () => (card?.classList.contains("swatchcard--visible") ? setTimeout(() => requestAnimationFrame(step), 900) : requestAnimationFrame(wait));
+  const wait = () => (card?.classList.contains("swatchcard--visible") ? setTimeout(() => requestAnimationFrame(step), 550) : requestAnimationFrame(wait));
   wait();
 }
 
