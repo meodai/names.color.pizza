@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
 import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
-import { cardURL } from "./cards.mjs";
+import { cardKey, cardURL } from "./cards.mjs";
 import { documentURI, documentKey, FIRST_DAY } from "../src/standard-site.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -243,9 +243,15 @@ let written = 0;
 const added = existsSync(join(DIST, "added.json")) ? JSON.parse(readFileSync(join(DIST, "added.json"), "utf8")) : null;
 const addedDay = (name) => added?.commits[added.names[name]]?.[1] || FIRST_DAY;
 const documents = [];
-// who adopted which color: slug → { by, on, amount, shine, at }
+// who adopted which color: slug → { by, on, amount, shine, at }, as the upload
+// worker keeps it; adopted.json in the repo only when that can't be read
 const ADOPTED = resolve(here, "../adopted.json");
-const adopted = existsSync(ADOPTED) ? JSON.parse(readFileSync(ADOPTED, "utf8")) : {};
+const adopted =
+  (await fetch("https://media.color.pizza/data/adopted.json", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : r.status === 404 ? {} : null))
+    .catch(() => null)) ?? (existsSync(ADOPTED) ? JSON.parse(readFileSync(ADOPTED, "utf8")) : {});
+// a color's link preview comes through the worker: its adopted card once there is one
+const previewOf = (slug, it) => `https://color-names-upload.cloudflare-54bbeb.workers.dev/og/${slug}.png?k=${cardKey(it)}`;
 let withArt = 0;
 let withCopy = 0;
 // each name's art list lives on media.color.pizza (lists/<slug>.json), not in
@@ -285,7 +291,7 @@ for (const [i, { name, hex }] of items.entries()) {
     meta("property", "og:description", description),
     meta("property", "og:url", url),
     meta("property", "og:site_name", "Color Names"),
-    meta("property", "og:image", `${cardURL({ name, hex })}`),
+    meta("property", "og:image", previewOf(slug, { name, hex })),
     meta("property", "og:image:width", "1200"),
     meta("property", "og:image:height", "630"),
     meta("property", "og:image:alt", `${name}, ${hex}: a swatch of the color`),

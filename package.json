@@ -12,7 +12,7 @@
     "prebuild": "node scripts/added.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "postbuild": "node scripts/pages.mjs && node scripts/previews.mjs",
+    "postbuild": "node scripts/pages.mjs && node scripts/previews.mjs && node scripts/share.mjs",
     "collect": "node scripts/collect.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

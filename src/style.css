@@ -385,6 +385,19 @@ a:hover {
   opacity: 0.5;
 }
 
+.adopt__share-card {
+  display: block;
+  inline-size: min(100%, 26rem);
+  block-size: auto;
+  margin: var(--space-m) 0 0;
+  border-radius: 0.4rem;
+  box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 0.5);
+}
+
+.adopt__share-card[hidden] {
+  display: none;
+}
+
 .adopt__share {
   display: flex;
   flex-wrap: wrap;
@@ -413,6 +426,21 @@ a:hover {
 .adopt__share a:focus-visible {
   color: var(--ink);
   background: var(--paper);
+}
+
+.adopt__founding {
+  margin: var(--space-s) 0 0;
+  font-size: var(--text-xs);
+}
+
+.adopt__founding b {
+  background: linear-gradient(160deg, #fff1b0, #f2c230 55%, #c8901a);
+  background-clip: text;
+  color: transparent;
+}
+
+.adopt__founding[hidden] {
+  display: none;
 }
 
 .adopt__legal {
@@ -490,6 +518,18 @@ a:hover {
   color: inherit;
   font-weight: var(--weight-display);
   text-decoration: none;
+}
+
+.supporter__founding {
+  margin-inline-start: 0.6em;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  color: #3a2a00;
+  background: linear-gradient(160deg, #fff1b0, #f2c230 55%, #c8901a);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+  vertical-align: 0.15em;
 }
 
 /* their colors as little cards, each leaning its own way, a little stacked */
@@ -597,6 +637,12 @@ a:hover {
   text-decoration: none;
   transform: translate(var(--lean-x, 0), var(--lean-y, 0)) rotate(calc(var(--r, 0deg) * -1));
   transition: transform 0.6s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.card-badge--founding {
+  box-shadow:
+    0 0 0 4px #e9b52b,
+    0 0.6rem 1.4rem rgb(0 0 0 / 0.35);
 }
 
 .card-badge img {

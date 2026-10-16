@@ -47,13 +47,14 @@ const profileLink = ({ by, on }, className) =>
 export function adoptedHTML(adopted) {
   const a = profileLink(adopted, "hero__adopter");
   a.textContent = handle(adopted.by, adopted.on);
-  return [`Adopted ${longDate(adopted.at)} by `, a];
+  return [`Adopted ${longDate(adopted.at)} by `, a, ...(adopted.founding ? [", founding patron"] : [])];
 }
 
 // their avatar, or their initial, pinned to the card's corner
 export function adopterBadge(adopted) {
-  const a = profileLink(adopted, "card-badge");
-  a.setAttribute("aria-label", `Adopted by ${handle(adopted.by, adopted.on)}`);
+  // the first fifty wear gold
+  const a = profileLink(adopted, adopted.founding ? "card-badge card-badge--founding" : "card-badge");
+  a.setAttribute("aria-label", `${adopted.founding ? "Founding patron" : "Adopted by"} ${handle(adopted.by, adopted.on)}`);
   const initial = () =>
     Object.assign(document.createElement("span"), {
       textContent: adopted.on === "anonymous" ? "\u2665\uFE0E" : handle(adopted.by, adopted.on).replace(/^@/, "")[0]?.toUpperCase() || "?",

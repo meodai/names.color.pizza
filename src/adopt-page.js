@@ -3,6 +3,7 @@ import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlac
 import { tiltCard } from "./tilt.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, loadAdoptions } from "./shines.js";
 import { UNAVATAR, adopterBadge, cleanHandle, handle, longDate } from "./adopter.js";
+import { drawShareCard } from "./share-card.js";
 
 const toLab = converter("lab");
 const shade = (hex, amount) => {
@@ -38,8 +39,30 @@ async function adoptedBy(session) {
   return null;
 }
 
+// the parrot in black, as the link preview shows it
+function logoSVG() {
+  const svg = document.querySelector(".brand__logo").cloneNode(true);
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  svg.setAttribute("height", "184");
+  svg.querySelectorAll("[fill]").forEach((p) => p.getAttribute("fill") !== "#fff" && p.setAttribute("fill", "#000"));
+  return svg.outerHTML;
+}
+
+// their link preview, drawn here the moment they've paid and handed to the worker,
+// so the color's link shows it from now on
+async function shareCard(q, it, adopted, session) {
+  const blob = await drawShareCard(it, adopted, logoSVG()).catch(() => null);
+  if (!blob) return;
+  const img = q("[data-share-card]");
+  img.src = URL.createObjectURL(blob);
+  img.alt = `${it.name}, adopted: the card that shows when its link is shared`;
+  img.hidden = false;
+  await fetch(`${WORKER}/share?session=${encodeURIComponent(session)}`, { method: "POST", body: blob }).catch(() => null);
+}
+
 function shareRow(q, it, slug) {
-  const url = `https://names.color.pizza/color/${slug}/`;
+  // a fresh address, so a site that saw the plain card before fetches the adopted one
+  const url = `https://names.color.pizza/color/${slug}/?adopted`;
   const text = `I adopted ${it.name} on Color Names.`;
   q("[data-share-bsky]").href = `https://bsky.app/intent/compose?text=${encodeURIComponent(`${text} ${url}`)}`;
   q("[data-share-x]").href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
@@ -206,6 +229,7 @@ export async function initAdoptPage() {
     // taken already: who has it, and where everyone else is
     const mine = bought || adopted[slug];
     state = bought ? "bought" : mine?.amount >= ADOPT_FROM ? "taken" : missed ? "missed" : "free";
+    q("[data-founding]").hidden = state !== "free" || Object.values(adopted).filter((a) => a.amount >= ADOPT_FROM).length >= 50;
     if (mine?.amount >= ADOPT_FROM) {
       who?.clear();
       q("[data-who]").hidden = true;
@@ -219,8 +243,11 @@ export async function initAdoptPage() {
         document.title = `You adopted ${it.name} — Color Names`;
         q(".hero__stats").hidden = true;
         q("[data-pick]").hidden = true;
-        q("[data-lead]").textContent = `Thank you! ${it.name} carries your name from today, for everyone to see.`;
+        q("[data-lead]").textContent = `Thank you! ${it.name} carries your name from today, for everyone to see.${
+          mine.founding ? " And you're one of the first fifty: a founding patron, for good." : ""
+        }`;
         shareRow(q, it, slug);
+        shareCard(q, it, mine, session);
         return;
       }
       q("[data-name]").textContent = `${it.name} is adopted.`;

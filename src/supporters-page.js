@@ -16,6 +16,7 @@ export async function initSupportersPage() {
     const p = people.get(key) || { ...a, total: 0, colors: [] };
     p.total += a.amount;
     p.avatar ||= a.avatar;
+    p.founding ||= a.founding;
     p.colors.push({ slug, name: names[slug]?.name || slug, hex: names[slug]?.hex || "#888" });
     people.set(key, p);
   }
@@ -44,8 +45,8 @@ export async function initSupportersPage() {
       const face = p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" />` : `<span>${p.on === "anonymous" ? "\u2665\uFE0E" : esc(handle.replace(/^@/, "")[0]?.toUpperCase() || "?")}</span>`;
       return `<li class="supporter">
         <span class="supporter__rank">#${rank + 1}</span>
-        ${wrap("card-badge supporter__face", face)}
-        ${wrap("supporter__name", esc(handle))}
+        ${wrap(`card-badge supporter__face${p.founding ? " card-badge--founding" : ""}`, face)}
+        <span class="supporter__who">${wrap("supporter__name", esc(handle))}${p.founding ? '<span class="supporter__founding">Founding patron</span>' : ""}</span>
         <span class="supporter__colors">${p.colors
           .map(
             (c) =>
