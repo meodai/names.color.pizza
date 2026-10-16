@@ -14,6 +14,7 @@ uniform vec2 u_view;
 uniform vec2 u_clip;
 uniform float u_time;
 uniform float u_px; // the sparkle's size on screen, device px
+uniform vec2 u_corner; // from the card's middle to where the sparkle sits
 out vec2 v_p;
 out float v_flash;
 void main() {
@@ -25,7 +26,9 @@ void main() {
   v_flash = min(flash, 1.0);
   v_p = a_corner * 2.0 - 1.0;
   float n = u_clip.x, f = u_clip.y;
-  vec2 center = vec2(dot(v, u_right), dot(v, u_up)) * u_fpx / (u_view * 0.5) / max(z, 0.001);
+  // on the card's top right corner, a little inside it
+  vec2 at = vec2(dot(v, u_right), dot(v, u_up)) + u_corner;
+  vec2 center = at * u_fpx / (u_view * 0.5) / max(z, 0.001);
   vec2 size = vec2(u_px) * (0.6 + 0.6 * v_flash) / u_view;
   gl_Position = vec4((center + v_p * size) * z, (z * (f + n) - 2.0 * f * n) / (f - n) - 0.00002 * z, z);
   if (z <= n || v_flash < 0.01) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -55,14 +58,14 @@ function compile(gl, type, src) {
   return s;
 }
 
-export function createSparkleRenderer(gl, { NEAR, FAR }) {
+export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
   const prog = gl.createProgram();
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
   gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   const u = {};
-  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "time", "px"]) u[k] = gl.getUniformLocation(prog, `u_${k}`);
+  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "time", "px", "corner"]) u[k] = gl.getUniformLocation(prog, `u_${k}`);
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
   const corner = gl.createBuffer();
@@ -101,6 +104,7 @@ export function createSparkleRenderer(gl, { NEAR, FAR }) {
       gl.uniform2f(u.clip, NEAR, FAR);
       gl.uniform1f(u.time, performance.now() % 1e7);
       gl.uniform1f(u.px, 46 * dpr);
+      gl.uniform2f(u.corner, W * 0.42, H * 0.44);
       gl.depthFunc(gl.LEQUAL);
       gl.depthMask(false);
       gl.enable(gl.BLEND);

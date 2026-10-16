@@ -546,7 +546,7 @@ export async function initWall(root) {
   let sparkled = [];
   let sparkles = null;
   try {
-    sparkles = createSparkleRenderer(draw.gl, { NEAR, FAR });
+    sparkles = createSparkleRenderer(draw.gl, { NEAR, FAR, W, H });
   } catch (e) {
     console.error(e);
   }
