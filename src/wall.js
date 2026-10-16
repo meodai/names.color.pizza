@@ -109,6 +109,16 @@ const STRIP_MS = 200;
 // camera speed (share of its distance moved, plus radians turned, per second) past which
 // names stay away until it has been slower for CALM_MS
 const RUSH = 1.2;
+const FLY_KEYS = {
+  w: "forward",
+  s: "back",
+  a: "left",
+  d: "right",
+  ArrowLeft: "turnLeft",
+  ArrowRight: "turnRight",
+  ArrowUp: "turnUp",
+  ArrowDown: "turnDown",
+};
 const CALM_MS = 160;
 // the cards in front of a hovered one make way after HOVER_WAIT, over HOVER_MS
 const HOVER_WAIT = 140;
@@ -715,6 +725,22 @@ export async function initWall(root) {
   let listShift = null;
   let leaving = null;
   let opening = null;
+  const held = new Set();
+  const letGo = () => held.clear();
+  window.addEventListener("keyup", (e) => held.delete(FLY_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key]));
+  window.addEventListener("blur", letGo);
+  // per 16 ms a key is held, fed into the same eased motion as the mouse
+  function fly(dt) {
+    const k = dt / 16;
+    if (held.has("forward")) delta.zoom -= 0.025 * k;
+    if (held.has("back")) delta.zoom += 0.025 * k;
+    if (held.has("left")) pan(14 * k, 0);
+    if (held.has("right")) pan(-14 * k, 0);
+    if (held.has("turnLeft")) rotate(-7 * k, 0);
+    if (held.has("turnRight")) rotate(7 * k, 0);
+    if (held.has("turnUp")) rotate(0, -7 * k);
+    if (held.has("turnDown")) rotate(0, 7 * k);
+  }
   // pending input, eased out in frame(); zoom is log scale
   const delta = { yaw: 0, pitch: 0, pan: [0, 0, 0], zoom: 0 };
   const moving = () =>
@@ -732,6 +758,7 @@ export async function initWall(root) {
     const dt = lastTime ? Math.min(48, time - lastTime) : 16;
     lastTime = time;
 
+    if (held.size && !busy) fly(dt);
     if (anim?.card) {
       const t = Math.min(1, (time - anim.start) / anim.duration);
       const k = anim.ease(t);
@@ -847,7 +874,7 @@ export async function initWall(root) {
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay) request();
+    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size) request();
     else lastTime = 0;
   }
 
@@ -1526,14 +1553,26 @@ export async function initWall(root) {
     if (cardAt(e.clientX - rect.left, e.clientY - rect.top) < 0) goHome();
   });
 
+  // held keys fly the camera: W S forward and back, A D sideways, the arrows turn it.
+  // Never while typing, nor with a modifier, so shortcuts stay the browser's
+  const typing = (t) => t.closest?.("input, textarea, select, [contenteditable]");
   window.addEventListener("keydown", (e) => {
-    if (busy || e.target.closest?.("input, button, a")) return;
-    const turns = { ArrowLeft: [0.25, 0], ArrowRight: [-0.25, 0], ArrowUp: [0, 0.2], ArrowDown: [0, -0.2] };
-    if (turns[e.key]) {
+    if (busy || typing(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+    const key = FLY_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+    if (key && !e.target.closest?.("[role=menu], [role=tablist], [role=listbox]")) {
       e.preventDefault();
-      dropSpot();
-      flyTo({ yaw: cam.yaw + turns[e.key][0], pitch: clamp(cam.pitch + turns[e.key][1], -1.45, 1.45) }, 320);
-    } else if (e.key === "+" || e.key === "=") step(1 / 1.8)();
+      if (!held.has(key)) {
+        held.add(key);
+        anim = null;
+        stopIdle();
+        dropSpot();
+        setAway(true);
+        request();
+      }
+      return;
+    }
+    if (e.target.closest?.("button, a")) return;
+    if (e.key === "+" || e.key === "=") step(1 / 1.8)();
     else if (e.key === "-") step(1.8)();
     else if (e.key === "0" || e.key === "Home") goHome();
     else if (e.key === "/") {
