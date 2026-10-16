@@ -475,8 +475,10 @@ async function render(hex) {
     location.replace(siteURL(`color/${slugFor(data, exact.name)}/`));
     return;
   }
-  const near = exact || closestAny(data, hex).item;
-  if (!exact && import.meta.env.PROD && !page.embedded && builtPage?.name !== near.name) {
+  // a page built for this very color knows its name, even before the API's list has it
+  const ownPage = !exact && builtPage?.hex === hex ? { name: builtPage.name, hex } : null;
+  const near = exact || ownPage || closestAny(data, hex).item;
+  if (!exact && !ownPage && import.meta.env.PROD && !page.embedded && builtPage?.name !== near.name) {
     location.replace(`${siteURL(`color/${slugFor(data, near.name)}/`)}#${hex.slice(1)}`);
     return;
   }
