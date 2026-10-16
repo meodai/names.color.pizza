@@ -93,8 +93,12 @@ const IN = { fly: 800, clear: [0, 450], repel: [150, 500], fade: [420, 380], gli
 const OUT = { leave: 300, travel: 760, fade: [380, 420], repel: [520, 520], fly: 900 };
 const part = (t, [at, length]) => ease(clamp((t - at) / length, 0, 1));
 const START_DIST = 340;
-const LABEL_PX = 92;
-const MAX_LABELS = 140;
+const LABEL_PX = 72;
+const MAX_LABELS = 200;
+// a card wider than this share of the screen's short side dissolves, in its own time
+const NEAR_AT = 0.5;
+const NEAR_MS = 260;
+const NEAR_SLOTS = 16;
 const FOCUS_PX = 230;
 
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
@@ -148,6 +152,10 @@ out vec2 v_local;
 out vec3 v_color;
 out float v_cardpx;
 out float v_fog;
+out float v_near;
+uniform float u_nearAt;          // card width over the screen's short side past which it's gone
+uniform int u_nearIds[${NEAR_SLOTS}];   // the cards fading in or out right now
+uniform float u_nearAlpha[${NEAR_SLOTS}];
 void main() {
   vec3 pos = a_pos;
   float keep = 1.0;
@@ -205,6 +213,10 @@ void main() {
   v_color = a_color;
   v_cardpx = u_size.x / px;
   v_fog = max(smoothstep(u_fog.x, u_fog.y, z), 1.0 - born);
+  // a card about to fill the screen dissolves, so the camera passes through it
+  float near = v_cardpx / min(u_view.x, u_view.y) > u_nearAt ? 0.0 : 1.0;
+  for (int k = 0; k < ${NEAR_SLOTS}; k++) if (u_nearIds[k] == gl_InstanceID) near = u_nearAlpha[k];
+  v_near = gl_InstanceID == u_focus || gl_InstanceID == u_only ? 1.0 : near;
 }`;
 
 const FRAG = `#version 300 es
@@ -213,9 +225,12 @@ in vec2 v_local;
 in vec3 v_color;
 in float v_cardpx;
 in float v_fog;
+in float v_near;
 uniform vec2 u_size;
 out vec4 o;
 void main() {
+  // dithered, so it fades without sorting the cards
+  if (v_near < 1.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) >= v_near) discard;
   if (v_local.x < 0.0 || v_local.y < 0.0 || v_local.x > u_size.x || v_local.y > u_size.y) discard;
   // far cards are solid color, so the space reads as a cloud
   vec3 paper = mix(v_color, vec3(1.0), smoothstep(10.0, 34.0, v_cardpx));
@@ -280,9 +295,14 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     "only",
     "keepAll",
     "grow",
+    "nearAt",
+    "nearIds",
+    "nearAlpha",
   ]) {
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
   }
+  gl.uniform1f(u.nearAt, 1e9);
+  gl.uniform1iv(u.nearIds, new Int32Array(NEAR_SLOTS).fill(-1));
   gl.uniform2f(u.size, W, H);
   gl.uniform2f(u.clip, NEAR, FAR);
   gl.uniform1i(u.focus, -1);
@@ -333,6 +353,12 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     Object.values(buffers).forEach((b) => gl.deleteBuffer(b));
     gl.deleteVertexArray(vao);
     gl.deleteProgram(prog);
+  };
+  draw.near = (at, ids, alphas) => {
+    gl.useProgram(prog);
+    gl.uniform1f(u.nearAt, at);
+    gl.uniform1iv(u.nearIds, ids);
+    gl.uniform1fv(u.nearAlpha, alphas);
   };
   draw.move = (array) => {
     gl.useProgram(prog);
@@ -466,6 +492,7 @@ export async function initWall(root) {
     const [rx, ry, rz] = cam.right;
     const [ux, uy, uz] = cam.up;
     const maxZ = minPx ? (W * cam.fpx) / minPx : FAR;
+    const short = Math.min(view.w, view.h);
     // mirrors the shader's clearing around a found card
     let sp = null;
     if (spot?.on) {
@@ -485,10 +512,49 @@ export async function initWall(root) {
       const hh = (H / 2) * s;
       if (sp && i !== sp.i && z < sp.z && Math.abs(x - sp.x) < hw + sp.hw && Math.abs(y - sp.y) < hh + sp.hh) continue;
       if (x + hw < 0 || x - hw > view.w || y + hh < 0 || y - hh > view.h) continue;
-      out.push({ i, z, x0: x - hw, y0: y - hh, x1: x + hw, y1: y + hh, s });
+      const near = i === sp?.i ? 1 : nearAlpha(i, (W * s) / short);
+      out.push({ i, z, x0: x - hw, y0: y - hh, x1: x + hw, y1: y + hh, s, near });
     }
     out.sort((a, b) => a.z - b.z);
     return out.length > limit ? out.slice(0, limit) : out;
+  }
+
+  // a card that grows past NEAR_AT fades out over NEAR_MS, and back in once it's smaller again,
+  // so a camera that stops halfway never leaves one half there
+  let gone = new Set();
+  const fading = new Map();
+  let nearNow = 0;
+  const nearIds = new Int32Array(NEAR_SLOTS);
+  const nearAlphas = new Float32Array(NEAR_SLOTS);
+  function nearAlpha(i, fill) {
+    const f = fading.get(i);
+    if (!f) return fill > NEAR_AT ? 0 : 1;
+    return f.from + (f.to - f.from) * easeInOut(clamp((nearNow - f.t0) / NEAR_MS, 0, 1));
+  }
+  function trackNear(time) {
+    nearNow = time;
+    const short = Math.min(view.w, view.h);
+    const keep = opening?.i ?? (spot?.on ? spot.i : -1);
+    const now = new Set();
+    for (const c of onScreen(short * NEAR_AT)) if (c.i !== keep) now.add(c.i);
+    for (const [i, f] of fading) if (time - f.t0 >= NEAR_MS) fading.delete(i);
+    const start = (i, to) => {
+      const f = fading.get(i);
+      const at = f ? f.from + (f.to - f.from) * easeInOut(clamp((time - f.t0) / NEAR_MS, 0, 1)) : 1 - to;
+      fading.set(i, { from: at, to, t0: time });
+    };
+    for (const i of now) if (!gone.has(i)) start(i, 0);
+    for (const i of gone) if (!now.has(i)) start(i, 1);
+    gone = now;
+    nearIds.fill(-1);
+    let k = 0;
+    for (const [i, f] of fading) {
+      if (k >= NEAR_SLOTS) break;
+      nearIds[k] = i;
+      nearAlphas[k++] = nearAlpha(i, 0);
+    }
+    draw.near(NEAR_AT, nearIds, nearAlphas);
+    return fading.size > 0;
   }
 
   function cardAt(sx, sy) {
@@ -498,7 +564,7 @@ export async function initWall(root) {
     }
     if (cellsMix > 0.5) return cellAt(sx, sy);
     for (const c of onScreen()) {
-      if (sx >= c.x0 && sx <= c.x1 && sy >= c.y0 && sy <= c.y1) return c.i;
+      if (c.near > 0.5 && sx >= c.x0 && sx <= c.x1 && sy >= c.y0 && sy <= c.y1) return c.i;
     }
     return -1;
   }
@@ -642,10 +708,11 @@ export async function initWall(root) {
     }
 
     update();
+    const fadingNear = trackNear(time);
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift) request();
+    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear) request();
     else lastTime = 0;
   }
 
@@ -680,20 +747,32 @@ export async function initWall(root) {
     const covers = [];
     for (const c of near) {
       const top = c.y0 + W * c.s;
-      const hidden = covers.some((r) => r.x0 < c.x1 && r.x1 > c.x0 && r.y0 < c.y1 && r.y1 > top);
-      covers.push(c);
-      if (hidden || used >= MAX_LABELS) continue;
+      const w = c.x1 - c.x0;
+      // a nearer card over the right end of the strip only cuts the name short
+      let clip = c.x1;
+      const hidden = covers.some((r) => {
+        if (r.x0 >= c.x1 || r.x1 <= c.x0 || r.y0 >= c.y1 || r.y1 <= top) return false;
+        if (r.x0 > c.x0 + w * 0.6 && r.y0 <= top && r.y1 >= c.y1) {
+          clip = Math.min(clip, r.x0);
+          return false;
+        }
+        return true;
+      });
+      // a card dissolving near the camera no longer hides the names behind it
+      if ((c.near ?? 1) > 0.5) covers.push(c);
+      if (hidden || used >= MAX_LABELS || c.near === 0) continue;
       const l = label(used++);
       if (l.i !== c.i) {
         l.i = c.i;
         l.hex.textContent = items[c.i].hex;
         l.name.textContent = items[c.i].name;
       }
-      const w = c.x1 - c.x0;
+      l.el.style.clipPath = clip < c.x1 ? `inset(0 ${c.x1 - clip}px 0 0)` : "";
       l.el.style.transform = `translate(${c.x0}px, ${top}px)`;
       l.el.style.width = `${w}px`;
       l.el.style.fontSize = `${w * 0.205}px`;
       l.el.style.zIndex = String(MAX_LABELS - used);
+      l.el.style.opacity = c.near < 1 ? String(c.near) : "";
       l.el.hidden = false;
     }
     for (let k = used; k < pool.length && !pool[k].el.hidden; k++) pool[k].el.hidden = true;
