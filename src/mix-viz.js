@@ -1,21 +1,24 @@
 // Small drawings beside "On screen", "In print" and "As light", as tall as their label,
-// in the label's color: three bars for red, green and blue; four dithered dots for cyan,
+// in the label's color: three bands for red, green and blue; four dithered dots for cyan,
 // magenta, yellow and black; a thermometer for how warm the color is as light.
 
+// all three as wide as the four dots of print
+const WIDTH = 51;
 const svg = (w, body) =>
   `<svg class="mix-viz" viewBox="0 0 ${w} 12" width="${w}" height="12" aria-hidden="true" shape-rendering="crispEdges">${body}</svg>`;
 
-// red, green and blue, 0–1 each: a bar each, filled from the bottom
+// red, green and blue, 0–1 each: three long bands stacked without a gap, each filled from the left
 export function screenViz(rgb) {
+  const len = WIDTH - 1;
   return svg(
-    17,
-    rgb
-      .map((v, i) => {
-        const x = i * 6;
-        const h = Math.round(v * 10);
-        return `<rect x="${x + 0.5}" y="0.5" width="4" height="11" fill="none" stroke="currentColor"/>${h ? `<rect x="${x + 1}" y="${11 - h}" width="3" height="${h}" fill="currentColor"/>` : ""}`;
-      })
-      .join(""),
+    WIDTH,
+    `<rect x="0.5" y="0.5" width="${len}" height="11" fill="none" stroke="currentColor"/>` +
+      rgb
+        .map((v, i) => {
+          const w = Math.round(v * (len - 1));
+          return w ? `<rect x="1" y="${1 + i * 10 / 3}" width="${w}" height="${10 / 3}" fill="currentColor"/>` : "";
+        })
+        .join(""),
   );
 }
 
@@ -37,7 +40,7 @@ export function printViz(cmyk) {
     })
     .join("");
   const clips = cmyk.map((_, i) => `<clipPath id="${id}-${i}"><circle cx="${i * 13 + 6}" cy="6" r="5.5"/></clipPath>`).join("");
-  return svg(51, `<defs>${clips}</defs>${dots}`);
+  return svg(WIDTH, `<defs>${clips}</defs>${dots}`);
 }
 
 // a color temperature in kelvin: warmer (fewer kelvin) fills more of the tube
@@ -45,10 +48,10 @@ const COOLEST = 12000;
 const WARMEST = 1000;
 export function lightViz(kelvin) {
   const warm = Math.min(1, Math.max(0, (Math.log(COOLEST) - Math.log(kelvin)) / (Math.log(COOLEST) - Math.log(WARMEST))));
-  const len = 30;
+  const len = WIDTH - 14;
   const fill = Math.round(warm * len);
   return svg(
-    44,
+    WIDTH,
     `<circle cx="6" cy="6" r="5.5" fill="currentColor" shape-rendering="geometricPrecision"/>` +
       `<rect x="10.5" y="3.5" width="${len + 3}" height="5" rx="2.5" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
       (fill ? `<rect x="10" y="4" width="${fill + 2}" height="4" fill="currentColor"/>` : ""),
