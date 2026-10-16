@@ -441,9 +441,17 @@ a:hover {
 
 .supporter {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 2.6rem auto 1fr;
   align-items: center;
   gap: var(--space-2xs) var(--space-s);
+}
+
+.supporter__rank {
+  grid-row: span 2;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
+  font-feature-settings: "tnum" 1;
 }
 
 .supporter .supporter__face {
@@ -459,27 +467,63 @@ a:hover {
   text-decoration: none;
 }
 
+/* their colors as little cards, each leaning its own way, a little stacked */
 .supporter__colors {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  padding: 0.4rem 0 0.2rem 0.3rem;
 }
 
 .supporter__color {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  font-size: var(--text-xs);
-  color: inherit;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: 4.6rem;
+  margin-inline-end: -1.1rem;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 0 0.3rem 0.8rem rgb(0 0 0 / 0.45);
+  font-size: 0.55rem;
+  line-height: 1.2;
   text-decoration: none;
+  rotate: calc(-10deg + var(--r, 1) * 10deg);
+  transition:
+    rotate 0.25s ease,
+    translate 0.25s ease;
 }
 
-.supporter__color::before {
-  content: "";
-  inline-size: 1em;
-  block-size: 1em;
-  border-radius: 0.2em;
+.supporter__color i {
+  aspect-ratio: 1;
   background: var(--c);
+}
+
+/* as .swatchcard's label: the hex bold, the name light */
+.supporter__color b,
+.supporter__color span {
+  overflow: hidden;
+  padding-inline: 0.45em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.supporter__color b {
+  padding-block-start: 0.4em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+}
+
+.supporter__color span {
+  padding-block-end: 0.55em;
+  font-weight: 300;
+}
+
+.supporter__color:hover,
+.supporter__color:focus-visible {
+  z-index: 1;
+  rotate: 0deg;
+  translate: 0 -0.4rem;
 }
 
 /* the adopter's face on the card's corner, upright, leaning less than the card */
