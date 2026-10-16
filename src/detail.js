@@ -652,7 +652,7 @@ function pixelOnCard() {
   const open = Object.assign(document.createElement("button"), {
     type: "button",
     className: "gallery__pixel",
-    title: `${pixel.subject} Pixel art by Retro Diffusion`,
+    title: `${pixel.subject} Pixel art by Retro Diffusion, gifted to Color Names`,
   });
   open.append(Object.assign(document.createElement("img"), { src: pixel.src, alt: pixel.subject, width: 64, height: 64, decoding: "async" }));
   open.addEventListener("click", () => openPicture(open, { kind: "pixel", image: pixel.src, title: pixel.subject, ratio: 1 }));
@@ -864,7 +864,7 @@ const link = (href, text) =>
   href ? `<a href="${escapeHTML(href)}" target="_blank" rel="noopener">${escapeHTML(text)}</a>` : escapeHTML(text);
 
 function sourceHTML(it) {
-  if (it.kind === "pixel") return link("https://retrodiffusion.ai/", "Pixel art by Retro Diffusion");
+  if (it.kind === "pixel") return `${link("https://retrodiffusion.ai/", "Pixel art by Retro Diffusion")}, gifted to Color Names`;
   if (it.work) {
     const museum = MUSEUMS[it.work.museum];
     return museum ? link(museum.url, museum.name) : "";

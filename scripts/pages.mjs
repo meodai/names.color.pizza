@@ -305,7 +305,7 @@ function datasetLine({ name, hex, url, said, looked, pixel }) {
     words: { describe: some(lore.descriptiveWords), means: some(lore.meanings), makesYou: some(lore.effects), fits: some(lore.usage) },
     meaning: (looked?.entries || []).map((e) => ({ title: e.title, wikipedia: e.link, ...(e.wikidata ? { wikidata: `https://www.wikidata.org/wiki/${e.wikidata}` } : {}) })),
     definitions: (looked?.definitions || []).map((d) => ({ term: d.term, wiktionary: d.link })),
-    ...(pixel ? { pixelArt: { image: pixel.src, subject: pixel.subject, license: "https://creativecommons.org/licenses/by/4.0/", credit: "Pixel art by Retro Diffusion", creditUrl: "https://retrodiffusion.ai/" } } : {}),
+    ...(pixel ? { pixelArt: { image: pixel.src, subject: pixel.subject, license: "https://creativecommons.org/licenses/by/4.0/", credit: "Pixel art by Retro Diffusion, gifted to Color Names", creditUrl: "https://retrodiffusion.ai/" } } : {}),
   });
 }
 
