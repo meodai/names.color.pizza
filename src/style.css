@@ -2658,6 +2658,13 @@ a:hover {
   background: var(--fg);
 }
 
+/* on a wide screen the adopt page's card stays in view while the text scrolls past */
+@media (min-width: 761px) and (orientation: landscape) {
+  .adopt .color-hero__card {
+    position: fixed;
+  }
+}
+
 @media (max-width: 760px), (orientation: portrait) {
   /* card middle + half its tilted height, then a spacing step */
   .color-hero {
