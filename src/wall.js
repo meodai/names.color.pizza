@@ -156,6 +156,7 @@ in vec2 a_corner;
 in vec3 a_pos;
 in vec3 a_color;
 uniform vec3 u_eye;
+uniform vec3 u_wasEye;
 uniform vec3 u_right;
 uniform vec3 u_up;
 uniform vec3 u_fwd;
@@ -231,7 +232,7 @@ void main() {
   if (u_only >= 0 && gl_InstanceID != u_only) keep = 0.0;
   if (gl_InstanceID != u_focus) keep *= u_keepAll;
   if (u_handed && gl_InstanceID == u_focus) keep = 0.0;
-  v_star = a_star * glint(pos - u_eye, mod(float(gl_InstanceID) * 2.399963, 6.2832)) * u_glint;
+  v_star = a_star * glint(pos - u_eye, pos - u_wasEye, mod(float(gl_InstanceID) * 2.399963, 6.2832)) * u_glint;
   keep *= 1.0 + 0.4 * v_star;
   vec3 v = pos - u_eye;
   float z = dot(v, u_fwd);
@@ -339,6 +340,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   const u = {};
   for (const k of [
     "eye",
+    "wasEye",
     "right",
     "up",
     "fwd",
@@ -388,6 +390,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform1i(u.only, only);
     gl.uniform1f(u.keepAll, keepAll);
     gl.uniform3fv(u.eye, cam.eye);
+    gl.uniform3fv(u.wasEye, cam.wasEye || cam.eye);
     gl.uniform3fv(u.right, cam.right);
     gl.uniform3fv(u.up, cam.up);
     gl.uniform3fv(u.fwd, cam.fwd);
@@ -809,6 +812,7 @@ export async function initWall(root) {
   let glintEye = null;
   function trackGlint() {
     const moved = glintEye ? Math.hypot(...sub(cam.eye, glintEye)) / Math.max(cam.dist, 1e-6) : 0;
+    cam.wasEye = glintEye || cam.eye;
     glintEye = cam.eye.slice();
     // even the slow drift at the start counts in full
     cam.glint = Math.max(Math.min(1, moved / 0.0005), (cam.glint || 0) * 0.92);

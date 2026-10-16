@@ -15,10 +15,13 @@ float facet(vec3 v, float seed) {
 float facetHash(float p, float seed, float salt) {
   return fract(sin((floor(p) + seed + salt) * 91.345) * 47453.5453);
 }
-// one facet after the other comes round; about half of them catch the light
-float glint(vec3 v, float seed) {
+// one facet after the other comes round; about half of them catch the light. Each
+// flash lasts about six frames however slowly its facet passes (was: from the eye a frame ago)
+float glint(vec3 v, vec3 was, float seed) {
   float p = facet(v, seed);
-  return step(0.5, facetHash(p, seed, 0.0)) * pow(sin(fract(p) * 3.14159), 8.0);
+  float rate = abs(p - facet(was, seed));
+  float sharp = clamp(0.37 / max(rate * 6.0, 1e-4), 2.8, 60.0);
+  return step(0.5, facetHash(p, seed, 0.0)) * pow(sin(fract(p) * 3.14159), sharp * sharp);
 }`;
 
 const VERT = `#version 300 es
@@ -26,6 +29,7 @@ in vec2 a_corner;
 in vec4 a_spark; // card position, its own phase
 in vec3 a_tint;  // the card's color
 uniform vec3 u_eye;
+uniform vec3 u_wasEye;
 uniform vec3 u_right;
 uniform vec3 u_up;
 uniform vec3 u_fwd;
@@ -43,7 +47,7 @@ ${GLINT}
 void main() {
   vec3 v = a_spark.xyz - u_eye;
   float z = dot(v, u_fwd);
-  float flash = glint(v, a_spark.w) * u_glint;
+  float flash = glint(v, a_spark.xyz - u_wasEye, a_spark.w) * u_glint;
   v_flash = min(flash, 1.0);
   // each facet throws its flash at its own angle
   v_turn = facetHash(facet(v, a_spark.w), a_spark.w, 17.0) * 1.5708;
@@ -94,7 +98,7 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   const u = {};
-  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "glint", "px", "corner"]) u[k] = gl.getUniformLocation(prog, `u_${k}`);
+  for (const k of ["eye", "wasEye", "right", "up", "fwd", "fpx", "view", "clip", "glint", "px", "corner"]) u[k] = gl.getUniformLocation(prog, `u_${k}`);
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
   const corner = gl.createBuffer();
@@ -130,6 +134,7 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
       gl.bindBuffer(gl.ARRAY_BUFFER, sparkBuf);
       gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
       gl.uniform3fv(u.eye, cam.eye);
+      gl.uniform3fv(u.wasEye, cam.wasEye || cam.eye);
       gl.uniform3fv(u.right, cam.right);
       gl.uniform3fv(u.up, cam.up);
       gl.uniform3fv(u.fwd, cam.fwd);
