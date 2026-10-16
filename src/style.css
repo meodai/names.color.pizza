@@ -152,6 +152,90 @@ a:hover {
   margin: 0;
 }
 
+/* a page that isn't there: #404404 in the middle of a slowly turning spiral of names */
+.not-found {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.not-found__wheel {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  inline-size: max(100vmin, 34rem);
+  translate: -50% -50%;
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.not-found__wheel.is-in {
+  opacity: 1;
+}
+
+.not-found__wheel a {
+  text-decoration: none;
+}
+
+.not-found__wheel a:hover tspan {
+  text-decoration: underline;
+}
+
+.not-found__spin {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: not-found-spin 150s linear infinite;
+}
+
+@keyframes not-found-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .not-found__spin {
+    animation: none;
+  }
+}
+
+.not-found__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  text-align: center;
+  pointer-events: none;
+}
+
+.not-found__content a {
+  pointer-events: auto;
+}
+
+.not-found__hex {
+  margin: 0;
+  font-size: clamp(2rem, 8vmin, 4.5rem);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.03em;
+  font-feature-settings: "tnum" 1;
+}
+
+.not-found__lead {
+  margin: 0;
+  max-width: 16em;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-transform: uppercase;
+}
+
+.not-found__more {
+  margin: var(--space-xs) 0 0;
+}
+
 .legal__content {
   inline-size: min(100%, 40rem);
   margin-block: var(--space-l);
@@ -1137,7 +1221,8 @@ a:hover {
 
 /* the adopt button, at the end of a color's page and under its title */
 .footer__adopt a,
-.hero__stats a.adopt-cta {
+.hero__stats a.adopt-cta,
+.not-found__more a {
   display: inline-block;
   padding: 0.85rem 1.6rem;
   border-radius: 999px;
@@ -1150,6 +1235,8 @@ a:hover {
 
 .footer__adopt a:hover,
 .footer__adopt a:focus-visible,
+.not-found__more a:hover,
+.not-found__more a:focus-visible,
 .hero__stats a.adopt-cta:hover,
 .hero__stats a.adopt-cta:focus-visible {
   scale: 1.04;

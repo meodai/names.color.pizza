@@ -22,6 +22,7 @@ export default defineConfig({
         adopt: resolve(import.meta.dirname, "adopt/index.html"),
         supporters: resolve(import.meta.dirname, "supporters/index.html"),
         legal: resolve(import.meta.dirname, "legal/index.html"),
+        notFound: resolve(import.meta.dirname, "not-found/index.html"),
       },
     },
   },

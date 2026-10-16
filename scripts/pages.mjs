@@ -456,36 +456,24 @@ writeFileSync(
     2,
   ),
 );
+// any address that isn't there: the not-found page, with paths from the site's root; a
+// /color/<hex> goes on to that color first
+const ROOT = new URL(SITE).pathname;
 writeFileSync(
   join(DIST, "404.html"),
-  `<!doctype html>
-<html lang="en">
-<meta charset="utf-8" />
-<title>Color Names</title>
-<meta name="robots" content="noindex" />
-${[
-  meta("property", "og:type", "website"),
-  meta("property", "og:title", "Color Names"),
-  meta("property", "og:description", "31,935 colors, each named by a person: wander through them, hanging where their color is."),
-  meta("property", "og:site_name", "Color Names"),
-  meta("property", "og:image", `${SITE}og.jpg`),
-  meta("property", "og:image:width", "1200"),
-  meta("property", "og:image:height", "630"),
-  meta("name", "twitter:card", "summary_large_image"),
-].join("\n")}
-<script>
-  (() => {
-    const m = location.pathname.match(/^(.*\\/)color\\/#?([0-9a-f]{3}|[0-9a-f]{6})\\/?$/i);
-    if (m) location.replace(m[1] + "color/#" + m[2].toLowerCase());
-    else {
-      const root = location.pathname.match(/^(.*?\\/)color\\//);
-      location.replace(root ? root[1] : "${new URL(SITE).pathname}");
-    }
-  })();
-</script>
-<p><a href="${SITE}">Color Names</a></p>
-</html>
-`,
+  readFileSync(join(DIST, "not-found/index.html"), "utf8")
+    .replace(/"\.\.\//g, `"${ROOT}`)
+    .replace('data-root="../"', `data-root="${ROOT}"`)
+    .replace(
+      "<head>",
+      `<head>
+    <script>
+      (() => {
+        const m = location.pathname.match(/^(.*\\/)color\\/#?([0-9a-f]{3}|[0-9a-f]{6})\\/?$/i);
+        if (m) location.replace(m[1] + "color/#" + m[2].toLowerCase());
+      })();
+    </script>`,
+    ),
 );
 
 writeFileSync(
