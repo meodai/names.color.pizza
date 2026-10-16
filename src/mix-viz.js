@@ -1,49 +1,55 @@
 // Small drawings beside "On screen", "In print" and "As light", as tall as their label,
-// in the label's color: three cells for red, green and blue; four dithered dots for cyan,
+// in the label's color: three cells for red, green and blue; four dithered cells for cyan,
 // magenta, yellow and black; a thermometer for how warm the color is as light.
 
-// all three as wide as the four dots of print
+// all three the same width
 const WIDTH = 51;
 const svg = (w, body) =>
   `<svg class="mix-viz" viewBox="0 0 ${w} 12" width="${w}" height="12" aria-hidden="true" shape-rendering="crispEdges">${body}</svg>`;
 
 // red, green and blue, 0–1 each: three cells side by side in one box, a line between them,
-// each filled from its left edge
+// each filled from its left edge, a pixel clear of its lines so they stay visible
 export function screenViz(rgb) {
-  const cell = (WIDTH - 1) / 3;
+  const edges = cellEdges(3);
   return svg(
     WIDTH,
-    `<rect x="0.5" y="0.5" width="${WIDTH - 1}" height="11" fill="none" stroke="currentColor"/>` +
-      `<path d="M${(cell + 0.5).toFixed(1)} 0v12M${(2 * cell + 0.5).toFixed(1)} 0v12" stroke="currentColor"/>` +
+    box(edges) +
       rgb
         .map((v, i) => {
-          const x = Math.round(i * cell) + 1;
-          const w = Math.round(v * (Math.round((i + 1) * cell) - x));
-          return w ? `<rect x="${x}" y="1" width="${w}" height="10" fill="currentColor"/>` : "";
+          const x = edges[i] + 2;
+          const w = Math.round(v * (edges[i + 1] - 1 - x));
+          return w ? `<rect x="${x}" y="2" width="${w}" height="8" fill="currentColor"/>` : "";
         })
         .join(""),
   );
 }
 
-// a 4 × 4 ordered dither: which cells are inked at a coverage
-const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-let clipId = 0;
+// cells side by side in one box with a line between them; the box's edges at each line
+const cellEdges = (n) => Array.from({ length: n + 1 }, (_, i) => Math.round((i * (WIDTH - 1)) / n));
+const box = (edges) =>
+  `<rect x="0.5" y="0.5" width="${WIDTH - 1}" height="11" fill="none" stroke="currentColor"/>` +
+  `<path d="${edges
+    .slice(1, -1)
+    .map((e) => `M${e + 0.5} 0v12`)
+    .join("")}" stroke="currentColor"/>`;
 
-// cyan, magenta, yellow and black, 0–1 each: a round dot each, dithered as dense as the ink
+// a 4 × 4 ordered dither: which pixels are inked at a coverage
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
+// cyan, magenta, yellow and black, 0–1 each: a cell each, dithered as dense as the ink,
+// a pixel clear of its lines
 export function printViz(cmyk) {
-  const id = `mix-dot-${++clipId}`;
-  const dots = cmyk
+  const edges = cellEdges(4);
+  const inked = cmyk
     .map((v, i) => {
-      const x = i * 13;
-      let cells = "";
-      for (let y = 0; y < 12; y += 1)
-        for (let cx = 0; cx < 12; cx += 1)
-          if (BAYER[(y % 4) * 4 + (cx % 4)] < Math.round(v * 16)) cells += `M${x + cx} ${y}h1v1h-1z`;
-      return `<g clip-path="url(#${id}-${i})"><path d="${cells}" fill="currentColor"/></g><circle cx="${x + 6}" cy="6" r="5.5" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>`;
+      const level = Math.round(v * 16);
+      let d = "";
+      for (let y = 2; y < 10; y++)
+        for (let x = edges[i] + 2; x < edges[i + 1] - 1; x++) if (BAYER[(y % 4) * 4 + (x % 4)] < level) d += `M${x} ${y}h1v1h-1z`;
+      return d;
     })
     .join("");
-  const clips = cmyk.map((_, i) => `<clipPath id="${id}-${i}"><circle cx="${i * 13 + 6}" cy="6" r="5.5"/></clipPath>`).join("");
-  return svg(WIDTH, `<defs>${clips}</defs>${dots}`);
+  return svg(WIDTH, box(edges) + (inked ? `<path d="${inked}" fill="currentColor"/>` : ""));
 }
 
 // a color temperature in kelvin: warmer (fewer kelvin) fills more of the tube
