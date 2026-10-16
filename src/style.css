@@ -454,6 +454,31 @@ a:hover {
   font-feature-settings: "tnum" 1;
 }
 
+/* the first three in metal: gold, silver, bronze */
+.supporter:nth-child(-n + 3) .supporter__rank {
+  background: linear-gradient(160deg, var(--metal-hi) 20%, var(--metal) 45%, var(--metal-lo) 60%, var(--metal-hi) 85%);
+  background-clip: text;
+  color: transparent;
+}
+
+.supporter:nth-child(1) {
+  --metal-hi: #fff1b0;
+  --metal: #f2c230;
+  --metal-lo: #a8740d;
+}
+
+.supporter:nth-child(2) {
+  --metal-hi: #ffffff;
+  --metal: #c9ced6;
+  --metal-lo: #7d8590;
+}
+
+.supporter:nth-child(3) {
+  --metal-hi: #ffd9b0;
+  --metal: #d4884a;
+  --metal-lo: #8a4a1c;
+}
+
 .supporter .supporter__face {
   position: static;
   grid-row: span 2;
