@@ -922,6 +922,31 @@ a:hover {
   background: var(--fg);
 }
 
+/* the adopt button again, in the page's own colors */
+.footer__adopt {
+  margin: 0;
+}
+
+.footer__adopt[hidden] {
+  display: none;
+}
+
+.footer__adopt a {
+  display: inline-block;
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  color: var(--bg);
+  background: var(--fg);
+  font-weight: var(--weight-display);
+  text-decoration: none;
+  transition: scale 0.2s ease;
+}
+
+.footer__adopt a:hover,
+.footer__adopt a:focus-visible {
+  scale: 1.04;
+}
+
 .color-page .footer .footer__about {
   max-width: 34ch;
 }

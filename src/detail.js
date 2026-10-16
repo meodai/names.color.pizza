@@ -418,6 +418,12 @@ async function render(hex) {
     );
     card.parentElement.querySelector(".card-badge")?.remove();
     if (shown) card.parentElement.append(adopterBadge(adopted));
+    // and once more at the end of the page, while it's free
+    const again = page.root.querySelector("[data-footer-adopt]");
+    if (again) {
+      again.hidden = shown;
+      again.firstElementChild.href = siteURL(`adopt/#${hex.slice(1)}`);
+    }
   };
   adoption(builtPage?.hex === hex ? builtPage.adopted : null);
   // the bucket knows about adoptions since the last build
