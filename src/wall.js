@@ -14,6 +14,7 @@ import {
 } from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 import { createLabelRenderer } from "./labels-gl.js";
+import { loadAdoptions } from "./shines.js";
 
 const W = 1;
 const H = 1.3; // square swatch over a 0.3 label strip
@@ -172,6 +173,8 @@ uniform float u_bang;
 uniform vec3 u_bangCenter;
 in float a_grow;
 in float a_strip;  // how far its name strip is out, 0 for a plain swatch
+in float a_star;   // 1 for an adopted color: it twinkles now and then, like a distant star
+uniform float u_time;
 uniform float u_grow;
 uniform int u_only;
 uniform float u_keepAll;
@@ -181,6 +184,7 @@ out float v_cardpx;
 out float v_fog;
 out float v_near;
 out float v_strip;
+out float v_star;
 uniform int u_hover;            // the hovered card: the ones in front of it make way
 uniform vec3 u_hoverPos;
 uniform float u_hoverClear;
@@ -225,6 +229,10 @@ void main() {
   if (u_only >= 0 && gl_InstanceID != u_only) keep = 0.0;
   if (gl_InstanceID != u_focus) keep *= u_keepAll;
   if (u_handed && gl_InstanceID == u_focus) keep = 0.0;
+  // a short flash every few seconds, each card at its own moment, swelling a little
+  float phase = fract(sin(float(gl_InstanceID) * 78.233) * 43758.5453) * 6.2831;
+  v_star = a_star * pow(max(sin(u_time * 0.0009 + phase), 0.0), 30.0);
+  keep *= 1.0 + 0.4 * v_star;
   vec3 v = pos - u_eye;
   float z = dot(v, u_fwd);
   float px = max(z, 0.001) / u_fpx; // world units per pixel at this depth
@@ -268,6 +276,7 @@ in float v_cardpx;
 in float v_fog;
 in float v_near;
 in float v_strip;
+in float v_star;
 uniform vec2 u_size;
 out vec4 o;
 void main() {
@@ -278,6 +287,12 @@ void main() {
   // far cards are solid color, so the space reads as a cloud
   vec3 paper = mix(v_color, vec3(1.0), smoothstep(10.0, 34.0, v_cardpx));
   vec3 c = v_local.y < u_size.x ? v_color : paper;
+  if (v_star > 0.001) {
+    // the card lights up, with a four-pointed glint near its corner
+    vec2 q = (v_local - vec2(u_size.x * 0.8, u_size.x * 0.2)) / u_size.x;
+    float glint = exp(-abs(q.x) * 70.0) * exp(-abs(q.y) * 9.0) + exp(-abs(q.y) * 70.0) * exp(-abs(q.x) * 9.0);
+    c = mix(c, vec3(1.0), clamp(v_star * (0.35 + glint), 0.0, 1.0));
+  }
   o = vec4(mix(c, vec3(0.0), v_fog), 1.0);
 }`;
 
@@ -306,7 +321,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     const loc = gl.getAttribLocation(prog, name);
     buffers[name] = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers[name]);
-    gl.bufferData(gl.ARRAY_BUFFER, array, name === "a_pos" || name === "a_strip" ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, array, ["a_pos", "a_strip", "a_star"].includes(name) ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, size, type, normalized, 0, 0);
     gl.vertexAttribDivisor(loc, divisor);
@@ -317,6 +332,8 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   attrib("a_grow", grow, 1, gl.UNSIGNED_BYTE, false, 1);
   const strips = new Float32Array(positions.length / 3);
   attrib("a_strip", strips, 1, gl.FLOAT, false, 1);
+  const stars = new Float32Array(positions.length / 3);
+  attrib("a_star", stars, 1, gl.FLOAT, false, 1);
 
   const u = {};
   for (const k of [
@@ -343,6 +360,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     "nearAt",
     "nearIds",
     "nearAlpha",
+    "time",
     "hover",
     "hoverPos",
     "hoverClear",
@@ -377,6 +395,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     // fog from the shape's middle, so it doesn't shift as the camera turns
     const mid = Math.hypot(...sub(cam.center, cam.eye));
     gl.uniform2f(u.fog, Math.max(0, mid) + 60, mid + 420);
+    gl.uniform1f(u.time, performance.now() % 1e7);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
   };
   draw.bang = (t, center) => {
@@ -416,6 +435,11 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform1f(u.hoverClear, clear);
   };
   draw.strips = strips;
+  draw.stars = (on) => {
+    stars.set(on);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_star);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, stars);
+  };
   draw.uploadStrips = () => {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_strip);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, strips);
@@ -515,6 +539,22 @@ export async function initWall(root) {
   }
   const textInGL = () => texts && !opening && !spot && cellsMix <= 0 && !morph && !bang && !listShift;
   status.hidden = true;
+  // the adopted colors twinkle among the rest: by name, so it holds in every list
+  let adoptedNames = new Set();
+  let twinkling = 0;
+  function markStars() {
+    const on = new Float32Array(items.length);
+    twinkling = 0;
+    items.forEach((it, i) => adoptedNames.has(it.name) && (on[i] = 1) && twinkling++);
+    draw.stars(on);
+    request();
+  }
+  document.addEventListener("visibilitychange", () => !document.hidden && twinkling && request());
+  Promise.all([loadAdoptions(), getList("default")]).then(([adopted, all]) => {
+    const names = new Map([...slugsOf(all.items)].map(([name, slug]) => [slug, name]));
+    adoptedNames = new Set(Object.entries(adopted).filter(([, a]) => a.amount >= 5).map(([slug]) => names.get(slug)));
+    markStars();
+  });
 
   const view = { w: 1, h: 1 };
   let dpr = 1;
@@ -879,6 +919,8 @@ export async function initWall(root) {
     placeLabels();
     placeMark();
     if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size) request();
+    // a twinkle needs no more than a calm 20 frames a second
+    else if (twinkling && !document.hidden) setTimeout(request, 50);
     else lastTime = 0;
   }
 
@@ -1846,6 +1888,7 @@ export async function initWall(root) {
     cellsMix = 0;
     for (const l of pool) l.i = -1;
     showCount();
+    markStars();
   }
 
   async function ensureCells(key) {
