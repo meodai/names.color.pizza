@@ -15,7 +15,7 @@ import {
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 import { createLabelRenderer } from "./labels-gl.js";
 import { loadAdoptions } from "./shines.js";
-import { createSparkleRenderer, GLINT } from "./sparkles-gl.js";
+import { createSparkleRenderer } from "./sparkles-gl.js";
 
 const W = 1;
 const H = 1.3; // square swatch over a 0.3 label strip
@@ -156,7 +156,6 @@ in vec2 a_corner;
 in vec3 a_pos;
 in vec3 a_color;
 uniform vec3 u_eye;
-uniform vec3 u_wasEye;
 uniform vec3 u_right;
 uniform vec3 u_up;
 uniform vec3 u_fwd;
@@ -175,8 +174,7 @@ uniform float u_bang;
 uniform vec3 u_bangCenter;
 in float a_grow;
 in float a_strip;  // how far its name strip is out, 0 for a plain swatch
-in float a_star;   // 1 for an adopted color: it catches the light as you move, like glitter
-uniform float u_glint;
+in float a_star;   // how bright an adopted color flashes now, like glitter catching the light
 uniform float u_grow;
 uniform int u_only;
 uniform float u_keepAll;
@@ -193,7 +191,6 @@ uniform float u_hoverClear;
 uniform float u_nearAt;          // card width over the screen's short side past which it's gone
 uniform int u_nearIds[${NEAR_SLOTS}];   // the cards fading in or out right now
 uniform float u_nearAlpha[${NEAR_SLOTS}];
-${GLINT}
 void main() {
   vec3 pos = a_pos;
   float keep = 1.0;
@@ -232,7 +229,7 @@ void main() {
   if (u_only >= 0 && gl_InstanceID != u_only) keep = 0.0;
   if (gl_InstanceID != u_focus) keep *= u_keepAll;
   if (u_handed && gl_InstanceID == u_focus) keep = 0.0;
-  v_star = a_star * glint(pos - u_eye, pos - u_wasEye, mod(float(gl_InstanceID) * 2.399963, 6.2832)) * u_glint;
+  v_star = a_star;
   vec3 v = pos - u_eye;
   float z = dot(v, u_fwd);
   float px = max(z, 0.001) / u_fpx; // world units per pixel at this depth
@@ -339,7 +336,6 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   const u = {};
   for (const k of [
     "eye",
-    "wasEye",
     "right",
     "up",
     "fwd",
@@ -362,7 +358,6 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     "nearAt",
     "nearIds",
     "nearAlpha",
-    "glint",
     "hover",
     "hoverPos",
     "hoverClear",
@@ -389,7 +384,6 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform1i(u.only, only);
     gl.uniform1f(u.keepAll, keepAll);
     gl.uniform3fv(u.eye, cam.eye);
-    gl.uniform3fv(u.wasEye, cam.wasEye || cam.eye);
     gl.uniform3fv(u.right, cam.right);
     gl.uniform3fv(u.up, cam.up);
     gl.uniform3fv(u.fwd, cam.fwd);
@@ -398,7 +392,6 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     // fog from the shape's middle, so it doesn't shift as the camera turns
     const mid = Math.hypot(...sub(cam.center, cam.eye));
     gl.uniform2f(u.fog, Math.max(0, mid) + 60, mid + 420);
-    gl.uniform1f(u.glint, cam.glint || 0);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
   };
   draw.bang = (t, center) => {
@@ -438,10 +431,10 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform1f(u.hoverClear, clear);
   };
   draw.strips = strips;
-  draw.stars = (on) => {
-    stars.set(on);
+  draw.star = (i, flash) => {
+    stars[i] = flash;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_star);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, stars);
+    gl.bufferSubData(gl.ARRAY_BUFFER, i * 4, stars, i, 1);
   };
   draw.uploadStrips = () => {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_strip);
@@ -542,10 +535,9 @@ export async function initWall(root) {
   }
   const textInGL = () => texts && !opening && !spot && cellsMix <= 0 && !morph && !bang && !listShift;
   status.hidden = true;
-  // the adopted colors twinkle among the rest: by name, so it holds in every list
+  // the adopted colors glitter among the rest: by name, so it holds in every list
   let adoptedNames = new Set();
-  let twinkling = 0;
-  let sparkled = [];
+  let glitter = [];
   let sparkles = null;
   try {
     sparkles = createSparkleRenderer(draw.gl, { NEAR, FAR, W, H });
@@ -553,17 +545,39 @@ export async function initWall(root) {
     console.error(e);
   }
   function markStars() {
-    const on = new Float32Array(items.length);
-    twinkling = 0;
-    sparkled = [];
-    items.forEach((it, i) => {
-      if (!adoptedNames.has(it.name)) return;
-      on[i] = 1;
-      sparkled.push(i);
-    });
-    twinkling = sparkled.length;
-    draw.stars(on);
+    glitter = [];
+    items.forEach((it, i) => adoptedNames.has(it.name) && glitter.push({ i, cell: null, at: -1e9, flash: 0, turn: 0 }));
     request();
+  }
+  // Each card has tiny facets that come round as the view turns, zooms or travels;
+  // about half catch the light, and that one flashes like a photo far off: on at once,
+  // gone in a moment, however fast the camera goes
+  const FLASH_MS = 70;
+  const hash = (n) => {
+    const x = Math.sin(n * 91.345) * 47453.5453;
+    return x - Math.floor(x);
+  };
+  function trackGlitter(time) {
+    let lit = false;
+    for (const g of glitter) {
+      const p = g.i * 3;
+      const v = [positions[p] - cam.eye[0], positions[p + 1] - cam.eye[1], positions[p + 2] - cam.eye[2]];
+      const len = Math.hypot(...v) || 1e-6;
+      const seed = (g.i * 2.399963) % 6.2832;
+      const a = [Math.sin(seed * 3.1), Math.cos(seed * 5.7), Math.sin(seed * 1.3 + 1)];
+      const facet = Math.floor(((v[0] * a[0] + v[1] * a[1] + v[2] * a[2]) / len) * 24 + ((v[0] * a[2] - v[2] * a[0]) / len) * 15 + Math.log(len) * 6);
+      if (g.cell !== null && facet !== g.cell && hash(facet + seed) < 0.5) {
+        g.at = time;
+        g.turn = hash(facet * 3.7 + seed) * Math.PI * 0.5;
+      }
+      g.cell = facet;
+      const flash = Math.exp(-(time - g.at) / FLASH_MS);
+      const next = flash > 0.02 ? flash : 0;
+      if (next !== g.flash) draw.star(g.i, next);
+      g.flash = next;
+      lit ||= next > 0;
+    }
+    return lit;
   }
   Promise.all([loadAdoptions(), getList("default")]).then(([adopted, all]) => {
     const names = new Map([...slugsOf(all.items)].map(([name, slug]) => [slug, name]));
@@ -807,16 +821,6 @@ export async function initWall(root) {
   let spot = null;
   let busy = false;
 
-  // the glitter follows how fast the view turns and travels, and settles when it stops
-  let glintEye = null;
-  function trackGlint() {
-    const moved = glintEye ? Math.hypot(...sub(cam.eye, glintEye)) / Math.max(cam.dist, 1e-6) : 0;
-    cam.wasEye = glintEye || cam.eye;
-    glintEye = cam.eye.slice();
-    // even the slow drift at the start counts in full; standing still, nothing glints
-    cam.glint = Math.min(1, moved / 0.0005);
-  }
-
   function frame(time) {
     queued = false;
     const dt = lastTime ? Math.min(48, time - lastTime) : 16;
@@ -940,11 +944,11 @@ export async function initWall(root) {
       : textInGL()
         ? trackStrips(time, texts.ready)
         : false;
-    trackGlint();
+    const glittering = trackGlitter(time);
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || (twinkling && cam.glint > 0)) request();
+    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || glittering) request();
     else lastTime = 0;
   }
 
@@ -1702,7 +1706,7 @@ export async function initWall(root) {
     }
     if (!cellsDraw || cellsMix <= 0) {
       draw(cam, dpr);
-      if (!opening && !morph && !bang && !listShift) sparkles?.draw(cam, dpr, canvas, sparkled, positions, colors);
+      if (!opening && !morph && !bang && !listShift) sparkles?.draw(cam, dpr, canvas, glitter.filter((g) => g.flash > 0), positions, colors);
       if (textInGL()) {
         if (textsFor !== draw) {
           texts.reset();
