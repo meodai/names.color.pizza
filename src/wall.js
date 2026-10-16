@@ -233,7 +233,6 @@ void main() {
   if (gl_InstanceID != u_focus) keep *= u_keepAll;
   if (u_handed && gl_InstanceID == u_focus) keep = 0.0;
   v_star = a_star * glint(pos - u_eye, pos - u_wasEye, mod(float(gl_InstanceID) * 2.399963, 6.2832)) * u_glint;
-  keep *= 1.0 + 0.4 * v_star;
   vec3 v = pos - u_eye;
   float z = dot(v, u_fwd);
   float px = max(z, 0.001) / u_fpx; // world units per pixel at this depth
