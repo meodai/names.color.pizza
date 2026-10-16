@@ -1996,6 +1996,12 @@ export async function initWall(root) {
     const lowest = below.length ? Math.min(...below.map((b) => b.top)) : innerHeight;
     const gap = below.length ? innerHeight - Math.max(...below.map((b) => b.bottom)) : 0;
     list.style.setProperty("--az-bottom", `${Math.round(innerHeight - lowest + gap)}px`);
+    // names start under the parrot, hexes end under GitHub (on a phone, the menu)
+    const box = list.getBoundingClientRect();
+    const logo = q(".wall__brand .brand__logo")?.getBoundingClientRect();
+    const end = [q(".wall__nav a"), q("[data-menu]")].map((el) => el?.getBoundingClientRect()).find((b) => b?.width);
+    if (logo?.width) list.style.setProperty("--az-left", `${Math.round(logo.left - box.left)}px`);
+    if (end) list.style.setProperty("--az-right", `${Math.max(8, Math.round(box.left + list.clientWidth - end.right))}px`);
   };
   addEventListener("resize", () => azOn && placeAz());
 

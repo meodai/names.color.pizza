@@ -5235,7 +5235,7 @@ html.is-arriving {
   justify-content: space-between;
   gap: var(--space-s);
   block-size: 64px;
-  padding: 0 var(--space-s);
+  padding: 0 var(--az-right, var(--space-s)) 0 var(--az-left, var(--space-s));
   overflow: hidden;
   color: var(--ink);
   background: var(--c);
