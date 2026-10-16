@@ -8,7 +8,8 @@ const svg = (w, body) =>
   `<svg class="mix-viz" viewBox="0 0 ${w} 12" width="${w}" height="12" aria-hidden="true" shape-rendering="crispEdges">${body}</svg>`;
 
 // red, green and blue, 0–1 each: three cells side by side in one box, a line between them,
-// each filled from its left edge, a pixel clear of its lines so they stay visible
+// each filled from its left edge, a pixel clear of its lines so they stay visible. Each fill
+// has its ink's class: hovered or focused, the drawing shows its real colors (see the CSS)
 export function screenViz(rgb) {
   const edges = cellEdges(3);
   return svg(
@@ -18,7 +19,7 @@ export function screenViz(rgb) {
         .map((v, i) => {
           const x = edges[i] + 2;
           const w = Math.round(v * (edges[i + 1] - 1 - x));
-          return w ? `<rect x="${x}" y="2" width="${w}" height="8" fill="currentColor"/>` : "";
+          return w ? `<rect class="mix-${"rgb"[i]}" x="${x}" y="2" width="${w}" height="8" fill="currentColor"/>` : "";
         })
         .join(""),
   );
@@ -46,10 +47,10 @@ export function printViz(cmyk) {
       let d = "";
       for (let y = 2; y < 10; y++)
         for (let x = edges[i] + 2; x < edges[i + 1] - 1; x++) if (BAYER[(y % 4) * 4 + (x % 4)] < level) d += `M${x} ${y}h1v1h-1z`;
-      return d;
+      return d ? `<path class="mix-${"cmyk"[i]}" d="${d}" fill="currentColor"/>` : "";
     })
     .join("");
-  return svg(WIDTH, box(edges) + (inked ? `<path d="${inked}" fill="currentColor"/>` : ""));
+  return svg(WIDTH, box(edges) + inked);
 }
 
 // a color temperature in kelvin: warmer (fewer kelvin) fills more of the tube
@@ -63,10 +64,13 @@ export function lightViz(kelvin) {
   const end = WIDTH - 0.5;
   const glass = `M${join.toFixed(2)} 2.5H${end - 3.5}A3.5 3.5 0 0 1 ${end - 3.5} 9.5H${join.toFixed(2)}A5.5 5.5 0 1 1 ${join.toFixed(2)} 2.5Z`;
   const reach = Math.round(10 + warm * (end - 2.5 - 10));
+  // shown in its colors: cold blue where the scale starts, warm orange at its far end
+  const heat = `<defs><linearGradient id="mix-heat" gradientUnits="userSpaceOnUse" x1="2" x2="${end - 2}" y1="0" y2="0"><stop offset="0" stop-color="#9ec5ff"/><stop offset="0.5" stop-color="#fff4e0"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient></defs>`;
   return svg(
     WIDTH,
-    `<path d="${glass}" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
-      `<circle cx="6" cy="6" r="4" fill="currentColor" shape-rendering="geometricPrecision"/>` +
-      `<rect x="6" y="4" width="${reach - 6}" height="4" fill="currentColor"/>`,
+    heat +
+      `<path d="${glass}" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
+      `<circle class="mix-heat" cx="6" cy="6" r="4" fill="currentColor" shape-rendering="geometricPrecision"/>` +
+      `<rect class="mix-heat" x="6" y="4" width="${reach - 6}" height="4" fill="currentColor"/>`,
   );
 }

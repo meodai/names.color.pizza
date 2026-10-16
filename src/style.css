@@ -2546,6 +2546,53 @@ h2:hover > .anchor,
   gap: 0.85em;
 }
 
+/* hovered or focused, each drawing in its real colors */
+.mix-viz [class^="mix-"] {
+  transition: fill 0.25s ease;
+}
+
+.color-specs__pair {
+  cursor: default;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-r {
+  fill: #ff2b2b;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-g {
+  fill: #19d14a;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-b {
+  fill: #2b5cff;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-c {
+  fill: #00b4ee;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-m {
+  fill: #ec008c;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-y {
+  fill: #ffe600;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-k {
+  fill: #111;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-heat {
+  fill: url(#mix-heat);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mix-viz [class^="mix-"] {
+    transition: none;
+  }
+}
+
 .mix-viz {
   flex: none;
   block-size: 1.2em;
