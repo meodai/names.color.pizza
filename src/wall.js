@@ -1267,6 +1267,13 @@ export async function initWall(root) {
     });
   };
 
+  // the view a color page's close leads back to: model, list, A–Z or cells, all in the address
+  function rememberView() {
+    try {
+      sessionStorage.setItem("wall-view", JSON.stringify({ href: location.href, at: Date.now() }));
+    } catch {}
+  }
+
   function open(i) {
     if (busy) return;
     busy = true;
@@ -1277,6 +1284,7 @@ export async function initWall(root) {
     const before = saveable();
     const task = (pending = { i, before, c: null, cancelled: false });
     spot = null;
+    rememberView();
     // push now, so Back at any point on the way in returns to the wall
     history.pushState({ colorDepth: 1 }, "", colorURL(it.hex));
     toOwnURL(it);
@@ -2241,6 +2249,7 @@ export async function initWall(root) {
 
   const saveable = () => ({ target: cam.target, yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist, home: !away });
   addEventListener("pagehide", () => {
+    if (!colorPage && !pending) rememberView();
     if (busy) return; // opening a card already saved the view from before the click
     try {
       sessionStorage.setItem("wall-camera", JSON.stringify(saveable()));
@@ -2255,8 +2264,14 @@ export async function initWall(root) {
   try {
     fromColorPage = /\/color\/([^/]+\/)?$/.test(new URL(document.referrer).pathname);
   } catch {}
+  // a color page's close sent us back here
+  let returning = false;
+  try {
+    returning = sessionStorage.getItem("wall-return") === "1";
+    sessionStorage.removeItem("wall-return");
+  } catch {}
   let saved = null;
-  if (nav === "back_forward" || (nav === "navigate" && fromColorPage)) {
+  if (nav === "back_forward" || returning || (nav === "navigate" && fromColorPage)) {
     try {
       saved = JSON.parse(sessionStorage.getItem("wall-camera"));
     } catch {}
@@ -2266,7 +2281,7 @@ export async function initWall(root) {
   if (new URLSearchParams(location.search).get("view") === "az") {
     let was = null;
     try {
-      if (nav === "back_forward" || fromColorPage) was = JSON.parse(sessionStorage.getItem("az-view"));
+      if (nav === "back_forward" || returning || fromColorPage) was = JSON.parse(sessionStorage.getItem("az-view"));
     } catch {}
     setAz(true, was);
   }
