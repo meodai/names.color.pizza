@@ -2537,13 +2537,11 @@ h2:hover > .anchor,
   max-width: 30ch;
 }
 
-/* the label, its little drawing under it, then the text; the drawing as far from the label
-   as from the text, which brings its line's leading */
-.color-specs__mix {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.85em;
+/* the drawing standing at the left of its title and text, as tall as both: the text sets
+   the height, the drawing follows */
+.color-specs__pair {
+  position: relative;
+  padding-inline-start: 1.6em;
 }
 
 /* hovered or focused, each drawing in its real colors */
@@ -2594,8 +2592,10 @@ h2:hover > .anchor,
 }
 
 .mix-viz {
-  flex: none;
-  block-size: 1.2em;
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  block-size: 100%;
   inline-size: auto;
   overflow: visible;
 }

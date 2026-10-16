@@ -4,8 +4,9 @@
 
 // all three the same width
 const WIDTH = 75;
+// drawn lying down, shown standing up: left becomes the bottom, so fills rise
 const svg = (w, body) =>
-  `<svg class="mix-viz" viewBox="0 0 ${w} 12" width="${w}" height="12" aria-hidden="true" shape-rendering="crispEdges">${body}</svg>`;
+  `<svg class="mix-viz" viewBox="0 0 12 ${w}" width="12" height="${w}" aria-hidden="true" shape-rendering="crispEdges"><g transform="rotate(-90) translate(${-w} 0)">${body}</g></svg>`;
 
 // red, green and blue, 0–1 each: three cells side by side in one box, a line between them,
 // each filled from its left edge, a pixel clear of its lines so they stay visible. Each fill
@@ -17,8 +18,10 @@ export function screenViz(rgb) {
     box(edges) +
       rgb
         .map((v, i) => {
-          const x = edges[i] + 2;
-          const w = Math.round(v * (edges[i + 1] - 1 - x));
+          // standing up, the first ink on top
+          const at = 2 - i;
+          const x = edges[at] + 2;
+          const w = Math.round(v * (edges[at + 1] - 1 - x));
           return w ? `<rect class="mix-${"rgb"[i]}" x="${x}" y="2" width="${w}" height="8" fill="currentColor"/>` : "";
         })
         .join(""),
@@ -44,9 +47,10 @@ export function printViz(cmyk) {
   const inked = cmyk
     .map((v, i) => {
       const level = Math.round(v * 16);
+      const at = 3 - i;
       let d = "";
       for (let y = 2; y < 10; y++)
-        for (let x = edges[i] + 2; x < edges[i + 1] - 1; x++) if (BAYER[(y % 4) * 4 + (x % 4)] < level) d += `M${x} ${y}h1v1h-1z`;
+        for (let x = edges[at] + 2; x < edges[at + 1] - 1; x++) if (BAYER[(y % 4) * 4 + (x % 4)] < level) d += `M${x} ${y}h1v1h-1z`;
       return d ? `<path class="mix-${"cmyk"[i]}" d="${d}" fill="currentColor"/>` : "";
     })
     .join("");

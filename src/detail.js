@@ -548,7 +548,7 @@ async function render(hex) {
     ["In print", `${print[0]} cyan, ${print[1]} magenta, ${print[2]} yellow and ${print[3]} black`, printViz(cmyk)],
     ["As light", `about ${light.value.toLocaleString("en-US")} K, ${light.descriptive.join(", ")}`, lightViz(light.value)],
   ]
-    .map(([label, v, viz]) => `<div class="color-specs__pair"><dt class="label color-specs__mix">${label}${viz}</dt><dd>${escapeHTML(v)}</dd></div>`)
+    .map(([label, v, viz]) => `<div class="color-specs__pair"><dt class="label color-specs__mix"><span>${label}</span>${viz}</dt><dd>${escapeHTML(v)}</dd></div>`)
     .join("");
 
   page.about.innerHTML = lore.description.map((t) => `<p>${escapeHTML(t)}</p>`).join("");
