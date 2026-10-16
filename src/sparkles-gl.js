@@ -15,13 +15,15 @@ float facet(vec3 v, float seed) {
 float facetHash(float p, float seed, float salt) {
   return fract(sin((floor(p) + seed + salt) * 91.345) * 47453.5453);
 }
-// one facet after the other comes round; about half of them catch the light. Each
-// flash lasts about six frames however slowly its facet passes (was: from the eye a frame ago)
+// one facet after the other comes round; about half of them catch the light, like a
+// photo flash far off: on at once, gone within a few frames however slowly the facet
+// passes (was: from the eye a frame ago)
 float glint(vec3 v, vec3 was, float seed) {
   float p = facet(v, seed);
-  float rate = abs(p - facet(was, seed));
-  float sharp = clamp(0.37 / max(rate * 6.0, 1e-4), 2.8, 60.0);
-  return step(0.5, facetHash(p, seed, 0.0)) * pow(sin(fract(p) * 3.14159), sharp * sharp);
+  float step_ = p - facet(was, seed);
+  float d = (fract(p) - 0.5) * sign(step_);
+  float frames = d / max(abs(step_), 1e-5);
+  return step(0.5, facetHash(p, seed, 0.0)) * step(0.0, d) * step(1e-5, abs(step_)) * exp(-frames * 0.7);
 }`;
 
 const VERT = `#version 300 es
@@ -142,7 +144,7 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
       gl.uniform2f(u.view, canvas.width, canvas.height);
       gl.uniform2f(u.clip, NEAR, FAR);
       gl.uniform1f(u.glint, cam.glint || 0);
-      gl.uniform1f(u.px, 46 * dpr);
+      gl.uniform1f(u.px, 30 * dpr);
       gl.uniform2f(u.corner, W * 0.42, H * 0.44);
       gl.depthFunc(gl.LEQUAL);
       gl.depthMask(false);
