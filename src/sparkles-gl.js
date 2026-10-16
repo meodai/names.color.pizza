@@ -22,8 +22,8 @@ float glint(vec3 v, vec3 was, float seed) {
   float p = facet(v, seed);
   float step_ = p - facet(was, seed);
   float d = (fract(p) - 0.5) * sign(step_);
-  float frames = d / max(abs(step_), 1e-5);
-  return step(0.5, facetHash(p, seed, 0.0)) * step(0.0, d) * step(1e-5, abs(step_)) * exp(-frames * 0.7);
+  float frames = d / max(abs(step_), 1e-3);
+  return step(0.5, facetHash(p, seed, 0.0)) * step(0.0, d) * step(1e-3, abs(step_)) * exp(-frames * 0.7);
 }`;
 
 const VERT = `#version 300 es

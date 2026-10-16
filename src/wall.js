@@ -813,8 +813,8 @@ export async function initWall(root) {
     const moved = glintEye ? Math.hypot(...sub(cam.eye, glintEye)) / Math.max(cam.dist, 1e-6) : 0;
     cam.wasEye = glintEye || cam.eye;
     glintEye = cam.eye.slice();
-    // even the slow drift at the start counts in full
-    cam.glint = Math.max(Math.min(1, moved / 0.0005), (cam.glint || 0) * 0.92);
+    // even the slow drift at the start counts in full; standing still, nothing glints
+    cam.glint = Math.min(1, moved / 0.0005);
   }
 
   function frame(time) {
@@ -944,7 +944,7 @@ export async function initWall(root) {
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || (twinkling && cam.glint > 0.02)) request();
+    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || (twinkling && cam.glint > 0)) request();
     else lastTime = 0;
   }
 
