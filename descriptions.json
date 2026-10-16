@@ -270256,5 +270256,13 @@
     "reference": "Beda Fomm, a World War II battle",
     "description": "North African desert sky at dawn, bright as a signal flare.",
     "model": "describer"
+  },
+  {
+    "name": "Mindful Green",
+    "hex": "#a6fd44",
+    "ai": true,
+    "kind": "mood",
+    "description": "The first spring leaf noticed on a slow walk, bright lime and wide awake.",
+    "model": "claude"
   }
 ]
