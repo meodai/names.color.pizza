@@ -1,4 +1,5 @@
 import { loadList } from "./api.js";
+import { loadAdoptions, ADOPT_FROM } from "./shines.js";
 
 let release;
 export function showVersion(root = document) {
@@ -66,7 +67,16 @@ export const LISTS = {
   default: "Full",
   bestOf: "Best of",
   short: "Short",
+  adopted: "Adopted",
 };
+
+// the colors patrons adopted, out of the full list
+async function adoptedColors() {
+  const [adopted, all] = await Promise.all([loadAdoptions(), loadList("default")]);
+  const kept = new Set(Object.entries(adopted).filter(([, a]) => a.amount >= ADOPT_FROM).map(([slug]) => slug));
+  const slugs = slugsOf(all);
+  return all.filter((c) => kept.has(slugs.get(c.name)));
+}
 
 // about one just-noticeable difference in OKLab
 export const UNNAMED = 0.02;
@@ -161,7 +171,7 @@ export const getList = (key) => {
   if (!prepared.has(key))
     prepared.set(
       key,
-      loadList(key)
+      (key === "adopted" ? adoptedColors() : loadList(key))
         .then(prepare)
         .then((d) => (ready.set(key, d), d)),
     );
