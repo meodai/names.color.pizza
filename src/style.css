@@ -2537,6 +2537,20 @@ h2:hover > .anchor,
   max-width: 30ch;
 }
 
+/* the label, then its little drawing, as tall as the label's line */
+.color-specs__mix {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.mix-viz {
+  flex: none;
+  block-size: 1.2em;
+  inline-size: auto;
+  overflow: visible;
+}
+
 .color-fill .color-specs--formats {
   margin-inline-start: var(--lead-inset);
 }

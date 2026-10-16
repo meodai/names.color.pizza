@@ -14,6 +14,7 @@ import {
   tidySenses,
 } from "./names.js";
 import { FORMATS } from "./formats.js";
+import { screenViz, printViz, lightViz } from "./mix-viz.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
@@ -539,12 +540,15 @@ async function render(hex) {
   );
   const print = lore.percentageWords("cmyk");
   const light = lore.temperatureWords;
+  const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
+  const k = 1 - Math.max(r, g, b);
+  const cmyk = k === 1 ? [0, 0, 0, 1] : [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
   page.mix.innerHTML = [
-    ["On screen", `${mix[0]} red, ${mix[1]} green and ${mix[2]} blue`],
-    ["In print", `${print[0]} cyan, ${print[1]} magenta, ${print[2]} yellow and ${print[3]} black`],
-    ["As light", `about ${light.value.toLocaleString("en-US")} K, ${light.descriptive.join(", ")}`],
+    ["On screen", `${mix[0]} red, ${mix[1]} green and ${mix[2]} blue`, screenViz([r, g, b])],
+    ["In print", `${print[0]} cyan, ${print[1]} magenta, ${print[2]} yellow and ${print[3]} black`, printViz(cmyk)],
+    ["As light", `about ${light.value.toLocaleString("en-US")} K, ${light.descriptive.join(", ")}`, lightViz(light.value)],
   ]
-    .map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${escapeHTML(v)}</dd></div>`)
+    .map(([label, v, viz]) => `<div><dt class="label color-specs__mix">${label}${viz}</dt><dd>${escapeHTML(v)}</dd></div>`)
     .join("");
 
   page.about.innerHTML = lore.description.map((t) => `<p>${escapeHTML(t)}</p>`).join("");
