@@ -146734,15 +146734,6 @@
     "model": "describer"
   },
   {
-    "name": "Medusa Green",
-    "hex": "#998800",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Medusa, Greek mythology",
-    "description": "Mythical snakes for hair, and a complexion like mossy stone and old bronze.",
-    "model": "describer"
-  },
-  {
     "name": "Medusa’s Snakes",
     "hex": "#777711",
     "ai": true,
@@ -180154,15 +180145,6 @@
     "kind": "reference",
     "reference": "Pikachu, Pokémon",
     "description": "Electric Pokémon yellow, bright as a lightning bolt on a forest floor.",
-    "model": "describer"
-  },
-  {
-    "name": "Pikachu Chu",
-    "hex": "#eede73",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Pikachu",
-    "description": "Pikachu's bright, electrified yellow, softened like a cuddle.",
     "model": "describer"
   },
   {
@@ -222233,14 +222215,6 @@
     "kind": "reference",
     "reference": "Pokémon",
     "description": "Sleepy Pokémon darkness, deep as a cave.",
-    "model": "describer"
-  },
-  {
-    "name": "Snot",
-    "hex": "#acbb0d",
-    "ai": true,
-    "kind": "thing",
-    "description": "Thick, drippy, nose-wipe yellow.",
     "model": "describer"
   },
   {
@@ -270255,6 +270229,32 @@
     "kind": "thing",
     "reference": "cumulonimbus cloud at night",
     "description": "Stormcloud grey, just before the thunderclap.",
+    "model": "describer"
+  },
+  {
+    "name": "Snotgirl",
+    "hex": "#c1d151",
+    "ai": true,
+    "kind": "thing",
+    "description": "Greenish snot, the kind that lands on your sleeve after a bad cold.",
+    "model": "describer"
+  },
+  {
+    "name": "Medusa",
+    "hex": "#559260",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Medusa, Greek mythology",
+    "description": "Snake-haired green, tangled and ancient as a forest floor.",
+    "model": "describer"
+  },
+  {
+    "name": "Beda Blue",
+    "hex": "#00beda",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Beda Fomm, a World War II battle",
+    "description": "North African desert sky at dawn, bright as a signal flare.",
     "model": "describer"
   }
 ]
