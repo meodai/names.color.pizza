@@ -57,12 +57,15 @@ const COOLEST = 12000;
 const WARMEST = 1000;
 export function lightViz(kelvin) {
   const warm = Math.min(1, Math.max(0, (Math.log(COOLEST) - Math.log(kelvin)) / (Math.log(COOLEST) - Math.log(WARMEST))));
-  const len = WIDTH - 14;
-  const fill = Math.round(warm * len);
+  // the tube from the bulb to the end, its fill a pixel clear of the glass, as in the cells
+  const start = 12;
+  const room = WIDTH - 2 - start;
+  const fill = Math.round(warm * room);
   return svg(
     WIDTH,
-    `<circle cx="6" cy="6" r="5.5" fill="currentColor" shape-rendering="geometricPrecision"/>` +
-      `<rect x="10.5" y="3.5" width="${len + 3}" height="5" rx="2.5" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
-      (fill ? `<rect x="10" y="4" width="${fill + 2}" height="4" fill="currentColor"/>` : ""),
+    `<circle cx="6" cy="6" r="5.5" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
+      `<circle cx="6" cy="6" r="3.5" fill="currentColor" shape-rendering="geometricPrecision"/>` +
+      `<rect x="10.5" y="2.5" width="${WIDTH - 11}" height="7" rx="3.5" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
+      (fill ? `<rect x="${start}" y="4" width="${fill}" height="4" fill="currentColor"/>` : ""),
   );
 }
