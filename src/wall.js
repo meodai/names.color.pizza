@@ -546,13 +546,15 @@ export async function initWall(root) {
   }
   function markStars() {
     glitter = [];
-    items.forEach((it, i) => adoptedNames.has(it.name) && glitter.push({ i, cell: null, at: -1e9, flash: 0, turn: 0 }));
+    items.forEach((it, i) => adoptedNames.has(it.name) && glitter.push({ i, cell: null, at: -1e9, rest: 0, flash: 0, turn: 0 }));
     request();
   }
   // Each card has tiny facets that come round as the view turns, zooms or travels;
   // about half catch the light, and that one flashes like a photo far off: on at once,
-  // gone in a moment, however fast the camera goes
+  // gone in a moment, however fast the camera goes. After a flash a card rests a few
+  // seconds, so a quick turn or zoom glitters no busier than the slow drift
   const FLASH_MS = 70;
+  const REST_MS = [2000, 6000];
   const hash = (n) => {
     const x = Math.sin(n * 91.345) * 47453.5453;
     return x - Math.floor(x);
@@ -566,8 +568,9 @@ export async function initWall(root) {
       const seed = (g.i * 2.399963) % 6.2832;
       const a = [Math.sin(seed * 3.1), Math.cos(seed * 5.7), Math.sin(seed * 1.3 + 1)];
       const facet = Math.floor(((v[0] * a[0] + v[1] * a[1] + v[2] * a[2]) / len) * 24 + ((v[0] * a[2] - v[2] * a[0]) / len) * 15 + Math.log(len) * 6);
-      if (g.cell !== null && facet !== g.cell && hash(facet + seed) < 0.5) {
+      if (g.cell !== null && facet !== g.cell && time - g.at > g.rest && hash(facet + seed) < 0.5) {
         g.at = time;
+        g.rest = REST_MS[0] + Math.random() * (REST_MS[1] - REST_MS[0]);
         g.turn = hash(facet * 3.7 + seed) * Math.PI * 0.5;
       }
       g.cell = facet;
