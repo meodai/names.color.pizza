@@ -32,7 +32,7 @@ async function adoptedBy(session) {
     const found = await fetch(`${WORKER}/adopted?session=${encodeURIComponent(session)}`)
       .then((r) => r.json())
       .catch(() => ({}));
-    if (found.slug) return found;
+    if (found.slug || found.clash) return found;
     await sleep(2000);
   }
   return null;
@@ -142,14 +142,17 @@ export async function initAdoptPage() {
     q("[data-act]").hidden = true;
     q("[data-who]").hidden = true;
   }
-  const [data, bought] = await Promise.all([getList("default"), session ? adoptedBy(session) : null]);
+  const [data, answer] = await Promise.all([getList("default"), session ? adoptedBy(session) : null]);
   const slugs = slugsOf(data.items);
-  if (session && !bought) {
+  // paid, but someone adopted the color a moment earlier
+  const missed = answer?.clash ? answer : null;
+  let bought = missed ? null : answer;
+  if (session && !answer) {
     q("[data-place]").hidden = true;
     q("[data-lead]").textContent = "Your payment went through. Your color shows up on its page in a minute or two.";
     return;
   }
-  const asked = bought?.slug || new URLSearchParams(location.search).get("c");
+  const asked = bought?.slug || (missed ? null : new URLSearchParams(location.search).get("c"));
   const hex = normalizeHex(location.hash.slice(1));
   const first = asked ? data.items.find((i) => slugs.get(i.name) === asked) : hex ? closest(data, hex) : null;
   const card = q("[data-card]");
@@ -162,9 +165,13 @@ export async function initAdoptPage() {
   const cta = q("[data-cta]");
   let slug = null;
   let who = null;
+  let shown = null;
+  // free, taken, missed (paid for one that went to someone else) or bought
+  let state = "free";
 
   // one color on the page; picking another redoes it all
   function show(it) {
+    shown = it;
     slug = slugs.get(it.name);
     q("[data-place]").querySelectorAll(".card-badge").forEach((b) => b.remove());
     document.title = `Adopt ${it.name} — Color Names`;
@@ -198,6 +205,7 @@ export async function initAdoptPage() {
 
     // taken already: who has it, and where everyone else is
     const mine = bought || adopted[slug];
+    state = bought ? "bought" : mine?.amount >= ADOPT_FROM ? "taken" : missed ? "missed" : "free";
     if (mine?.amount >= ADOPT_FROM) {
       who?.clear();
       q("[data-who]").hidden = true;
@@ -210,6 +218,7 @@ export async function initAdoptPage() {
         q("[data-name]").textContent = `You adopted ${it.name}.`;
         document.title = `You adopted ${it.name} — Color Names`;
         q(".hero__stats").hidden = true;
+        q("[data-pick]").hidden = true;
         q("[data-lead]").textContent = `Thank you! ${it.name} carries your name from today, for everyone to see.`;
         shareRow(q, it, slug);
         return;
@@ -221,13 +230,59 @@ export async function initAdoptPage() {
       cta.removeAttribute("target");
       return;
     }
+    if (state === "missed") {
+      const wanted = data.items.find((i) => slugs.get(i.name) === missed.wanted)?.name || "your color";
+      document.title = "So close — Color Names";
+      q("[data-name]").textContent = "So close.";
+      q("[data-lead]").textContent = `Someone adopted ${wanted} moments before you. Pick another free color: your payment carries over.`;
+      q("[data-tiers]").hidden = true;
+      q("[data-who]").hidden = true;
+      q(".hero__stats").hidden = true;
+      cta.textContent = `Make ${it.name} mine`;
+      cta.href = "#";
+      cta.removeAttribute("aria-disabled");
+      q("[data-note]").textContent = "";
+      return;
+    }
     q("[data-who]").hidden = false;
     who ??= askWho(q, () => slug, q("[data-place]"));
     who.update();
   }
 
+  cta.addEventListener("click", async (e) => {
+    // the payment that missed goes to this color instead
+    if (state === "missed") {
+      e.preventDefault();
+      cta.setAttribute("aria-disabled", "true");
+      const res = await fetch(`${WORKER}/reassign`, { method: "POST", body: JSON.stringify({ session, slug }) }).catch(() => null);
+      const got = await res?.json().catch(() => null);
+      if (got?.slug) {
+        bought = got;
+        return show(shown);
+      }
+      cta.removeAttribute("aria-disabled");
+      if (got?.error === "taken") {
+        adopted[slug] = { amount: ADOPT_FROM, by: "someone", on: "name" };
+        q("[data-note]").textContent = `${shown.name} was just taken too. Pick another.`;
+      } else q("[data-note]").textContent = "That didn't go through. Try again, or write to tschou@elastiq.ch.";
+      return;
+    }
+    // one last look before paying: someone may have adopted it since the page opened
+    if (state !== "free" || cta.getAttribute("aria-disabled") === "true") return;
+    e.preventDefault();
+    const go = cta.href;
+    const fresh = await loadAdoptions();
+    if (fresh[slug]?.amount >= ADOPT_FROM) {
+      adopted[slug] = fresh[slug];
+      show(shown);
+      q("[data-lead]").textContent = `Someone adopted ${shown.name} just now. Every color has one adopter: pick another one.`;
+      return;
+    }
+    location.href = go;
+  });
+
   // no color asked for: the search's color wheel, and the name it lands on
-  if (!first) {
+  if (!first || missed) {
     const row = q("[data-pick]");
     const picker = q("[data-picker]");
     const named = q("[data-pick-name]");
@@ -239,7 +294,9 @@ export async function initAdoptPage() {
       show(it);
     };
     picker.addEventListener("input", () => pick(picker.value));
-    const start = data.items[Math.floor(Math.random() * data.items.length)];
+    let start;
+    do start = data.items[Math.floor(Math.random() * data.items.length)];
+    while (adopted[slugs.get(start.name)]);
     picker.value = start.hex;
     pick(start.hex);
     return;
