@@ -93,8 +93,10 @@ const IN = { fly: 800, clear: [0, 450], repel: [150, 500], fade: [420, 380], gli
 const OUT = { leave: 300, travel: 760, fade: [380, 420], repel: [520, 520], fly: 900 };
 const part = (t, [at, length]) => ease(clamp((t - at) / length, 0, 1));
 const START_DIST = 340;
-const LABEL_PX = 72;
-const MAX_LABELS = 200;
+const LABEL_PX = 60;
+const MAX_LABELS = 260;
+// share of a name's strip nearer cards may cover before the name is left out
+const LABEL_COVERED = 0.45;
 // a card wider than this share of the screen's short side dissolves, in its own time
 const NEAR_AT = 0.5;
 const NEAR_MS = 260;
@@ -748,16 +750,16 @@ export async function initWall(root) {
     for (const c of near) {
       const top = c.y0 + W * c.s;
       const w = c.x1 - c.x0;
-      // a nearer card over the right end of the strip only cuts the name short
+      // a nearer card over the right end of the strip only cuts the name short;
+      // one over just a corner of it lets the name show on top
       let clip = c.x1;
-      const hidden = covers.some((r) => {
-        if (r.x0 >= c.x1 || r.x1 <= c.x0 || r.y0 >= c.y1 || r.y1 <= top) return false;
-        if (r.x0 > c.x0 + w * 0.6 && r.y0 <= top && r.y1 >= c.y1) {
-          clip = Math.min(clip, r.x0);
-          return false;
-        }
-        return true;
-      });
+      let covered = 0;
+      for (const r of covers) {
+        if (r.x0 >= c.x1 || r.x1 <= c.x0 || r.y0 >= c.y1 || r.y1 <= top) continue;
+        if (r.x0 > c.x0 + w * 0.6 && r.y0 <= top && r.y1 >= c.y1) clip = Math.min(clip, r.x0);
+        else covered += (Math.min(r.x1, c.x1) - Math.max(r.x0, c.x0)) * (Math.min(r.y1, c.y1) - Math.max(r.y0, top));
+      }
+      const hidden = covered > LABEL_COVERED * w * (c.y1 - top);
       // a card dissolving near the camera no longer hides the names behind it
       if ((c.near ?? 1) > 0.5) covers.push(c);
       if (hidden || used >= MAX_LABELS || c.near === 0) continue;
