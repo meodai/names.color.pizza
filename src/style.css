@@ -595,6 +595,27 @@ a:hover {
   vertical-align: 0.15em;
 }
 
+/* on a phone: rank and face on top, then the name, then the colors, each the full width */
+@media (max-width: 40rem) {
+  .supporter {
+    grid-template-columns: auto 1fr;
+  }
+
+  .supporter__rank,
+  .supporter .supporter__face {
+    grid-row: auto;
+  }
+
+  .supporter .supporter__face {
+    justify-self: start;
+  }
+
+  .supporter__who,
+  .supporter__colors {
+    grid-column: 1 / -1;
+  }
+}
+
 /* their colors as little cards, each leaning its own way, a little stacked */
 .supporter__colors {
   display: flex;
