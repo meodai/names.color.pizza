@@ -49,7 +49,7 @@ export async function initSupportersPage() {
       const handle = handleOf(p.by, p.on);
       const href = PROFILES[p.on]?.(p.by);
       const wrap = (cls, inner) =>
-        href ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener">${inner}</a>` : `<span class="${cls}">${inner}</span>`;
+        href ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="${p.on === "website" ? "nofollow ugc noopener" : "noopener"}">${inner}</a>` : `<span class="${cls}">${inner}</span>`;
       const face = p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" />` : `<span>${p.on === "anonymous" ? "\u2665\uFE0E" : esc(handle.replace(/^@/, "")[0]?.toUpperCase() || "?")}</span>`;
       return `<li class="supporter">
         <span class="supporter__rank">#${rank + 1}</span>

@@ -7,6 +7,7 @@ export const PROFILES = {
   tiktok: (by) => `https://www.tiktok.com/@${by}`,
   twitch: (by) => `https://www.twitch.tv/${by}`,
   linkedin: (by) => `https://www.linkedin.com/in/${by}/`,
+  website: (by) => `https://${by}/`,
 };
 // where unavatar finds their picture; the upload worker keeps a copy once they've paid
 export const UNAVATAR = {
@@ -17,12 +18,23 @@ export const UNAVATAR = {
   tiktok: (by) => `tiktok/${by}`,
   twitch: (by) => `twitch/${by}`,
   linkedin: (by) => `linkedin/user:${by}`,
+  website: (by) => `domain/${by}`,
 };
+// a site's address: just its host, and only one that looks like a real domain
+const host = (typed) =>
+  typed
+    .trim()
+    .toLowerCase()
+    .replace(/^[a-z]+:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/[/?#:].*$/, "");
+export const isHost = (h) => /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/.test(h);
 // a handle however it was pasted: @name, a profile link, a name
 export const ANONYMOUS = "Anonymous";
 export const cleanHandle = (typed, on) => {
   if (on === "anonymous") return ANONYMOUS;
   if (on === "name") return typed.trim().slice(0, 60);
+  if (on === "website") return host(typed).slice(0, 60);
   const h = typed
     .trim()
     .replace(/^https?:\/\/[^/]+\/(profile\/|in\/)?/, "")
@@ -36,11 +48,17 @@ export const longDate = (day) =>
   new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 
 // a handle with its @, a plain name as it was given
-export const handle = (by, on) => (on === "name" || on === "anonymous" ? by : `@${by.replace(/^@/, "")}`);
+export const handle = (by, on) => (on === "name" || on === "anonymous" || on === "website" ? by : `@${by.replace(/^@/, "")}`);
 // their profile, or just a span for someone who gave a name
 const profileLink = ({ by, on }, className) =>
   PROFILES[on]
-    ? Object.assign(document.createElement("a"), { href: PROFILES[on](by), target: "_blank", rel: "noopener", className })
+    ? Object.assign(document.createElement("a"), {
+        href: PROFILES[on](by),
+        target: "_blank",
+        // a bought link is no recommendation
+        rel: on === "website" ? "nofollow ugc noopener" : "noopener",
+        className,
+      })
     : Object.assign(document.createElement("span"), { className });
 
 // "Adopted <date> by @handle"

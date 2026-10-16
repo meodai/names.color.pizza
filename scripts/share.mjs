@@ -94,7 +94,7 @@ async function face(adopted) {
   return sharp(disc).composite([{ input: picture, left: 8, top: 8 }]).png().toBuffer();
 }
 
-const handle = (a) => (a.on === "name" || a.on === "anonymous" ? a.by : `@${a.by.replace(/^@/, "")}`);
+const handle = (a) => (a.on === "name" || a.on === "anonymous" || a.on === "website" ? a.by : `@${a.by.replace(/^@/, "")}`);
 
 export async function shareCard(it, adopted) {
   const top = H - STRIP;

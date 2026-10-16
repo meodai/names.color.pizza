@@ -2,7 +2,7 @@ import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, loadAdoptions } from "./shines.js";
-import { UNAVATAR, adopterBadge, cleanHandle, handle, longDate } from "./adopter.js";
+import { UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
 
 const toLab = converter("lab");
@@ -114,16 +114,21 @@ function askWho(q, slugNow, place) {
   };
   const update = () => {
     const name = cleanHandle(by.value, on.value);
-    by.placeholder = on.value === "name" ? "Your name" : "@handle";
+    by.placeholder = on.value === "name" ? "Your name" : on.value === "website" ? "example.com" : "@handle";
     by.hidden = on.value === "anonymous";
-    // not before the account is known to exist
-    const lookup = Boolean(name && UNAVATAR[on.value]);
-    cta.setAttribute("aria-disabled", String(!name || lookup));
+    // not before the account is known to exist; a site only needs a real address
+    const site = on.value === "website";
+    const lookup = Boolean(name && UNAVATAR[on.value] && !site);
+    cta.setAttribute("aria-disabled", String(!name || lookup || (site && !isHost(name))));
     cta.href = `${PAYMENT}?client_reference_id=${reference(slugNow(), on.value, name)}`;
     clearTimeout(timer);
     asking?.abort();
     timer = setTimeout(async () => {
       note.textContent = "";
+      if (on.value === "website" && name && !isHost(name)) {
+        note.textContent = "That doesn't look like a website address, like example.com.";
+        return show(null);
+      }
       if (!name || !UNAVATAR[on.value]) return show(name);
       asking = new AbortController();
       const res = await fetch(`https://unavatar.io/${UNAVATAR[on.value](encodeURIComponent(name))}?fallback=false`, {
@@ -131,7 +136,7 @@ function askWho(q, slugNow, place) {
       }).catch(() => null);
       if (asking.signal.aborted) return;
       // 404 is unavatar's "nobody by that name"; anything else (busy, offline) says nothing
-      if (res?.status === 404) {
+      if (res?.status === 404 && on.value !== "website") {
         note.textContent = `No ${label()} account called @${name} found. Check the spelling, or pick another way to show you.`;
         return show(null);
       }

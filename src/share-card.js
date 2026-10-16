@@ -74,7 +74,7 @@ const loadImage = (src) =>
     img.src = src;
   });
 
-const handleOf = (a) => (a.on === "name" || a.on === "anonymous" ? a.by : `@${a.by.replace(/^@/, "")}`);
+const handleOf = (a) => (a.on === "name" || a.on === "anonymous" || a.on === "website" ? a.by : `@${a.by.replace(/^@/, "")}`);
 
 // the same card as scripts/share.mjs, drawn on a canvas: a PNG blob
 export async function drawShareCard(it, adopted, logoSVG) {
