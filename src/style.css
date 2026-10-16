@@ -190,9 +190,15 @@ a:hover {
   text-decoration-thickness: 2px;
 }
 
-/* who adopted it, on a line of its own */
-.hero__adopted {
-  flex-basis: 100%;
+/* on a color's page the hex, then when it was added and who adopted it, one under the other */
+.hero__stats[data-stats] {
+  display: grid;
+  grid-template-columns: max-content auto;
+  justify-content: start;
+}
+
+.hero__stats[data-stats] .hero__adopted {
+  grid-column: 2;
 }
 
 .hero__adopted:empty {
