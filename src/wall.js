@@ -103,7 +103,7 @@ const NEAR_AT = 0.5;
 const NEAR_MS = 260;
 const NEAR_SLOTS = 16;
 // a card's name strip slides out under it, then its name fades in
-const STRIP_MS = 280;
+const STRIP_MS = 200;
 const FOCUS_PX = 230;
 
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
@@ -586,6 +586,7 @@ export async function initWall(root) {
   // the cards with a name to show grow their strip, the others fold it away
   const showing = new Set();
   const stripAnim = new Map();
+  let hoverI = -1;
   let stripsOf = draw;
   function trackStrips(time) {
     if (stripsOf !== draw) {
@@ -1371,6 +1372,7 @@ export async function initWall(root) {
     hoverQueued = null;
     // a click may have opened a card since the move was queued
     if (busy) {
+      hoverI = -1;
       tip.hidden = true;
       canvas.style.cursor = "";
       return;
@@ -1381,6 +1383,11 @@ export async function initWall(root) {
     const i = cardAt(sx, sy);
     const hit = i < 0 ? null : onScreen().find((c) => c.i === i) || { i, ...boxRect(drawnBox(i)) };
     canvas.style.cursor = hit ? "pointer" : "";
+    // the card under the mouse shows its strip and name, however small
+    if ((hit?.i ?? -1) !== hoverI) {
+      hoverI = hit?.i ?? -1;
+      request();
+    }
     if (!hit || (cellsMix <= 0.5 && hit.x1 - hit.x0 >= LABEL_PX)) {
       tip.hidden = true;
       return;
@@ -1392,7 +1399,11 @@ export async function initWall(root) {
     tip.style.transform = `translate(${sx}px, ${sy}px)`;
     tip.hidden = false;
   }
-  canvas.addEventListener("pointerleave", () => (tip.hidden = true));
+  canvas.addEventListener("pointerleave", () => {
+    tip.hidden = true;
+    hoverI = -1;
+    request();
+  });
 
   canvas.addEventListener(
     "wheel",
@@ -1504,6 +1515,7 @@ export async function initWall(root) {
         }
         // a name stays a little below the size it came at, so it doesn't flicker at the edge
         const named = onScreen(LABEL_PX * 0.85, texts.slots).filter((c) => c.x1 - c.x0 >= LABEL_PX || showing.has(c.i));
+        if (hoverI >= 0 && cellsMix <= 0.5 && !named.some((c) => c.i === hoverI)) named.unshift({ i: hoverI });
         texts.draw(cam, dpr, canvas, named, items, positions, { at: NEAR_AT, ids: nearIds, alphas: nearAlphas }, draw.strips);
       }
       if (leaving) leaving(cam, dpr, { clear: false, keepAll: listShift?.leave ?? 0 });

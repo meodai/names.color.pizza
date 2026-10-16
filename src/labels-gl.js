@@ -43,12 +43,15 @@ void main() {
   v_uv = (cell * vec2(${SLOT_W.toFixed(1)}, ${SLOT_H.toFixed(1)}) + a_corner * vec2(${SLOT_W.toFixed(1)}, ${(SLOT_W * (H - W) / W).toFixed(2)})) / vec2(${ATLAS.toFixed(1)}, ${TALL.toFixed(1)});
   float near = ${W.toFixed(1)} / px / min(u_view.x, u_view.y) > u_nearAt ? 0.0 : 1.0;
   int card = int(a_card.x + 0.5);
-  // the text comes once its strip is (nearly) out
-  v_show = smoothstep(0.6, 1.0, a_card.y);
+  // the hex comes as the strip is nearly out, the name just after
+  v_show = a_card.y;
   v_y = a_corner.y / max(a_card.y, 0.001);
   for (int k = 0; k < ${NEAR_SLOTS}; k++) if (u_nearIds[k] == card) near = u_nearAlpha[k];
   v_near = near;
 }`;
+
+// where the name's line starts, as a share of the strip's height (see paint)
+const NAME_AT = (0.2475 + 0.55 * 1.2 - 0.05 * 0.27) * 0.205 * SLOT_W / (SLOT_W * 0.3);
 
 const FRAG = `#version 300 es
 precision highp float;
@@ -62,7 +65,9 @@ void main() {
   // the same dither as the cards', so a dissolving card takes its name along
   if (v_near < 1.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) >= v_near) discard;
   if (v_y > 1.0) discard;
-  float a = texture(u_atlas, v_uv).r * v_show;
+  // the name sits below ${NAME_AT} of the strip
+  float show = v_y * v_show < ${NAME_AT} ? smoothstep(0.45, 0.8, v_show) : smoothstep(0.7, 1.0, v_show);
+  float a = texture(u_atlas, v_uv).r * show;
   if (a < 0.01) discard;
   o = vec4(0.0, 0.0, 0.0, a);
 }`;
