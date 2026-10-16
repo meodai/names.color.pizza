@@ -102,6 +102,8 @@ const LABEL_COVERED = 0.45;
 const NEAR_AT = 0.5;
 const NEAR_MS = 260;
 const NEAR_SLOTS = 16;
+// a card's name strip slides out under it, then its name fades in
+const STRIP_MS = 280;
 const FOCUS_PX = 230;
 
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
@@ -148,6 +150,7 @@ uniform bool u_handed; // the focused card is now drawn by its HTML copy
 uniform float u_bang;
 uniform vec3 u_bangCenter;
 in float a_grow;
+in float a_strip;  // how far its name strip is out, 0 for a plain swatch
 uniform float u_grow;
 uniform int u_only;
 uniform float u_keepAll;
@@ -156,6 +159,7 @@ out vec3 v_color;
 out float v_cardpx;
 out float v_fog;
 out float v_near;
+out float v_strip;
 uniform float u_nearAt;          // card width over the screen's short side past which it's gone
 uniform int u_nearIds[${NEAR_SLOTS}];   // the cards fading in or out right now
 uniform float u_nearAlpha[${NEAR_SLOTS}];
@@ -220,6 +224,7 @@ void main() {
   float near = v_cardpx / min(u_view.x, u_view.y) > u_nearAt ? 0.0 : 1.0;
   for (int k = 0; k < ${NEAR_SLOTS}; k++) if (u_nearIds[k] == gl_InstanceID) near = u_nearAlpha[k];
   v_near = gl_InstanceID == u_focus || gl_InstanceID == u_only ? 1.0 : near;
+  v_strip = gl_InstanceID == u_focus ? 1.0 : a_strip;
 }`;
 
 const FRAG = `#version 300 es
@@ -229,12 +234,14 @@ in vec3 v_color;
 in float v_cardpx;
 in float v_fog;
 in float v_near;
+in float v_strip;
 uniform vec2 u_size;
 out vec4 o;
 void main() {
   // dithered, so it fades without sorting the cards
   if (v_near < 1.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) >= v_near) discard;
   if (v_local.x < 0.0 || v_local.y < 0.0 || v_local.x > u_size.x || v_local.y > u_size.y) discard;
+  if (v_local.y > u_size.x + (u_size.y - u_size.x) * v_strip) discard;
   // far cards are solid color, so the space reads as a cloud
   vec3 paper = mix(v_color, vec3(1.0), smoothstep(10.0, 34.0, v_cardpx));
   vec3 c = v_local.y < u_size.x ? v_color : paper;
@@ -266,7 +273,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     const loc = gl.getAttribLocation(prog, name);
     buffers[name] = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers[name]);
-    gl.bufferData(gl.ARRAY_BUFFER, array, name === "a_pos" ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, array, name === "a_pos" || name === "a_strip" ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, size, type, normalized, 0, 0);
     gl.vertexAttribDivisor(loc, divisor);
@@ -275,6 +282,8 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   attrib("a_pos", positions, 3, gl.FLOAT, false, 1);
   attrib("a_color", colors, 3, gl.UNSIGNED_BYTE, true, 1);
   attrib("a_grow", grow, 1, gl.UNSIGNED_BYTE, false, 1);
+  const strips = new Float32Array(positions.length / 3);
+  attrib("a_strip", strips, 1, gl.FLOAT, false, 1);
 
   const u = {};
   for (const k of [
@@ -362,6 +371,11 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform1f(u.nearAt, at);
     gl.uniform1iv(u.nearIds, ids);
     gl.uniform1fv(u.nearAlpha, alphas);
+  };
+  draw.strips = strips;
+  draw.uploadStrips = () => {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_strip);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, strips);
   };
   draw.move = (array) => {
     gl.useProgram(prog);
@@ -569,6 +583,40 @@ export async function initWall(root) {
     return fading.size > 0;
   }
 
+  // the cards with a name to show grow their strip, the others fold it away
+  const showing = new Set();
+  const stripAnim = new Map();
+  let stripsOf = draw;
+  function trackStrips(time) {
+    if (stripsOf !== draw) {
+      showing.clear();
+      stripAnim.clear();
+      stripsOf = draw;
+    }
+    const strips = draw.strips;
+    const ready = texts?.ready ?? new Set();
+    const aim = (i, to) => {
+      const a = stripAnim.get(i);
+      if (a ? a.to === to : strips[i] === to) return;
+      stripAnim.set(i, { from: strips[i], to, t0: time });
+    };
+    for (const i of ready) {
+      aim(i, 1);
+      showing.add(i);
+    }
+    for (const i of showing) if (!ready.has(i)) aim(i, 0);
+    if (!stripAnim.size) return false;
+    for (const [i, a] of stripAnim) {
+      const k = reduceMotion ? 1 : clamp((time - a.t0) / STRIP_MS, 0, 1);
+      strips[i] = a.from + (a.to - a.from) * easeInOut(k);
+      if (k < 1) continue;
+      stripAnim.delete(i);
+      if (a.to === 0) showing.delete(i);
+    }
+    draw.uploadStrips();
+    return true;
+  }
+
   function cardAt(sx, sy) {
     if (spot?.on) {
       const b = drawnBox(spot.i);
@@ -721,10 +769,11 @@ export async function initWall(root) {
 
     update();
     const fadingNear = trackNear(time);
+    const stripping = textInGL() && trackStrips(time);
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear) request();
+    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping) request();
     else lastTime = 0;
   }
 
@@ -775,6 +824,7 @@ export async function initWall(root) {
       // a card dissolving near the camera no longer hides the names behind it
       if ((c.near ?? 1) > 0.5) covers.push(c);
       if (hidden || used >= MAX_LABELS || c.near === 0) continue;
+      if (c.i !== spot?.i && c.i !== opening?.i && draw.strips[c.i] < 0.99) continue;
       const l = label(used++);
       if (l.i !== c.i) {
         l.i = c.i;
@@ -1452,11 +1502,9 @@ export async function initWall(root) {
           texts.reset();
           textsFor = draw;
         }
-        texts.draw(cam, dpr, canvas, onScreen(LABEL_PX, texts.slots), items, positions, {
-          at: NEAR_AT,
-          ids: nearIds,
-          alphas: nearAlphas,
-        });
+        // a name stays a little below the size it came at, so it doesn't flicker at the edge
+        const named = onScreen(LABEL_PX * 0.85, texts.slots).filter((c) => c.x1 - c.x0 >= LABEL_PX || showing.has(c.i));
+        texts.draw(cam, dpr, canvas, named, items, positions, { at: NEAR_AT, ids: nearIds, alphas: nearAlphas }, draw.strips);
       }
       if (leaving) leaving(cam, dpr, { clear: false, keepAll: listShift?.leave ?? 0 });
       return;
