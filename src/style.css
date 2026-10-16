@@ -2537,11 +2537,12 @@ h2:hover > .anchor,
   max-width: 30ch;
 }
 
-/* the label, then its little drawing, as tall as the label's line */
+/* the label, its little drawing under it, then the text */
 .color-specs__mix {
   display: flex;
-  align-items: center;
-  gap: 0.6em;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2xs);
 }
 
 .mix-viz {
