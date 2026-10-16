@@ -79,21 +79,34 @@ function askWho(q, slug, place) {
   const on = q("[data-on]");
   const by = q("[data-by]");
   const cta = q("[data-cta]");
+  const note = q("[data-who-note]");
+  const label = () => on.selectedOptions[0].textContent;
   let badge;
   let timer;
+  let asking;
+  const show = (name, avatar) => {
+    badge?.remove();
+    badge = name ? adopterBadge({ by: name, on: on.value, avatar }) : null;
+    if (badge) place.append(badge);
+  };
   const update = () => {
     const name = cleanHandle(by.value, on.value);
     by.placeholder = on.value === "name" ? "Your name" : "@handle";
     cta.setAttribute("aria-disabled", String(!name));
     cta.href = `${PAYMENT}?client_reference_id=${reference(slug, on.value, name)}`;
     clearTimeout(timer);
-    timer = setTimeout(() => {
-      badge?.remove();
-      badge = null;
-      if (!name) return;
-      const avatar = UNAVATAR[on.value] && `https://unavatar.io/${UNAVATAR[on.value](encodeURIComponent(name))}?fallback=false`;
-      badge = adopterBadge({ by: name, on: on.value, avatar });
-      place.append(badge);
+    asking?.abort();
+    timer = setTimeout(async () => {
+      note.textContent = "";
+      if (!name || !UNAVATAR[on.value]) return show(name);
+      asking = new AbortController();
+      const res = await fetch(`https://unavatar.io/${UNAVATAR[on.value](encodeURIComponent(name))}?fallback=false`, {
+        signal: asking.signal,
+      }).catch(() => null);
+      if (asking.signal.aborted) return;
+      // 404 is unavatar's "nobody by that name"; anything else (busy, offline) says nothing
+      if (res?.status === 404) note.textContent = `No ${label()} account called @${name} found. Check the spelling, or go on with your initial.`;
+      show(name, res?.ok ? URL.createObjectURL(await res.blob()) : undefined);
     }, 500);
   };
   on.addEventListener("change", update);
