@@ -3029,6 +3029,8 @@ h2:hover > .anchor,
   --ry: 0deg;
   transform: perspective(70em) rotateX(var(--ry)) rotateY(var(--rx));
   transition: transform 0.6s cubic-bezier(0.3, 0.7, 0, 1);
+  /* a finger tilts it sideways; up and down still scrolls */
+  touch-action: pan-y;
 }
 
 .swatchcard--tilt.is-tilting {

@@ -111,8 +111,10 @@ export function tiltCard(card) {
 
   // the phone's tilt, from how it was held when it started
   let level = null;
+  let gyro = false;
   const tilted = (e) => {
     if (e.gamma == null || e.beta == null) return;
+    gyro = true;
     level ??= e.beta;
     held = true;
     card.classList.add("is-tilting");
@@ -124,6 +126,35 @@ export function tiltCard(card) {
     hero.addEventListener("pointerdown", () => DeviceOrientationEvent.requestPermission().catch(() => {}), {
       once: true,
     });
+
+  // a finger: a tap throws sparks; without the phone's tilt, the card follows the
+  // finger while held (sideways; up and down still scrolls the page)
+  let finger = null;
+  const at = (e) => {
+    const r = card.getBoundingClientRect();
+    return [clamp((e.clientX - r.left) / r.width), clamp((e.clientY - r.top) / r.height)];
+  };
+  const letGo = (e) => {
+    if (e.pointerId !== finger) return;
+    finger = null;
+    held = false;
+    card.classList.remove("is-tilting");
+    if (!kind) set(0.5, 0.5, 0);
+  };
+  if (!calm) {
+    card.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") return;
+      for (let n = 0; n < 8; n++) spark();
+      if (gyro) return;
+      finger = e.pointerId;
+      held = true;
+      card.classList.add("is-tilting");
+      last = { px: 0.5, py: 0.5, t: performance.now() };
+      move(...at(e));
+    });
+    card.addEventListener("pointermove", (e) => e.pointerId === finger && move(...at(e)));
+    for (const type of ["pointerup", "pointercancel", "pointerleave"]) card.addEventListener(type, letGo);
+  }
 
   // a kind of foil, or null for a plain card
   function holo(next) {
