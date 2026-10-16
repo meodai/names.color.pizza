@@ -15,7 +15,7 @@ import {
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 import { createLabelRenderer } from "./labels-gl.js";
 import { loadAdoptions } from "./shines.js";
-import { createSparkleRenderer } from "./sparkles-gl.js";
+import { createSparkleRenderer, GLINT } from "./sparkles-gl.js";
 
 const W = 1;
 const H = 1.3; // square swatch over a 0.3 label strip
@@ -174,8 +174,8 @@ uniform float u_bang;
 uniform vec3 u_bangCenter;
 in float a_grow;
 in float a_strip;  // how far its name strip is out, 0 for a plain swatch
-in float a_star;   // 1 for an adopted color: it twinkles now and then, like a distant star
-uniform float u_time;
+in float a_star;   // 1 for an adopted color: it catches the light as you move, like glitter
+uniform float u_glint;
 uniform float u_grow;
 uniform int u_only;
 uniform float u_keepAll;
@@ -192,6 +192,7 @@ uniform float u_hoverClear;
 uniform float u_nearAt;          // card width over the screen's short side past which it's gone
 uniform int u_nearIds[${NEAR_SLOTS}];   // the cards fading in or out right now
 uniform float u_nearAlpha[${NEAR_SLOTS}];
+${GLINT}
 void main() {
   vec3 pos = a_pos;
   float keep = 1.0;
@@ -230,9 +231,7 @@ void main() {
   if (u_only >= 0 && gl_InstanceID != u_only) keep = 0.0;
   if (gl_InstanceID != u_focus) keep *= u_keepAll;
   if (u_handed && gl_InstanceID == u_focus) keep = 0.0;
-  // a short flash every few seconds, each card at its own moment, swelling a little
-  float phase = fract(sin(float(gl_InstanceID) * 78.233) * 43758.5453) * 6.2831;
-  v_star = a_star * pow(max(sin(u_time * 0.0009 + phase), 0.0), 30.0);
+  v_star = a_star * glint(pos - u_eye, mod(float(gl_InstanceID) * 2.399963, 6.2832)) * u_glint;
   keep *= 1.0 + 0.4 * v_star;
   vec3 v = pos - u_eye;
   float z = dot(v, u_fwd);
@@ -361,7 +360,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     "nearAt",
     "nearIds",
     "nearAlpha",
-    "time",
+    "glint",
     "hover",
     "hoverPos",
     "hoverClear",
@@ -396,7 +395,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     // fog from the shape's middle, so it doesn't shift as the camera turns
     const mid = Math.hypot(...sub(cam.center, cam.eye));
     gl.uniform2f(u.fog, Math.max(0, mid) + 60, mid + 420);
-    gl.uniform1f(u.time, performance.now() % 1e7);
+    gl.uniform1f(u.glint, cam.glint || 0);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
   };
   draw.bang = (t, center) => {
@@ -563,7 +562,6 @@ export async function initWall(root) {
     draw.stars(on);
     request();
   }
-  document.addEventListener("visibilitychange", () => !document.hidden && twinkling && request());
   Promise.all([loadAdoptions(), getList("default")]).then(([adopted, all]) => {
     const names = new Map([...slugsOf(all.items)].map(([name, slug]) => [slug, name]));
     adoptedNames = new Set(Object.entries(adopted).filter(([, a]) => a.amount >= 5).map(([slug]) => names.get(slug)));
@@ -806,6 +804,14 @@ export async function initWall(root) {
   let spot = null;
   let busy = false;
 
+  // the glitter follows how fast the view turns and travels, and settles when it stops
+  let glintEye = null;
+  function trackGlint() {
+    const moved = glintEye ? Math.hypot(...sub(cam.eye, glintEye)) / Math.max(cam.dist, 1e-6) : 0;
+    glintEye = cam.eye.slice();
+    cam.glint = Math.max(Math.min(1, moved * 40), (cam.glint || 0) * 0.92);
+  }
+
   function frame(time) {
     queued = false;
     const dt = lastTime ? Math.min(48, time - lastTime) : 16;
@@ -929,12 +935,11 @@ export async function initWall(root) {
       : textInGL()
         ? trackStrips(time, texts.ready)
         : false;
+    trackGlint();
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size) request();
-    // a twinkle needs no more than a calm 20 frames a second
-    else if (twinkling && !document.hidden) setTimeout(request, 50);
+    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || (twinkling && cam.glint > 0.02)) request();
     else lastTime = 0;
   }
 

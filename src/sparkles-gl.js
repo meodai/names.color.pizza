@@ -1,6 +1,20 @@
-// Glitter on the adopted colors: a four-pointed sparkle over each, the same size on
-// screen however far the card is, flashing in short bursts at its own rhythm. Drawn at
-// the card's depth, so nearer cards hide it; added to what's below, like light.
+// Glitter on the adopted colors: a four-pointed sparkle on each, the same size on
+// screen however far the card is. Like glitter it catches the light only as you move:
+// each card has its own tiny facets, so a turn or a zoom lights it now and then.
+// Drawn at the card's depth, so nearer cards hide it; added to what's below, like light.
+
+// how much of the light a card's facets throw toward the eye
+export const GLINT = `
+// (v: from the eye to the card); turning moves dir, zooming moves how far it is
+float glint(vec3 v, float seed) {
+  vec3 dir = normalize(v);
+  vec3 a = normalize(vec3(sin(seed * 3.1), cos(seed * 5.7), sin(seed * 1.3 + 1.0)));
+  vec3 b = normalize(cross(a, vec3(0.3, 0.9, 0.2)));
+  // one facet after the other comes round; about half of them catch the light
+  float p = dot(dir, a) * 20.0 + dot(dir, b) * 13.0 + log(length(v)) * 6.0 + seed * 5.0;
+  float lit = step(0.5, fract(sin((floor(p) + seed) * 91.345) * 47453.5453));
+  return lit * pow(sin(fract(p) * 3.14159), 8.0);
+}`;
 
 const VERT = `#version 300 es
 in vec2 a_corner;
@@ -12,17 +26,16 @@ uniform vec3 u_fwd;
 uniform float u_fpx;
 uniform vec2 u_view;
 uniform vec2 u_clip;
-uniform float u_time;
+uniform float u_glint; // how much the camera moves, 0 when still
 uniform float u_px; // the sparkle's size on screen, device px
 uniform vec2 u_corner; // from the card's middle to where the sparkle sits
 out vec2 v_p;
 out float v_flash;
+${GLINT}
 void main() {
   vec3 v = a_spark.xyz - u_eye;
   float z = dot(v, u_fwd);
-  // two waves of flashes a little apart, so it glitters rather than blinks
-  float t = u_time * 0.0016 + a_spark.w;
-  float flash = pow(max(sin(t), 0.0), 40.0) + 0.7 * pow(max(sin(t * 1.7 + 2.1), 0.0), 60.0);
+  float flash = glint(v, a_spark.w) * u_glint;
   v_flash = min(flash, 1.0);
   v_p = a_corner * 2.0 - 1.0;
   float n = u_clip.x, f = u_clip.y;
@@ -65,7 +78,7 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   const u = {};
-  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "time", "px", "corner"]) u[k] = gl.getUniformLocation(prog, `u_${k}`);
+  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "glint", "px", "corner"]) u[k] = gl.getUniformLocation(prog, `u_${k}`);
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
   const corner = gl.createBuffer();
@@ -102,7 +115,7 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
       gl.uniform1f(u.fpx, cam.fpx * dpr);
       gl.uniform2f(u.view, canvas.width, canvas.height);
       gl.uniform2f(u.clip, NEAR, FAR);
-      gl.uniform1f(u.time, performance.now() % 1e7);
+      gl.uniform1f(u.glint, cam.glint || 0);
       gl.uniform1f(u.px, 46 * dpr);
       gl.uniform2f(u.corner, W * 0.42, H * 0.44);
       gl.depthFunc(gl.LEQUAL);
