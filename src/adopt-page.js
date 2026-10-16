@@ -92,7 +92,10 @@ function askWho(q, slugNow, place) {
   const update = () => {
     const name = cleanHandle(by.value, on.value);
     by.placeholder = on.value === "name" ? "Your name" : "@handle";
-    cta.setAttribute("aria-disabled", String(!name));
+    by.hidden = on.value === "anonymous";
+    // not before the account is known to exist
+    const lookup = Boolean(name && UNAVATAR[on.value]);
+    cta.setAttribute("aria-disabled", String(!name || lookup));
     cta.href = `${PAYMENT}?client_reference_id=${reference(slugNow(), on.value, name)}`;
     clearTimeout(timer);
     asking?.abort();
@@ -105,7 +108,11 @@ function askWho(q, slugNow, place) {
       }).catch(() => null);
       if (asking.signal.aborted) return;
       // 404 is unavatar's "nobody by that name"; anything else (busy, offline) says nothing
-      if (res?.status === 404) note.textContent = `No ${label()} account called @${name} found. Check the spelling, or go on with your initial.`;
+      if (res?.status === 404) {
+        note.textContent = `No ${label()} account called @${name} found. Check the spelling, or pick another way to show you.`;
+        return show(null);
+      }
+      cta.setAttribute("aria-disabled", "false");
       show(name, res?.ok ? URL.createObjectURL(await res.blob()) : undefined);
     }, 500);
   };

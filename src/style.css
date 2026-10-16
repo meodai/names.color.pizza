@@ -377,6 +377,10 @@ a:hover {
   flex: 1;
 }
 
+.adopt__who input[hidden] {
+  display: none;
+}
+
 .adopt__cta[aria-disabled="true"] {
   opacity: 0.5;
 }

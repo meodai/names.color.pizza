@@ -19,20 +19,24 @@ export const UNAVATAR = {
   linkedin: (by) => `linkedin/user:${by}`,
 };
 // a handle however it was pasted: @name, a profile link, a name
-export const cleanHandle = (typed, on) =>
-  on === "name"
-    ? typed.trim().slice(0, 60)
-    : typed
-        .trim()
-        .replace(/^https?:\/\/[^/]+\/(profile\/|in\/)?/, "")
-        .replace(/^@/, "")
-        .replace(/[/?#].*$/, "")
-        .slice(0, 60);
+export const ANONYMOUS = "Anonymous";
+export const cleanHandle = (typed, on) => {
+  if (on === "anonymous") return ANONYMOUS;
+  if (on === "name") return typed.trim().slice(0, 60);
+  const h = typed
+    .trim()
+    .replace(/^https?:\/\/[^/]+\/(profile\/|in\/)?/, "")
+    .replace(/^@/, "")
+    .replace(/[/?#].*$/, "")
+    .slice(0, 60);
+  // a Bluesky handle without its domain is most likely on bsky.social
+  return on === "bluesky" && h && !h.includes(".") ? `${h}.bsky.social` : h;
+};
 export const longDate = (day) =>
   new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 
 // a handle with its @, a plain name as it was given
-export const handle = (by, on) => (on === "name" ? by : `@${by.replace(/^@/, "")}`);
+export const handle = (by, on) => (on === "name" || on === "anonymous" ? by : `@${by.replace(/^@/, "")}`);
 // their profile, or just a span for someone who gave a name
 const profileLink = ({ by, on }, className) =>
   PROFILES[on]
@@ -51,7 +55,9 @@ export function adopterBadge(adopted) {
   const a = profileLink(adopted, "card-badge");
   a.setAttribute("aria-label", `Adopted by ${handle(adopted.by, adopted.on)}`);
   const initial = () =>
-    Object.assign(document.createElement("span"), { textContent: handle(adopted.by, adopted.on).replace(/^@/, "")[0]?.toUpperCase() || "?" });
+    Object.assign(document.createElement("span"), {
+      textContent: adopted.on === "anonymous" ? "\u2665\uFE0E" : handle(adopted.by, adopted.on).replace(/^@/, "")[0]?.toUpperCase() || "?",
+    });
   if (!adopted.avatar) a.append(initial());
   else {
     const img = Object.assign(document.createElement("img"), { src: adopted.avatar, alt: "", loading: "lazy" });
