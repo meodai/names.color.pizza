@@ -1981,10 +1981,16 @@ export async function initWall(root) {
   // A–Z: the list as one long column instead of the space; the model stays as it was
   let azOn = false;
   let az = null;
-  // the list starts as far below the search as the search is below the top
+  // the list starts as far below the top bar's controls as they are below the top; on a
+  // phone the search sits at the bottom instead, and the list ends as far above it
   const placeAz = () => {
-    const box = q("[data-find]").getBoundingClientRect();
-    root.querySelector(".az__list")?.style.setProperty("--az-top", `${Math.round(box.bottom + box.top)}px`);
+    const list = root.querySelector(".az__list");
+    if (!list) return;
+    const find = q("[data-find]").getBoundingClientRect();
+    const onTop = find.top < innerHeight / 2;
+    const top = onTop ? find : q("[data-menu]").getBoundingClientRect();
+    list.style.setProperty("--az-top", `${Math.round(top.bottom + top.top)}px`);
+    list.style.setProperty("--az-bottom", onTop ? "0px" : `${Math.round(innerHeight - find.top + (innerHeight - find.bottom))}px`);
   };
   addEventListener("resize", () => azOn && placeAz());
 

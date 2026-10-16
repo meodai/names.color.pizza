@@ -5218,7 +5218,7 @@ html.is-arriving {
 }
 
 .az__sizer {
-  margin-block-start: var(--az-top);
+  margin-block: var(--az-top) var(--az-bottom, 0px);
 }
 
 .az__rows {
@@ -5227,6 +5227,9 @@ html.is-arriving {
 }
 
 .az__row {
+  --ink-on: var(--ink);
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5240,7 +5243,41 @@ html.is-arriving {
 }
 
 .az__row.is-dark {
+  --ink-on: var(--paper);
   color: var(--paper);
+}
+
+/* hovered: the text's color rises from the bottom of the bar, the name turns the bar's color */
+.az__row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ink-on);
+  transform: scaleY(0);
+  transform-origin: 50% 100%;
+  transition: transform 0.28s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.az__row {
+  transition: color 0.2s ease;
+}
+
+.az__row:hover,
+.az__row:focus-visible {
+  color: var(--c);
+}
+
+.az__row:hover::before,
+.az__row:focus-visible::before {
+  transform: scaleY(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .az__row,
+  .az__row::before {
+    transition: none;
+  }
 }
 
 .az__row strong {
@@ -5260,16 +5297,8 @@ html.is-arriving {
   text-transform: uppercase;
 }
 
-.az__row:hover strong,
-.az__row:focus-visible strong {
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.15em;
-}
-
 .az__row:focus-visible {
-  outline: 3px solid currentColor;
-  outline-offset: -6px;
+  outline: none;
 }
 
 /* how many names show, for screen readers only */
