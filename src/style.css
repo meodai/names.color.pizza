@@ -2540,7 +2540,7 @@ h2:hover > .anchor,
 /* the drawing standing at the left of its title and text, one size whatever the text */
 .color-specs__pair {
   position: relative;
-  padding-inline-start: 2.6em;
+  padding-inline-start: 2.1em;
 }
 
 /* hovered or focused, each drawing in its real colors */
@@ -2594,7 +2594,7 @@ h2:hover > .anchor,
   position: absolute;
   inset-block-start: 0.15em;
   inset-inline-start: 0;
-  block-size: 5.2em;
+  block-size: 6.6em;
   inline-size: auto;
   overflow: visible;
 }
