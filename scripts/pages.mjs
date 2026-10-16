@@ -76,15 +76,18 @@ const copyOf = (slug) => {
 };
 
 // palettes and credits of every collection, kept with the copies
+// (and a fingerprint of all of it, with the code that picks from it)
+const artPrint = createHash("sha1").update(readFileSync(resolve(here, "../src/art.js")));
 async function collection(name) {
   const local = process.env.ART_DATA && join(process.env.ART_DATA, `${name}.json`);
-  if (local && existsSync(local)) return JSON.parse(readFileSync(local, "utf8"));
-  try {
-    const res = await fetch(`${MEDIA}/data/${name}.json`);
-    return res.ok ? await res.json() : [];
-  } catch {
-    return [];
+  let text = "[]";
+  if (local && existsSync(local)) text = readFileSync(local, "utf8");
+  else {
+    const res = await fetch(`${MEDIA}/data/${name}.json?t=${Date.now()}`).catch(() => null);
+    if (res?.ok) text = await res.text();
   }
+  artPrint.update(name).update(text);
+  return JSON.parse(text);
 }
 const works = [];
 for (const museum of Object.keys(MUSEUMS)) {
@@ -97,6 +100,7 @@ const wikimedia = new Map((await collection("wikimedia-art")).filter((w) => w.th
 if (!works.length) console.log("pages.mjs: no art data; no page has art");
 const near = works.length ? bucketed(works) : null;
 const artFor = (hex) => (near ? pickArt(near, hex) : null);
+const ART_PRINT = artPrint.digest("hex");
 
 const template = readFileSync(join(DIST, "color/index.html"), "utf8").replace(/"\.\.\//g, '"../../');
 
@@ -263,6 +267,12 @@ const listed = existsSync(join(LISTS, "uploaded.json"))
   ? JSON.parse(readFileSync(join(LISTS, "uploaded.json"), "utf8"))
   : {};
 const toUpload = [];
+// what each color's art list came to (its fingerprint, "" for none), as long as the
+// art and the code that picks it stay the same: a color known here needn't be picked again
+const PICKS = join(LISTS, "picks.json");
+const cached = existsSync(PICKS) ? JSON.parse(readFileSync(PICKS, "utf8")) : null;
+const picks = cached?.print === ART_PRINT ? cached.byHex : {};
+let picked = 0;
 const sitemap = [`<url><loc>${SITE}</loc></url>`];
 
 // ONLY=slug,slug: just those pages, for a quick local preview
@@ -274,7 +284,11 @@ for (const [i, { name, hex }] of items.entries()) {
   const copy = copyOf(slug);
   if (copy) withCopy++;
   const looked = hosted(copy?.looked || null);
-  const art = artFor(hex);
+  // picked before and its list already up (or, locally, already written): known
+  const known = picks[hex];
+  const ready = known !== undefined && (!known || (LOCAL ? existsSync(join(DIST, "lists", `${slug}.json`)) : listed[slug] === known));
+  const art = ready ? (known ? true : null) : artFor(hex);
+  if (!ready) picked++;
   const url = `${SITE}color/${slug}/`;
   const lines = intro(name, hex);
   const said = described.get(name) || "";
@@ -328,7 +342,7 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(
       "</body>",
       () =>
-        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art?.length ? listURL(slug) : null, adopted: adopted[slug] })}</script>\n  </body>`,
+        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art === true || art?.length ? listURL(slug) : null, adopted: adopted[slug] })}</script>\n  </body>`,
     );
   const meaning = meaningHTML(looked);
   if (meaning) {
@@ -373,14 +387,17 @@ ${preview.join("\n")}
 `,
   );
 
-  if (art?.length) {
+  if (art === true) withArt++;
+  else if (!art?.length) picks[hex] = "";
+  else {
     withArt++;
     const body = JSON.stringify(art);
+    picks[hex] = createHash("sha1").update(body).digest("hex");
     if (LOCAL) {
       mkdirSync(join(DIST, "lists"), { recursive: true });
       writeFileSync(join(DIST, "lists", `${slug}.json`), body);
     } else {
-      const sum = createHash("sha1").update(body).digest("hex");
+      const sum = picks[hex];
       if (listed[slug] !== sum) toUpload.push({ slug, body, sum });
     }
   }
@@ -452,6 +469,10 @@ if (UPLOAD_URL && UPLOAD_KEY && toUpload.length) {
   mkdirSync(LISTS, { recursive: true });
   writeFileSync(join(LISTS, "uploaded.json"), JSON.stringify(listed));
 }
+if (!ONLY && works.length) {
+  mkdirSync(LISTS, { recursive: true });
+  writeFileSync(PICKS, JSON.stringify({ print: ART_PRINT, byHex: picks }));
+}
 // the adoptions with each color's name and hex, for the adopt and supporters pages
 const bySlug = new Map(items.map(({ name, hex }) => [slugs.get(name), { name, hex }]));
 writeFileSync(
@@ -484,5 +505,5 @@ if (!ONLY) {
 }
 
 console.log(
-  `pages.mjs: ${written} color pages (${withCopy} with the nightly copy, ${withArt} with art, ${uploaded} art lists uploaded${toUpload.length ? `, ${toUpload.length} not` : ""}), ${written} hex forwards, sitemap`,
+  `pages.mjs: ${written} color pages (${withCopy} with the nightly copy, ${withArt} with art, ${picked} picked anew, ${uploaded} art lists uploaded${toUpload.length ? `, ${toUpload.length} not` : ""}), ${written} hex forwards, sitemap`,
 );

@@ -67,15 +67,23 @@ export function bucketed(works) {
     }
   }
   for (const [k, list] of cells) cells.set(k, list.sort((x, y) => y[0][3] - x[0][3]).slice(0, TOP));
-  return (L, A, B, reach = 1) => {
+  // within (a box of) reach cells; with a radius, only the cells that come within it
+  return (L, A, B, reach = 1, radius = Infinity) => {
     const [l, a, b] = [L, A, B].map((v) => Math.floor(v / CLOSE));
+    // how far the point is from a cell's nearest side along one axis
+    const gap = (v, cell) => Math.max(cell * CLOSE - v, v - (cell + 1) * CLOSE, 0);
     const found = [];
-    for (let i = -reach; i <= reach; i++)
-      for (let j = -reach; j <= reach; j++)
+    for (let i = -reach; i <= reach; i++) {
+      const gi = gap(L, l + i) ** 2;
+      for (let j = -reach; j <= reach; j++) {
+        const gj = gi + gap(A, a + j) ** 2;
         for (let k = -reach; k <= reach; k++) {
+          if (gj + gap(B, b + k) ** 2 >= radius * radius) continue;
           const list = cells.get(`${l + i},${a + j},${b + k}`);
-          if (list) found.push(...list);
+          if (list) for (const entry of list) found.push(entry);
         }
+      }
+    }
     return found;
   };
 }
@@ -85,20 +93,36 @@ export function bucketed(works) {
 // only a little of it
 export function pickArt(near, hex, count = ART_COUNT) {
   const [L, A, B] = rgbToOklab(hexToRgb(hex));
-  const tiers = [CLOSE * 0.4, CLOSE * 0.6, CLOSE, CLOSE * 1.6, CLOSE * 2.4].map((radius) => {
-    const byWork = new Map();
-    for (const [c, w] of near(L, A, B, Math.ceil(radius / CLOSE))) {
-      const d = Math.hypot(c[0] - L, c[1] - A, c[2] - B);
-      if (d >= radius) continue;
-      const s = byWork.get(w) || { w, share: 0, best: null };
-      s.share += c[3];
-      if (!s.best || d < s.best.d) s.best = { d, hex: c[4] };
-      byWork.set(w, s);
+  const RADII = [CLOSE * 0.4, CLOSE * 0.6, CLOSE, CLOSE * 1.6, CLOSE * 2.4];
+  // one look at the widest reach, each distance measured once; every ring then takes
+  // its share in the same order a look of its own would have found them
+  const reach = RADII.at(-1);
+  const around = [];
+  for (const [c, w] of near(L, A, B, Math.ceil(reach / CLOSE), reach)) {
+    const d = Math.hypot(c[0] - L, c[1] - A, c[2] - B);
+    if (d < reach) around.push([c, w, d]);
+  }
+  // every work's share in each ring, gathered in one pass in the order found; on equal
+  // scores a ring keeps the order its works first came up in
+  const per = new Map();
+  for (let n = 0; n < around.length; n++) {
+    const [c, w, d] = around[n];
+    let s = per.get(w);
+    if (!s) per.set(w, (s = { w, share: [0, 0, 0, 0, 0], best: [null, null, null, null, null], first: [-1, -1, -1, -1, -1] }));
+    for (let t = RADII.length - 1; t >= 0 && d < RADII[t]; t--) {
+      s.share[t] += c[3];
+      if (!s.best[t] || d < s.best[t].d) s.best[t] = { d, hex: c[4] };
+      if (s.first[t] < 0) s.first[t] = n;
     }
-    // a closer match counts for a little more
-    return [...byWork.values()]
-      .map((s) => ({ ...s, score: s.share * (1 - (0.5 * s.best.d) / radius) }))
-      .sort((x, y) => y.score - x.score);
+  }
+  const tiers = RADII.map((radius, t) => {
+    const ring = [];
+    for (const s of per.values()) {
+      if (s.first[t] < 0) continue;
+      // a closer match counts for a little more
+      ring.push({ w: s.w, share: s.share[t], best: s.best[t], score: s.share[t] * (1 - (0.5 * s.best[t].d) / radius), first: s.first[t] });
+    }
+    return ring.sort((x, y) => y.score - x.score || x.first - y.first);
   });
   // at each distance, works mostly of the color if there are enough of them
   const strong = tiers.flatMap((t) => [FULL, STRONG].map((min) => t.filter((s) => s.share >= min)));
