@@ -291,7 +291,8 @@ void main() {
     // the card lights up, with a four-pointed glint near its corner
     vec2 q = (v_local - vec2(u_size.x * 0.8, u_size.x * 0.2)) / u_size.x;
     float glint = exp(-abs(q.x) * 70.0) * exp(-abs(q.y) * 9.0) + exp(-abs(q.y) * 70.0) * exp(-abs(q.x) * 9.0);
-    c = mix(c, vec3(1.0), clamp(v_star * (0.35 + glint), 0.0, 1.0));
+    vec3 light = mix(v_color / max(max(v_color.r, v_color.g), max(v_color.b, 0.001)), vec3(1.0), 0.6);
+    c = mix(c, light, clamp(v_star * (0.35 + glint), 0.0, 1.0));
   }
   o = vec4(mix(c, vec3(0.0), v_fog), 1.0);
 }`;
@@ -1698,7 +1699,7 @@ export async function initWall(root) {
     }
     if (!cellsDraw || cellsMix <= 0) {
       draw(cam, dpr);
-      if (!opening && !morph && !bang && !listShift) sparkles?.draw(cam, dpr, canvas, sparkled, positions);
+      if (!opening && !morph && !bang && !listShift) sparkles?.draw(cam, dpr, canvas, sparkled, positions, colors);
       if (textInGL()) {
         if (textsFor !== draw) {
           texts.reset();

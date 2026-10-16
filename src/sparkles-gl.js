@@ -19,6 +19,7 @@ float glint(vec3 v, float seed) {
 const VERT = `#version 300 es
 in vec2 a_corner;
 in vec4 a_spark; // card position, its own phase
+in vec3 a_tint;  // the card's color
 uniform vec3 u_eye;
 uniform vec3 u_right;
 uniform vec3 u_up;
@@ -31,12 +32,14 @@ uniform float u_px; // the sparkle's size on screen, device px
 uniform vec2 u_corner; // from the card's middle to where the sparkle sits
 out vec2 v_p;
 out float v_flash;
+out vec3 v_tint;
 ${GLINT}
 void main() {
   vec3 v = a_spark.xyz - u_eye;
   float z = dot(v, u_fwd);
   float flash = glint(v, a_spark.w) * u_glint;
   v_flash = min(flash, 1.0);
+  v_tint = a_tint / max(max(a_tint.r, a_tint.g), max(a_tint.b, 0.001));
   v_p = a_corner * 2.0 - 1.0;
   float n = u_clip.x, f = u_clip.y;
   // on the card's top right corner, a little inside it
@@ -51,6 +54,7 @@ const FRAG = `#version 300 es
 precision highp float;
 in vec2 v_p;
 in float v_flash;
+in vec3 v_tint;
 out vec4 o;
 void main() {
   vec2 a = abs(v_p);
@@ -60,7 +64,9 @@ void main() {
   float diag = 0.45 * (exp(-d.x * 30.0) * exp(-d.y * 5.0) + exp(-d.y * 30.0) * exp(-d.x * 5.0));
   float core = exp(-dot(v_p, v_p) * 18.0);
   float light = (rays + diag + core) * v_flash;
-  o = vec4(vec3(light), light);
+  // white at the heart, the rays a little in the card's own hue
+  vec3 tint = mix(v_tint, vec3(1.0), 0.55 + 0.45 * min(core * 2.0, 1.0));
+  o = vec4(tint * light, light);
 }`;
 
 function compile(gl, type, src) {
@@ -91,18 +97,23 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
   const aSpark = gl.getAttribLocation(prog, "a_spark");
   gl.bindBuffer(gl.ARRAY_BUFFER, sparkBuf);
   gl.enableVertexAttribArray(aSpark);
-  gl.vertexAttribPointer(aSpark, 4, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(aSpark, 4, gl.FLOAT, false, 28, 0);
   gl.vertexAttribDivisor(aSpark, 1);
+  const aTint = gl.getAttribLocation(prog, "a_tint");
+  gl.enableVertexAttribArray(aTint);
+  gl.vertexAttribPointer(aTint, 3, gl.FLOAT, false, 28, 16);
+  gl.vertexAttribDivisor(aTint, 1);
   gl.bindVertexArray(null);
   let data = new Float32Array(0);
 
   return {
-    // the adopted cards' indices; positions of the whole list
-    draw(cam, dpr, canvas, which, positions) {
+    // the adopted cards' indices; positions and colors (bytes) of the whole list
+    draw(cam, dpr, canvas, which, positions, colors) {
       if (!which.length) return;
-      if (data.length !== which.length * 4) data = new Float32Array(which.length * 4);
+      if (data.length !== which.length * 7) data = new Float32Array(which.length * 7);
       which.forEach((i, k) => {
-        data.set([positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2], ((i * 2.399963) % 6.2832)], k * 4);
+        const p = i * 3;
+        data.set([positions[p], positions[p + 1], positions[p + 2], (i * 2.399963) % 6.2832, colors[p] / 255, colors[p + 1] / 255, colors[p + 2] / 255], k * 7);
       });
       gl.useProgram(prog);
       gl.bindVertexArray(vao);
