@@ -1,5 +1,4 @@
 import { loadList } from "./api.js";
-import { loadAdoptions, ADOPT_FROM } from "./shines.js";
 
 let release;
 export function showVersion(root = document) {
@@ -70,8 +69,10 @@ export const LISTS = {
   adopted: "Adopted",
 };
 
-// the colors patrons adopted, out of the full list
+// the colors patrons adopted, out of the full list (shines.js only in a browser: the
+// build scripts read this file too)
 async function adoptedColors() {
+  const { loadAdoptions, ADOPT_FROM } = await import("./shines.js");
   const [adopted, all] = await Promise.all([loadAdoptions(), loadList("default")]);
   const kept = new Set(Object.entries(adopted).filter(([, a]) => a.amount >= ADOPT_FROM).map(([slug]) => slug));
   const slugs = slugsOf(all);
