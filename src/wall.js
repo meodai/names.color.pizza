@@ -1981,8 +1981,7 @@ export async function initWall(root) {
   // A–Z: the list as one long column instead of the space; the model stays as it was
   let azOn = false;
   let az = null;
-  // the list starts as far below the top bar's controls as they are below the top; on a
-  // phone the search sits at the bottom instead, and the list ends as far above it
+  // the list starts as far below the top bar's controls as they are below the top
   const placeAz = () => {
     const list = root.querySelector(".az__list");
     if (!list) return;
@@ -1990,7 +1989,13 @@ export async function initWall(root) {
     const onTop = find.top < innerHeight / 2;
     const top = onTop ? find : q("[data-menu]").getBoundingClientRect();
     list.style.setProperty("--az-top", `${Math.round(top.bottom + top.top)}px`);
-    list.style.setProperty("--az-bottom", onTop ? "0px" : `${Math.round(innerHeight - find.top + (innerHeight - find.bottom))}px`);
+    // and room at the end for whatever floats at the bottom: the models and lists, or the search
+    const below = [q(".wall__dock"), onTop ? null : q("[data-find]")]
+      .map((el) => el?.getBoundingClientRect())
+      .filter((b) => b && b.height && b.top > innerHeight / 2);
+    const lowest = below.length ? Math.min(...below.map((b) => b.top)) : innerHeight;
+    const gap = below.length ? innerHeight - Math.max(...below.map((b) => b.bottom)) : 0;
+    list.style.setProperty("--az-bottom", `${Math.round(innerHeight - lowest + gap)}px`);
   };
   addEventListener("resize", () => azOn && placeAz());
 
