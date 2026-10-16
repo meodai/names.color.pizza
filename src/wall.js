@@ -15,6 +15,7 @@ import {
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 import { createLabelRenderer } from "./labels-gl.js";
 import { loadAdoptions } from "./shines.js";
+import { createSparkleRenderer } from "./sparkles-gl.js";
 
 const W = 1;
 const H = 1.3; // square swatch over a 0.3 label strip
@@ -542,10 +543,23 @@ export async function initWall(root) {
   // the adopted colors twinkle among the rest: by name, so it holds in every list
   let adoptedNames = new Set();
   let twinkling = 0;
+  let sparkled = [];
+  let sparkles = null;
+  try {
+    sparkles = createSparkleRenderer(draw.gl, { NEAR, FAR });
+  } catch (e) {
+    console.error(e);
+  }
   function markStars() {
     const on = new Float32Array(items.length);
     twinkling = 0;
-    items.forEach((it, i) => adoptedNames.has(it.name) && (on[i] = 1) && twinkling++);
+    sparkled = [];
+    items.forEach((it, i) => {
+      if (!adoptedNames.has(it.name)) return;
+      on[i] = 1;
+      sparkled.push(i);
+    });
+    twinkling = sparkled.length;
     draw.stars(on);
     request();
   }
@@ -1678,6 +1692,7 @@ export async function initWall(root) {
     }
     if (!cellsDraw || cellsMix <= 0) {
       draw(cam, dpr);
+      if (!opening && !morph && !bang && !listShift) sparkles?.draw(cam, dpr, canvas, sparkled, positions);
       if (textInGL()) {
         if (textsFor !== draw) {
           texts.reset();
