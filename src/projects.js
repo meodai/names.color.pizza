@@ -1,0 +1,36 @@
+// What else a patron keeps going: the open projects of Elastiq GmbH, as on elastiq.ch
+export const PROJECTS = [
+  ["Ray Color", 2026, "Palettes from a raytraced sphere: you light the room, not the colors", "https://meodai.github.io/ray-color/"],
+  ["CuspHanger", 2026, "Sequential and diverging OKLCH palettes from a few parameters", "https://meodai.github.io/cusphanger/"],
+  ["nutelch", 2026, "Chroma measured against the edge of the gamut", "https://meodai.github.io/nutelch/"],
+  ["Color Names Timeline", 2026, "The list's history, replayed as a cloud of points", "https://meodai.github.io/color-names-timeline/"],
+  ["Design Book", 2026, "Design systems that keep rules instead of fixed values", "https://meodai.github.io/design-book/"],
+  ["Charcuterie", 2026, "An explorer for Unicode characters, scripts and glyphs", "https://charcuterie.elastiq.ch/"],
+  ["Heerich", 2026, "3D voxel scenes, drawn as SVG", "https://meodai.github.io/heerich/"],
+  ["Color Palette Shader", 2026, "Palettes and gradients, animated on the GPU", "https://meodai.github.io/color-palette-shader/"],
+  ["PickyPalette", 2026, "Palettes sculpted right on a color model", "https://pickypalette.color.pizza/"],
+  ["OKpalette", 2026, "The colors of an image, picked in OKLCh", "https://okpalette.color.pizza/"],
+  ["DittoTones", 2025, "One color into a full palette, after known design systems", "https://meodai.github.io/dittoTones/"],
+  ["Pro Color Harmonies", 2025, "Color harmonies in OKLCh, as a library", "https://meodai.github.io/pro-color-harmonies/"],
+  ["Poline Orbits", 2025, "A circular playground for Poline palettes", "https://poline-orbits.color.pizza/"],
+  ["Color Router", 2025, "A color system that handles palettes like a spreadsheet", "https://github.com/meodai/color-router"],
+  ["Verloop", 2024, "A book of generative gradients, with Rik Oostenbroek", "https://verloop.xyz/"],
+  ["RYBitten", 2024, "Between RGB and Itten's RYB color spaces", "https://rybitten.space/"],
+  ["Albers", 2023, "A generative study of color interaction, after Josef Albers", "https://albers.elastiq.ch/"],
+  ["Poline", 2023, "Palettes by interpolating HSL in cartesian space", "https://meodai.github.io/poline/"],
+  ["Color Name API", 2022, "The name of any color, as an API", "https://meodai.github.io/color-name-api/"],
+  ["Rampensau", 2022, "Palettes from hue cycling and easing", "https://meodai.github.io/rampensau/"],
+  ["Color Description", 2021, "Color values in words people use", "https://words.github.io/color-description/"],
+  ["Parrot", 2021, "A bot that posts random colors and collects the names people invent", "https://parrot.color.pizza/"],
+  ["Farbvelo", 2020, "A generative cycle through color harmonies", "https://farbvelo.elastiq.ch/"],
+  ["Color Name Distribution", 2017, "The list's names, plotted in 3D color models", "https://codepen.io/meodai/full/zdgXJj"],
+].map(([name, year, about, url]) => ({ name, year, about, url }));
+
+// a color from the list for each: one that shares a word with it, else one its name picks
+export function colorFor(project, items) {
+  const word = project.name.split(/\s+/)[0].toLowerCase();
+  const fits = word.length >= 4 && items.find((it) => it.name.toLowerCase().split(/[\s-]+/).includes(word));
+  if (fits) return fits;
+  const h = [...project.name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+  return items[h % items.length];
+}

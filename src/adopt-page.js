@@ -4,6 +4,7 @@ import { tiltCard } from "./tilt.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, loadAdoptions } from "./shines.js";
 import { UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
+import { PROJECTS, colorFor } from "./projects.js";
 
 const toLab = converter("lab");
 const shade = (hex, amount) => {
@@ -97,6 +98,26 @@ function reference(slug, on, by) {
   }
 }
 
+// their picture for the preview, and whether they exist: Bluesky and GitHub ask their own
+// open APIs; the rest unavatar, free and so only so many times a day for each visitor
+// (busy or offline says nothing either way)
+async function lookup(on, name, signal) {
+  const json = (url) =>
+    fetch(url, { signal })
+      .then(async (r) => ({ status: r.status, body: r.ok ? await r.json() : null }))
+      .catch(() => ({ status: 0 }));
+  if (on === "bluesky") {
+    const r = await json(`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(name)}`);
+    return { missing: r.status === 400 || r.status === 404, src: r.body?.avatar };
+  }
+  if (on === "github") {
+    const r = await json(`https://api.github.com/users/${encodeURIComponent(name)}`);
+    return { missing: r.status === 404, src: r.body?.avatar_url };
+  }
+  const res = await fetch(`https://unavatar.io/${UNAVATAR[on](encodeURIComponent(name))}?fallback=false`, { signal }).catch(() => null);
+  return { missing: res?.status === 404, src: res?.ok ? URL.createObjectURL(await res.blob()) : undefined };
+}
+
 // who they'll be on the card: asked before paying, kept only once Stripe says they paid
 function askWho(q, slugNow, place) {
   const on = q("[data-on]");
@@ -118,8 +139,8 @@ function askWho(q, slugNow, place) {
     by.hidden = on.value === "anonymous";
     // not before the account is known to exist; a site only needs a real address
     const site = on.value === "website";
-    const lookup = Boolean(name && UNAVATAR[on.value] && !site);
-    cta.setAttribute("aria-disabled", String(!name || lookup || (site && !isHost(name))));
+    const checking = Boolean(name && UNAVATAR[on.value] && !site);
+    cta.setAttribute("aria-disabled", String(!name || checking || (site && !isHost(name))));
     cta.href = `${PAYMENT}?client_reference_id=${reference(slugNow(), on.value, name)}`;
     clearTimeout(timer);
     asking?.abort();
@@ -131,17 +152,14 @@ function askWho(q, slugNow, place) {
       }
       if (!name || !UNAVATAR[on.value]) return show(name);
       asking = new AbortController();
-      const res = await fetch(`https://unavatar.io/${UNAVATAR[on.value](encodeURIComponent(name))}?fallback=false`, {
-        signal: asking.signal,
-      }).catch(() => null);
+      const found = await lookup(on.value, name, asking.signal);
       if (asking.signal.aborted) return;
-      // 404 is unavatar's "nobody by that name"; anything else (busy, offline) says nothing
-      if (res?.status === 404 && on.value !== "website") {
+      if (found.missing && on.value !== "website") {
         note.textContent = `No ${label()} account called @${name} found. Check the spelling, or pick another way to show you.`;
         return show(null);
       }
       cta.setAttribute("aria-disabled", "false");
-      show(name, res?.ok ? URL.createObjectURL(await res.blob()) : undefined);
+      show(name, found.src);
     }, 500);
   };
   on.addEventListener("change", update);
@@ -158,6 +176,34 @@ function askWho(q, slugNow, place) {
   return { update, clear: () => show(null) };
 }
 
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+// the studio's other projects, as cards in colors from the list; the side card steps
+// aside while they're in view
+function moreProjects(q, data) {
+  q("[data-projects]").innerHTML = PROJECTS.map((p) => {
+    const it = colorFor(p, data.items);
+    const dark = wcagLuminance(it.hex) < 0.5;
+    const vars = `--c-color:${it.hex};--c-shade0:${shade(it.hex, dark ? 25 : -25)};--c-shade1:${shade(it.hex, dark ? 12 : -12)}`;
+    return `<a class="neighbor adopt-project" href="${esc(p.url)}" target="_blank" rel="noopener" title="${esc(p.about)}">
+        <div class="swatchcard swatchcard--visible" style="${vars}">
+          <div class="swatchcard__upper">
+            <i class="swatchcard__swatch" aria-hidden="true"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i>
+          </div>
+          <div class="swatchcard__label">
+            <div class="swatchcard__info">
+              <span class="swatchcard__row1">${esc(p.name)}</span>
+              <span class="swatchcard__row2">${p.year} · in ${esc(it.name)}</span>
+            </div>
+          </div>
+        </div>
+        <span class="adopt-project__about">${esc(p.about)}</span>
+      </a>`;
+  }).join("");
+  const place = q("[data-place]");
+  new IntersectionObserver(([e]) => place.classList.toggle("is-away", e.isIntersecting), { threshold: 0.05 }).observe(q("[data-more]"));
+}
+
 // the color comes as ?c=<slug> or #<hex>, or after paying as ?session=<checkout>;
 // its card shows one of the foils it could get
 export async function initAdoptPage() {
@@ -172,6 +218,7 @@ export async function initAdoptPage() {
   }
   const [data, answer] = await Promise.all([getList("default"), session ? adoptedBy(session) : null]);
   const slugs = slugsOf(data.items);
+  moreProjects(q, data);
   // paid, but someone adopted the color a moment earlier
   const missed = answer?.clash ? answer : null;
   let bought = missed ? null : answer;

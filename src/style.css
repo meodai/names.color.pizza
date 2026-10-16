@@ -443,6 +443,50 @@ a:hover {
   display: none;
 }
 
+/* the closing white section: what else a patron keeps going */
+.adopt-more {
+  min-height: auto;
+  gap: var(--space-m);
+  padding-block: var(--space-l);
+}
+
+.adopt-more__about {
+  max-width: 40ch;
+}
+
+.adopt-project {
+  display: grid;
+  gap: var(--space-2xs);
+  color: inherit;
+  text-decoration: none;
+}
+
+.adopt-project .swatchcard {
+  inline-size: 100%;
+  font-size: clamp(0.95rem, 1.55vw, 1.45rem);
+}
+
+.adopt-project .swatchcard__row1 {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.adopt-project__about {
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  opacity: 0.75;
+}
+
+.adopt .color-hero__card {
+  transition: opacity 0.3s ease;
+}
+
+.adopt .color-hero__card.is-away {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .adopt__legal {
   margin: var(--space-s) 0 0;
   font-size: var(--text-xs);
