@@ -57,15 +57,16 @@ const COOLEST = 12000;
 const WARMEST = 1000;
 export function lightViz(kelvin) {
   const warm = Math.min(1, Math.max(0, (Math.log(COOLEST) - Math.log(kelvin)) / (Math.log(COOLEST) - Math.log(WARMEST))));
-  // the tube from the bulb to the end, its fill a pixel clear of the glass, as in the cells
-  const start = 12;
-  const room = WIDTH - 2 - start;
-  const fill = Math.round(warm * room);
+  // one outline, the bulb flowing into a tube rounded only at its end; inside it, a pixel
+  // clear all round, the mercury: the bulb full, the tube as far as the color is warm
+  const join = Math.sqrt(5.5 ** 2 - 3.5 ** 2) + 6;
+  const end = WIDTH - 0.5;
+  const glass = `M${join.toFixed(2)} 2.5H${end - 3.5}A3.5 3.5 0 0 1 ${end - 3.5} 9.5H${join.toFixed(2)}A5.5 5.5 0 1 1 ${join.toFixed(2)} 2.5Z`;
+  const reach = Math.round(10 + warm * (end - 2.5 - 10));
+  const mercury = `M6 2A4 4 0 1 0 6 10A4 4 0 1 0 6 2ZM6 4H${reach}V8H6Z`;
   return svg(
     WIDTH,
-    `<circle cx="6" cy="6" r="5.5" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
-      `<circle cx="6" cy="6" r="3.5" fill="currentColor" shape-rendering="geometricPrecision"/>` +
-      `<rect x="10.5" y="2.5" width="${WIDTH - 11}" height="7" rx="3.5" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
-      (fill ? `<rect x="${start}" y="4" width="${fill}" height="4" fill="currentColor"/>` : ""),
+    `<path d="${glass}" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
+      `<path d="${mercury}" fill="currentColor" fill-rule="nonzero" shape-rendering="geometricPrecision"/>`,
   );
 }
