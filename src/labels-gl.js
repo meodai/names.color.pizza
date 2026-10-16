@@ -20,6 +20,9 @@ uniform vec3 u_fwd;
 uniform float u_fpx;
 uniform vec2 u_view;
 uniform vec2 u_clip;
+uniform int u_hover;
+uniform vec3 u_hoverPos;
+uniform float u_hoverClear;
 uniform float u_nearAt;
 uniform int u_nearIds[${NEAR_SLOTS}];
 uniform float u_nearAlpha[${NEAR_SLOTS}];
@@ -47,6 +50,16 @@ void main() {
   v_show = a_card.y;
   v_y = a_corner.y / max(a_card.y, 0.001);
   for (int k = 0; k < ${NEAR_SLOTS}; k++) if (u_nearIds[k] == card) near = u_nearAlpha[k];
+  // as the card shader clears the way to the hovered card
+  if (u_hover >= 0 && card != u_hover && u_hoverClear > 0.0) {
+    vec3 vh = u_hoverPos - u_eye;
+    float zh = dot(vh, u_fwd);
+    if (z > 0.0 && z < zh) {
+      vec2 d = abs(vec2(dot(v, u_right), dot(v, u_up)) / z - vec2(dot(vh, u_right), dot(vh, u_up)) / zh);
+      vec2 reach = vec2(${W.toFixed(1)}, ${H.toFixed(4)}) * 0.5 * (1.0 / z + 1.0 / zh);
+      if (d.x < reach.x && d.y < reach.y) near *= 1.0 - u_hoverClear;
+    }
+  }
   v_near = near;
 }`;
 
@@ -115,7 +128,7 @@ export function createLabelRenderer(gl, geo) {
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   const u = {};
-  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "nearAt", "nearIds", "nearAlpha", "atlas"])
+  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "nearAt", "nearIds", "nearAlpha", "atlas", "hover", "hoverPos", "hoverClear"])
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
 
   const vao = gl.createVertexArray();
@@ -231,6 +244,11 @@ export function createLabelRenderer(gl, geo) {
       gl.uniform1f(u.nearAt, near.at);
       gl.uniform1iv(u.nearIds, near.ids);
       gl.uniform1fv(u.nearAlpha, near.alphas);
+      gl.uniform1i(u.hover, near.hover?.i ?? -1);
+      if (near.hover) {
+        gl.uniform3fv(u.hoverPos, near.hover.pos);
+        gl.uniform1f(u.hoverClear, near.hover.clear);
+      }
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, atlas);
       gl.uniform1i(u.atlas, 0);

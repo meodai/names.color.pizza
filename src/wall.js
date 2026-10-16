@@ -110,6 +110,9 @@ const STRIP_MS = 200;
 // names stay away until it has been slower for CALM_MS
 const RUSH = 1.2;
 const CALM_MS = 160;
+// the cards in front of a hovered one make way after HOVER_WAIT, over HOVER_MS
+const HOVER_WAIT = 140;
+const HOVER_MS = 220;
 const FOCUS_PX = 230;
 
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
@@ -168,6 +171,9 @@ out float v_cardpx;
 out float v_fog;
 out float v_near;
 out float v_strip;
+uniform int u_hover;            // the hovered card: the ones in front of it make way
+uniform vec3 u_hoverPos;
+uniform float u_hoverClear;
 uniform float u_nearAt;          // card width over the screen's short side past which it's gone
 uniform int u_nearIds[${NEAR_SLOTS}];   // the cards fading in or out right now
 uniform float u_nearAlpha[${NEAR_SLOTS}];
@@ -231,6 +237,15 @@ void main() {
   // a card about to fill the screen dissolves, so the camera passes through it
   float near = v_cardpx / min(u_view.x, u_view.y) > u_nearAt ? 0.0 : 1.0;
   for (int k = 0; k < ${NEAR_SLOTS}; k++) if (u_nearIds[k] == gl_InstanceID) near = u_nearAlpha[k];
+  if (u_hover >= 0 && gl_InstanceID != u_hover && u_hoverClear > 0.0) {
+    vec3 vh = u_hoverPos - u_eye;
+    float zh = dot(vh, u_fwd);
+    if (z > 0.0 && z < zh) {
+      vec2 d = abs(vec2(dot(v, u_right), dot(v, u_up)) / z - vec2(dot(vh, u_right), dot(vh, u_up)) / zh);
+      vec2 reach = u_size * 0.5 * (1.0 / z + 1.0 / zh);
+      if (d.x < reach.x && d.y < reach.y) near *= 1.0 - u_hoverClear;
+    }
+  }
   v_near = gl_InstanceID == u_focus || gl_InstanceID == u_only ? 1.0 : near;
   v_strip = gl_InstanceID == u_focus ? 1.0 : a_strip;
 }`;
@@ -318,10 +333,14 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     "nearAt",
     "nearIds",
     "nearAlpha",
+    "hover",
+    "hoverPos",
+    "hoverClear",
   ]) {
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
   }
   gl.uniform1f(u.nearAt, 1e9);
+  gl.uniform1i(u.hover, -1);
   gl.uniform1iv(u.nearIds, new Int32Array(NEAR_SLOTS).fill(-1));
   gl.uniform2f(u.size, W, H);
   gl.uniform2f(u.clip, NEAR, FAR);
@@ -379,6 +398,12 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform1f(u.nearAt, at);
     gl.uniform1iv(u.nearIds, ids);
     gl.uniform1fv(u.nearAlpha, alphas);
+  };
+  draw.hover = (i, pos, clear) => {
+    gl.useProgram(prog);
+    gl.uniform1i(u.hover, i);
+    if (pos) gl.uniform3fv(u.hoverPos, pos);
+    gl.uniform1f(u.hoverClear, clear);
   };
   draw.strips = strips;
   draw.uploadStrips = () => {
@@ -597,6 +622,21 @@ export async function initWall(root) {
   const showing = new Set();
   const stripAnim = new Map();
   let hoverI = -1;
+  // which card the others make way for, and how far they have
+  const clearing = { i: -1, v: 0, from: 0 };
+  function trackHoverClear(time, dt) {
+    const want = hoverI >= 0 && !opening && !spot && cellsMix <= 0.5 && !rushing ? hoverI : -1;
+    const was = clearing.v;
+    if (clearing.i !== want) {
+      // the last one's cards come back first
+      clearing.v = Math.max(0, clearing.v - (2 * dt) / HOVER_MS);
+      if (clearing.v === 0) Object.assign(clearing, { i: want, from: time + HOVER_WAIT });
+    } else if (want >= 0 && time >= clearing.from) clearing.v = Math.min(1, clearing.v + dt / HOVER_MS);
+    if (reduceMotion) clearing.v = clearing.i === want && want >= 0 ? 1 : 0;
+    if (clearing.i >= 0) draw.hover(clearing.i, posOf(clearing.i), easeInOut(clearing.v));
+    else draw.hover(-1, null, 0);
+    return clearing.v !== was || (clearing.i >= 0 && clearing.v < 1) || clearing.i !== want;
+  }
   let lastEye = null;
   let lastFwd = null;
   let calmSince = 0;
@@ -650,6 +690,11 @@ export async function initWall(root) {
       if (Math.abs(sx - b.x) <= b.w / 2 && Math.abs(sy - b.y) <= (b.w * H) / 2) return spot.i;
     }
     if (cellsMix > 0.5) return cellAt(sx, sy);
+    // the hovered card keeps the mouse while the cards in front of it are away
+    if (clearing.i >= 0 && clearing.v > 0) {
+      const p = project(posOf(clearing.i));
+      if (Math.abs(sx - p.x) <= (W / 2) * p.s && Math.abs(sy - p.y) <= (H / 2) * p.s) return clearing.i;
+    }
     for (const c of onScreen()) {
       if (c.near > 0.5 && sx >= c.x0 && sx <= c.x1 && sy >= c.y0 && sy <= c.y1) return c.i;
     }
@@ -797,11 +842,12 @@ export async function initWall(root) {
     update();
     trackSpeed(time, dt);
     const fadingNear = trackNear(time);
+    const clearingWay = trackHoverClear(time, dt);
     const stripping = textInGL() && trackStrips(time);
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing) request();
+    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay) request();
     else lastTime = 0;
   }
 
@@ -1558,7 +1604,12 @@ export async function initWall(root) {
           ? []
           : onScreen(LABEL_PX * 0.85, texts.slots).filter((c) => c.x1 - c.x0 >= LABEL_PX || showing.has(c.i));
         if (hoverI >= 0 && !rushing && cellsMix <= 0.5 && !named.some((c) => c.i === hoverI)) named.unshift({ i: hoverI });
-        texts.draw(cam, dpr, canvas, named, items, positions, { at: NEAR_AT, ids: nearIds, alphas: nearAlphas }, draw.strips);
+        texts.draw(cam, dpr, canvas, named, items, positions, {
+          at: NEAR_AT,
+          ids: nearIds,
+          alphas: nearAlphas,
+          hover: clearing.i >= 0 ? { i: clearing.i, pos: posOf(clearing.i), clear: easeInOut(clearing.v) } : null,
+        }, draw.strips);
       }
       if (leaving) leaving(cam, dpr, { clear: false, keepAll: listShift?.leave ?? 0 });
       return;
