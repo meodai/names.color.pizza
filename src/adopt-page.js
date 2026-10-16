@@ -4,7 +4,7 @@ import { tiltCard } from "./tilt.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, loadAdoptions } from "./shines.js";
 import { UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
-import { PROJECTS, iconSVG } from "./projects.js";
+import { PROJECTS } from "./projects.js";
 
 const toLab = converter("lab");
 const shade = (hex, amount) => {
@@ -178,15 +178,11 @@ function askWho(q, slugNow, place) {
 
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
-// the studio's other projects, each drawn small; the side card steps
+// the studio's other projects, one under another; the side card steps
 // aside while they're in view
 function moreProjects(q, data) {
   q("[data-projects]").innerHTML = PROJECTS.map(
-    (p) => `<a class="adopt-project" href="${esc(p.url)}" target="_blank" rel="noopener">
-        <span class="adopt-project__icon">${iconSVG(p.icon)}</span>
-        <span class="adopt-project__name">${esc(p.name)} <small>${p.year}</small></span>
-        <span class="adopt-project__about">${esc(p.about)}</span>
-      </a>`,
+    (p) => `<li><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a> <small>${p.year}</small><p>${esc(p.about)}</p></li>`,
   ).join("");
   const place = q("[data-place]");
   new IntersectionObserver(([e]) => place.classList.toggle("is-away", e.isIntersecting), { threshold: 0.05 }).observe(q("[data-more]"));
