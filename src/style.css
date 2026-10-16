@@ -1323,6 +1323,11 @@ h2:hover > .anchor,
   inset: 0;
   z-index: 2;
   display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  pointer-events: auto;
   opacity: 0;
 }
 
@@ -1527,6 +1532,16 @@ h2:hover > .anchor,
   max-block-size: min(70svh, 100svh - 16rem);
   inline-size: auto;
   block-size: auto;
+}
+
+/* pixel art opens as itself: no mount, its pixels sharp, as big as a picture */
+.lightbox--pixel .lightbox__mat {
+  display: none;
+}
+
+.lightbox--pixel .lightbox__frame img {
+  inline-size: min(64vw, 70svh, 40rem);
+  image-rendering: pixelated;
 }
 
 /* hung on the mount's right edge, as tall as it, a swatch per color by its share */

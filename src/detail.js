@@ -648,16 +648,16 @@ function pixelOnCard() {
   const upper = page.art.querySelector(".gallery__swatch .swatchcard__upper");
   if (!upper || !cardPixel || cardPixel.hex !== current?.hex || upper.querySelector(".gallery__pixel")) return;
   const { pixel } = cardPixel;
-  const credit = Object.assign(document.createElement("a"), {
+  // opens like the other pictures: the sentence it was drawn from, and who drew it
+  const open = Object.assign(document.createElement("button"), {
+    type: "button",
     className: "gallery__pixel",
-    href: "https://retrodiffusion.ai/",
-    target: "_blank",
-    rel: "noopener",
     title: `${pixel.subject} Pixel art by Retro Diffusion`,
   });
-  credit.append(Object.assign(document.createElement("img"), { src: pixel.src, alt: pixel.subject, width: 64, height: 64, decoding: "async" }));
-  upper.append(credit);
-  // a link now: no longer only decoration
+  open.append(Object.assign(document.createElement("img"), { src: pixel.src, alt: pixel.subject, width: 64, height: 64, decoding: "async" }));
+  open.addEventListener("click", () => openPicture(open, { kind: "pixel", image: pixel.src, title: pixel.subject, ratio: 1 }));
+  upper.append(open);
+  // a button now: no longer only decoration
   upper.closest(".gallery__swatch").removeAttribute("aria-hidden");
 }
 
@@ -864,6 +864,7 @@ const link = (href, text) =>
   href ? `<a href="${escapeHTML(href)}" target="_blank" rel="noopener">${escapeHTML(text)}</a>` : escapeHTML(text);
 
 function sourceHTML(it) {
+  if (it.kind === "pixel") return link("https://retrodiffusion.ai/", "Pixel art by Retro Diffusion");
   if (it.work) {
     const museum = MUSEUMS[it.work.museum];
     return museum ? link(museum.url, museum.name) : "";
@@ -880,7 +881,7 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
       <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
     </div>
     <figcaption class="lightbox__info">
-      ${link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ')}
+      ${it.link ? link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ') : `<span class="lightbox__title">${escapeHTML(it.title || "Untitled")}</span>`}
       ${it.by ? `<span>${escapeHTML(it.by)}</span>` : ""}
       <span class="lightbox__source">${sourceHTML(it)}</span>
     </figcaption>
@@ -897,7 +898,7 @@ function openPicture(tile, it) {
   const box = document.createElement("div");
   const wide = (it.ratio || 1) > 1;
   // wider than tall: the palette along the top, else down the right
-  box.className = wide ? "lightbox lightbox--wide" : "lightbox";
+  box.className = [wide ? "lightbox lightbox--wide" : "lightbox", it.kind === "pixel" && "lightbox--pixel"].filter(Boolean).join(" ");
   const grow = wide ? "1 0" : "0 1";
   box.innerHTML = pictureHTML(it);
   (page.embedded ? page.root : document.body).append(box);
