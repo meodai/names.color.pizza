@@ -1973,6 +1973,13 @@ export async function initWall(root) {
   // A–Z: the list as one long column instead of the space; the model stays as it was
   let azOn = false;
   let az = null;
+  // the list starts as far below the search as the search is below the top
+  const placeAz = () => {
+    const box = q("[data-find]").getBoundingClientRect();
+    root.querySelector(".az__list")?.style.setProperty("--az-top", `${Math.round(box.bottom + box.top)}px`);
+  };
+  addEventListener("resize", () => azOn && placeAz());
+
   // pages are named by the full list's slugs, whichever list is shown
   let azSlugs = null;
   // the chip, the address and the list follow at once; the list fills once its names are in
@@ -2011,6 +2018,7 @@ export async function initWall(root) {
         },
       });
       az.open(items, search.value, restore?.scroll);
+      placeAz();
     });
   }
 

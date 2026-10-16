@@ -5210,6 +5210,8 @@ html.is-arriving {
 .az__list {
   --az-top: calc(var(--bar-h) + var(--space-xs));
   position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper) var(--ink);
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -5278,4 +5280,9 @@ html.is-arriving {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* cells are a view of the space, not of the list */
+.wall.is-az [data-cells] {
+  display: none;
 }
