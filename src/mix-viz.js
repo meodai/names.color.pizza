@@ -63,10 +63,10 @@ export function lightViz(kelvin) {
   const end = WIDTH - 0.5;
   const glass = `M${join.toFixed(2)} 2.5H${end - 3.5}A3.5 3.5 0 0 1 ${end - 3.5} 9.5H${join.toFixed(2)}A5.5 5.5 0 1 1 ${join.toFixed(2)} 2.5Z`;
   const reach = Math.round(10 + warm * (end - 2.5 - 10));
-  const mercury = `M6 2A4 4 0 1 0 6 10A4 4 0 1 0 6 2ZM6 4H${reach}V8H6Z`;
   return svg(
     WIDTH,
     `<path d="${glass}" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
-      `<path d="${mercury}" fill="currentColor" fill-rule="nonzero" shape-rendering="geometricPrecision"/>`,
+      `<circle cx="6" cy="6" r="4" fill="currentColor" shape-rendering="geometricPrecision"/>` +
+      `<rect x="6" y="4" width="${reach - 6}" height="4" fill="currentColor"/>`,
   );
 }
