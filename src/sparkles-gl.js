@@ -6,14 +6,19 @@
 // how much of the light a card's facets throw toward the eye
 export const GLINT = `
 // (v: from the eye to the card); turning moves dir, zooming moves how far it is
-float glint(vec3 v, float seed) {
+float facet(vec3 v, float seed) {
   vec3 dir = normalize(v);
   vec3 a = normalize(vec3(sin(seed * 3.1), cos(seed * 5.7), sin(seed * 1.3 + 1.0)));
   vec3 b = normalize(cross(a, vec3(0.3, 0.9, 0.2)));
-  // one facet after the other comes round; about half of them catch the light
-  float p = dot(dir, a) * 20.0 + dot(dir, b) * 13.0 + log(length(v)) * 6.0 + seed * 5.0;
-  float lit = step(0.5, fract(sin((floor(p) + seed) * 91.345) * 47453.5453));
-  return lit * pow(sin(fract(p) * 3.14159), 8.0);
+  return dot(dir, a) * 20.0 + dot(dir, b) * 13.0 + log(length(v)) * 6.0 + seed * 5.0;
+}
+float facetHash(float p, float seed, float salt) {
+  return fract(sin((floor(p) + seed + salt) * 91.345) * 47453.5453);
+}
+// one facet after the other comes round; about half of them catch the light
+float glint(vec3 v, float seed) {
+  float p = facet(v, seed);
+  return step(0.5, facetHash(p, seed, 0.0)) * pow(sin(fract(p) * 3.14159), 8.0);
 }`;
 
 const VERT = `#version 300 es
@@ -33,12 +38,15 @@ uniform vec2 u_corner; // from the card's middle to where the sparkle sits
 out vec2 v_p;
 out float v_flash;
 out vec3 v_tint;
+out float v_turn;
 ${GLINT}
 void main() {
   vec3 v = a_spark.xyz - u_eye;
   float z = dot(v, u_fwd);
   float flash = glint(v, a_spark.w) * u_glint;
   v_flash = min(flash, 1.0);
+  // each facet throws its flash at its own angle
+  v_turn = facetHash(facet(v, a_spark.w), a_spark.w, 17.0) * 1.5708;
   v_tint = a_tint / max(max(a_tint.r, a_tint.g), max(a_tint.b, 0.001));
   v_p = a_corner * 2.0 - 1.0;
   float n = u_clip.x, f = u_clip.y;
@@ -55,14 +63,16 @@ precision highp float;
 in vec2 v_p;
 in float v_flash;
 in vec3 v_tint;
+in float v_turn;
 out vec4 o;
 void main() {
-  vec2 a = abs(v_p);
+  vec2 q = mat2(cos(v_turn), sin(v_turn), -sin(v_turn), cos(v_turn)) * v_p;
+  vec2 a = abs(q);
   // long thin rays along the axes, shorter ones on the diagonals, a bright core
   float rays = exp(-a.x * 26.0) * exp(-a.y * 2.6) + exp(-a.y * 26.0) * exp(-a.x * 2.6);
-  vec2 d = abs(vec2(v_p.x + v_p.y, v_p.x - v_p.y)) * 0.7071;
+  vec2 d = abs(vec2(q.x + q.y, q.x - q.y)) * 0.7071;
   float diag = 0.45 * (exp(-d.x * 30.0) * exp(-d.y * 5.0) + exp(-d.y * 30.0) * exp(-d.x * 5.0));
-  float core = exp(-dot(v_p, v_p) * 18.0);
+  float core = exp(-dot(q, q) * 18.0);
   float light = (rays + diag + core) * v_flash;
   // white at the heart, the rays a little in the card's own hue
   vec3 tint = mix(v_tint, vec3(1.0), 0.55 + 0.45 * min(core * 2.0, 1.0));
