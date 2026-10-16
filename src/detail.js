@@ -407,7 +407,7 @@ async function render(hex) {
     adoptedLine.replaceChildren(
       ...(shown
         ? adoptedHTML(adopted)
-        : [Object.assign(document.createElement("a"), { href: siteURL(`adopt/#${hex.slice(1)}`), textContent: "Adopt this color" })]),
+        : [Object.assign(document.createElement("a"), { href: siteURL(`adopt/#${hex.slice(1)}`), textContent: "Adopt this color \u2665\uFE0E" })]),
     );
     card.parentElement.querySelector(".card-badge")?.remove();
     if (shown) card.parentElement.append(adopterBadge(adopted));
