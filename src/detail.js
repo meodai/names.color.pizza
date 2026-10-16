@@ -442,15 +442,19 @@ async function render(hex) {
   page.neighbors.replaceChildren();
   page.complements.replaceChildren();
   page.ramp.replaceChildren();
-  page.neighborsSlide.hidden = true;
   page.dictionary.replaceChildren();
   page.wiki.replaceChildren();
-  page.wordsSlide.hidden = true;
   gallery = [];
   closePicture(true);
-  page.meaningSlide.hidden = true;
-  page.artSlide.hidden = true;
   page.art.replaceChildren();
+  // the sections stay where they are while they fill, and go only once they turn out empty;
+  // a page built for this color already left out the ones it knew were empty
+  const built = builtPage?.hex === hex;
+  for (const slide of [page.neighborsSlide, page.wordsSlide, page.meaningSlide, page.artSlide]) {
+    if (!built) slide.hidden = false;
+    slide.classList.add("is-filling");
+  }
+  artWaiting = { hex, sources: 3 };
   alternate();
   document.title = known ? `${known}: ${hex} — Color Names` : `${hex} — Color Names`;
   document.querySelector('link[rel="icon"]').href =
@@ -460,6 +464,7 @@ async function render(hex) {
   const mix = lore.percentageWords();
 
   const early = builtPage?.hex === hex && builtPage.looked ? showMeaning(builtPage.name, builtPage.looked) : false;
+  if (early) filled(page.meaningSlide, true);
 
   const data = await getList("default");
   if (current?.hex !== hex) return; // a newer color took over
@@ -560,9 +565,9 @@ async function render(hex) {
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
   page.complements.innerHTML = neighborsHTML(named(data, rampOf(complementHex(hex))), data);
   page.ramp.innerHTML = neighborsHTML(named(data, rampOf(hex)), data);
-  page.neighborsSlide.hidden = false;
   revealNeighbors();
-  page.wordsSlide.hidden = !page.words.innerHTML.trim();
+  filled(page.wordsSlide, !!page.words.innerHTML.trim());
+  filled(page.neighborsSlide, true);
 
   const own = exact && import.meta.env.PROD ? new URL(siteURL(`color/${slugFor(data, current.name)}/`)) : location;
   page.pageLink.href = own.href;
@@ -579,7 +584,7 @@ async function render(hex) {
 
   const looked = (await saved)?.looked || (await lookupName(current.name));
   if (current?.hex !== hex) return;
-  if (!early) showMeaning(current.name, looked);
+  if (!early) filled(page.meaningSlide, showMeaning(current.name, looked));
   const { images = [] } = looked;
   addToGallery(
     hex,
@@ -595,11 +600,14 @@ async function render(hex) {
       link: img.link,
     })),
   );
+  artSourceDone(hex);
 }
 
 async function showPictures(hex, terms, saved) {
-  const pictures = (await saved)?.looked?.pictures ?? (await lookupPictures(hex, terms));
-  if (current?.hex !== hex || !pictures.length) return;
+  const pictures = await Promise.resolve((await saved)?.looked?.pictures ?? lookupPictures(hex, terms)).catch(() => []);
+  if (current?.hex !== hex) return;
+  artSourceDone(hex);
+  if (!pictures.length) return;
   addToGallery(
     hex,
     pictures.map((p) => ({
@@ -616,6 +624,23 @@ async function showPictures(hex, terms, saved) {
   );
 }
 
+// a section has its content, or hasn't and goes
+function filled(slide, has) {
+  slide.classList.remove("is-filling");
+  if (slide.hidden === !has) return;
+  slide.hidden = !has;
+  alternate();
+}
+
+// the art strip waits for its three sources (Wikipedia's pictures, Commons, the art list)
+// and goes only if none of them brought anything
+let artWaiting = null;
+function artSourceDone(hex) {
+  if (artWaiting?.hex !== hex || --artWaiting.sources > 0) return;
+  artWaiting = null;
+  if (!gallery.length) filled(page.artSlide, false);
+}
+
 async function showArt(hex, saved) {
   const copy = await saved;
   const list = copy?.list;
@@ -624,6 +649,7 @@ async function showArt(hex, saved) {
   try {
     if (list) art = await (await fetch(new URL(list, location.href))).json();
   } catch {}
+  if (current?.hex === hex) setTimeout(() => artSourceDone(hex));
   addToGallery(
     hex,
     art.map((w) => ({
@@ -710,10 +736,7 @@ function addToGallery(hex, items) {
   // most of the color first, whatever the source
   gallery = [...gallery, ...items].sort((a, b) => (b.share ?? -1) - (a.share ?? -1));
   // shown first: a hidden strip has no width to measure
-  if (page.artSlide.hidden) {
-    page.artSlide.hidden = false;
-    alternate();
-  }
+  filled(page.artSlide, true);
   layoutGallery();
 }
 

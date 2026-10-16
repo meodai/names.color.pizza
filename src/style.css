@@ -2492,6 +2492,15 @@ h2:hover > .anchor,
   padding-block: var(--space-l);
 }
 
+/* a section waiting for its content keeps about the room it will take, so nothing below jumps */
+.color-page .slide.is-filling {
+  min-height: 70svh;
+}
+
+.color-page .color-art.is-filling {
+  min-height: min(100svh, 56rem);
+}
+
 .color-page .color-fill {
   --bg: var(--fill);
   --fg: var(--fill-ink, #fff);

@@ -378,10 +378,14 @@ for (const [i, { name, hex }] of items.entries()) {
       () =>
         `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art === true || art?.length ? listURL(slug) : null, adopted: adopted[slug], pixel: pixelOf(slug) })}</script>\n  </body>`,
     );
+  // the sections the page will fill are there from the start; the ones known to stay empty aren't
   const meaning = meaningHTML(looked);
+  const pictures = looked?.entries?.some((e) => e.image) || looked?.images?.length || looked?.pictures?.length;
+  if (!meaning) html = html.replace(/(<section[^>]*data-meaning-slide)([^>]*?)(\s*>)/, "$1$2 hidden$3");
+  if (!pictures && !(art === true || art?.length)) html = html.replace(/(<section[^>]*data-art-slide)([^>]*?)(\s*>)/, "$1$2 hidden$3");
   if (meaning) {
     html = html
-      .replace(/(<section[^>]*data-meaning-slide)([^>]*?)\s+hidden(\s*>)/, "$1$2$3")
+      .replace('slide--dense is-filling" id="meaning"', 'slide--dense" id="meaning"')
       .replace(
         /(<h2[^>]*data-meaning-title[^>]*>)[\s\S]*?(<\/h2>)/,
         (_, open, close) => `${open}${escapeHTML(name)}${close}`,
