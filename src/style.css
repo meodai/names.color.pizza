@@ -4410,9 +4410,61 @@ html.is-arriving {
   background: var(--ink);
 }
 
-.wall__search::placeholder {
+/* the placeholder, centered: gone once the search is focused or holds anything */
+.wall__hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-inline: 2.95rem;
+  overflow: hidden;
   color: var(--ink);
-  opacity: 1;
+  font-size: var(--text-base);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.wall__search:focus ~ .wall__hint,
+.wall__search:not(:placeholder-shown) ~ .wall__hint {
+  opacity: 0;
+}
+
+/* until it's first used, a band of the picker's colors runs through the words now and then */
+.wall__hint.is-new {
+  background: linear-gradient(
+      100deg,
+      var(--ink) 0 42%,
+      #f2385a 45%,
+      #fdbd2b 47.5%,
+      #2fc46b 50%,
+      #2b8cf2 52.5%,
+      #9b4dff 55%,
+      var(--ink) 58% 100%
+    )
+    0 0 / 300% 100% no-repeat;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: hint-sheen 4.5s ease-in-out 1s infinite;
+}
+
+@keyframes hint-sheen {
+  0% {
+    background-position: 100% 0;
+  }
+  45%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall__hint.is-new {
+    animation: none;
+    background: none;
+    color: var(--ink);
+  }
 }
 
 /* focused, the search gets the same frosted ring as the controls */

@@ -2217,6 +2217,23 @@ export async function initWall(root) {
     search.focus();
   });
 
+  // the hint shimmers until the search is first used, here or on an earlier visit
+  const SEARCHED = "cn-searched";
+  const hint = q("[data-hint]");
+  try {
+    if (!localStorage.getItem(SEARCHED)) hint.classList.add("is-new");
+  } catch {}
+  search.addEventListener(
+    "input",
+    () => {
+      hint.classList.remove("is-new");
+      try {
+        localStorage.setItem(SEARCHED, "1");
+      } catch {}
+    },
+    { once: true },
+  );
+
   search.addEventListener("input", () => {
     showClear();
     if (azOn) return az?.filter(search.value);
