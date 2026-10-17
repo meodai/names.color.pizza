@@ -535,7 +535,8 @@ a:hover {
   display: none;
 }
 
-.adopt__share a {
+.adopt__share a,
+.adopt__share button {
   padding: 0.55rem 1.1rem;
   border: 1px solid currentColor;
   border-radius: 999px;
@@ -546,8 +547,17 @@ a:hover {
   text-decoration: none;
 }
 
+.adopt__share button {
+  font-family: inherit;
+  letter-spacing: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
 .adopt__share a:hover,
-.adopt__share a:focus-visible {
+.adopt__share a:focus-visible,
+.adopt__share button:hover,
+.adopt__share button:focus-visible {
   color: var(--ink);
   background: var(--paper);
 }
@@ -5541,4 +5551,66 @@ html.is-arriving {
   margin: var(--space-m) 0 0;
   font-size: var(--text-xs);
   opacity: 0.7;
+}
+
+.cert__print {
+  justify-content: center;
+}
+
+/* printed, the page is the certificate alone, on one sheet, in its colors */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .color-page > :not(.adopt-cert),
+  .adopt-cert > :not(.cert) {
+    display: none !important;
+  }
+
+  .adopt-cert {
+    display: block;
+    min-block-size: 0;
+    padding: 0;
+  }
+
+  .cert {
+    inline-size: 100%;
+    block-size: 276mm;
+    margin: 0;
+    align-content: space-evenly;
+    gap: 0;
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 0 0.85rem var(--paper),
+      inset 0 0 0 0.92rem var(--ink);
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .cert__card {
+    inline-size: 11rem;
+    font-size: 2.255rem;
+  }
+
+  .cert__foot {
+    margin-block-start: 0;
+  }
+
+  .cert * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+.cert__print button:hover,
+.cert__print button:focus-visible {
+  color: var(--paper);
+  background: var(--ink);
 }

@@ -66,8 +66,10 @@ async function certificate(q, it, slug, mine) {
   const dark = wcagLuminance(it.hex) < 0.5;
   const shades = [shade(it.hex, dark ? 25 : -25), shade(it.hex, dark ? 12 : -12)];
   const el = q("[data-cert]");
-  el.innerHTML = certificateHTML({ it, adopted: mine, number, logo: sealParrot(), ink, shades });
+  el.innerHTML = `${certificateHTML({ it, adopted: mine, number, logo: sealParrot(), ink, shades })}
+    <p class="adopt__share cert__print"><button type="button" data-cert-print>Print it</button></p>`;
   el.hidden = false;
+  el.querySelector("[data-cert-print]").addEventListener("click", () => print());
   q("[data-share-cert]").addEventListener("click", (e) => {
     e.preventDefault();
     el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
