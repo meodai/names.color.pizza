@@ -63,9 +63,21 @@ async function certificate(q, it, slug, mine) {
   const keys = Object.keys(all).filter((k) => all[k].amount >= ADOPT_FROM);
   const number = (keys.includes(slug) ? keys.indexOf(slug) : keys.length) + 1;
   const ink = wcagLuminance(it.hex) > 0.4 ? "#000" : "#fff";
+  const dark = wcagLuminance(it.hex) < 0.5;
+  const shades = [shade(it.hex, dark ? 25 : -25), shade(it.hex, dark ? 12 : -12)];
   const el = q("[data-cert]");
-  el.innerHTML = certificateHTML({ it, adopted: mine, number, logo: sealParrot(), ink });
+  el.innerHTML = certificateHTML({ it, adopted: mine, number, logo: sealParrot(), ink, shades });
   el.hidden = false;
+  // its swatch comes in as the cards do, once it's in view
+  const card = el.querySelector(".swatchcard");
+  new IntersectionObserver(
+    ([e], seen) => {
+      if (!e.isIntersecting) return;
+      card.classList.add("swatchcard--visible");
+      seen.disconnect();
+    },
+    { threshold: 0.6 },
+  ).observe(card);
 }
 
 // their link preview, drawn here the moment they've paid and handed to the worker,

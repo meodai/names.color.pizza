@@ -5467,23 +5467,12 @@ html.is-arriving {
   overflow-wrap: anywhere;
 }
 
-.cert__color {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  margin: 0;
-  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
-  font-weight: var(--weight-display);
-  letter-spacing: -0.02em;
-}
-
-.cert__swatch {
-  flex: none;
-  inline-size: 0.9em;
-  block-size: 0.9em;
-  border-radius: 50%;
-  background: var(--cert-c);
-  box-shadow: 0 0 0 2px var(--ink);
+.cert__card {
+  inline-size: 14rem;
+  margin-block: var(--space-xs) var(--space-2xs);
+  font-size: 2.87rem;
+  rotate: -3deg;
+  box-shadow: 0 0.5rem 1.4rem rgb(0 0 0 / 0.16);
 }
 
 .cert__facts {

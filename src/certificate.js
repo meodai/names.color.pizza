@@ -41,12 +41,12 @@ function seal(logo) {
   </svg>`;
 }
 
-// it: the color; adopted: who, how and when; number: its place in the register
-export function certificateHTML({ it, adopted, number, logo, ink }) {
+// it: the color; adopted: who, how and when; number: its place in the register;
+// shades: the swatch card's two darker (or lighter) steps
+export function certificateHTML({ it, adopted, number, logo, ink, shades }) {
   const no = String(number).padStart(4, "0");
   const when = longDate(adopted.at);
   const facts = [
-    ["Value", it.hex],
     ["Recorded", escapeHTML(when)],
     ...(adopted.founding ? [["Standing", "Founding patron"]] : []),
     ...(adopted.shine && adopted.amount >= 10 ? [["Foil", escapeHTML(adopted.shine[0].toUpperCase() + adopted.shine.slice(1))]] : []),
@@ -61,7 +61,17 @@ export function certificateHTML({ it, adopted, number, logo, ink }) {
     <p class="cert__line">This is to certify that</p>
     <p class="cert__who">${escapeHTML(handle(adopted.by, adopted.on))}</p>
     <p class="cert__line">is the one and only adopter of</p>
-    <p class="cert__color"><i class="cert__swatch" aria-hidden="true"></i><span>${escapeHTML(it.name)}</span></p>
+    <div class="swatchcard cert__card" style="--c-color:${it.hex};--c-shade0:${shades[0]};--c-shade1:${shades[1]}">
+      <div class="swatchcard__upper">
+        <i class="swatchcard__swatch" aria-hidden="true"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i>
+      </div>
+      <div class="swatchcard__label">
+        <div class="swatchcard__info">
+          <span class="swatchcard__row1">${it.hex}</span>
+          <span class="swatchcard__row2">${escapeHTML(it.name)}</span>
+        </div>
+      </div>
+    </div>
     <dl class="cert__facts">${facts.map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
     <footer class="cert__foot">
       <div class="cert__sign">
