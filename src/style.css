@@ -5119,12 +5119,6 @@ html.is-arriving {
     0 0 0 2px var(--ink);
 }
 
-.wall__zoom button[aria-pressed="true"] {
-  color: var(--paper);
-  background: var(--ink);
-  box-shadow: inset 0 0 0 2px var(--paper);
-}
-
 .wall__zoom button:focus-visible,
 .wall__intro-links button:focus-visible,
 .wall__result:focus-visible {
