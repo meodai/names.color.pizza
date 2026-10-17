@@ -6,9 +6,11 @@ const KEY = "cn-pixel";
 // the bucket; a local preview can't read it into WebGL (CORS), so it's served a copy
 const MEDIA = location.hostname === "localhost" ? siteURL("pixel-mirror/") : "https://media.color.pizza/";
 
-let on = false;
+// on for the visit, or asked for by the address (?view=pixel)
+let on = new URLSearchParams(location.search).get("view") === "pixel";
 try {
-  on = sessionStorage.getItem(KEY) === "1";
+  if (on) sessionStorage.setItem(KEY, "1");
+  on ||= sessionStorage.getItem(KEY) === "1";
 } catch {}
 document.documentElement.classList.toggle("is-pixel", on);
 

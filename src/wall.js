@@ -2157,6 +2157,16 @@ export async function initWall(root) {
   const modeActive = () => modeList.querySelector('[aria-checked="true"]');
   function showMode() {
     const now = modeNow();
+    // the view in the address too, as A–Z keeps its own
+    if (!root.classList.contains("is-az") && new URLSearchParams(location.search).get("view") !== "az") {
+      try {
+        const url = new URL(location.href);
+        const was = url.searchParams.get("view");
+        if (now === "colors") url.searchParams.delete("view");
+        else url.searchParams.set("view", now);
+        if (url.searchParams.get("view") !== was) history.replaceState(history.state, "", url);
+      } catch {}
+    }
     for (const b of modeList.querySelectorAll("[data-mode]")) {
       b.setAttribute("aria-checked", String(b.dataset.mode === now));
       if (!modes.classList.contains("is-marked")) b.classList.toggle("is-last", b.dataset.mode === now);
