@@ -115,6 +115,7 @@ const NEAR_MS = 260;
 const NEAR_SLOTS = 16;
 // full-size pixel art kept on the GPU for the cards close by (see pixel-mode.js)
 const DETAIL_SLOTS = 1024;
+const DETAIL_IN_MS = 320; // a full-size drawing dithering in over its small one
 // a card's name strip slides out under it, then its name fades in
 const STRIP_MS = 200;
 // names come out from the middle of the view: the edge this much later
@@ -188,6 +189,8 @@ in float a_strip;  // how far its name strip is out, 0 for a plain swatch
 in float a_star;   // how bright an adopted color flashes now, like glitter catching the light
 in float a_slot;   // where its pixel art is in the atlas, -1 for none
 in float a_detail; // where its full-size pixel art is, once it came close, -1 till then
+in float a_detailAt; // when it came, so it can dither in over the small one
+uniform float u_now;
 uniform float u_grow;
 uniform int u_only;
 uniform float u_keepAll;
@@ -200,6 +203,7 @@ out float v_strip;
 out float v_star;
 flat out float v_slot;
 flat out float v_detail;
+flat out float v_detailK;
 uniform int u_hover;            // the hovered card: the ones in front of it make way
 uniform vec3 u_hoverPos;
 uniform float u_hoverClear;
@@ -248,6 +252,7 @@ void main() {
   v_star = a_star;
   v_slot = a_slot;
   v_detail = a_detail;
+  v_detailK = clamp((u_now - a_detailAt) / ${DETAIL_IN_MS}.0, 0.0, 1.0);
   vec3 v = pos - u_eye;
   float z = dot(v, u_fwd);
   float px = max(z, 0.001) / u_fpx; // world units per pixel at this depth
@@ -295,6 +300,7 @@ in float v_strip;
 in float v_star;
 flat in float v_slot;
 flat in float v_detail;
+flat in float v_detailK;
 uniform vec2 u_size;
 uniform highp sampler2DArray u_atlas; // pixel art, 64 × 64 tiles to a layer
 uniform float u_pixel;                // 0 the colors, 1 their pixel art
@@ -326,10 +332,16 @@ void main() {
   if (u_pixel > 0.0 && v_slot >= 0.0 && v_local.y < u_size.x) {
     vec2 inTile = clamp(v_local / u_size.x, 0.0, 0.999);
     float layer = floor(v_slot / 4096.0);
-    bool there = v_detail >= 0.0 || ((u_sheets >> int(layer)) & 1) == 1;
+    bool sheet = ((u_sheets >> int(layer)) & 1) == 1;
+    bool there = v_detail >= 0.0 || sheet;
     if (there) {
       vec4 t;
-      if (v_detail >= 0.0) {
+      // the full-size drawing replaces the small one in the same ordered dither, 16 across
+      vec2 ditherCell = floor(inTile * 16.0);
+      int dk = int(mod(ditherCell.x, 4.0)) + int(mod(ditherCell.y, 4.0)) * 4;
+      int dbayer[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
+      bool sharp = v_detail >= 0.0 && (!sheet || (float(dbayer[dk]) + 0.5) / 16.0 < v_detailK);
+      if (sharp) {
         t = texture(u_detail, (vec2(mod(v_detail, 32.0), floor(v_detail / 32.0)) + inTile) / 32.0);
       } else {
         float k = v_slot - layer * 4096.0;
@@ -389,6 +401,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   attrib("a_star", stars, 1, gl.FLOAT, false, 1);
   attrib("a_slot", new Float32Array(positions.length / 3).fill(-1), 1, gl.FLOAT, false, 1);
   attrib("a_detail", new Float32Array(positions.length / 3).fill(-1), 1, gl.FLOAT, false, 1);
+  attrib("a_detailAt", new Float32Array(positions.length / 3).fill(-1e9), 1, gl.FLOAT, false, 1);
   // the pixel art: a pixel each until pixel art is asked for (pixelInit), so the space
   // keeps its memory otherwise. The atlas's sheets as layers, and the full-size tiles of the
   // cards close by, swapped in and out as they come and go
@@ -445,6 +458,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     "pixel",
     "detail",
     "sheets",
+    "now",
   ]) {
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
   }
@@ -480,6 +494,7 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     // fog from the shape's middle, so it doesn't shift as the camera turns
     const mid = Math.hypot(...sub(cam.center, cam.eye));
     gl.uniform2f(u.fog, Math.max(0, mid) + 60, mid + 420);
+    gl.uniform1f(u.now, performance.now() % 1e6);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, atlas);
     gl.activeTexture(gl.TEXTURE2);
@@ -539,9 +554,11 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.texSubImage2D(gl.TEXTURE_2D, 0, (slot % 32) * 64, Math.floor(slot / 32) * 64, gl.RGBA, gl.UNSIGNED_BYTE, image);
     gl.activeTexture(gl.TEXTURE0);
   };
-  draw.pixelDetailOf = (i, slot) => {
+  draw.pixelDetailOf = (i, slot, at = -1e9) => {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_detail);
     gl.bufferSubData(gl.ARRAY_BUFFER, i * 4, new Float32Array([slot]));
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_detailAt);
+    gl.bufferSubData(gl.ARRAY_BUFFER, i * 4, new Float32Array([at]));
   };
   draw.pixelMix = (k) => {
     gl.useProgram(prog);
@@ -755,7 +772,8 @@ export async function initWall(root) {
           detail.of.set(i, slot);
           detail.seen[slot] = performance.now();
           draw.pixelDetail(slot, image);
-          draw.pixelDetailOf(i, slot);
+          draw.pixelDetailOf(i, slot, reduceMotion ? -1e9 : performance.now() % 1e6);
+          detail.fadingUntil = performance.now() + DETAIL_IN_MS;
           request();
         })
         .catch(() => {})
@@ -1233,7 +1251,7 @@ export async function initWall(root) {
     render(time);
     placeLabels();
     placeMark();
-    if (anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || glittering) request();
+    if (time < (detail.fadingUntil ?? 0) || anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || glittering) request();
     else lastTime = 0;
   }
 
