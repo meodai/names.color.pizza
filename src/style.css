@@ -5946,3 +5946,9 @@ html.is-arriving {
 .wall__mode-list button.is-last {
   order: 1;
 }
+
+/* closing: the other icons fade first, one after the other, before the tabs fold */
+.wall__modes.is-fading .wall__mode-list button[aria-checked="false"] {
+  opacity: 0;
+  transition: opacity 0.18s ease var(--fade-delay, 0ms);
+}

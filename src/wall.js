@@ -2104,21 +2104,28 @@ export async function initWall(root) {
     modes.classList.add("is-open", "is-marked");
     followThumb(modeActive(), MODE_MS);
   }
-  // the marker fades as the tabs finish closing, not after; then, once it's all still, the
-  // view changes (turning to pixel art takes the page a moment, which would stutter the tabs)
+  // closing: the other two icons fade, the farther first, and the marker with them; then the
+  // tabs fold into the one button. Once it's all still the view changes (turning to pixel art
+  // takes the page a moment, which would stutter the tabs)
+  const FADE_MS = reduceMotion ? 0 : 260;
   function closeModes(then) {
     if (!modes.classList.contains("is-open")) return;
     const b = modeActive();
-    modes.classList.remove("is-open");
-    followThumb(b, MODE_MS);
+    const all = [...modeList.querySelectorAll("[data-mode]")];
+    all
+      .filter((o) => o !== b)
+      .sort((x, y) => Math.abs(all.indexOf(y) - all.indexOf(b)) - Math.abs(all.indexOf(x) - all.indexOf(b)))
+      .forEach((o, k) => o.style.setProperty("--fade-delay", `${k * 80}ms`));
+    modes.classList.remove("is-marked");
+    modes.classList.add("is-fading");
     clearTimeout(modeTimer);
     modeTimer = setTimeout(() => {
-      modes.classList.remove("is-marked");
+      modes.classList.remove("is-open", "is-fading");
       modeTimer = setTimeout(() => {
         then?.();
         showMode();
-      }, MODE_MS * 0.7);
-    }, MODE_MS * 0.55);
+      }, MODE_MS);
+    }, FADE_MS);
   }
   modeList.addEventListener("click", (e) => {
     const b = e.target.closest("[data-mode]");
