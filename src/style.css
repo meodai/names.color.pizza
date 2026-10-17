@@ -5515,14 +5515,24 @@ html.is-arriving {
   transition: color 0.2s ease;
 }
 
-.az__row:hover,
 .az__row:focus-visible {
   color: var(--c);
 }
 
-.az__row:hover::before,
 .az__row:focus-visible::before {
   transform: scaleY(1);
+}
+
+/* only a real pointer hovers: a touch screen leaves the row under the finger "hovered"
+   once a scroll stops */
+@media (hover: hover) and (pointer: fine) {
+  .az__row:hover {
+    color: var(--c);
+  }
+
+  .az__row:hover::before {
+    transform: scaleY(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
