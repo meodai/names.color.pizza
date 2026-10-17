@@ -17,7 +17,7 @@ export function seeded(text) {
   return () => ((h = (h * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 }
 
-// the five foils of src/shines.js, drawn for a still image
+// the foils of src/shines.js, drawn for a still image
 export function foilSVG(shine, w, h, rand) {
   const rainbow = (id, a, x2 = 1, y2 = 1) => `<linearGradient id="${id}" x1="0" y1="0" x2="${x2}" y2="${y2}">
       ${["#ff7ad9", "#ffd36e", "#f5ff7a", "#7affc8", "#7ad7ff", "#b38cff", "#ff7ad9"]
@@ -50,6 +50,36 @@ export function foilSVG(shine, w, h, rand) {
         cells.push(`<rect x="${x + 3}" y="${y + 3}" width="${size - 6}" height="${size - 6}" fill="hsl(${hue} 95% 70%)" fill-opacity="${(0.08 + rand() * 0.2).toFixed(2)}"/>`);
       }
     body = cells.join("");
+  } else if (shine === "nova") {
+    // rays from a point of light, clear at its very center, fading out
+    const cx = w * (0.55 + rand() * 0.2);
+    const cy = h * (0.3 + rand() * 0.3);
+    const reach = Math.hypot(w, h);
+    defs += `<radialGradient id="fade" cx="${cx}" cy="${cy}" r="${reach * 0.55}" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#000"/><stop offset="0.05" stop-color="#000"/><stop offset="0.22" stop-color="#fff"/>
+      <stop offset="0.5" stop-color="#999"/><stop offset="1" stop-color="#000"/></radialGradient>
+      <mask id="m"><rect width="${w}" height="${h}" fill="url(#fade)"/></mask>`;
+    const rays = Array.from({ length: 60 }, (_, k) => {
+      const a = (k / 60) * Math.PI * 2;
+      return `<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${(cx + Math.cos(a) * reach).toFixed(1)}" y2="${(cy + Math.sin(a) * reach).toFixed(1)}" stroke="hsl(${Math.round((k / 60) * 360)} 100% 80%)" stroke-width="3" stroke-opacity="0.8"/>`;
+    }).join("");
+    body = `<g mask="url(#m)">${rays}</g>`;
+  } else if (shine === "gold") {
+    // brushed metal, a band of gold across it
+    defs += `<filter id="metal" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.003 0.6" numOctaves="3" seed="3"/><feColorMatrix type="saturate" values="0"/></filter>
+      <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0.36">
+        <stop offset="0.25" stop-color="#d8b75c" stop-opacity="0"/><stop offset="0.42" stop-color="#d8b75c" stop-opacity="0.5"/>
+        <stop offset="0.5" stop-color="#f6e3a8" stop-opacity="0.75"/><stop offset="0.58" stop-color="#d8b75c" stop-opacity="0.5"/>
+        <stop offset="0.75" stop-color="#d8b75c" stop-opacity="0"/></linearGradient>`;
+    body = `<rect width="${w}" height="${h}" filter="url(#metal)" opacity="0.18"/><rect width="${w}" height="${h}" fill="url(#gold)"/>`;
+  } else if (shine === "glitter") {
+    // specks of every color over a faint rainbow
+    defs += rainbow("rb", 0.22, 1, 0.35);
+    const specks = Array.from({ length: 900 }, () => {
+      const r = rand() < 0.08 ? 2.4 : 0.7 + rand() * 1.1;
+      return `<circle cx="${(rand() * w).toFixed(1)}" cy="${(rand() * h).toFixed(1)}" r="${r.toFixed(1)}" fill="hsl(${Math.round(rand() * 360)} 100% 75%)" fill-opacity="${(0.45 + rand() * 0.5).toFixed(2)}"/>`;
+    }).join("");
+    body = `<rect width="${w}" height="${h}" fill="url(#rb)"/>${specks}`;
   } else {
     // aurora: soft bands of light
     defs += `<filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="40"/></filter>`;

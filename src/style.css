@@ -3531,6 +3531,35 @@ h2:hover > .anchor,
   opacity: var(--shine);
 }
 
+/* nova: fine rainbow rays fanning out from where the light falls, clear at its very center
+   and fading away from it, the rainbow turning with the card */
+.swatchcard--holo[data-shine="nova"]::before,
+.swatchcard--holo[data-shine="nova"] .holo-parrot {
+  background-image:
+    radial-gradient(circle at var(--fx) var(--fy), #000 0%, #000 4%, #fff 24%, #b0b0b0 42%, #000 88%),
+    repeating-conic-gradient(
+      from 0deg at var(--fx) var(--fy),
+      hsl(0 0% 8%) 0deg 2.4deg,
+      hsl(0 0% 40%) 3deg,
+      hsl(0 0% 78%) 3.5deg,
+      hsl(0 0% 40%) 4deg,
+      hsl(0 0% 8%) 4.6deg 6deg
+    ),
+    conic-gradient(
+      from calc(var(--rx, 0deg) * 6 + var(--ry, 0deg) * 4) at var(--fx) var(--fy),
+      hsl(2 100% 73%),
+      hsl(52 100% 69%),
+      hsl(140 100% 70%),
+      hsl(200 100% 72%),
+      hsl(262 100% 76%),
+      hsl(320 100% 74%),
+      hsl(2 100% 73%)
+    );
+  background-blend-mode: multiply, hard-light;
+  background-size: 100% 100%;
+  filter: brightness(1) contrast(2.1) saturate(1.2);
+}
+
 /* barely a rainbow: a fine printed texture, a faint pastel wash and a strong shine */
 .swatchcard--holo[data-shine="aurora"]::before,
 .swatchcard--holo[data-shine="aurora"] .holo-parrot {
@@ -3556,6 +3585,68 @@ h2:hover > .anchor,
     center,
     0% var(--fy);
   filter: brightness(0.6) contrast(1.8) saturate(1);
+}
+
+/* gold, after the secret rares: golden light in bands over brushed metal, brighter as the card
+   turns. The metal is drawn here, stretched noise, not loaded */
+.swatchcard--holo[data-shine="gold"]::before,
+.swatchcard--holo[data-shine="gold"] .holo-parrot {
+  background-image:
+    repeating-linear-gradient(
+      110deg,
+      rgb(89 46 80 / 0.5) 0%,
+      hsl(39 37% 60%) 2.5%,
+      rgb(216 183 92) 5%,
+      hsl(39 37% 60%) 7.5%,
+      rgb(14 21 46 / 0.5) 10%,
+      rgb(14 21 46 / 0.5) 15%
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .9' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='1.6' intercept='-.15'/%3E%3CfeFuncG type='linear' slope='1.6' intercept='-.15'/%3E%3CfeFuncB type='linear' slope='1.6' intercept='-.15'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23m)'/%3E%3C/svg%3E");
+  background-blend-mode: darken;
+  background-size: 600% 600%, 9em;
+  background-position:
+    var(--fx) var(--fy),
+    center;
+  filter: brightness(calc(var(--tilt, 0) * 0.4 + 0.7)) contrast(2.6) saturate(0.66);
+}
+
+/* a tick quieter than the others: gold is loud by nature */
+.swatchcard--holo[data-shine="gold"].swatchcard--visible::before {
+  opacity: calc(var(--shine) * 0.72);
+}
+
+/* glitter, after the rainbow secret rares: a rainbow and bands of pastel crossing it, over
+   glitter of every color. The glitter is drawn here, noise thresholded per channel, not loaded */
+.swatchcard--holo[data-shine="glitter"]::before,
+.swatchcard--holo[data-shine="glitter"] .holo-parrot {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='9 0 0 0 -5.2 0 9 0 0 -5.2 0 0 9 0 -5.2 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23g)'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      -20deg,
+      rgb(253 71 65) 7%,
+      rgb(255 243 151) 14%,
+      rgb(168 255 95) 21%,
+      rgb(131 255 247) 28%,
+      rgb(75 198 255) 35%,
+      rgb(255 73 246) 42%,
+      rgb(255 56 49) 49%
+    ),
+    repeating-linear-gradient(
+      130deg,
+      rgb(89 46 80 / 0.5) 0%,
+      hsl(118 43% 76%) 2.5%,
+      rgb(223 96 202) 5%,
+      hsl(180 57% 56%) 7.5%,
+      rgb(14 21 46 / 0.5) 10%,
+      rgb(14 21 46 / 0.5) 15%
+    );
+  background-blend-mode: color-burn, soft-light;
+  background-size: 8em, 500% 500%, 1000% 1000%;
+  background-position:
+    center,
+    0% var(--fy),
+    var(--fx) var(--fy);
+  filter: brightness(calc(var(--tilt, 0) * 0.25 + 0.66)) contrast(2) saturate(0.95);
 }
 
 .swatchcard--holo[data-shine="aurora"].swatchcard--visible::before {
