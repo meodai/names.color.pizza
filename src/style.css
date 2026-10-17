@@ -3519,9 +3519,9 @@ h2:hover > .anchor,
   background-blend-mode: color, darken;
   background-size: 850% 850%, 265% 265%, 265% 265%;
   background-position:
-    calc(100% - clamp(0%, var(--fx), 100%)) calc(100% - clamp(0%, var(--fy), 100%)),
-    clamp(0%, var(--fx), 100%) clamp(0%, var(--fy), 100%),
-    clamp(0%, var(--fx), 100%) clamp(0%, var(--fy), 100%);
+    calc(100% - var(--fx)) calc(100% - var(--fy)),
+    var(--fx) var(--fy),
+    var(--fx) var(--fy);
   filter: brightness(0.85) contrast(2.4) saturate(1.3);
 }
 
