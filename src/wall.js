@@ -1643,7 +1643,13 @@ export async function initWall(root) {
     if (busy) return;
     flyTo({ dist: clamp(cam.dist * factor, MIN_DIST, MAX_DIST) }, 420);
   };
-  const goHome = () => !busy && flyTo(home(), 1000);
+  // home, by any way there, and turning again once it arrives, as when the page opens
+  const goHome = () =>
+    !busy &&
+    flyTo(home(), 1000, () => {
+      idle = !reduceMotion;
+      request();
+    });
 
   q(".brand").addEventListener("click", (e) => {
     e.preventDefault();
