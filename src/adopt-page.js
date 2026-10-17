@@ -81,10 +81,12 @@ async function certificate(q, it, slug, mine) {
     <p class="adopt__share cert__print"><button type="button" data-cert-print>Print it</button></p>`;
   el.hidden = false;
   el.querySelector("[data-cert-print]").addEventListener("click", () => print());
-  q("[data-share-cert]").addEventListener("click", (e) => {
+  const link = Object.assign(document.createElement("a"), { href: "#certificate", textContent: "Your certificate" });
+  link.addEventListener("click", (e) => {
     e.preventDefault();
     el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   });
+  q("[data-note]").replaceChildren(link);
 }
 
 // their link preview, drawn here the moment they've paid and handed to the worker,
