@@ -4001,6 +4001,13 @@ html.is-arriving {
   overscroll-behavior: none;
 }
 
+/* the white search and its results read ink on paper again, their selection with them */
+.wall__search,
+.wall__results {
+  --fg: var(--ink);
+  --bg: var(--paper);
+}
+
 .wall {
   position: fixed;
   inset: 0;
