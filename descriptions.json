@@ -270264,5 +270264,14 @@
     "kind": "mood",
     "description": "The first spring leaf noticed on a slow walk, bright lime and wide awake.",
     "model": "claude"
+  },
+  {
+    "name": "Entropic Pink",
+    "hex": "#bd0249",
+    "ai": true,
+    "kind": "thing",
+    "reference": "entropy, pink",
+    "description": "Chaos in a lipstick tube, disorder made vibrant and hot.",
+    "model": "describer"
   }
 ]
