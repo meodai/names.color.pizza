@@ -17,6 +17,7 @@ import { createLabelRenderer } from "./labels-gl.js";
 import { loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
 import { createAz } from "./az.js";
+import { pixelMode } from "./pixel-mode.js";
 
 const CARD_W = 1;
 const CARD_H = 1.3; // square swatch over a 0.3 label strip
@@ -659,8 +660,8 @@ export async function initWall(root) {
   } catch (e) {
     console.error(e);
   }
-  // ↑ ↑ ↓ ↓ ← → ← → B A: the space in pixel art. The atlas comes when first asked for, its
-  // sheets one by one, each card its color until its sheet is in
+  // the space in pixel art (pixel-mode.js): the atlas comes when first asked for, its sheets
+  // side by side, each card its color until its sheet is in
   const pixelArt = { on: false, k: 0, index: null, slots: null, sheets: [], loading: null };
   async function pixelSlots() {
     const { index } = pixelArt;
@@ -772,16 +773,8 @@ export async function initWall(root) {
     };
     requestAnimationFrame(step);
   }
-  const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
-  let konami = 0;
-  window.addEventListener("keydown", (e) => {
-    if (e.target.closest?.("input, textarea, select")) return;
-    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    konami = key === KONAMI[konami] ? konami + 1 : key === KONAMI[0] ? 1 : 0;
-    if (konami < KONAMI.length) return;
-    konami = 0;
-    togglePixelArt();
-  });
+  window.addEventListener("pixelmode", (e) => e.detail !== pixelArt.on && togglePixelArt());
+  if (pixelMode()) togglePixelArt();
 
   function markStars() {
     glitter = [];

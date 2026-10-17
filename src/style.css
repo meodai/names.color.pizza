@@ -5815,3 +5815,25 @@ html.is-arriving {
   color: var(--paper);
   background: var(--ink);
 }
+
+/* in pixel art (pixel-mode.js) every card wears its drawing, as the art section's does */
+.swatchcard__pixel {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  inline-size: 100%;
+  block-size: 100%;
+  image-rendering: pixelated;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease calc(var(--anim-appear-delay, 0ms) + var(--anim-appear-duration, 1100ms) * 0.6);
+}
+
+.is-pixel .swatchcard__pixel {
+  display: block;
+}
+
+.is-pixel .swatchcard--visible .swatchcard__pixel {
+  opacity: 1;
+}

@@ -20,6 +20,7 @@ import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
 import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
+import { pixelCards } from "./pixel-mode.js";
 
 // the heart in its own box, so the link's underline passes it by
 function adoptLink(hex, name, approx) {
@@ -221,7 +222,7 @@ const neighborsHTML = (items, data) =>
       (it, i) => `<a class="neighbor" style="--rnd:${between(-1, 1).toFixed(2)}" href="${
         import.meta.env.PROD ? siteURL(`color/${slugFor(data, it.name)}/`) : `#${it.hex.slice(1)}`
       }" aria-label="${escapeHTML(it.name)}, ${it.hex}">
-        <div class="swatchcard" style="${cardStyle(it.hex)};--anim-appear-delay:${i * 75}ms">
+        <div class="swatchcard" data-slug="${slugFor(data, it.name)}" style="${cardStyle(it.hex)};--anim-appear-delay:${i * 75}ms">
           <div class="swatchcard__upper">
             <i class="swatchcard__swatch" aria-hidden="true">
               <i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i>
@@ -574,6 +575,8 @@ async function render(hex) {
   page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
   page.complements.innerHTML = neighborsHTML(named(data, rampOf(complementHex(hex))), data);
   page.ramp.innerHTML = neighborsHTML(named(data, rampOf(hex)), data);
+  card.dataset.slug = slugFor(data, current.name);
+  pixelCards(page.root);
   revealNeighbors();
   filled(page.wordsSlide, !!page.words.innerHTML.trim());
   filled(page.neighborsSlide, true);
