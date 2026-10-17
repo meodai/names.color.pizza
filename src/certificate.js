@@ -65,7 +65,7 @@ export function certificateHTML({ it, adopted, number, logo, ink }) {
     <dl class="cert__facts">${facts.map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
     <footer class="cert__foot">
       <div class="cert__sign">
-        <p class="cert__signature">David Aerne</p>
+        <p class="cert__signature">D. Aerne</p>
         <p class="label">Keeper of the List, Zürich</p>
       </div>
       ${seal(logo)}

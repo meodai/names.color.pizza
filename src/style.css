@@ -5521,14 +5521,14 @@ html.is-arriving {
 .cert__signature {
   display: inline-block;
   min-inline-size: min(12rem, 100%);
-  padding: 0 0.2em 0.1em;
+  padding: 0 0.2em;
   white-space: nowrap;
   border-block-end: 1px solid var(--ink);
-  font-size: 1.9rem;
-  font-weight: 300;
-  font-style: italic;
-  letter-spacing: -0.04em;
-  rotate: -3deg;
+  font-family: "Mrs Saint Delafield", cursive;
+  font-size: 3.2rem;
+  font-weight: 400;
+  line-height: 0.75;
+  rotate: -4deg;
 }
 
 .cert__sign .label {
