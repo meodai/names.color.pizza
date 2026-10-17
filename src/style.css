@@ -3473,19 +3473,22 @@ h2:hover > .anchor,
 }
 
 /* radiant: crossed bars of grey that cut the light into a sparkle, over a pastel rainbow */
+/* each layer's tile big enough that, however far the card turns, it never shows its edge:
+   positions stay within 0–100%, sizes and stops scaled so the light moves and looks as before */
 .swatchcard--holo[data-shine="radiant"]::before,
 .swatchcard--holo[data-shine="radiant"] .holo-parrot {
-  --bar: 0.9%;
+  --bar: calc(0.9% * 2.1 / 2.65);
+  --hue: calc(4 / 8.5);
   background-image:
     repeating-linear-gradient(
       55deg,
       hsl(2 100% 81%) 0%,
-      hsl(207 100% 67%) 9%,
-      hsl(30 100% 79%) 18%,
-      hsl(160 100% 75%) 27%,
-      hsl(310 95% 83%) 36%,
-      hsl(190 100% 79%) 45%,
-      hsl(2 100% 81%) 54%
+      hsl(207 100% 67%) calc(9% * var(--hue)),
+      hsl(30 100% 79%) calc(18% * var(--hue)),
+      hsl(160 100% 75%) calc(27% * var(--hue)),
+      hsl(310 95% 83%) calc(36% * var(--hue)),
+      hsl(190 100% 79%) calc(45% * var(--hue)),
+      hsl(2 100% 81%) calc(54% * var(--hue))
     ),
     repeating-linear-gradient(
       45deg,
@@ -3514,11 +3517,11 @@ h2:hover > .anchor,
       hsl(0 0% 6%) calc(var(--bar) * 9) calc(var(--bar) * 10)
     );
   background-blend-mode: color, darken;
-  background-size: 400% 400%, 210% 210%, 210% 210%;
+  background-size: 850% 850%, 265% 265%, 265% 265%;
   background-position:
-    calc((var(--fx) - 50%) * -2.5 + 50%) calc((var(--fy) - 50%) * -2.5 + 50%),
-    calc((var(--fx) - 50%) * 1.5 + 50%) calc((var(--fy) - 50%) * 1.5 + 50%),
-    calc((var(--fx) - 50%) * 1.5 + 50%) calc((var(--fy) - 50%) * 1.5 + 50%);
+    calc(100% - clamp(0%, var(--fx), 100%)) calc(100% - clamp(0%, var(--fy), 100%)),
+    clamp(0%, var(--fx), 100%) clamp(0%, var(--fy), 100%),
+    clamp(0%, var(--fx), 100%) clamp(0%, var(--fy), 100%);
   filter: brightness(0.85) contrast(2.4) saturate(1.3);
 }
 
