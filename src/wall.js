@@ -300,8 +300,17 @@ uniform highp sampler2D u_detail;     // full-size pixel art of the cards close 
 uniform int u_sheets;                 // which of the atlas's sheets have come, a bit each
 out vec4 o;
 void main() {
-  // dithered, so it fades without sorting the cards
-  if (v_near < 1.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) >= v_near) discard;
+  // dithered, so it fades without sorting the cards; in pixel art a drawing comes and goes
+  // as on a color's page, pixel by pixel from the bottom up, a little ragged
+  if (v_near < 1.0) {
+    float due = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+    if (u_pixel > 0.5 && v_local.y < u_size.x) {
+      vec2 cell = floor(clamp(v_local / u_size.x, 0.0, 0.999) * 64.0);
+      float ragged = fract(sin(dot(cell + v_slot, vec2(12.9898, 78.233))) * 43758.5453);
+      due = (1.0 - cell.y / 63.0) * 0.7 + ragged * 0.3;
+    }
+    if (due >= v_near) discard;
+  }
   if (v_local.x < 0.0 || v_local.y < 0.0 || v_local.x > u_size.x || v_local.y > u_size.y) discard;
   if (v_local.y > u_size.x + (u_size.y - u_size.x) * v_strip) discard;
   // far cards are solid color, so the space reads as a cloud
