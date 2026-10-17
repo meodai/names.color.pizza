@@ -127687,7 +127687,7 @@
   },
   {
     "name": "Kyuri Green",
-    "hex": "#4b5d16",
+    "hex": "#4b5d17",
     "ai": true,
     "kind": "thing",
     "reference": "Kyuri, Japanese for cucumber",
@@ -270273,5 +270273,23 @@
     "reference": "entropy, pink",
     "description": "Chaos in a lipstick tube, disorder made vibrant and hot.",
     "model": "describer"
+  },
+  {
+    "name": "Feels Good Man",
+    "hex": "#7ca25a",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Boy's Club comics catchphrase",
+    "description": "Mellow frog green, the easy grin of the Boy's Club comics catchphrase.",
+    "model": "claude"
+  },
+  {
+    "name": "Green Yuri",
+    "hex": "#4b5d16",
+    "ai": true,
+    "kind": "reference",
+    "reference": "fan nickname for the manga The Guy She Was Interested In Wasn't a Guy at All",
+    "description": "Deep olive ink from a manga cover, so present that fans named the whole series after it.",
+    "model": "claude"
   }
 ]
