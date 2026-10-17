@@ -17,7 +17,8 @@ import { createLabelRenderer } from "./labels-gl.js";
 import { loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
 import { createAz } from "./az.js";
-import { pixelMode, pixelAtlas, setPixelMode } from "./pixel-mode.js";
+import { pixelMode, setPixelMode } from "./pixel-mode.js";
+import { createPixelSpace, DETAIL_IN_MS } from "./pixel-space.js";
 
 const CARD_W = 1;
 const CARD_H = 1.3; // square swatch over a 0.3 label strip
@@ -113,9 +114,7 @@ const LABEL_COVERED = 0.45;
 const NEAR_AT = 0.5;
 const NEAR_MS = 260;
 const NEAR_SLOTS = 16;
-// full-size pixel art kept on the GPU for the cards close by (see pixel-mode.js)
-const DETAIL_SLOTS = 1024;
-const DETAIL_IN_MS = 320; // a full-size drawing dithering in over its small one
+
 // a card's name strip slides out under it, then its name fades in
 const STRIP_MS = 200;
 // names come out from the middle of the view: the edge this much later
@@ -702,125 +701,20 @@ export async function initWall(root) {
   } catch (e) {
     console.error(e);
   }
-  // the space in pixel art (pixel-mode.js): the atlas comes when first asked for, its sheets
-  // side by side, each card its color until its sheet is in
-  const pixelArt = { on: false, k: 0, index: null, slots: null, sheets: [], loading: null };
-  async function pixelSlots() {
-    pixelArt.names ??= slugsOf((await getList("default")).items);
-    const slots = new Float32Array(items.length);
-    items.forEach((it, i) => (slots[i] = pixelArt.index.slot.get(pixelArt.names.get(it.name)) ?? -1));
-    return slots;
-  }
-  async function loadPixelArt() {
-    pixelArt.index = await pixelAtlas();
-    draw.pixelInit(pixelArt.index.sheets.length);
-    pixelArt.slots = await pixelSlots();
-    draw.pixelSlots(pixelArt.slots);
-    await Promise.all(
-      pixelArt.index.sheets.map(async (_, n) => {
-        const blob = await fetch(pixelArt.index.sheetURL(n)).then((r) => r.blob());
-        pixelArt.sheets[n] = await createImageBitmap(blob, { premultiplyAlpha: "none" });
-        draw.pixelSheet(n, pixelArt.sheets[n]);
-        request();
-      }),
-    );
-  }
-  // close up, every card bigger than DETAIL_PX on screen gets its full 64 × 64 tile, the
-  // nearest first, a dozen fetched at a time; looked for a few times a second, whatever
-  // the names do. When all slots are taken, the card seen longest ago gives its up
-  const DETAIL_PX = 22;
-  const detail = { of: new Map(), owner: new Int32Array(DETAIL_SLOTS).fill(-1), seen: new Float64Array(DETAIL_SLOTS), loading: new Set(), queue: [], busy: 0, round: 0, looked: 0 };
-  function lookForDetail(time) {
-    if (!pixelArt.on || !pixelArt.slots) return;
-    // too soon: look once more after, in case the camera stops right now
-    if (time - detail.looked < 120) {
-      detail.later ||= setTimeout(() => {
-        detail.later = 0;
-        request();
-      }, 130);
-      return;
-    }
-    detail.looked = time;
-    const queue = [];
-    for (const { i } of onScreen(DETAIL_PX, DETAIL_SLOTS / 2)) {
-      const slot = detail.of.get(i);
-      if (slot !== undefined) detail.seen[slot] = time;
-      else if (!detail.loading.has(i) && pixelArt.slots[i] >= 0) queue.push(i);
-    }
-    detail.queue = queue;
-    fetchDetail();
-  }
-  function fetchDetail() {
-    while (detail.busy < 12 && detail.queue.length) {
-      const i = detail.queue.shift();
-      detail.loading.add(i);
-      const round = detail.round;
-      detail.busy++;
-      fetch(pixelArt.index.tileURL(pixelArt.slots[i]))
-        .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
-        .then((blob) => createImageBitmap(blob, { premultiplyAlpha: "none" }))
-        .then((image) => {
-          if (round !== detail.round) return;
-          let slot = detail.owner.indexOf(-1);
-          if (slot < 0) {
-            slot = 0;
-            for (let k = 1; k < DETAIL_SLOTS; k++) if (detail.seen[k] < detail.seen[slot]) slot = k;
-            const was = detail.owner[slot];
-            detail.of.delete(was);
-            draw.pixelDetailOf(was, -1);
-          }
-          detail.owner[slot] = i;
-          detail.of.set(i, slot);
-          detail.seen[slot] = performance.now();
-          draw.pixelDetail(slot, image);
-          draw.pixelDetailOf(i, slot, reduceMotion ? -1e9 : performance.now() % 1e6);
-          detail.fadingUntil = performance.now() + DETAIL_IN_MS;
-          request();
-        })
-        .catch(() => {})
-        .finally(() => {
-          detail.loading.delete(i);
-          detail.busy--;
-          fetchDetail();
-        });
-    }
-  }
-  // a new list builds a new renderer: it gets the slots and sheets back, the close ones anew
-  async function restorePixelArt() {
-    if (!pixelArt.index) return;
-    draw.pixelInit(pixelArt.index.sheets.length);
-    detail.round++;
-    detail.of.clear();
-    detail.loading.clear();
-    detail.queue = [];
-    detail.owner.fill(-1);
-    pixelArt.slots = await pixelSlots();
-    draw.pixelSlots(pixelArt.slots);
-    pixelArt.sheets.forEach((sheet, n) => sheet && draw.pixelSheet(n, sheet));
-    draw.pixelMix(pixelArt.k);
-    request();
-  }
-  function togglePixelArt() {
-    pixelArt.on = !pixelArt.on;
-    if (pixelArt.on) tip.hidden = true;
-    if (pixelArt.on) pixelArt.loading ??= loadPixelArt().catch((e) => console.error(e));
-    const from = pixelArt.k;
-    const to = pixelArt.on ? 1 : 0;
-    const start = performance.now();
-    const step = (now) => {
-      const t = reduceMotion ? 1 : Math.min(1, (now - start) / 600);
-      pixelArt.k = from + (to - from) * t * t * (3 - 2 * t);
-      draw.pixelMix(pixelArt.k);
-      request();
-      if (t < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }
+  // the space in pixel art (pixel-space.js)
+  const pixelArt = createPixelSpace({
+    getDraw: () => draw,
+    getItems: () => items,
+    onScreen: (...a) => onScreen(...a),
+    request: () => request(),
+    reduceMotion,
+    onToggle: (on) => on && (tip.hidden = true),
+  });
   window.addEventListener("pixelmode", (e) => {
-    if (e.detail !== pixelArt.on) togglePixelArt();
+    if (e.detail !== pixelArt.on) pixelArt.toggle();
     showMode();
   });
-  if (pixelMode()) togglePixelArt();
+  if (pixelMode()) pixelArt.toggle();
 
   function markStars() {
     glitter = [];
@@ -1126,7 +1020,7 @@ export async function initWall(root) {
     queued = false;
     const dt = lastTime ? Math.min(48, time - lastTime) : 16;
     lastTime = time;
-    lookForDetail(time);
+    pixelArt.lookForDetail(time);
 
     if (held.size && !busy) fly(dt);
     if (anim?.card) {
@@ -1252,7 +1146,7 @@ export async function initWall(root) {
     render(time);
     placeLabels();
     placeMark();
-    if (time < (detail.fadingUntil ?? 0) || anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || glittering) request();
+    if (time < pixelArt.fadingUntil || anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || glittering) request();
     else lastTime = 0;
   }
 
@@ -2397,7 +2291,7 @@ export async function initWall(root) {
     for (const l of pool) l.i = -1;
     showCount();
     markStars();
-    restorePixelArt();
+    pixelArt.restore();
     if (azOn) az?.open(items, search.value, 0);
   }
 
