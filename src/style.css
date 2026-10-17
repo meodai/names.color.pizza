@@ -5402,6 +5402,7 @@ html.is-arriving {
   padding-block: var(--space-xl);
   color: var(--ink);
   background: var(--paper);
+  border-block-end: 1px solid var(--ink);
 }
 
 .adopt-cert[hidden] {
@@ -5597,6 +5598,7 @@ html.is-arriving {
     display: block;
     min-block-size: 0;
     padding: 0;
+    border: 0;
   }
 
   .cert {
