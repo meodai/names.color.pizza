@@ -139,10 +139,6 @@ const fileLink = (src = "") => {
   return m ? `https://${m[1] === "commons" ? "commons.wikimedia.org" : "en.wikipedia.org"}/wiki/File:${m[2]}` : "";
 };
 
-// TEMPORARY until wikimedia-art has a copy of every picture: Commons pictures
-// without one load from Commons, with no palette or credit
-const commons = (src = "") => /^https:\/\/(upload|thumb)\.wikimedia\.org\/wikipedia\/commons\//.test(src);
-
 // the pictures that have a copy, pointing at it; an article keeps its lead picture
 function hosted(looked) {
   if (!looked) return looked;
@@ -153,15 +149,11 @@ function hosted(looked) {
     entries: (looked.entries || []).map(({ image, ...e }) => {
       if (!image) return e;
       const w = copy({ link: fileLink(image) });
-      return w ? { ...e, image: `${MEDIA}/${w.thumb}` } : commons(image) ? { ...e, image } : e;
+      return w ? { ...e, image: `${MEDIA}/${w.thumb}` } : e;
     }),
     pictures: (looked.pictures || []).flatMap((p) => {
       const w = copy(p);
-      return w
-        ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w), palette: paletteOf(w) }]
-        : commons(p.image)
-          ? [p]
-          : [];
+      return w ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w), palette: paletteOf(w) }] : [];
     }),
     images: (looked.images || [])
       .filter((img) => !leads.has(fileTitle(img.link)))
@@ -178,9 +170,7 @@ function hosted(looked) {
                 palette: paletteOf(w),
               },
             ]
-          : commons(img.src) && img.link
-            ? [{ ...img, srcset: "" }]
-            : [];
+          : [];
       }),
   };
 }

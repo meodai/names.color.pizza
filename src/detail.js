@@ -745,12 +745,8 @@ let gallery = [];
 const galleryRows = () => 6;
 
 function addToGallery(hex, items) {
-  // TEMPORARY: or from Commons, until wikimedia-art has a copy of every picture
-  items = items.filter(
-    (it) =>
-      it.image?.startsWith(`${MEDIA}/`) ||
-      /^https:\/\/(upload|thumb)\.wikimedia\.org\/wikipedia\/commons\//.test(it.image),
-  );
+  // only pictures we keep a copy of
+  items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`));
   if (current?.hex !== hex || !items.length) return;
   // most of the color first, whatever the source
   gallery = [...gallery, ...items].sort((a, b) => (b.share ?? -1) - (a.share ?? -1));
