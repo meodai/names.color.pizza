@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
 import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
-import { cardURL } from "./cards.mjs";
+import { cardKey, cardURL } from "./cards.mjs";
 import { FORMATS } from "../src/formats.js";
 import { documentURI, documentKey, FIRST_DAY } from "../src/standard-site.js";
 
@@ -263,12 +263,9 @@ const pixels =
     .catch(() => ({}))) || {};
 const pixelOf = (slug) => pixels[slug] && { src: `https://media.color.pizza/pixel/${slug}.png?v=${pixels[slug].v}`, subject: pixels[slug].subject };
 
-// a color's link preview, straight from the bucket: its adopted card once there is one
-// (share.mjs makes it in this same build), else its plain card
-const previewOf = (slug, it) => {
-  const a = adopted[slug];
-  return a?.amount >= 5 ? `https://media.color.pizza/share/${slug}.png?v=${a.at}-${a.amount}` : cardURL(it);
-};
+// a color's link preview comes through the worker, which picks it when asked: the color's
+// adopted card the moment there is one, else its plain card, no build needed in between
+const previewOf = (slug, it) => `https://color-names-upload.cloudflare-54bbeb.workers.dev/og/${slug}.png?k=${cardKey(it)}`;
 let withArt = 0;
 let withCopy = 0;
 // each name's art list lives on media.color.pizza (lists/<slug>.json), not in

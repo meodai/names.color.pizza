@@ -256,7 +256,7 @@ export async function initAdoptPage() {
     q("[data-tiers]").hidden = false;
     q("[data-act]").hidden = false;
     cta.textContent = `Adopt ${it.name}`;
-    q("[data-note]").textContent = "From 5, paid on Stripe.";
+    q("[data-note]").textContent = "From $5, paid on Stripe.";
     q("[data-close]").href = siteURL(`color/${slug}/`);
 
     const dark = wcagLuminance(it.hex) < 0.5;

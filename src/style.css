@@ -498,6 +498,13 @@ a:hover {
   display: none;
 }
 
+/* on a phone: where you're known on one line, the name on the next, each the full width */
+@media (max-width: 40rem) {
+  .adopt__who-row {
+    flex-direction: column;
+  }
+}
+
 .adopt__cta[aria-disabled="true"] {
   opacity: 0.5;
 }
