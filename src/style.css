@@ -5366,7 +5366,7 @@ html.is-arriving {
       visibility 0s linear;
   }
 
-  :is(.wall__pick-list > button, .wall__zoom button, .wall__zoom [data-home]) {
+  :is(.wall__pick-list > button, .wall__zoom button, .wall__zoom [data-home], .wall__modes) {
     transition:
       opacity 0.3s ease var(--menu-in),
       translate 0.45s cubic-bezier(0.3, 0.7, 0, 1) var(--menu-in),
@@ -5379,7 +5379,7 @@ html.is-arriving {
     --menu-out: 80ms;
   }
 
-  .wall__zoom .wall__mode-list button {
+  .wall__modes {
     --menu-in: 110ms;
     --menu-out: 40ms;
   }
@@ -5400,7 +5400,7 @@ html.is-arriving {
       visibility 0s linear 0.3s;
   }
 
-  .wall:not(:has([data-menu][aria-expanded="true"])) :is(.wall__pick-list > button, .wall__zoom button) {
+  .wall:not(:has([data-menu][aria-expanded="true"])) :is(.wall__pick-list > button, .wall__zoom button, .wall__modes) {
     opacity: 0;
     translate: 0 -0.75rem;
     visibility: hidden;
@@ -5907,8 +5907,18 @@ html.is-arriving {
   background: transparent;
 }
 
-.wall__modes.is-marked .wall__mode-list button[aria-checked="true"] {
+.wall__modes.is-marked .wall__mode-list button[aria-checked="true"],
+.wall__modes.is-picking .wall__mode-list button.is-target {
   color: var(--paper);
+}
+
+.wall__modes.is-picking .wall__mode-list button[aria-checked="true"]:not(.is-target) {
+  color: var(--ink);
+  transition-delay: 0s;
+}
+
+.wall__modes.is-picking .wall__mode-list button.is-target {
+  transition-delay: 0.1s;
 }
 
 .wall__mode-thumb {
@@ -5919,9 +5929,9 @@ html.is-arriving {
   opacity: 0;
   pointer-events: none;
   transition:
-    opacity 0.25s ease,
-    translate 0.35s cubic-bezier(0.34, 1.4, 0.5, 1),
-    inline-size 0.35s cubic-bezier(0.34, 1.4, 0.5, 1);
+    opacity 0.22s ease,
+    translate 0.35s cubic-bezier(0.3, 0.7, 0, 1),
+    inline-size 0.35s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
 .wall__modes.is-marked .wall__mode-thumb {

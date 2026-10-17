@@ -2104,7 +2104,9 @@ export async function initWall(root) {
     modes.classList.add("is-open", "is-marked");
     followThumb(modeActive(), MODE_MS);
   }
-  function closeModes() {
+  // the marker fades as the tabs finish closing, not after; then, once it's all still, the
+  // view changes (turning to pixel art takes the page a moment, which would stutter the tabs)
+  function closeModes(then) {
     if (!modes.classList.contains("is-open")) return;
     const b = modeActive();
     modes.classList.remove("is-open");
@@ -2112,8 +2114,11 @@ export async function initWall(root) {
     clearTimeout(modeTimer);
     modeTimer = setTimeout(() => {
       modes.classList.remove("is-marked");
-      showMode();
-    }, MODE_MS);
+      modeTimer = setTimeout(() => {
+        then?.();
+        showMode();
+      }, MODE_MS * 0.7);
+    }, MODE_MS * 0.55);
   }
   modeList.addEventListener("click", (e) => {
     const b = e.target.closest("[data-mode]");
@@ -2122,13 +2127,20 @@ export async function initWall(root) {
     if (b === modeActive()) return closeModes();
     if (azOn) setAz(false);
     placeThumb(b);
+    // its icon turns white as the marker comes under it
+    modeList.querySelectorAll(".is-target").forEach((t) => t.classList.remove("is-target"));
+    b.classList.add("is-target");
+    modes.classList.add("is-picking");
     clearTimeout(modeTimer);
     modeTimer = setTimeout(() => {
+      modes.classList.remove("is-picking");
+      b.classList.remove("is-target");
+      for (const o of modeList.querySelectorAll("[data-mode]")) o.setAttribute("aria-checked", String(o === b));
       const want = b.dataset.mode;
-      setPixelMode(want === "pixel");
-      setCells(want === "cells");
-      showMode();
-      closeModes();
+      closeModes(() => {
+        setPixelMode(want === "pixel");
+        setCells(want === "cells");
+      });
     }, MODE_MS);
   });
   document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && closeModes());
