@@ -335,9 +335,9 @@ void main() {
     bool there = v_detail >= 0.0 || sheet;
     if (there) {
       vec4 t;
-      // the full-size drawing replaces the small one in the same ordered dither, pixel by its
-      // own pixel, 64 across
-      vec2 ditherCell = floor(inTile * 64.0);
+      // the full-size drawing replaces the small one in the same ordered dither, in the small
+      // one's coarse pixels, 16 across
+      vec2 ditherCell = floor(inTile * 16.0);
       int dk = int(mod(ditherCell.x, 4.0)) + int(mod(ditherCell.y, 4.0)) * 4;
       int dbayer[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
       bool sharp = v_detail >= 0.0 && (!sheet || (float(dbayer[dk]) + 0.5) / 16.0 < v_detailK);
