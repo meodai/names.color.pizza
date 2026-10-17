@@ -203,6 +203,7 @@ flat out float v_detail;
 uniform int u_hover;            // the hovered card: the ones in front of it make way
 uniform vec3 u_hoverPos;
 uniform float u_hoverClear;
+uniform float u_pixel;           // 0 the colors, 1 their pixel art
 uniform float u_nearAt;          // card width over the screen's short side past which it's gone
 uniform int u_nearIds[${NEAR_SLOTS}];   // the cards fading in or out right now
 uniform float u_nearAlpha[${NEAR_SLOTS}];
@@ -274,7 +275,8 @@ void main() {
     float zh = dot(vh, u_fwd);
     if (z > 0.0 && z < zh) {
       vec2 d = abs(vec2(dot(v, u_right), dot(v, u_up)) / z - vec2(dot(vh, u_right), dot(vh, u_up)) / zh);
-      vec2 reach = u_size * 0.5 * (1.0 / z + 1.0 / zh);
+      // in pixel art only the drawings count, smaller than their cards and with no name strip
+      vec2 reach = (u_pixel > 0.5 ? vec2(u_size.x * 0.6) : u_size) * 0.5 * (1.0 / z + 1.0 / zh);
       if (d.x < reach.x && d.y < reach.y) near *= 1.0 - u_hoverClear;
     }
   }
