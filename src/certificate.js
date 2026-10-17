@@ -38,8 +38,14 @@ function seal(logo) {
     <circle cx="60" cy="60" r="38" fill="none" stroke="var(--cert-on)" stroke-width="0.8"/>
     <text fill="var(--cert-on)" font-size="7.2" font-weight="700"><textPath href="#cert-rim" textLength="269" lengthAdjust="spacing">${words}</textPath></text>
     <svg x="40" y="36" width="40" height="48" viewBox="20 12 130 158" color="var(--cert-on)">${logo}</svg>
+    <svg x="42.5" y="33.5" width="40" height="48" viewBox="20 12 130 158" overflow="visible"><path d="${PARROT_LINES}" fill="none" stroke="#000" stroke-width="7" stroke-miterlimit="10"/></svg>
   </svg>`;
 }
+
+// the parrot drawn in lines (public/logo/cockatoo-stroke-one-color.svg), laid over the seal's
+// filled one a little off, as a print slightly out of register
+const PARROT_LINES =
+  "M113.9 79.2A10 10 0 0 0 120 70V50a30 30 0 0 1 30-30v50a40 40 0 0 1-20 34.6m-9.6-3.3a40 40 0 0 0 4.2-46l-10-17.3-15-26a30 30 0 0 0-11 41l10 17.3a10 10 0 0 1-.7 11m16.1 18.9a40 40 0 0 0-18.6-44.8L78 45.4l-26-15a30 30 0 0 0 11 41l17.3 10a10 10 0 0 1 4.1 12.8M110 110a40 40 0 0 0-40-40H20a30 30 0 0 0 30 30h21.2m33.4-9.9A80 80 0 0 0 30 170h80m0-70v30a10 10 0 0 0 10 10h30a40 40 0 0 0-40-40zm0 30v40a30 30 0 0 0 30-30m-52.5-20a7.5 7.5 0 1 0 7.5 7.5 7.5 7.5 0 0 0-7.5-7.5z";
 
 // it: the color; adopted: who, how and when; number: its place in the register;
 // shades: the swatch card's two darker (or lighter) steps
