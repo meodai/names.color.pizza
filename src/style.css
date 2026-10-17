@@ -5379,7 +5379,7 @@ html.is-arriving {
     --menu-out: 80ms;
   }
 
-  .wall__zoom [data-mode-toggle] {
+  .wall__zoom .wall__mode-list button {
     --menu-in: 110ms;
     --menu-out: 40ms;
   }
@@ -5849,34 +5849,64 @@ html.is-arriving {
   visibility: hidden;
 }
 
-/* the space's views: the button wears the one shown, and opens all three to its left as tabs */
+/* the space's views: a single button, the view shown; pressed, the other two slide out to its
+   left and it's a row of tabs, as the models are; picked, it's one button again */
 .wall__modes {
   position: relative;
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
 }
 
 .wall__mode-list {
   position: absolute;
-  inset-block-start: 50%;
-  inset-inline-end: calc(100% + 0.4rem);
+  inset-block: 0;
+  inset-inline-end: 0;
   display: flex;
-  gap: 0.15rem;
-  padding: 0.2rem;
+  justify-content: flex-end;
+  padding: 0;
   border-radius: 999px;
   background: var(--paper);
-  translate: 0 -50%;
+  transition:
+    padding 0.35s cubic-bezier(0.3, 0.7, 0, 1),
+    box-shadow 0.35s ease;
+}
+
+.wall__modes.is-open .wall__mode-list {
+  inset-block: -0.2rem;
+  padding: 0.2rem;
   box-shadow: 0 0.4rem 1.4rem rgb(0 0 0 / 0.25);
 }
 
-.wall__mode-list[hidden] {
-  display: none;
-}
-
 .wall__zoom .wall__mode-list button {
-  inline-size: 2.2rem;
-  block-size: 2.2rem;
+  flex: none;
+  padding: 0;
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  overflow: hidden;
+  transition:
+    inline-size 0.35s cubic-bezier(0.3, 0.7, 0, 1),
+    margin 0.35s cubic-bezier(0.3, 0.7, 0, 1),
+    opacity 0.25s ease,
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
-.wall__mode-list button[aria-checked="true"] {
+.wall__modes:not(.is-open) .wall__mode-list button[aria-checked="false"] {
+  inline-size: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wall__modes.is-open .wall__mode-list {
+  gap: 0.15rem;
+}
+
+.wall__modes.is-open .wall__mode-list button[aria-checked="true"] {
   color: var(--paper);
   background: var(--ink);
+}
+
+/* the view shown stays where the button was, the others open beside it */
+.wall__mode-list button[aria-checked="true"] {
+  order: 1;
 }

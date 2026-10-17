@@ -2065,27 +2065,20 @@ export async function initWall(root) {
     cellsFade = { from: cellsMix, to: on ? 1 : 0, t0: performance.now() };
     request();
   }
-  // one button for how the space shows its names: as colors, as cells or as pixel art. It
-  // wears the icon of the one shown; pressed, it opens all three, side by side, to pick from
+  // one button for how the space shows its names: as colors, as cells or as pixel art. It is
+  // the one shown; pressed, it opens into tabs of all three, and closes again once one's picked
   const modes = q("[data-modes]");
-  const modeToggle = q("[data-mode-toggle]");
   const modeList = q("[data-mode-list]");
   const modeNow = () => (pixelMode() ? "pixel" : cellsOn ? "cells" : "colors");
   function showMode() {
     const now = modeNow();
     for (const b of modeList.querySelectorAll("[data-mode]")) b.setAttribute("aria-checked", String(b.dataset.mode === now));
-    const icon = modeList.querySelector(`[data-mode="${now}"] svg`);
-    modeToggle.querySelector("svg").replaceWith(icon.cloneNode(true));
-    modeToggle.setAttribute("aria-label", `View: ${modeList.querySelector(`[data-mode="${now}"]`).title}`);
   }
-  function openModes(open) {
-    modeList.hidden = !open;
-    modeToggle.setAttribute("aria-expanded", String(open));
-  }
-  modeToggle.addEventListener("click", () => openModes(modeList.hidden));
+  const openModes = (open) => modes.classList.toggle("is-open", open);
   modeList.addEventListener("click", (e) => {
     const b = e.target.closest("[data-mode]");
     if (!b) return;
+    if (!modes.classList.contains("is-open")) return openModes(true);
     if (azOn) setAz(false);
     const want = b.dataset.mode;
     setPixelMode(want === "pixel");
@@ -2095,9 +2088,9 @@ export async function initWall(root) {
   });
   document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && openModes(false));
   modes.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || modeList.hidden) return;
+    if (e.key !== "Escape" || !modes.classList.contains("is-open")) return;
     openModes(false);
-    modeToggle.focus();
+    modeList.querySelector('[aria-checked="true"]').focus();
   });
   showMode();
 
