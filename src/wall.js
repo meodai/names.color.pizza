@@ -1470,6 +1470,18 @@ export async function initWall(root) {
     sizeCard(card, w);
     return { copy, card };
   }
+  // a picture loaded, so it shows the moment it's on the page; never longer than a moment and
+  // a half (decode() of one not yet on the page can stay pending, so it's load we wait for)
+  const drawable = (img) =>
+    img &&
+    !(img.complete && img.naturalWidth) &&
+    Promise.race([
+      new Promise((done) => {
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      }),
+      new Promise((done) => setTimeout(done, 1500)),
+    ]);
   const pixelOf = (i) =>
     pixelArt.on && pixelArt.slots?.[i] >= 0
       ? { src: pixelArt.index.tileURL(pixelArt.slots[i]), slug: pixelArt.index.slugs[pixelArt.slots[i]] }
@@ -1553,8 +1565,17 @@ export async function initWall(root) {
       if (task.cancelled) return;
       const pixel = pixelOf(i);
       const c = (task.c = makeCopy(it.hex, it.name, 0, pixel));
+      // its drawing loaded before it takes over from the space's, so nothing blinks: on the
+      // page but unseen meanwhile, as a picture off the page may not load at all
       placeCopy(c, drawnBox(i));
-      root.append(c.copy);
+      if (pixel) {
+        c.copy.style.visibility = "hidden";
+        root.append(c.copy);
+        await drawable(c.card.querySelector(".swatchcard__pixel"));
+        if (task.cancelled) return c.copy.remove();
+        placeCopy(c, drawnBox(i));
+        c.copy.style.visibility = "";
+      } else root.append(c.copy);
       opening.handed = true;
       request();
       const place = cardPlace();
@@ -1613,6 +1634,8 @@ export async function initWall(root) {
       // back past every color visited since
       onClose: () => history.go(-colorPage.depth),
     });
+    // and the page's own drawing ready before the copy goes
+    await drawable(layer.querySelector(".swatchcard__pixel--now"));
     requestAnimationFrame(() => copy.remove());
   }
 
