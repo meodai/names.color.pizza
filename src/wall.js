@@ -975,6 +975,19 @@ export async function initWall(root) {
     lastEye = cam.eye;
     lastFwd = cam.fwd;
   }
+  // in pixel art the drawings speak for themselves: a name only for the card under the
+  // pointer and the one nearest the middle
+  function pixelNames(ready) {
+    if (!pixelArt.on) return ready;
+    let middle = -1;
+    let best = Infinity;
+    for (const i of ready) {
+      const p = project(posOf(i));
+      const d = Math.hypot(p.x - view.w / 2, p.y - view.h / 2);
+      if (d < best) [best, middle] = [d, i];
+    }
+    return new Set([middle, hoverI].filter((i) => i >= 0 && ready.has(i)));
+  }
   let stripsOf = draw;
   function trackStrips(time, ready) {
     if (stripsOf !== draw) {
@@ -1191,7 +1204,7 @@ export async function initWall(root) {
     const stripping = opening
       ? trackStrips(time, new Set([opening.i]))
       : textInGL()
-        ? trackStrips(time, texts.ready)
+        ? trackStrips(time, pixelNames(texts.ready))
         : false;
     const glittering = trackGlitter(time);
     render(time);
