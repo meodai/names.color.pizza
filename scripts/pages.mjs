@@ -270,7 +270,7 @@ const statsHTML = (hex, adopted) =>
       ? `Adopted ${escapeHTML(longDate(adopted.at))} by <span class="hero__adopter">${escapeHTML(handle(adopted.by, adopted.on))}</span>${adopted.founding ? ", founding patron" : ""}`
       : `<a class="adopt-cta" href="../../adopt/#${hex.slice(1)}">Adopt this color <span class="hero__heart">\u2665\uFE0E</span></a>`
   }</span>`;
-const pixelOf = (slug) => pixels[slug] && { src: `https://media.color.pizza/pixel/${slug}.png?v=${pixels[slug].v}`, subject: pixels[slug].subject };
+const pixelOf = (slug) => pixels[slug] && { src: `https://media.color.pizza/pixel/${slug}.webp?v=${pixels[slug].v}`, subject: pixels[slug].subject };
 
 // a color's link preview comes through the worker, which picks it when asked: the color's
 // adopted card the moment there is one, else its plain card, no build needed in between

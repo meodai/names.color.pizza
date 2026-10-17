@@ -257,20 +257,37 @@
       </div>
 
       <div class="wall__zoom">
-        <button
-          type="button"
-          data-cells
-          aria-pressed="false"
-          aria-label="Show each name’s part of the space"
-          title="Cells"
-        >
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <circle cx="10" cy="10" r="7" />
-              <path d="M10 3v7l6.58 2.39M10 10H3" />
-            </g>
-          </svg>
-        </button>
+        <div class="wall__modes" data-modes>
+          <button type="button" data-mode-toggle aria-expanded="false" aria-haspopup="menu" aria-label="How the space shows its names" title="View">
+            <svg viewBox="0 0 20 20" aria-hidden="true" data-mode-icon></svg>
+          </button>
+          <div class="wall__mode-list" role="menu" aria-label="How the space shows its names" data-mode-list hidden>
+            <button type="button" role="menuitemradio" aria-checked="true" data-mode="colors" aria-label="Colors" title="Colors">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+                  <rect x="4.5" y="3" width="11" height="14" rx="1" />
+                  <path d="M4.5 12.5h11" />
+                </g>
+              </svg>
+            </button>
+            <button type="button" role="menuitemradio" aria-checked="false" data-mode="cells" data-cells aria-label="Each name’s part of the space" title="Cells">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                  <circle cx="10" cy="10" r="7" />
+                  <path d="M10 3v7l6.58 2.39M10 10H3" />
+                </g>
+              </svg>
+            </button>
+            <button type="button" role="menuitemradio" aria-checked="false" data-mode="pixel" aria-label="Each color’s pixel art" title="Pixel art">
+              <svg viewBox="0 0 20 20" aria-hidden="true" shape-rendering="crispEdges">
+                <path
+                  d="M6 4h2v2H6zM12 4h2v2h-2zM8 6h4v2H8zM5 8h10v2H5zM4 10h2v2H4zM8 10h4v2H8zM14 10h2v2h-2zM4 12h12v2H4zM6 14h2v2H6zM12 14h2v2h-2z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
         <button type="button" data-home aria-label="Show the whole space">
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2" />

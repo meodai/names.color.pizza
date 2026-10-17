@@ -17,7 +17,7 @@ import { createLabelRenderer } from "./labels-gl.js";
 import { loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
 import { createAz } from "./az.js";
-import { pixelMode } from "./pixel-mode.js";
+import { pixelMode, pixelAtlas, setPixelMode } from "./pixel-mode.js";
 
 const CARD_W = 1;
 const CARD_H = 1.3; // square swatch over a 0.3 label strip
@@ -113,12 +113,7 @@ const LABEL_COVERED = 0.45;
 const NEAR_AT = 0.5;
 const NEAR_MS = 260;
 const NEAR_SLOTS = 16;
-// the pixel art atlas: sheets of 4,096 tiles, 16 × 16 each (see art-colors-runner/pixel)
-const PIXEL_SHEETS = 8;
-// from the bucket; a local preview can't read it (CORS), so it's served its own copy
-const PIXEL_FROM = location.hostname === "localhost" ? siteURL("") : "https://media.color.pizza/";
-const PIXEL_ATLAS = `${PIXEL_FROM}pixel-atlas/`;
-const PIXEL_TILES = location.hostname === "localhost" ? `${PIXEL_FROM}pixel-tiles/` : `${PIXEL_FROM}pixel/`;
+// full-size pixel art kept on the GPU for the cards close by (see pixel-mode.js)
 const DETAIL_SLOTS = 1024;
 // a card's name strip slides out under it, then its name fades in
 const STRIP_MS = 200;
@@ -381,25 +376,29 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   attrib("a_star", stars, 1, gl.FLOAT, false, 1);
   attrib("a_slot", new Float32Array(positions.length / 3).fill(-1), 1, gl.FLOAT, false, 1);
   attrib("a_detail", new Float32Array(positions.length / 3).fill(-1), 1, gl.FLOAT, false, 1);
-  // the pixel art atlas: empty (clear) until its sheets come
-  const atlas = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D_ARRAY, atlas);
-  gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 11, gl.RGBA8, 1024, 1024, PIXEL_SHEETS);
-  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  // and the full-size tiles of the cards close by, swapped in and out as they come and go
-  const detail = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE2);
-  gl.bindTexture(gl.TEXTURE_2D, detail);
-  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, 2048, 2048);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.activeTexture(gl.TEXTURE0);
+  // the pixel art: a pixel each until pixel art is asked for (pixelInit), so the space
+  // keeps its memory otherwise. The atlas's sheets as layers, and the full-size tiles of the
+  // cards close by, swapped in and out as they come and go
+  const texture = (target, unit, setup) => {
+    const t = gl.createTexture();
+    gl.activeTexture(unit);
+    gl.bindTexture(target, t);
+    setup();
+    gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE0);
+    return t;
+  };
+  const clear = new Uint8Array(4);
+  const placeholder = (target, unit) =>
+    texture(target, unit, () => {
+      if (target === gl.TEXTURE_2D) gl.texImage2D(target, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, clear);
+      else gl.texImage3D(target, 0, gl.RGBA8, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, clear);
+      gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    });
+  let atlas = placeholder(gl.TEXTURE_2D_ARRAY, gl.TEXTURE1);
+  let detail = placeholder(gl.TEXTURE_2D, gl.TEXTURE2);
 
   const u = {};
   for (const k of [
@@ -500,6 +499,18 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, slots);
   };
   let sheets = 0;
+  draw.pixelInit = (layers) => {
+    gl.deleteTexture(atlas);
+    gl.deleteTexture(detail);
+    atlas = texture(gl.TEXTURE_2D_ARRAY, gl.TEXTURE1, () => {
+      gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 11, gl.RGBA8, 1024, 1024, layers);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    });
+    detail = texture(gl.TEXTURE_2D, gl.TEXTURE2, () => {
+      gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, 2048, 2048);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    });
+  };
   draw.pixelSheet = (layer, image) => {
     gl.useProgram(prog);
     gl.uniform1i(u.sheets, (sheets |= 1 << layer));
@@ -664,20 +675,19 @@ export async function initWall(root) {
   // side by side, each card its color until its sheet is in
   const pixelArt = { on: false, k: 0, index: null, slots: null, sheets: [], loading: null };
   async function pixelSlots() {
-    const { index } = pixelArt;
-    pixelArt.bySlug ??= new Map(index.slugs.map((slug, i) => [slug, i]));
     pixelArt.names ??= slugsOf((await getList("default")).items);
     const slots = new Float32Array(items.length);
-    items.forEach((it, i) => (slots[i] = pixelArt.bySlug.get(pixelArt.names.get(it.name)) ?? -1));
+    items.forEach((it, i) => (slots[i] = pixelArt.index.slot.get(pixelArt.names.get(it.name)) ?? -1));
     return slots;
   }
   async function loadPixelArt() {
-    pixelArt.index = await fetch(`${PIXEL_ATLAS}index.json`).then((r) => r.json());
+    pixelArt.index = await pixelAtlas();
+    draw.pixelInit(pixelArt.index.sheets.length);
     pixelArt.slots = await pixelSlots();
     draw.pixelSlots(pixelArt.slots);
     await Promise.all(
-      Array.from({ length: pixelArt.index.sheets }, async (_, n) => {
-        const blob = await fetch(`${PIXEL_ATLAS}sheet-${n}.webp`).then((r) => r.blob());
+      pixelArt.index.sheets.map(async (_, n) => {
+        const blob = await fetch(pixelArt.index.sheetURL(n)).then((r) => r.blob());
         pixelArt.sheets[n] = await createImageBitmap(blob, { premultiplyAlpha: "none" });
         draw.pixelSheet(n, pixelArt.sheets[n]);
         request();
@@ -713,10 +723,9 @@ export async function initWall(root) {
     while (detail.busy < 12 && detail.queue.length) {
       const i = detail.queue.shift();
       detail.loading.add(i);
-      const slug = pixelArt.index.slugs[pixelArt.slots[i]];
       const round = detail.round;
       detail.busy++;
-      fetch(`${PIXEL_TILES}${slug}.png`)
+      fetch(pixelArt.index.tileURL(pixelArt.slots[i]))
         .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
         .then((blob) => createImageBitmap(blob, { premultiplyAlpha: "none" }))
         .then((image) => {
@@ -747,6 +756,7 @@ export async function initWall(root) {
   // a new list builds a new renderer: it gets the slots and sheets back, the close ones anew
   async function restorePixelArt() {
     if (!pixelArt.index) return;
+    draw.pixelInit(pixelArt.index.sheets.length);
     detail.round++;
     detail.of.clear();
     detail.loading.clear();
@@ -760,6 +770,7 @@ export async function initWall(root) {
   }
   function togglePixelArt() {
     pixelArt.on = !pixelArt.on;
+    if (pixelArt.on) tip.hidden = true;
     if (pixelArt.on) pixelArt.loading ??= loadPixelArt().catch((e) => console.error(e));
     const from = pixelArt.k;
     const to = pixelArt.on ? 1 : 0;
@@ -773,7 +784,10 @@ export async function initWall(root) {
     };
     requestAnimationFrame(step);
   }
-  window.addEventListener("pixelmode", (e) => e.detail !== pixelArt.on && togglePixelArt());
+  window.addEventListener("pixelmode", (e) => {
+    if (e.detail !== pixelArt.on) togglePixelArt();
+    showMode();
+  });
   if (pixelMode()) togglePixelArt();
 
   function markStars() {
@@ -968,10 +982,11 @@ export async function initWall(root) {
     lastEye = cam.eye;
     lastFwd = cam.fwd;
   }
-  // in pixel art the drawings speak for themselves: a name only for the card under the
-  // pointer and the one nearest the middle
+  // in pixel art the drawings speak for themselves: one name only, the card under the pointer's,
+  // or else the one nearest the middle
   function pixelNames(ready) {
     if (!pixelArt.on) return ready;
+    if (hoverI >= 0 && ready.has(hoverI)) return new Set([hoverI]);
     let middle = -1;
     let best = Infinity;
     for (const i of ready) {
@@ -979,7 +994,7 @@ export async function initWall(root) {
       const d = Math.hypot(p.x - view.w / 2, p.y - view.h / 2);
       if (d < best) [best, middle] = [d, i];
     }
-    return new Set([middle, hoverI].filter((i) => i >= 0 && ready.has(i)));
+    return new Set(middle >= 0 ? [middle] : []);
   }
   let stripsOf = draw;
   function trackStrips(time, ready) {
@@ -1441,17 +1456,24 @@ export async function initWall(root) {
     card.style.fontSize = `${w * 0.205}px`;
   };
 
-  function makeCopy(hex, name, w) {
+  // in pixel art the copy is the drawing alone, as the space shows it; the card builds up
+  // under it once on the color's page
+  function makeCopy(hex, name, w, pixel) {
     const copy = document.createElement("div");
-    copy.className = "wall__handoff";
+    copy.className = pixel ? "wall__handoff is-pixel" : "wall__handoff";
     copy.innerHTML = CARD_HTML;
     const card = copy.firstElementChild;
     card.style.cssText = `--c-color:${hex};--c-shade0:${hex};--c-shade1:${hex}`;
     card.querySelector(".swatchcard__row1").textContent = hex;
     card.querySelector(".swatchcard__row2").textContent = name;
+    if (pixel) card.querySelector(".swatchcard__upper").append(Object.assign(document.createElement("img"), { className: "swatchcard__pixel swatchcard__pixel--now", src: pixel.src, alt: "" }));
     sizeCard(card, w);
     return { copy, card };
   }
+  const pixelOf = (i) =>
+    pixelArt.on && pixelArt.slots?.[i] >= 0
+      ? { src: pixelArt.index.tileURL(pixelArt.slots[i]), slug: pixelArt.index.slugs[pixelArt.slots[i]] }
+      : null;
 
   function placeCopy({ copy, card }, box, r = 0) {
     copy.style.transform = `translate(${box.x - box.w / 2}px, ${box.y - (box.w * H) / 2}px) rotate(${r}deg)`;
@@ -1529,7 +1551,8 @@ export async function initWall(root) {
 
     later(IN.glide, async () => {
       if (task.cancelled) return;
-      const c = (task.c = makeCopy(it.hex, it.name, 0));
+      const pixel = pixelOf(i);
+      const c = (task.c = makeCopy(it.hex, it.name, 0, pixel));
       placeCopy(c, drawnBox(i));
       root.append(c.copy);
       opening.handed = true;
@@ -1538,7 +1561,7 @@ export async function initWall(root) {
       await glide(c, slotOf(place), place.r, IN.travel);
       if (task.cancelled) return;
       try {
-        sessionStorage.setItem("card-handoff", JSON.stringify({ hex: it.hex, name: it.name, place }));
+        sessionStorage.setItem("card-handoff", JSON.stringify({ hex: it.hex, name: it.name, place, pixel }));
         sessionStorage.setItem("wall-camera", JSON.stringify(before));
       } catch {}
       try {
@@ -1846,7 +1869,7 @@ export async function initWall(root) {
     dot.style.background = items[hit.i].hex;
     tip.replaceChildren(dot, items[hit.i].name);
     tip.style.transform = `translate(${sx}px, ${sy}px)`;
-    tip.hidden = false;
+    tip.hidden = pixelArt.on;
   }
   canvas.addEventListener("pointerleave", () => {
     tip.hidden = true;
@@ -1924,7 +1947,6 @@ export async function initWall(root) {
     }
   });
 
-  const cellsButton = q("[data-cells]");
   const cellsData = {};
   const building = {};
   let cellsDraw = null;
@@ -2026,7 +2048,7 @@ export async function initWall(root) {
   async function setCells(on) {
     if (busy || on === cellsOn) return;
     cellsOn = on;
-    cellsButton.setAttribute("aria-pressed", String(on));
+    showMode();
     try {
       const url = new URL(location.href);
       if (on) url.searchParams.set("view", "cells");
@@ -2035,7 +2057,7 @@ export async function initWall(root) {
     } catch {}
     if (on && !(await ensureCells(model))) {
       cellsOn = false;
-      cellsButton.setAttribute("aria-pressed", "false");
+      showMode();
       return;
     }
     if (on && !cellsOn) return;
@@ -2043,10 +2065,41 @@ export async function initWall(root) {
     cellsFade = { from: cellsMix, to: on ? 1 : 0, t0: performance.now() };
     request();
   }
-  cellsButton.addEventListener("click", () => {
+  // one button for how the space shows its names: as colors, as cells or as pixel art. It
+  // wears the icon of the one shown; pressed, it opens all three, side by side, to pick from
+  const modes = q("[data-modes]");
+  const modeToggle = q("[data-mode-toggle]");
+  const modeList = q("[data-mode-list]");
+  const modeNow = () => (pixelMode() ? "pixel" : cellsOn ? "cells" : "colors");
+  function showMode() {
+    const now = modeNow();
+    for (const b of modeList.querySelectorAll("[data-mode]")) b.setAttribute("aria-checked", String(b.dataset.mode === now));
+    const icon = modeList.querySelector(`[data-mode="${now}"] svg`);
+    modeToggle.querySelector("svg").replaceWith(icon.cloneNode(true));
+    modeToggle.setAttribute("aria-label", `View: ${modeList.querySelector(`[data-mode="${now}"]`).title}`);
+  }
+  function openModes(open) {
+    modeList.hidden = !open;
+    modeToggle.setAttribute("aria-expanded", String(open));
+  }
+  modeToggle.addEventListener("click", () => openModes(modeList.hidden));
+  modeList.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mode]");
+    if (!b) return;
     if (azOn) setAz(false);
-    setCells(!cellsOn);
+    const want = b.dataset.mode;
+    setPixelMode(want === "pixel");
+    setCells(want === "cells");
+    openModes(false);
+    showMode();
   });
+  document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && openModes(false));
+  modes.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || modeList.hidden) return;
+    openModes(false);
+    modeToggle.focus();
+  });
+  showMode();
 
   const listButton = q("[data-lists]");
   const listMenu = q("[data-list-menu]");

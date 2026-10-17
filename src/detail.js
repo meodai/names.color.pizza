@@ -401,7 +401,14 @@ async function render(hex) {
   } catch {}
   const handedOver = handoff?.hex === hex;
   placeCard(handedOver && handoff.place ? handoff.place : undefined);
-  if (handedOver) card.classList.add("swatchcard--reset", "swatchcard--visible");
+  // in pixel art its drawing came along: it stays, and the card builds up under it
+  if (handedOver && handoff.pixel) {
+    card.querySelector(".swatchcard__upper").append(
+      Object.assign(document.createElement("img"), { className: "swatchcard__pixel swatchcard__pixel--now", src: handoff.pixel.src, alt: "" }),
+    );
+    card.querySelector(".swatchcard__pixel--now").dataset.slug = handoff.pixel.slug;
+    requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("swatchcard--visible")));
+  } else if (handedOver) card.classList.add("swatchcard--reset", "swatchcard--visible");
   // the text comes in once its description is there, so it doesn't move after: handed over
   // from the wall, or come from another color's page, where the description is still loading
   if (handedOver || builtPage?.hex !== hex) {

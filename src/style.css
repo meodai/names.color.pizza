@@ -5379,7 +5379,7 @@ html.is-arriving {
     --menu-out: 80ms;
   }
 
-  .wall__zoom [data-cells] {
+  .wall__zoom [data-mode-toggle] {
     --menu-in: 110ms;
     --menu-out: 40ms;
   }
@@ -5569,8 +5569,8 @@ html.is-arriving {
   white-space: nowrap;
 }
 
-/* cells are a view of the space, not of the list */
-.wall.is-az [data-cells] {
+/* cells and pixel art are views of the space, not of the list */
+.wall.is-az .wall__modes {
   display: none;
 }
 
@@ -5836,4 +5836,47 @@ html.is-arriving {
 
 .is-pixel .swatchcard--visible .swatchcard__pixel {
   opacity: 1;
+}
+
+/* the drawing that came along from the space: there at once, the card building up under it */
+.is-pixel .swatchcard__pixel--now {
+  opacity: 1;
+  transition: none;
+}
+
+.wall__handoff.is-pixel .swatchcard__swatch,
+.wall__handoff.is-pixel .swatchcard__label {
+  visibility: hidden;
+}
+
+/* the space's views: the button wears the one shown, and opens all three to its left as tabs */
+.wall__modes {
+  position: relative;
+}
+
+.wall__mode-list {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: calc(100% + 0.4rem);
+  display: flex;
+  gap: 0.15rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: var(--paper);
+  translate: 0 -50%;
+  box-shadow: 0 0.4rem 1.4rem rgb(0 0 0 / 0.25);
+}
+
+.wall__mode-list[hidden] {
+  display: none;
+}
+
+.wall__zoom .wall__mode-list button {
+  inline-size: 2.2rem;
+  block-size: 2.2rem;
+}
+
+.wall__mode-list button[aria-checked="true"] {
+  color: var(--paper);
+  background: var(--ink);
 }

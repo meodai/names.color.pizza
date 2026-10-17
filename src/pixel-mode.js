@@ -1,9 +1,10 @@
-// ↑ ↑ ↓ ↓ ← → ← → B A: the site in pixel art, for the rest of the visit. The wall shows its
-// drawings instead of the colors; on a color's page every card wears its drawing.
+// The site in pixel art, switched by the wall's pixel button, for the rest of the visit: the
+// wall shows its drawings instead of the colors; on a color's page every card wears its own.
+import { siteURL } from "./names.js";
 
 const KEY = "cn-pixel";
-const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
-const TILES = "https://media.color.pizza/pixel/";
+// the bucket; a local preview can't read it into WebGL (CORS), so it's served a copy
+const MEDIA = location.hostname === "localhost" ? siteURL("pixel-mirror/") : "https://media.color.pizza/";
 
 let on = false;
 try {
@@ -13,7 +14,23 @@ document.documentElement.classList.toggle("is-pixel", on);
 
 export const pixelMode = () => on;
 
-function set(next) {
+// the atlas's index, once: which slug sits in which slot, each drawing's version, the
+// sheets of small drawings by name (art-colors-runner/pixel/publish.py)
+let atlas = null;
+export function pixelAtlas() {
+  atlas ??= fetch(`${MEDIA}data/pixel-atlas.json`, { cache: "no-cache" })
+    .then((r) => r.json())
+    .then((a) => ({
+      ...a,
+      slot: new Map(a.slugs.map((slug, i) => [slug, i])),
+      sheetURL: (n) => `${MEDIA}pixel-atlas/${a.sheets[n]}`,
+      tileURL: (i) => `${MEDIA}pixel/${a.slugs[i]}.webp?v=${a.v[i]}`,
+    }));
+  return atlas;
+}
+
+export function setPixelMode(next) {
+  if (next === on) return;
   on = next;
   try {
     if (on) sessionStorage.setItem(KEY, "1");
@@ -24,32 +41,19 @@ function set(next) {
   window.dispatchEvent(new CustomEvent("pixelmode", { detail: on }));
 }
 
-let step = 0;
-window.addEventListener("keydown", (e) => {
-  if (e.target.closest?.("input, textarea, select")) return;
-  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-  step = key === KONAMI[step] ? step + 1 : key === KONAMI[0] ? 1 : 0;
-  if (step < KONAMI.length) return;
-  step = 0;
-  set(!on);
-});
-
 // each card that knows its color's slug gets its drawing on top, once pixel art is on
-export function pixelCards(root) {
+export async function pixelCards(root) {
   if (!on) return;
+  const a = await pixelAtlas().catch(() => null);
+  if (!a) return;
   for (const card of root.querySelectorAll(".swatchcard[data-slug]")) {
     const upper = card.querySelector(".swatchcard__upper");
     const had = upper?.querySelector(".swatchcard__pixel");
-    if (!upper || had?.dataset.slug === card.dataset.slug) continue;
+    const i = a.slot.get(card.dataset.slug);
+    if (!upper || i === undefined || had?.dataset.slug === card.dataset.slug) continue;
     had?.remove();
-    const img = Object.assign(document.createElement("img"), {
-      className: "swatchcard__pixel",
-      src: `${TILES}${card.dataset.slug}.png`,
-      alt: "",
-      decoding: "async",
-    });
+    const img = Object.assign(document.createElement("img"), { className: "swatchcard__pixel", src: a.tileURL(i), alt: "", decoding: "async" });
     img.dataset.slug = card.dataset.slug;
-    img.addEventListener("error", () => img.remove(), { once: true });
     upper.append(img);
   }
 }
