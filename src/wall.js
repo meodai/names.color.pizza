@@ -305,9 +305,10 @@ void main() {
   if (v_near < 1.0) {
     float due = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
     if (u_pixel > 0.5 && v_local.y < u_size.x) {
-      vec2 cell = floor(clamp(v_local / u_size.x, 0.0, 0.999) * 64.0);
+      // in big blocks, so it reads as pixels going, not as a fade, however small the card
+      vec2 cell = floor(clamp(v_local / u_size.x, 0.0, 0.999) * 10.0);
       float ragged = fract(sin(dot(cell + v_slot, vec2(12.9898, 78.233))) * 43758.5453);
-      due = (1.0 - cell.y / 63.0) * 0.7 + ragged * 0.3;
+      due = (1.0 - cell.y / 9.0) * 0.75 + ragged * 0.25;
     }
     if (due >= v_near) discard;
   }
