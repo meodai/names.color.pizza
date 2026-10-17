@@ -38,18 +38,33 @@ export function foilSVG(shine, w, h, rand) {
     }).join("");
     body = `<rect width="${w}" height="${h}" fill="#140a2e" fill-opacity="0.35"/><rect width="${w}" height="${h}" fill="url(#neb1)"/><rect width="${w}" height="${h}" fill="url(#neb2)"/>${stars}`;
   } else if (shine === "classic") {
-    defs += rainbow("rb", 0.18, 1, 0) + `<pattern id="band" width="140" height="${h}" patternUnits="userSpaceOnUse" patternTransform="rotate(25)">
-      <rect width="46" height="${h}" fill="#fff" fill-opacity="0.2"/><rect x="62" width="10" height="${h}" fill="#fff" fill-opacity="0.12"/></pattern>`;
-    body = `<rect width="${w}" height="${h}" fill="url(#rb)"/><rect width="${w}" height="${h}" fill="url(#band)"/>`;
+    // a band of fine upright stripes in rainbow steps, brightest at its middle, a soft glare in it
+    const mid = w * (0.42 + rand() * 0.3);
+    const half = w * 0.16;
+    defs += `<filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="22"/></filter>`;
+    const stripes = [];
+    for (let x = mid - half; x < mid + half; x += 6 + rand() * 6) {
+      const near = 1 - Math.abs(x - mid) / half;
+      stripes.push(`<rect x="${x.toFixed(1)}" width="${(1.5 + rand() * 3).toFixed(1)}" height="${h}" fill="hsl(${Math.round(((x - mid) / half) * 120 + 40 + rand() * 30)} 100% 80%)" fill-opacity="${(0.15 + near * 0.6).toFixed(2)}"/>`);
+    }
+    body = `${stripes.join("")}<ellipse cx="${mid.toFixed(1)}" cy="${(h * (0.45 + rand() * 0.2)).toFixed(1)}" rx="${(w * 0.045).toFixed(1)}" ry="${(h * 0.3).toFixed(1)}" fill="#fff" fill-opacity="0.55" filter="url(#soft)"/>`;
   } else if (shine === "radiant") {
-    const size = 36;
-    const cells = [];
-    for (let y = 0; y < h; y += size)
-      for (let x = 0; x < w; x += size) {
-        const hue = Math.round(((x + y) / (w + h)) * 360 + rand() * 40);
-        cells.push(`<rect x="${x + 3}" y="${y + 3}" width="${size - 6}" height="${size - 6}" fill="hsl(${hue} 95% 70%)" fill-opacity="${(0.08 + rand() * 0.2).toFixed(2)}"/>`);
+    // diamonds on a slanted grid, each a pale halo, a stronger middle and a bright core
+    const step = 230;
+    const diamond = (x, y, r) => `${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}`;
+    const shapes = [];
+    for (let row = -1; row * (step / 2) < h + step; row++)
+      for (let col = -1; col * step < w + step; col++) {
+        const x = col * step + (row % 2 ? step / 2 : 0);
+        const y = row * (step / 2);
+        const hue = Math.round(((x + y) / (w + h)) * 300 + rand() * 50);
+        shapes.push(
+          `<polygon points="${diamond(x, y, 62)}" fill="hsl(${hue} 100% 80%)" fill-opacity="0.22"/>`,
+          `<polygon points="${diamond(x, y, 42)}" fill="hsl(${hue} 100% 82%)" fill-opacity="0.45"/>`,
+          `<polygon points="${diamond(x, y, 18)}" fill="#fff" fill-opacity="0.8"/>`,
+        );
       }
-    body = cells.join("");
+    body = shapes.join("");
   } else if (shine === "nova") {
     // rays from a point of light, clear at its very center, fading out
     const cx = w * (0.55 + rand() * 0.2);
