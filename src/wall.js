@@ -2105,10 +2105,12 @@ export async function initWall(root) {
       if (!modes.classList.contains("is-marked")) b.classList.toggle("is-last", b.dataset.mode === now);
     }
   }
+  // the marker sits inside its tab, a little smaller, so the tabs needn't grow round it
+  const INSET = 4;
   const placeThumb = (b) => {
-    modeThumb.style.translate = `${b.offsetLeft}px ${b.offsetTop}px`;
-    modeThumb.style.inlineSize = `${b.offsetWidth}px`;
-    modeThumb.style.blockSize = `${b.offsetHeight}px`;
+    modeThumb.style.translate = `${b.offsetLeft + INSET}px ${b.offsetTop + INSET}px`;
+    modeThumb.style.inlineSize = `${Math.max(0, b.offsetWidth - 2 * INSET)}px`;
+    modeThumb.style.blockSize = `${b.offsetHeight - 2 * INSET}px`;
   };
   // the marker keeps to its tab while the tabs open or close under it
   function followThumb(b, ms) {
