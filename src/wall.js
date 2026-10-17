@@ -1209,8 +1209,10 @@ export async function initWall(root) {
     const fadingNear = trackNear(time);
     const clearingWay = trackHoverClear(time, dt);
     // while a card opens or comes back, only it keeps its name; the rest fold theirs away
-    const stripping = opening
-      ? trackStrips(time, new Set([opening.i]))
+    const stripping = folding
+      ? trackStrips(time, new Set())
+      : opening
+      ? trackStrips(time, pixelArt.on ? new Set() : new Set([opening.i]))
       : textInGL()
         ? trackStrips(time, pixelNames(texts.ready))
         : false;
@@ -1542,8 +1544,20 @@ export async function initWall(root) {
     } catch {}
   }
 
-  function open(i) {
+  // in pixel art a card's name folds away before it opens, so the drawing goes on its own
+  let folding = false;
+  function open(i, folded = false) {
     if (busy) return;
+    if (pixelArt.on && !folded && draw.strips[i] > 0.01) {
+      busy = folding = true;
+      tip.hidden = true;
+      request();
+      setTimeout(() => {
+        busy = folding = false;
+        open(i, true);
+      }, reduceMotion ? 0 : STRIP_MS + 40);
+      return;
+    }
     busy = true;
     marked = -1;
     mark.hidden = true;
