@@ -5471,8 +5471,7 @@ html.is-arriving {
   inline-size: 14rem;
   margin-block: var(--space-xs) var(--space-2xs);
   font-size: 2.87rem;
-  rotate: -3deg;
-  box-shadow: 0 0.5rem 1.4rem rgb(0 0 0 / 0.16);
+  text-align: start;
 }
 
 .cert__facts {
