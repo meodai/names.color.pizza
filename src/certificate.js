@@ -32,11 +32,11 @@ function rosette(cx, cy, size, loops = 18) {
 function seal(logo) {
   const words = "COLOR NAMES · CERTIFIED ADOPTION · OFFICIAL SEAL · ";
   return `<svg class="cert__seal" viewBox="0 0 120 120" aria-hidden="true">
-    <defs><path id="cert-rim" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs>
+    <defs><path id="cert-rim" d="M60 60m-43 0a43 43 0 1 1 86 0a43 43 0 1 1-86 0"/></defs>
     <circle cx="60" cy="60" r="57" fill="currentColor"/>
     <circle cx="60" cy="60" r="53" fill="none" stroke="var(--cert-on)" stroke-width="0.8" stroke-dasharray="1.5 2"/>
     <circle cx="60" cy="60" r="38" fill="none" stroke="var(--cert-on)" stroke-width="0.8"/>
-    <text fill="var(--cert-on)" font-size="7.2" font-weight="700"><textPath href="#cert-rim" textLength="288" lengthAdjust="spacing">${words}</textPath></text>
+    <text fill="var(--cert-on)" font-size="7.2" font-weight="700"><textPath href="#cert-rim" textLength="269" lengthAdjust="spacing">${words}</textPath></text>
     <svg x="40" y="36" width="40" height="48" viewBox="20 12 130 158" color="var(--cert-on)">${logo}</svg>
   </svg>`;
 }
