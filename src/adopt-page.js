@@ -62,11 +62,22 @@ async function certificate(q, it, slug, mine) {
   const all = await loadAdoptions();
   const keys = Object.keys(all).filter((k) => all[k].amount >= ADOPT_FROM);
   const number = (keys.includes(slug) ? keys.indexOf(slug) : keys.length) + 1;
-  const ink = wcagLuminance(it.hex) > 0.4 ? "#000" : "#fff";
-  const dark = wcagLuminance(it.hex) < 0.5;
+  const glow = wcagLuminance(it.hex);
+  const ink = glow > 0.4 ? "#000" : "#fff";
+  const dark = glow < 0.5;
   const shades = [shade(it.hex, dark ? 25 : -25), shade(it.hex, dark ? 12 : -12)];
+  // near white the color alone would vanish on the paper, near black it would shout:
+  // lines and the parrot then take a darker shade of it, or step back
+  const tone = glow > 0.8 ? "light" : glow < 0.04 ? "dark" : "mid";
+  const deeper = shade(it.hex, -30);
+  const look = {
+    tone,
+    line: tone === "light" ? deeper : it.hex,
+    parrot: tone === "dark" ? shade(it.hex, 35) : ink === "#fff" ? "#fff" : deeper,
+    key: tone === "dark" ? "#fff" : "#000",
+  };
   const el = q("[data-cert]");
-  el.innerHTML = `${certificateHTML({ it, adopted: mine, number, logo: sealParrot(), ink, shades })}
+  el.innerHTML = `${certificateHTML({ it, adopted: mine, number, logo: sealParrot(), ink, shades, look })}
     <p class="adopt__share cert__print"><button type="button" data-cert-print>Print it</button></p>`;
   el.hidden = false;
   el.querySelector("[data-cert-print]").addEventListener("click", () => print());

@@ -5434,8 +5434,24 @@ html.is-arriving {
   z-index: -1;
   inline-size: 100%;
   block-size: 100%;
-  color: var(--cert-c);
+  color: var(--cert-line);
   opacity: 0.35;
+}
+
+.cert[data-tone="dark"] .cert__guilloche {
+  opacity: 0.16;
+}
+
+.cert__seal-edge {
+  display: none;
+}
+
+.cert[data-tone="light"] .cert__seal-edge {
+  display: inline;
+}
+
+.cert[data-tone="light"] .cert__card {
+  outline: 1px solid var(--cert-line);
 }
 
 .cert__head {
