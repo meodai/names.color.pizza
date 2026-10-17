@@ -312,9 +312,9 @@ void main() {
   if (v_near < 1.0) {
     float due = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
     if (u_pixel > 0.5 && v_local.y < u_size.x) {
-      // a retro dither dissolve: the drawing's own pixels, 16 across, go in a 4 × 4 ordered
-      // (Bayer) pattern, so it thins out in a checker of pixels rather than fading
-      vec2 cell = floor(clamp(v_local / u_size.x, 0.0, 0.999) * 16.0);
+      // a retro dither dissolve: the drawing's own pixels (64 across once its full tile is
+      // in, 16 till then) go in a 4 × 4 ordered (Bayer) pattern, a checker of its pixels
+      vec2 cell = floor(clamp(v_local / u_size.x, 0.0, 0.999) * (v_detail >= 0.0 ? 64.0 : 16.0));
       int k = int(mod(cell.x, 4.0)) + int(mod(cell.y, 4.0)) * 4;
       int bayer[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
       due = (float(bayer[k]) + 0.5) / 16.0;
@@ -336,8 +336,9 @@ void main() {
     bool there = v_detail >= 0.0 || sheet;
     if (there) {
       vec4 t;
-      // the full-size drawing replaces the small one in the same ordered dither, 16 across
-      vec2 ditherCell = floor(inTile * 16.0);
+      // the full-size drawing replaces the small one in the same ordered dither, pixel by its
+      // own pixel, 64 across
+      vec2 ditherCell = floor(inTile * 64.0);
       int dk = int(mod(ditherCell.x, 4.0)) + int(mod(ditherCell.y, 4.0)) * 4;
       int dbayer[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
       bool sharp = v_detail >= 0.0 && (!sheet || (float(dbayer[dk]) + 0.5) / 16.0 < v_detailK);

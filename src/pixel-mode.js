@@ -1,10 +1,9 @@
 // The site in pixel art, switched by the wall's pixel button, for the rest of the visit: the
 // wall shows its drawings instead of the colors; on a color's page every card wears its own.
-import { siteURL } from "./names.js";
-
 const KEY = "cn-pixel";
-// the bucket; a local preview can't read it into WebGL (CORS), so it's served a copy
-const MEDIA = location.hostname === "localhost" ? siteURL("pixel-mirror/") : "https://media.color.pizza/";
+// the bucket; a local preview reads it through its own server (vite.config.js), as only the
+// site may read it into WebGL (CORS)
+const MEDIA = location.hostname === "localhost" ? `${location.origin}/media/` : "https://media.color.pizza/";
 
 // on for the visit, or asked for by the address (?view=pixel)
 let on = new URLSearchParams(location.search).get("view") === "pixel";

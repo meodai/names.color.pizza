@@ -8,9 +8,21 @@ const LIST_KEY = existsSync(csv) ? createHash("sha1").update(readFileSync(csv)).
 import { defineConfig } from "vite";
 
 // relative base: works as a GitHub project page without hardcoding the subpath
+const MEDIA = {
+  target: "https://media.color.pizza",
+  changeOrigin: true,
+  headers: { origin: "https://names.color.pizza" },
+  rewrite: (p) => p.replace(/^\/media/, ""),
+};
+
 export default defineConfig({
   base: "./",
   define: { __LIST_KEY__: JSON.stringify(LIST_KEY) },
+  // the bucket under the local preview's own address: it lets only the site read it into
+  // WebGL, and its edge cache would hand a local origin's answer to the site. Asked as the
+  // site, so what lands in the cache is just what the site gets
+  server: { proxy: { "/media": MEDIA } },
+  preview: { proxy: { "/media": MEDIA } },
   plugins: [
     {
       name: "strip-html-comments",
