@@ -112,6 +112,13 @@ const LABEL_COVERED = 0.45;
 const NEAR_AT = 0.5;
 const NEAR_MS = 260;
 const NEAR_SLOTS = 16;
+// the pixel art atlas: sheets of 4,096 tiles, 16 × 16 each (see art-colors-runner/pixel)
+const PIXEL_SHEETS = 8;
+// from the bucket; a local preview can't read it (CORS), so it's served its own copy
+const PIXEL_FROM = location.hostname === "localhost" ? siteURL("") : "https://media.color.pizza/";
+const PIXEL_ATLAS = `${PIXEL_FROM}pixel-atlas/`;
+const PIXEL_TILES = location.hostname === "localhost" ? `${PIXEL_FROM}pixel-tiles/` : `${PIXEL_FROM}pixel/`;
+const DETAIL_SLOTS = 1024;
 // a card's name strip slides out under it, then its name fades in
 const STRIP_MS = 200;
 // names come out from the middle of the view: the edge this much later
@@ -183,6 +190,8 @@ uniform vec3 u_bangCenter;
 in float a_grow;
 in float a_strip;  // how far its name strip is out, 0 for a plain swatch
 in float a_star;   // how bright an adopted color flashes now, like glitter catching the light
+in float a_slot;   // where its pixel art is in the atlas, -1 for none
+in float a_detail; // where its full-size pixel art is, once it came close, -1 till then
 uniform float u_grow;
 uniform int u_only;
 uniform float u_keepAll;
@@ -193,6 +202,8 @@ out float v_fog;
 out float v_near;
 out float v_strip;
 out float v_star;
+flat out float v_slot;
+flat out float v_detail;
 uniform int u_hover;            // the hovered card: the ones in front of it make way
 uniform vec3 u_hoverPos;
 uniform float u_hoverClear;
@@ -238,6 +249,8 @@ void main() {
   if (gl_InstanceID != u_focus) keep *= u_keepAll;
   if (u_handed && gl_InstanceID == u_focus) keep = 0.0;
   v_star = a_star;
+  v_slot = a_slot;
+  v_detail = a_detail;
   vec3 v = pos - u_eye;
   float z = dot(v, u_fwd);
   float px = max(z, 0.001) / u_fpx; // world units per pixel at this depth
@@ -282,7 +295,13 @@ in float v_fog;
 in float v_near;
 in float v_strip;
 in float v_star;
+flat in float v_slot;
+flat in float v_detail;
 uniform vec2 u_size;
+uniform highp sampler2DArray u_atlas; // pixel art, 64 × 64 tiles to a layer
+uniform float u_pixel;                // 0 the colors, 1 their pixel art
+uniform highp sampler2D u_detail;     // full-size pixel art of the cards close by, 32 × 32 tiles
+uniform int u_sheets;                 // which of the atlas's sheets have come, a bit each
 out vec4 o;
 void main() {
   // dithered, so it fades without sorting the cards
@@ -292,6 +311,25 @@ void main() {
   // far cards are solid color, so the space reads as a cloud
   vec3 paper = mix(v_color, vec3(1.0), smoothstep(10.0, 34.0, v_cardpx));
   vec3 c = v_local.y < u_size.x ? v_color : paper;
+  // its pixel art over the color, where there is any and its sheet has come
+  // its pixel art instead of the color, once its sheet has come: the color goes, and only
+  // the drawing is left, floating
+  if (u_pixel > 0.0 && v_slot >= 0.0 && v_local.y < u_size.x) {
+    vec2 inTile = clamp(v_local / u_size.x, 0.0, 0.999);
+    float layer = floor(v_slot / 4096.0);
+    bool there = v_detail >= 0.0 || ((u_sheets >> int(layer)) & 1) == 1;
+    if (there) {
+      vec4 t;
+      if (v_detail >= 0.0) {
+        t = texture(u_detail, (vec2(mod(v_detail, 32.0), floor(v_detail / 32.0)) + inTile) / 32.0);
+      } else {
+        float k = v_slot - layer * 4096.0;
+        t = texture(u_atlas, vec3((vec2(mod(k, 64.0), floor(k / 64.0)) + inTile) / 64.0, layer));
+      }
+      if (t.a < 0.4 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < u_pixel) discard;
+      c = mix(c, t.rgb, t.a * u_pixel);
+    }
+  }
   if (v_star > 0.001) {
     // the card lights up, with a four-pointed glint near its corner
     vec2 q = (v_local - vec2(u_size.x * 0.8, u_size.x * 0.2)) / u_size.x;
@@ -340,6 +378,27 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   attrib("a_strip", strips, 1, gl.FLOAT, false, 1);
   const stars = new Float32Array(positions.length / 3);
   attrib("a_star", stars, 1, gl.FLOAT, false, 1);
+  attrib("a_slot", new Float32Array(positions.length / 3).fill(-1), 1, gl.FLOAT, false, 1);
+  attrib("a_detail", new Float32Array(positions.length / 3).fill(-1), 1, gl.FLOAT, false, 1);
+  // the pixel art atlas: empty (clear) until its sheets come
+  const atlas = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, atlas);
+  gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 11, gl.RGBA8, 1024, 1024, PIXEL_SHEETS);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  // and the full-size tiles of the cards close by, swapped in and out as they come and go
+  const detail = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D, detail);
+  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, 2048, 2048);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.activeTexture(gl.TEXTURE0);
 
   const u = {};
   for (const k of [
@@ -369,6 +428,10 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     "hover",
     "hoverPos",
     "hoverClear",
+    "atlas",
+    "pixel",
+    "detail",
+    "sheets",
   ]) {
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
   }
@@ -380,6 +443,10 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   gl.uniform1i(u.focus, -1);
   gl.uniform1f(u.bang, -1);
   gl.uniform1f(u.grow, 1);
+  gl.uniform1i(u.atlas, 1);
+  gl.uniform1i(u.detail, 2);
+  gl.uniform1i(u.sheets, 0);
+  gl.uniform1f(u.pixel, 0);
   gl.enable(gl.DEPTH_TEST);
   gl.clearColor(0, 0, 0, 1);
 
@@ -400,6 +467,11 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     // fog from the shape's middle, so it doesn't shift as the camera turns
     const mid = Math.hypot(...sub(cam.center, cam.eye));
     gl.uniform2f(u.fog, Math.max(0, mid) + 60, mid + 420);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, atlas);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, detail);
+    gl.activeTexture(gl.TEXTURE0);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
   };
   draw.bang = (t, center) => {
@@ -421,7 +493,38 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     gl.uniform1f(u.clear, clear);
   };
   draw.gl = gl;
+  // pixel art: which tile each card has, a sheet of tiles as it comes, how far it shows
+  draw.pixelSlots = (slots) => {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_slot);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, slots);
+  };
+  let sheets = 0;
+  draw.pixelSheet = (layer, image) => {
+    gl.useProgram(prog);
+    gl.uniform1i(u.sheets, (sheets |= 1 << layer));
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, atlas);
+    gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, layer, 1024, 1024, 1, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+    gl.activeTexture(gl.TEXTURE0);
+  };
+  draw.pixelDetail = (slot, image) => {
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, detail);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, (slot % 32) * 64, Math.floor(slot / 32) * 64, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.activeTexture(gl.TEXTURE0);
+  };
+  draw.pixelDetailOf = (i, slot) => {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.a_detail);
+    gl.bufferSubData(gl.ARRAY_BUFFER, i * 4, new Float32Array([slot]));
+  };
+  draw.pixelMix = (k) => {
+    gl.useProgram(prog);
+    gl.uniform1f(u.pixel, k);
+  };
   draw.dispose = () => {
+    gl.deleteTexture(atlas);
+    gl.deleteTexture(detail);
     Object.values(buffers).forEach((b) => gl.deleteBuffer(b));
     gl.deleteVertexArray(vao);
     gl.deleteProgram(prog);
@@ -556,6 +659,130 @@ export async function initWall(root) {
   } catch (e) {
     console.error(e);
   }
+  // ↑ ↑ ↓ ↓ ← → ← → B A: the space in pixel art. The atlas comes when first asked for, its
+  // sheets one by one, each card its color until its sheet is in
+  const pixelArt = { on: false, k: 0, index: null, slots: null, sheets: [], loading: null };
+  async function pixelSlots() {
+    const { index } = pixelArt;
+    pixelArt.bySlug ??= new Map(index.slugs.map((slug, i) => [slug, i]));
+    pixelArt.names ??= slugsOf((await getList("default")).items);
+    const slots = new Float32Array(items.length);
+    items.forEach((it, i) => (slots[i] = pixelArt.bySlug.get(pixelArt.names.get(it.name)) ?? -1));
+    return slots;
+  }
+  async function loadPixelArt() {
+    pixelArt.index = await fetch(`${PIXEL_ATLAS}index.json`).then((r) => r.json());
+    pixelArt.slots = await pixelSlots();
+    draw.pixelSlots(pixelArt.slots);
+    await Promise.all(
+      Array.from({ length: pixelArt.index.sheets }, async (_, n) => {
+        const blob = await fetch(`${PIXEL_ATLAS}sheet-${n}.webp`).then((r) => r.blob());
+        pixelArt.sheets[n] = await createImageBitmap(blob, { premultiplyAlpha: "none" });
+        draw.pixelSheet(n, pixelArt.sheets[n]);
+        request();
+      }),
+    );
+  }
+  // close up, every card bigger than DETAIL_PX on screen gets its full 64 × 64 tile, the
+  // nearest first, a dozen fetched at a time; looked for a few times a second, whatever
+  // the names do. When all slots are taken, the card seen longest ago gives its up
+  const DETAIL_PX = 22;
+  const detail = { of: new Map(), owner: new Int32Array(DETAIL_SLOTS).fill(-1), seen: new Float64Array(DETAIL_SLOTS), loading: new Set(), queue: [], busy: 0, round: 0, looked: 0 };
+  function lookForDetail(time) {
+    if (!pixelArt.on || !pixelArt.slots) return;
+    // too soon: look once more after, in case the camera stops right now
+    if (time - detail.looked < 120) {
+      detail.later ||= setTimeout(() => {
+        detail.later = 0;
+        request();
+      }, 130);
+      return;
+    }
+    detail.looked = time;
+    const queue = [];
+    for (const { i } of onScreen(DETAIL_PX, DETAIL_SLOTS / 2)) {
+      const slot = detail.of.get(i);
+      if (slot !== undefined) detail.seen[slot] = time;
+      else if (!detail.loading.has(i) && pixelArt.slots[i] >= 0) queue.push(i);
+    }
+    detail.queue = queue;
+    fetchDetail();
+  }
+  function fetchDetail() {
+    while (detail.busy < 12 && detail.queue.length) {
+      const i = detail.queue.shift();
+      detail.loading.add(i);
+      const slug = pixelArt.index.slugs[pixelArt.slots[i]];
+      const round = detail.round;
+      detail.busy++;
+      fetch(`${PIXEL_TILES}${slug}.png`)
+        .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
+        .then((blob) => createImageBitmap(blob, { premultiplyAlpha: "none" }))
+        .then((image) => {
+          if (round !== detail.round) return;
+          let slot = detail.owner.indexOf(-1);
+          if (slot < 0) {
+            slot = 0;
+            for (let k = 1; k < DETAIL_SLOTS; k++) if (detail.seen[k] < detail.seen[slot]) slot = k;
+            const was = detail.owner[slot];
+            detail.of.delete(was);
+            draw.pixelDetailOf(was, -1);
+          }
+          detail.owner[slot] = i;
+          detail.of.set(i, slot);
+          detail.seen[slot] = performance.now();
+          draw.pixelDetail(slot, image);
+          draw.pixelDetailOf(i, slot);
+          request();
+        })
+        .catch(() => {})
+        .finally(() => {
+          detail.loading.delete(i);
+          detail.busy--;
+          fetchDetail();
+        });
+    }
+  }
+  // a new list builds a new renderer: it gets the slots and sheets back, the close ones anew
+  async function restorePixelArt() {
+    if (!pixelArt.index) return;
+    detail.round++;
+    detail.of.clear();
+    detail.loading.clear();
+    detail.queue = [];
+    detail.owner.fill(-1);
+    pixelArt.slots = await pixelSlots();
+    draw.pixelSlots(pixelArt.slots);
+    pixelArt.sheets.forEach((sheet, n) => sheet && draw.pixelSheet(n, sheet));
+    draw.pixelMix(pixelArt.k);
+    request();
+  }
+  function togglePixelArt() {
+    pixelArt.on = !pixelArt.on;
+    if (pixelArt.on) pixelArt.loading ??= loadPixelArt().catch((e) => console.error(e));
+    const from = pixelArt.k;
+    const to = pixelArt.on ? 1 : 0;
+    const start = performance.now();
+    const step = (now) => {
+      const t = reduceMotion ? 1 : Math.min(1, (now - start) / 600);
+      pixelArt.k = from + (to - from) * t * t * (3 - 2 * t);
+      draw.pixelMix(pixelArt.k);
+      request();
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+  let konami = 0;
+  window.addEventListener("keydown", (e) => {
+    if (e.target.closest?.("input, textarea, select")) return;
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    konami = key === KONAMI[konami] ? konami + 1 : key === KONAMI[0] ? 1 : 0;
+    if (konami < KONAMI.length) return;
+    konami = 0;
+    togglePixelArt();
+  });
+
   function markStars() {
     glitter = [];
     items.forEach((it, i) => adoptedNames.has(it.name) && glitter.push({ i, cell: null, at: -1e9, rest: 0, flash: 0, turn: 0 }));
@@ -846,6 +1073,7 @@ export async function initWall(root) {
     queued = false;
     const dt = lastTime ? Math.min(48, time - lastTime) : 16;
     lastTime = time;
+    lookForDetail(time);
 
     if (held.size && !busy) fly(dt);
     if (anim?.card) {
@@ -1960,6 +2188,7 @@ export async function initWall(root) {
     for (const l of pool) l.i = -1;
     showCount();
     markStars();
+    restorePixelArt();
     if (azOn) az?.open(items, search.value, 0);
   }
 
