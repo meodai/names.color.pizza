@@ -265,6 +265,7 @@
         </button>
         <div class="wall__modes" data-modes>
           <div class="wall__mode-list" role="radiogroup" aria-label="How the space shows its names" data-mode-list>
+            <i class="wall__mode-thumb" aria-hidden="true"></i>
             <button type="button" role="radio" aria-checked="true" data-mode="colors" aria-label="Colors" title="Colors">
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
@@ -283,10 +284,7 @@
             </button>
             <button type="button" role="radio" aria-checked="false" data-mode="pixel" aria-label="Each color’s pixel art" title="Pixel art">
               <svg viewBox="0 0 20 20" aria-hidden="true" shape-rendering="crispEdges">
-                <path
-                  d="M6 4h2v2H6zM12 4h2v2h-2zM8 6h4v2H8zM5 8h10v2H5zM4 10h2v2H4zM8 10h4v2H8zM14 10h2v2h-2zM4 12h12v2H4zM6 14h2v2H6zM12 14h2v2h-2z"
-                  fill="currentColor"
-                />
+                <rect x="5" y="5" width="10" height="10" fill="currentColor" />
               </svg>
             </button>
           </div>

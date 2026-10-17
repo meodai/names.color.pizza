@@ -2070,27 +2070,72 @@ export async function initWall(root) {
   const modes = q("[data-modes]");
   const modeList = q("[data-mode-list]");
   const modeNow = () => (pixelMode() ? "pixel" : cellsOn ? "cells" : "colors");
+  // a black marker under the view shown while the tabs are open: picked, it slides to the new
+  // one, that one turns active, the tabs close round it, and only then the marker fades
+  const modeThumb = modeList.querySelector(".wall__mode-thumb");
+  const MODE_MS = reduceMotion ? 0 : 350;
+  const modeActive = () => modeList.querySelector('[aria-checked="true"]');
   function showMode() {
     const now = modeNow();
-    for (const b of modeList.querySelectorAll("[data-mode]")) b.setAttribute("aria-checked", String(b.dataset.mode === now));
+    for (const b of modeList.querySelectorAll("[data-mode]")) {
+      b.setAttribute("aria-checked", String(b.dataset.mode === now));
+      if (!modes.classList.contains("is-marked")) b.classList.toggle("is-last", b.dataset.mode === now);
+    }
   }
-  const openModes = (open) => modes.classList.toggle("is-open", open);
+  const placeThumb = (b) => {
+    modeThumb.style.translate = `${b.offsetLeft}px ${b.offsetTop}px`;
+    modeThumb.style.inlineSize = `${b.offsetWidth}px`;
+    modeThumb.style.blockSize = `${b.offsetHeight}px`;
+  };
+  // the marker keeps to its tab while the tabs open or close under it
+  function followThumb(b, ms) {
+    modes.classList.add("is-tracking");
+    const until = performance.now() + ms + 40;
+    const step = (t) => {
+      placeThumb(b);
+      if (t < until) requestAnimationFrame(step);
+      else modes.classList.remove("is-tracking");
+    };
+    requestAnimationFrame(step);
+  }
+  let modeTimer = 0;
+  function openModes() {
+    clearTimeout(modeTimer);
+    modes.classList.add("is-open", "is-marked");
+    followThumb(modeActive(), MODE_MS);
+  }
+  function closeModes() {
+    if (!modes.classList.contains("is-open")) return;
+    const b = modeActive();
+    modes.classList.remove("is-open");
+    followThumb(b, MODE_MS);
+    clearTimeout(modeTimer);
+    modeTimer = setTimeout(() => {
+      modes.classList.remove("is-marked");
+      showMode();
+    }, MODE_MS);
+  }
   modeList.addEventListener("click", (e) => {
     const b = e.target.closest("[data-mode]");
     if (!b) return;
-    if (!modes.classList.contains("is-open")) return openModes(true);
+    if (!modes.classList.contains("is-open")) return openModes();
+    if (b === modeActive()) return closeModes();
     if (azOn) setAz(false);
-    const want = b.dataset.mode;
-    setPixelMode(want === "pixel");
-    setCells(want === "cells");
-    openModes(false);
-    showMode();
+    placeThumb(b);
+    clearTimeout(modeTimer);
+    modeTimer = setTimeout(() => {
+      const want = b.dataset.mode;
+      setPixelMode(want === "pixel");
+      setCells(want === "cells");
+      showMode();
+      closeModes();
+    }, MODE_MS);
   });
-  document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && openModes(false));
+  document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && closeModes());
   modes.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || !modes.classList.contains("is-open")) return;
-    openModes(false);
-    modeList.querySelector('[aria-checked="true"]').focus();
+    closeModes();
+    modeActive().focus();
   });
   showMode();
 

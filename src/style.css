@@ -5901,12 +5901,38 @@ html.is-arriving {
   gap: 0.15rem;
 }
 
-.wall__modes.is-open .wall__mode-list button[aria-checked="true"] {
+.wall__zoom .wall__mode-list button {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+.wall__modes.is-marked .wall__mode-list button[aria-checked="true"] {
   color: var(--paper);
+}
+
+.wall__mode-thumb {
+  position: absolute;
+  inset: 0 auto auto 0;
+  border-radius: 999px;
   background: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    translate 0.35s cubic-bezier(0.34, 1.4, 0.5, 1),
+    inline-size 0.35s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.wall__modes.is-marked .wall__mode-thumb {
+  opacity: 1;
+}
+
+.wall__modes.is-tracking .wall__mode-thumb {
+  transition: opacity 0.25s ease;
 }
 
 /* the view shown stays where the button was, the others open beside it */
-.wall__mode-list button[aria-checked="true"] {
+.wall__mode-list button.is-last {
   order: 1;
 }
