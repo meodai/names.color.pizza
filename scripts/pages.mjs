@@ -12,6 +12,7 @@ import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
 import { cardKey, cardURL } from "./cards.mjs";
 import { FORMATS } from "../src/formats.js";
+import { ADOPT_FROM, handle, longDate } from "../src/adopter.js";
 import { documentURI, documentKey, FIRST_DAY } from "../src/standard-site.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -261,6 +262,14 @@ const pixels =
   (await fetch(`https://media.color.pizza/data/pixel.json?t=${Date.now()}`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : {}))
     .catch(() => ({}))) || {};
+// the hero's stats as the page's script fills them: the hex, the line it was added on (filled
+// later, on the same line) and its adoption, or the way to adopt it
+const statsHTML = (hex, adopted) =>
+  `<span>${hex}</span><span></span><span class="hero__adopted">${
+    adopted?.amount >= ADOPT_FROM
+      ? `Adopted ${escapeHTML(longDate(adopted.at))} by <span class="hero__adopter">${escapeHTML(handle(adopted.by, adopted.on))}</span>${adopted.founding ? ", founding patron" : ""}`
+      : `<a class="adopt-cta" href="../../adopt/#${hex.slice(1)}">Adopt this color <span class="hero__heart">\u2665\uFE0E</span></a>`
+  }</span>`;
 const pixelOf = (slug) => pixels[slug] && { src: `https://media.color.pizza/pixel/${slug}.png?v=${pixels[slug].v}`, subject: pixels[slug].subject };
 
 // a color's link preview comes through the worker, which picks it when asked: the color's
@@ -358,6 +367,8 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(/\s*<meta\s+(?:property|name)="(?:og|twitter):[^>]*>/g, "")
     .replace(/<meta\s+name="description"[\s\S]*?\/>/, () => head)
     .replace(/(<h1[^>]*data-name[^>]*>)[\s\S]*?(<\/h1>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
+    // the line under it as the page's script lays it out, so the hero holds still when it does
+    .replace(/(<p[^>]*data-stats[^>]*>)(<\/p>)/, (_, open, close) => `${open}${statsHTML(hex, adopted[slug])}${close}`)
     .replace(
       /(<div[^>]*data-intro[^>]*>)[\s\S]*?(<\/div>)/,
       (_, open, close) =>

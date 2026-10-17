@@ -400,10 +400,12 @@ async function render(hex) {
   } catch {}
   const handedOver = handoff?.hex === hex;
   placeCard(handedOver && handoff.place ? handoff.place : undefined);
-  if (handedOver) {
-    card.classList.add("swatchcard--reset", "swatchcard--visible");
+  if (handedOver) card.classList.add("swatchcard--reset", "swatchcard--visible");
+  // the text comes in once its description is there, so it doesn't move after: handed over
+  // from the wall, or come from another color's page, where the description is still loading
+  if (handedOver || builtPage?.hex !== hex) {
+    clearTimeout(arriving);
     document.documentElement.classList.add("is-arriving");
-    // the text comes in once its description is there, so it doesn't move after
     arriving = setTimeout(arrive, 1000);
   }
   // the name as soon as it's known: handed over, this page's own, or from the list loaded before
@@ -428,8 +430,12 @@ async function render(hex) {
   page.cardName.textContent = known && approx ? `≈ ${known}` : known;
   page.name.textContent = known || hex;
   fitTitle();
-  page.intro.replaceChildren();
-  page.stats.replaceChildren();
+  // a page built for this color keeps the description it came with, and its line of stats is
+  // laid out now: both would otherwise wait for the whole list, and the hero jump when they came
+  const built = builtPage?.hex === hex;
+  if (!built) page.intro.replaceChildren();
+  const createdLine = document.createElement("span");
+  page.stats.replaceChildren(Object.assign(document.createElement("span"), { textContent: hex }), createdLine, adoptedLine);
   page.formats.innerHTML = formatsHTML(hex);
   page.fillHex.textContent = hex;
   page.fill.style.setProperty("--fill", hex);
@@ -450,7 +456,6 @@ async function render(hex) {
   page.art.replaceChildren();
   // the sections stay where they are while they fill, and go only once they turn out empty;
   // a page built for this color already left out the ones it knew were empty
-  const built = builtPage?.hex === hex;
   for (const slide of [page.neighborsSlide, page.wordsSlide, page.meaningSlide, page.artSlide]) {
     if (!built) slide.hidden = false;
     slide.classList.add("is-filling");
@@ -507,8 +512,6 @@ async function render(hex) {
   };
   if (builtPage?.name === current.name) describe(builtPage.description);
 
-  const createdLine = document.createElement("span");
-  page.stats.replaceChildren(Object.assign(document.createElement("span"), { textContent: hex }), createdLine, adoptedLine);
   // "by" is only set when someone other than the list's maintainer added it
   addedOn(current.name).then((added) => {
     if (!added || current?.hex !== hex) return;

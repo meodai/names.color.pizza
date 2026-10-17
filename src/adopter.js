@@ -1,4 +1,7 @@
 // who adopted a color: a link to them, and their face for the card's corner
+// from this many dollars a color is adopted, its adopter shown
+export const ADOPT_FROM = 5;
+
 export const PROFILES = {
   bluesky: (by) => `https://bsky.app/profile/${by}`,
   github: (by) => `https://github.com/${by}`,
