@@ -53,6 +53,15 @@ const PARROT_LINES =
 // of its lines, the seal's parrot and the parrot's outline
 export function certificateHTML({ it, adopted, number, logo, ink, shades, look }) {
   const no = String(number).padStart(4, "0");
+  // signed by hand: every certificate a little differently, the same one each time it's shown
+  const hash = (salt) => {
+    let h = 2166136261 ^ salt;
+    for (const ch of it.name + it.hex) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    return ((h ^ (h >>> 13)) >>> 0) / 4294967296;
+  };
+  const tilt = -9 + hash(1) * 9;
+  const drop = -0.08 + hash(2) * 0.38;
   const when = longDate(adopted.at);
   const facts = [
     ["Recorded", escapeHTML(when)],
@@ -83,7 +92,7 @@ export function certificateHTML({ it, adopted, number, logo, ink, shades, look }
     <dl class="cert__facts">${facts.map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
     <footer class="cert__foot">
       <div class="cert__sign">
-        <p class="cert__signature">D. Aerne</p>
+        <p class="cert__signature"><span style="rotate:${tilt.toFixed(1)}deg;translate:0 ${drop.toFixed(2)}em">D. Aerne</span></p>
         <p class="label">Keeper of the List, Zürich</p>
       </div>
       ${seal(logo)}
