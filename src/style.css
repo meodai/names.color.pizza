@@ -5471,7 +5471,6 @@ html.is-arriving {
   inline-size: 14rem;
   margin-block: var(--space-xs) var(--space-2xs);
   font-size: 2.87rem;
-  text-align: start;
   background: #fff;
   outline: 2px solid #fff;
 }

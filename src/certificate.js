@@ -38,7 +38,7 @@ function seal(logo) {
     <circle cx="60" cy="60" r="38" fill="none" stroke="var(--cert-on)" stroke-width="0.8"/>
     <text fill="var(--cert-on)" font-size="7.2" font-weight="700"><textPath href="#cert-rim" textLength="269" lengthAdjust="spacing">${words}</textPath></text>
     <svg x="40" y="36" width="40" height="48" viewBox="20 12 130 158" color="var(--cert-on)">${logo}</svg>
-    <svg x="42.5" y="33.5" width="40" height="48" viewBox="20 12 130 158" overflow="visible"><path d="${PARROT_LINES}" fill="none" stroke="#000" stroke-width="7" stroke-miterlimit="10"/></svg>
+    <svg x="37.5" y="38.5" width="40" height="48" viewBox="20 12 130 158" overflow="visible"><path d="${PARROT_LINES}" fill="none" stroke="#000" stroke-width="7" stroke-miterlimit="10"/></svg>
   </svg>`;
 }
 
