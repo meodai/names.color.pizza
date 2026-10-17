@@ -1,3 +1,15 @@
+@property --fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0rem;
+}
+
+@property --fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0rem;
+}
+
 :root {
   --ink: #000;
   --paper: #fff;
@@ -5088,11 +5100,21 @@ html.is-arriving {
     backdrop-filter: blur(16px) saturate(1.4);
   }
 
+  /* the white pill under the models, so their fade below leaves it whole */
+  .wall__tabs::before {
+    content: "";
+    position: absolute;
+    inset: 0.2rem;
+    border-radius: 999px;
+    background: var(--paper);
+  }
+
   .wall__models {
     min-inline-size: 0;
     padding: 0.15rem;
     overflow-x: auto;
     scrollbar-width: none;
+    background: none;
   }
 
   .wall__models button {
@@ -5103,33 +5125,28 @@ html.is-arriving {
     display: none;
   }
 
-  .wall__models::before,
-  .wall__models::after {
-    content: "";
-    position: sticky;
-    z-index: 2;
-    flex: none;
-    inline-size: 1.5rem;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+  /* a mask, not gradients laid on top: it fades the names themselves, to the row's very edge */
+  .wall__models {
+    --fade-start: 0rem;
+    --fade-end: 0rem;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--fade-start),
+      #000 calc(100% - var(--fade-end)),
+      transparent
+    );
+    transition:
+      --fade-start 0.2s ease,
+      --fade-end 0.2s ease;
   }
 
-  .wall__models::before {
-    left: 0;
-    margin-inline-end: -1.5rem;
-    background: linear-gradient(to right, var(--paper), transparent);
+  .wall__models.has-before {
+    --fade-start: 1.5rem;
   }
 
-  .wall__models::after {
-    right: 0;
-    margin-inline-start: -1.5rem;
-    background: linear-gradient(to left, var(--paper), transparent);
-  }
-
-  .wall__models.has-before::before,
-  .wall__models.has-after::after {
-    opacity: 1;
+  .wall__models.has-after {
+    --fade-end: 1.5rem;
   }
 
   .wall__models button {
