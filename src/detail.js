@@ -1220,11 +1220,13 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     },
     { capture: true, signal },
   );
-  // wheel sideways (or with shift), drag with a mouse, swipe on touch
+  // wheel sideways (or with shift), drag with a mouse, swipe on touch. Only a mostly
+  // sideways wheel moves the strip: a trackpad scrolling down drifts a little sideways
+  // too, and taking that would hold the page still
   page.art.addEventListener(
     "wheel",
     (e) => {
-      const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+      const dx = e.shiftKey ? e.deltaX || e.deltaY : Math.abs(e.deltaX) > Math.abs(e.deltaY) * 2 ? e.deltaX : 0;
       if (!dx) return;
       e.preventDefault();
       moveStrip(dx);
