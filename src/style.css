@@ -1566,6 +1566,11 @@ h2:hover > .anchor,
   image-rendering: pixelated;
 }
 
+.lightbox--pixel .lightbox__info {
+  align-items: center;
+  text-align: center;
+}
+
 /* hung on the mount's right edge, as tall as it, a swatch per color by its share */
 .lightbox__palette {
   position: absolute;
@@ -1757,6 +1762,7 @@ h2:hover > .anchor,
 }
 
 .lightbox__title {
+  font-feature-settings: normal;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
