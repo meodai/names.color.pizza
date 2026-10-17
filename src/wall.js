@@ -300,15 +300,16 @@ uniform highp sampler2D u_detail;     // full-size pixel art of the cards close 
 uniform int u_sheets;                 // which of the atlas's sheets have come, a bit each
 out vec4 o;
 void main() {
-  // dithered, so it fades without sorting the cards; in pixel art a drawing comes and goes
-  // as on a color's page, pixel by pixel from the bottom up, a little ragged
+  // dithered, so it fades without sorting the cards
   if (v_near < 1.0) {
     float due = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
     if (u_pixel > 0.5 && v_local.y < u_size.x) {
-      // in big blocks, so it reads as pixels going, not as a fade, however small the card
-      vec2 cell = floor(clamp(v_local / u_size.x, 0.0, 0.999) * 10.0);
-      float ragged = fract(sin(dot(cell + v_slot, vec2(12.9898, 78.233))) * 43758.5453);
-      due = (1.0 - cell.y / 9.0) * 0.75 + ragged * 0.25;
+      // a retro dither dissolve: the drawing's own pixels, 16 across, go in a 4 × 4 ordered
+      // (Bayer) pattern, so it thins out in a checker of pixels rather than fading
+      vec2 cell = floor(clamp(v_local / u_size.x, 0.0, 0.999) * 16.0);
+      int k = int(mod(cell.x, 4.0)) + int(mod(cell.y, 4.0)) * 4;
+      int bayer[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
+      due = (float(bayer[k]) + 0.5) / 16.0;
     }
     if (due >= v_near) discard;
   }
