@@ -1,6 +1,7 @@
 import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
+import { certificateHTML } from "./certificate.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, loadAdoptions } from "./shines.js";
 import { UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
@@ -47,6 +48,24 @@ function logoSVG() {
   svg.setAttribute("height", "184");
   svg.querySelectorAll("[fill]").forEach((p) => p.getAttribute("fill") !== "#fff" && p.setAttribute("fill", "#000"));
   return svg.outerHTML;
+}
+
+// the parrot's shapes for the certificate's seal: in the seal's ink, its eye in the color
+function sealParrot() {
+  const svg = document.querySelector(".brand__logo").cloneNode(true);
+  svg.querySelectorAll("[fill]").forEach((p) => p.setAttribute("fill", p.getAttribute("fill") === "#fff" ? "var(--cert-c)" : "currentColor"));
+  return svg.innerHTML;
+}
+
+// the certificate under the thanks, numbered by its place in the register
+async function certificate(q, it, slug, mine) {
+  const all = await loadAdoptions();
+  const keys = Object.keys(all).filter((k) => all[k].amount >= ADOPT_FROM);
+  const number = (keys.includes(slug) ? keys.indexOf(slug) : keys.length) + 1;
+  const ink = wcagLuminance(it.hex) > 0.4 ? "#000" : "#fff";
+  const el = q("[data-cert]");
+  el.innerHTML = certificateHTML({ it, adopted: mine, number, logo: sealParrot(), ink });
+  el.hidden = false;
 }
 
 // their link preview, drawn here the moment they've paid and handed to the worker,
@@ -184,8 +203,18 @@ function moreProjects(q, data) {
   q("[data-projects]").innerHTML = PROJECTS.map(
     (p) => `<li><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a> <small>${p.year}</small><p>${esc(p.about)}</p></li>`,
   ).join("");
+  // the card steps aside for the certificate and the footer
   const place = q("[data-place]");
-  new IntersectionObserver(([e]) => place.classList.toggle("is-away", e.isIntersecting), { threshold: 0.05 }).observe(q("[data-more]"));
+  const over = new Set();
+  const away = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => (e.isIntersecting ? over.add(e.target) : over.delete(e.target)));
+      place.classList.toggle("is-away", over.size > 0);
+    },
+    { threshold: 0.05 },
+  );
+  away.observe(q("[data-cert]"));
+  away.observe(q("[data-more]"));
 }
 
 // the color comes as ?c=<slug> or #<hex>, or after paying as ?session=<checkout>;
@@ -295,6 +324,7 @@ export async function initAdoptPage() {
         }`;
         shareRow(q, it, slug);
         shareCard(q, it, mine, session);
+        certificate(q, it, slug, mine);
         return;
       }
       q("[data-name]").textContent = `${it.name} is adopted.`;

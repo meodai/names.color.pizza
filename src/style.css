@@ -5384,3 +5384,167 @@ html.is-arriving {
 .wall.is-az [data-cells] {
   display: none;
 }
+
+/* the certificate on the thank-you page: paper, a double frame, the color's rosette and seal */
+.adopt-cert {
+  display: grid;
+  place-items: center;
+  padding-block: var(--space-xl);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.adopt-cert[hidden] {
+  display: none;
+}
+
+.cert {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: var(--space-xs);
+  inline-size: min(100%, 44rem);
+  padding: clamp(1.5rem, 6vw, 3.5rem);
+  overflow: hidden;
+  text-align: center;
+  background: var(--paper);
+  outline: 2px solid var(--ink);
+  outline-offset: -0.6rem;
+  box-shadow:
+    inset 0 0 0 0.85rem var(--paper),
+    inset 0 0 0 0.92rem var(--ink),
+    0 1.5rem 4rem rgb(0 0 0 / 0.12);
+}
+
+.cert__guilloche {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  inline-size: 100%;
+  block-size: 100%;
+  color: var(--cert-c);
+  opacity: 0.35;
+}
+
+.cert__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  text-align: start;
+  inline-size: 100%;
+  margin-block-end: var(--space-s);
+}
+
+.cert__no {
+  flex: none;
+  font-feature-settings: "tnum" 1;
+}
+
+.cert__title {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.cert__line {
+  margin: var(--space-s) 0 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cert__who {
+  margin: 0;
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.cert__color {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0;
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
+}
+
+.cert__swatch {
+  flex: none;
+  inline-size: 0.9em;
+  block-size: 0.9em;
+  border-radius: 50%;
+  background: var(--cert-c);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.cert__facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xs) var(--space-m);
+  margin: var(--space-m) 0 0;
+}
+
+.cert__facts dd {
+  margin: 0.2em 0 0;
+  font-weight: var(--weight-display);
+  font-feature-settings: "tnum" 1;
+}
+
+.cert__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-m);
+  inline-size: 100%;
+  margin-block-start: var(--space-l);
+  text-align: start;
+}
+
+.cert__sign {
+  min-inline-size: 0;
+}
+
+.cert__sign p {
+  margin: 0;
+}
+
+.cert__signature {
+  display: inline-block;
+  min-inline-size: min(12rem, 100%);
+  padding: 0 0.2em 0.1em;
+  white-space: nowrap;
+  border-block-end: 1px solid var(--ink);
+  font-size: 1.9rem;
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: -0.04em;
+  rotate: -3deg;
+}
+
+.cert__sign .label {
+  margin-block-start: 0.6em;
+}
+
+.cert__seal {
+  flex: none;
+  inline-size: clamp(5.5rem, 16vw, 7.5rem);
+  color: var(--cert-c);
+  rotate: -12deg;
+}
+
+.cert__fine {
+  max-inline-size: 46ch;
+  margin: var(--space-m) 0 0;
+  font-size: var(--text-xs);
+  opacity: 0.7;
+}
