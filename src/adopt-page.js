@@ -68,6 +68,10 @@ async function certificate(q, it, slug, mine) {
   const el = q("[data-cert]");
   el.innerHTML = certificateHTML({ it, adopted: mine, number, logo: sealParrot(), ink, shades });
   el.hidden = false;
+  q("[data-share-cert]").addEventListener("click", (e) => {
+    e.preventDefault();
+    el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
 }
 
 // their link preview, drawn here the moment they've paid and handed to the worker,
