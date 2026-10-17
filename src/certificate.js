@@ -61,7 +61,7 @@ export function certificateHTML({ it, adopted, number, logo, ink, shades }) {
     <p class="cert__line">This is to certify that</p>
     <p class="cert__who">${escapeHTML(handle(adopted.by, adopted.on))}</p>
     <p class="cert__line">is the one and only adopter of</p>
-    <div class="swatchcard cert__card" style="--c-color:${it.hex};--c-shade0:${shades[0]};--c-shade1:${shades[1]}">
+    <div class="swatchcard swatchcard--visible cert__card" style="--c-color:${it.hex};--c-shade0:${shades[0]};--c-shade1:${shades[1]}">
       <div class="swatchcard__upper">
         <i class="swatchcard__swatch" aria-hidden="true"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i>
       </div>

@@ -5472,6 +5472,13 @@ html.is-arriving {
   margin-block: var(--space-xs) var(--space-2xs);
   font-size: 2.87rem;
   text-align: start;
+  background: #fff;
+  outline: 2px solid #fff;
+}
+
+.cert__card,
+.cert__card * {
+  transition: none;
 }
 
 .cert__facts {
