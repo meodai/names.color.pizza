@@ -5846,7 +5846,7 @@ html.is-arriving {
 
 .wall__handoff.is-pixel .swatchcard__swatch,
 .wall__handoff.is-pixel .swatchcard__label {
-  visibility: hidden;
+  opacity: 0;
 }
 
 /* the space's views: a single button, the view shown; pressed, the other two slide out to its

@@ -1458,9 +1458,9 @@ export async function initWall(root) {
 
   // in pixel art the copy is the drawing alone, as the space shows it; the card builds up
   // under it once on the color's page
-  function makeCopy(hex, name, w, pixel) {
+  function makeCopy(hex, name, w, pixel, painted = false) {
     const copy = document.createElement("div");
-    copy.className = pixel ? "wall__handoff is-pixel" : "wall__handoff";
+    copy.className = pixel && !painted ? "wall__handoff is-pixel" : "wall__handoff";
     copy.innerHTML = CARD_HTML;
     const card = copy.firstElementChild;
     card.style.cssText = `--c-color:${hex};--c-shade0:${hex};--c-shade1:${hex}`;
@@ -1596,6 +1596,8 @@ export async function initWall(root) {
   }
 
   const later = (ms, fn) => setTimeout(fn, reduceMotion ? 0 : ms);
+  // how long a card back from its page takes to shed its color, in pixel art
+  const SHED_MS = 280;
 
   let colorPage = null;
   let colorMarkup = null;
@@ -1663,7 +1665,9 @@ export async function initWall(root) {
     if (i < 0) i = nearest(page.hex);
     const name = slot.querySelector("[data-card-name]")?.textContent || items[i].name;
 
-    const c = makeCopy(page.hex, name, from.w);
+    // in pixel art it leaves as a whole card, sheds its color, then flies back as the drawing
+    const pixel = pixelOf(i);
+    const c = makeCopy(page.hex, name, from.w, pixel, true);
     c.copy.classList.add("is-returning");
     placeCopy(c, from, tilt);
     root.append(c.copy);
@@ -1694,6 +1698,14 @@ export async function initWall(root) {
     request();
     // show the copy in place for a frame before it moves
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    // animated here, as the copy's card takes no transitions (swatchcard--reset)
+    if (c.card.querySelector(".swatchcard__pixel")) {
+      const shed = [...c.card.querySelectorAll(".swatchcard__swatch, .swatchcard__label")].map((el) =>
+        el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduceMotion ? 0 : SHED_MS, easing: "ease", fill: "forwards" }).finished,
+      );
+      await Promise.all(shed).catch(() => {});
+      c.copy.classList.add("is-pixel");
+    }
     await glide(c, drawnBox(i), 0, OUT.travel);
     c.copy.remove();
     opening.handed = false;
