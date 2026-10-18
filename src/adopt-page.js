@@ -302,7 +302,10 @@ export async function initAdoptPage() {
       textContent: "README",
     });
     const supporters = Object.assign(document.createElement("a"), { href: siteURL("supporters/"), textContent: "supporters" });
-    q("[data-tier5]").replaceChildren(`your name and picture on ${it.name}, with the `, supporters, " and in the ", readme);
+    // the color named, with a dot of it
+    const named = Object.assign(document.createElement("span"), { className: "adopt__named", textContent: it.name });
+    named.style.setProperty("--c", it.hex);
+    q("[data-tier5]").replaceChildren("your name and picture on ", named, ", with the ", supporters, " and in the ", readme);
     q("[data-tiers]").hidden = false;
     q("[data-act]").hidden = false;
     cta.textContent = `Adopt ${it.name}`;

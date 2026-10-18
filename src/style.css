@@ -443,6 +443,56 @@ a:hover {
   flex-basis: 100%;
 }
 
+/* the wheel and the name it lands on, one pill that opens the wheel, as the search bar */
+.adopt__pick-label {
+  cursor: pointer;
+}
+
+.adopt__named {
+  white-space: nowrap;
+}
+
+.adopt__named::before {
+  content: "";
+  display: inline-block;
+  inline-size: 0.7em;
+  block-size: 0.7em;
+  margin-inline-end: 0.3em;
+  border-radius: 50%;
+  vertical-align: -0.05em;
+  background: var(--c);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35);
+}
+
+.adopt__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.35rem 1.2rem 0.35rem 0.35rem;
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: var(--text-base);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* one ring when it's reached by keyboard, around the pill only */
+.adopt__pill input:focus-visible {
+  outline: none;
+}
+
+.adopt__pill:has(input:focus-visible) {
+  outline: var(--line) solid var(--paper);
+  outline-offset: 3px;
+}
+
+/* in the pill the wheel needs no rings of its own */
+.adopt__pill .adopt__wheel.wall__picker {
+  box-shadow: none;
+  outline: none;
+}
+
 .adopt__pick[hidden] {
   display: none;
 }

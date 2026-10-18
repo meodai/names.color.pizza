@@ -141,11 +141,13 @@
             <p class="costs__note"><span data-costs-note></span> <a href="../supporters/#costs">What it costs</a></p>
           </div>
           <div class="adopt__pick" data-pick hidden>
-            <span class="label adopt__pick-label">Pick a color</span>
-            <label class="wall__picker adopt__wheel" title="Pick a color">
-              <input type="color" data-picker aria-label="Pick a color to adopt" />
+            <label class="label adopt__pick-label" for="adopt-picker">Pick a color</label>
+            <label class="adopt__pill" title="Pick a color">
+              <span class="wall__picker adopt__wheel">
+                <input type="color" id="adopt-picker" data-picker aria-label="Pick a color to adopt" />
+              </span>
+              <span class="adopt__pick-name" data-pick-name></span>
             </label>
-            <span data-pick-name></span>
           </div>
           <form class="adopt__who" data-who>
             <label class="label" for="adopt-by">Show me as</label>
