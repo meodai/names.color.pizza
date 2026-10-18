@@ -13,6 +13,11 @@ on:
   schedule:
     - cron: "45 5 * * *"
   workflow_dispatch:
+    inputs:
+      list_before:
+        description: "The list's commit to announce names since, when the site doesn't say (list.txt)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -26,6 +31,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      listBefore: ${{ steps.list.outputs.before }}
+      listNow: ${{ steps.list.outputs.now }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/checkout@v5
@@ -70,6 +78,14 @@ jobs:
           UPLOAD_URL: ${{ vars.UPLOAD_URL }}
           UPLOAD_KEY: ${{ secrets.UPLOAD_KEY }}
         run: npm run build
+      # which commit of the list this build shows, beside the one the site showed till now
+      - name: The list's commit
+        id: list
+        run: |
+          before="${{ inputs.list_before }}"
+          echo "before=${before:-$(curl -sf https://names.color.pizza/list.txt || true)}" >> "$GITHUB_OUTPUT"
+          git -C color-names rev-parse HEAD | tee dist/list.txt
+          echo "now=$(cat dist/list.txt)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -83,3 +99,22 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # the names now online get a comment on the commit that added them, in the names repo
+  online:
+    needs: [build, deploy]
+    if: needs.build.outputs.listBefore != needs.build.outputs.listNow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+        with:
+          repository: meodai/color-names
+          path: color-names
+          fetch-depth: 0
+      - name: Say which names are online
+        env:
+          GH_TOKEN: ${{ secrets.NAMES_REPO_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "no NAMES_REPO_TOKEN; nothing said"; exit 0; fi
+          node scripts/online.mjs "${{ needs.build.outputs.listBefore }}" "${{ needs.build.outputs.listNow }}"
