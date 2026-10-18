@@ -270297,8 +270297,8 @@
     "hex": "#da702c",
     "ai": true,
     "kind": "reference",
-    "reference": "Pele, Hawaiian goddess of fire",
-    "description": "Molten lava, the fiery breath of Pele.",
-    "model": "describer"
+    "reference": "Pele, the Hawaiian goddess of volcanoes and fire",
+    "description": "Lava cooling at the edge of the sea, the glowing orange of Pele, who made Hawaii's islands.",
+    "model": "claude"
   }
 ]
