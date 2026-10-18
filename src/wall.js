@@ -14,7 +14,7 @@ import {
 } from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 import { createLabelRenderer } from "./labels-gl.js";
-import { loadAdoptions } from "./shines.js";
+import { counts, loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
 import { createAz } from "./az.js";
 import { pixelMode, setPixelMode } from "./pixel-mode.js";
@@ -620,6 +620,16 @@ export async function initWall(root) {
   try {
     introWanted = !localStorage.getItem("wall-intro-seen");
   } catch {}
+  // how many are adopted so far, once the adoptions are in
+  if (introWanted)
+    loadAdoptions()
+      .then((adopted) => {
+        const n = counts(adopted);
+        const stat = q("[data-adopted-count]");
+        stat.textContent = `${n.colors.toLocaleString("en-US")} ${n.colors === 1 ? "color" : "colors"} adopted by ${n.patrons.toLocaleString("en-US")} ${n.patrons === 1 ? "patron" : "patrons"} so far`;
+        stat.hidden = !n.colors;
+      })
+      .catch(() => {});
   q("[data-intro-close]").addEventListener("click", () => {
     intro.hidden = true;
     try {
