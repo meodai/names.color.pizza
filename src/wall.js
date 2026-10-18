@@ -802,7 +802,8 @@ export async function initWall(root) {
     return { x: view.w / 2 + dot(v, cam.right) * s, y: view.h / 2 - dot(v, cam.up) * s, z, s };
   }
 
-  function onScreen(minPx = 0, limit = Infinity) {
+  // margin: also the cards this share of the view beyond its edges, about to come in
+  function onScreen(minPx = 0, limit = Infinity, margin = 0) {
     const out = [];
     const [ex, ey, ez] = cam.eye;
     const [fx, fy, fz] = cam.fwd;
@@ -828,7 +829,9 @@ export async function initWall(root) {
       const hw = (W / 2) * s;
       const hh = (H / 2) * s;
       if (sp && i !== sp.i && z < sp.z && Math.abs(x - sp.x) < hw + sp.hw && Math.abs(y - sp.y) < hh + sp.hh) continue;
-      if (x + hw < 0 || x - hw > view.w || y + hh < 0 || y - hh > view.h) continue;
+      const mx = view.w * margin;
+      const my = view.h * margin;
+      if (x + hw < -mx || x - hw > view.w + mx || y + hh < -my || y - hh > view.h + my) continue;
       const near = i === sp?.i ? 1 : nearAlpha(i, (W * s) / short);
       out.push({ i, z, x0: x - hw, y0: y - hh, x1: x + hw, y1: y + hh, s, near });
     }

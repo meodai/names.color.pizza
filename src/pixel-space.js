@@ -38,8 +38,11 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
   }
   // close up, every card bigger than DETAIL_PX on screen gets its full 64 × 64 tile, the
   // nearest first, a dozen fetched at a time; looked for a few times a second, whatever
-  // the names do. When all slots are taken, the card seen longest ago gives its up
+  // the names do. Those done, the cards about to come close: a little smaller, or just
+  // past the view's edges. When all slots are taken, the card seen longest ago gives its up
   const DETAIL_PX = 22;
+  const AHEAD_PX = 12;
+  const AHEAD_MARGIN = 0.3;
   const detail = {
     of: new Map(),
     owner: new Int32Array(DETAIL_SLOTS).fill(-1),
@@ -49,6 +52,12 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     busy: 0,
     round: 0,
     looked: 0,
+    failed: new Map(),
+  };
+  // look again soon, though the camera stays still
+  const lookSoon = (ms) => {
+    clearTimeout(detail.again);
+    detail.again = setTimeout(request, ms);
   };
   function lookForDetail(time) {
     if (!pixelArt.on || !pixelArt.slots) return;
@@ -64,16 +73,26 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     // the card looked at first, then the nearest that show: not those gone, too close to the
     // eye, which would only hold the others up
     const queue = [];
+    const queued = new Set();
+    let missing = 0;
     const want = (i) => {
       const slot = detail.of.get(i);
-      if (slot !== undefined) detail.seen[slot] = time;
-      else if (!detail.loading.has(i) && pixelArt.slots[i] >= 0 && !queue.includes(i)) queue.push(i);
+      if (slot !== undefined) return void (detail.seen[slot] = time);
+      if (pixelArt.slots[i] < 0 || queued.has(i)) return;
+      missing++;
+      if (detail.loading.has(i) || (detail.failed.get(i) ?? 0) > time) return;
+      queued.add(i);
+      queue.push(i);
     };
     const focus = getFocus?.() ?? -1;
     if (focus >= 0) want(focus);
     for (const { i, near } of onScreen(DETAIL_PX, DETAIL_SLOTS / 2)) if (near > 0) want(i);
+    // only once every card showing has its own: the next ones never take a slot from them
+    if (!missing)
+      for (const { i, near } of onScreen(AHEAD_PX, DETAIL_SLOTS / 4, AHEAD_MARGIN)) if (near > 0 && !detail.of.has(i)) want(i);
     detail.queue = queue;
     fetchDetail();
+    if (missing) lookSoon(400);
   }
   function fetchDetail() {
     while (detail.busy < 12 && detail.queue.length) {
@@ -102,7 +121,11 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
           pixelArt.fadingUntil = performance.now() + DETAIL_IN_MS;
           request();
         })
-        .catch(() => {})
+        .catch(() => {
+          if (round !== detail.round) return;
+          detail.failed.set(i, performance.now() + 2000);
+          lookSoon(2100);
+        })
         .finally(() => {
           detail.loading.delete(i);
           detail.busy--;
@@ -119,6 +142,9 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     detail.loading.clear();
     detail.queue = [];
     detail.owner.fill(-1);
+    detail.failed.clear();
+    // the old list's slots would fetch the wrong drawings meanwhile
+    pixelArt.slots = null;
     pixelArt.slots = await pixelSlots();
     getDraw().pixelSlots(pixelArt.slots);
     pixelArt.sheets.forEach((sheet, n) => sheet && getDraw().pixelSheet(n, sheet));
