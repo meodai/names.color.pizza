@@ -246920,9 +246920,9 @@
     "hex": "#609d91",
     "ai": true,
     "kind": "reference",
-    "reference": "Treasure Isle, Duke Reid's studio",
-    "description": "Duke Reid's studio, where ska and rocksteady records were cut, and the island vibes seeped in.",
-    "model": "describer"
+    "reference": "Buried treasure",
+    "description": "Shallow water around a palm-fringed island, where an X on the map marks the buried chest.",
+    "model": "claude"
   },
   {
     "name": "Treasure Map",
