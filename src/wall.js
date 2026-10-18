@@ -961,6 +961,9 @@ export async function initWall(root) {
     return true;
   }
 
+  // in pixel art only the drawing itself takes the mouse, not the empty square around it
+  const drawnAt = (i, u, v) => pixelArt.k <= 0.5 || pixelArt.covers(i, u, v);
+
   function cardAt(sx, sy) {
     if (spot?.on) {
       const b = drawnBox(spot.i);
@@ -972,7 +975,9 @@ export async function initWall(root) {
       const p = project(posOf(clearing.i));
       const top = p.y - (H / 2) * p.s;
       const bottom = pixelArt.k > 0.5 ? top + W * p.s : p.y + (H / 2) * p.s;
-      if (Math.abs(sx - p.x) <= (W / 2) * p.s && sy >= top && sy <= bottom) return clearing.i;
+      const left = p.x - (W / 2) * p.s;
+      if (sx >= left && sx <= left + W * p.s && sy >= top && sy <= bottom && drawnAt(clearing.i, (sx - left) / (W * p.s), (sy - top) / (W * p.s)))
+        return clearing.i;
     }
     // nor do the cards cleared away in front of it, as the shader clears them
     const h = clearing.i >= 0 && clearing.v > 0.5 ? project(posOf(clearing.i)) : null;
@@ -982,7 +987,8 @@ export async function initWall(root) {
     for (const c of onScreen()) {
       // in pixel art a card is only its drawing, the square at its top
       const y1 = pixelArt.k > 0.5 ? c.y0 + W * c.s : c.y1;
-      if (c.near > 0.5 && sx >= c.x0 && sx <= c.x1 && sy >= c.y0 && sy <= y1 && !cleared(c)) return c.i;
+      if (c.near > 0.5 && sx >= c.x0 && sx <= c.x1 && sy >= c.y0 && sy <= y1 && !cleared(c) && drawnAt(c.i, (sx - c.x0) / (c.x1 - c.x0), (sy - c.y0) / (W * c.s)))
+        return c.i;
     }
     return -1;
   }

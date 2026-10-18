@@ -22,6 +22,41 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     items.forEach((it, i) => (slots[i] = pixelArt.index.slot.get(pixelArt.names.get(it.name)) ?? -1));
     return slots;
   }
+  // where each small drawing has paint, a pixel wider all round: what the mouse may land on.
+  // A row of bits per line of a tile, a sheet's tiles one after the other
+  const shapes = [];
+  function shapeOf(sheet, { tile, cols, per }) {
+    const canvas = new OffscreenCanvas(sheet.width, sheet.height);
+    const g = canvas.getContext("2d", { willReadFrequently: true });
+    g.drawImage(sheet, 0, 0);
+    const alpha = g.getImageData(0, 0, sheet.width, sheet.height).data;
+    const rows = new Uint16Array(per * tile);
+    for (let k = 0; k < per; k++) {
+      const x0 = (k % cols) * tile;
+      const y0 = Math.floor(k / cols) * tile;
+      if (y0 >= sheet.height) break;
+      const own = new Uint16Array(tile);
+      for (let y = 0; y < tile; y++)
+        for (let x = 0; x < tile; x++) if (alpha[((y0 + y) * sheet.width + x0 + x) * 4 + 3] > 24) own[y] |= 1 << x;
+      for (let y = 0; y < tile; y++) {
+        const near = own[y] | (y ? own[y - 1] : 0) | (y < tile - 1 ? own[y + 1] : 0);
+        rows[k * tile + y] = near | (near << 1) | (near >> 1);
+      }
+    }
+    return rows;
+  }
+  // card i's drawing has paint at (u, v), 0–1 across and down its square; true while unknown
+  function covers(i, u, v) {
+    const slot = pixelArt.slots?.[i];
+    const index = pixelArt.index;
+    if (slot === undefined || slot < 0 || !index) return true;
+    const rows = shapes[Math.floor(slot / index.per)];
+    if (!rows) return true;
+    const t = index.tile;
+    const x = Math.min(t - 1, Math.max(0, Math.floor(u * t)));
+    const y = Math.min(t - 1, Math.max(0, Math.floor(v * t)));
+    return ((rows[(slot % index.per) * t + y] >> x) & 1) === 1;
+  }
   async function loadPixelArt() {
     pixelArt.index = await pixelAtlas();
     getDraw().pixelInit(pixelArt.index.sheets.length);
@@ -33,6 +68,9 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
         pixelArt.sheets[n] = await createImageBitmap(blob, { premultiplyAlpha: "none" });
         getDraw().pixelSheet(n, pixelArt.sheets[n]);
         request();
+        // when the page has a moment: ~20 ms a sheet, and the opening motion comes first
+        const idle = globalThis.requestIdleCallback ?? ((f) => setTimeout(f, 200));
+        idle(() => (shapes[n] = shapeOf(pixelArt.sheets[n], pixelArt.index)), { timeout: 3000 });
       }),
     );
   }
@@ -171,5 +209,5 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     requestAnimationFrame(step);
   }
 
-  return Object.assign(pixelArt, { toggle: togglePixelArt, restore: restorePixelArt, lookForDetail });
+  return Object.assign(pixelArt, { toggle: togglePixelArt, restore: restorePixelArt, lookForDetail, covers });
 }
