@@ -2,7 +2,7 @@ import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
 import { certificateHTML } from "./certificate.js";
-import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, loadAdoptions } from "./shines.js";
+import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, RUNNING_A_YEAR, counts, loadAdoptions } from "./shines.js";
 import { UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
 import { PROJECTS } from "./projects.js";
@@ -327,6 +327,12 @@ export async function initAdoptPage() {
     const left = counts(adopted).founding;
     q("[data-founding]").hidden = state !== "free" || !left;
     q("[data-founding-left]").textContent = left === 1 ? "The last spot is open." : `${left} of 50 spots left.`;
+    // where the money goes, beside the choice
+    const raised = Object.values(adopted).reduce((sum, a) => sum + (a.amount || 0), 0);
+    const bar = q("[data-costs-bar]");
+    bar.hidden = state !== "free" || !raised;
+    bar.style.setProperty("--k", Math.min(1, raised / RUNNING_A_YEAR).toFixed(3));
+    q("[data-costs-note]").textContent = `$${raised.toLocaleString("en-US")} of the $${RUNNING_A_YEAR.toLocaleString("en-US")} a year it takes to run, covered by patrons so far.`;
     if (mine?.amount >= ADOPT_FROM) {
       who?.clear();
       q("[data-who]").hidden = true;

@@ -3,6 +3,8 @@ import { ADOPT_FROM } from "./adopter.js";
 // the kinds of foil an adopted color can get, one of them rolled when it's adopted with 10 or more
 export const SHINES = ["prism", "galaxy", "classic", "radiant", "aurora", "nova", "gold", "glitter"];
 export { ADOPT_FROM };
+// what a year of running it all costs (supporters/index.html has the parts)
+export const RUNNING_A_YEAR = 980;
 export const HOLO_FROM = 10;
 // the first this many patrons are founding patrons (as in the upload worker)
 export const FOUNDING = 50;

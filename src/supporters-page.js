@@ -1,5 +1,5 @@
 import { getList, siteURL, slugsOf } from "./names.js";
-import { counts, loadAdoptions } from "./shines.js";
+import { RUNNING_A_YEAR, counts, loadAdoptions } from "./shines.js";
 import { PROFILES, handle as handleOf } from "./adopter.js";
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -22,10 +22,20 @@ export async function initSupportersPage() {
   }
   const rows = [...people.values()].sort((x, y) => y.total - x.total);
   const n = counts(adopted);
+  const raised = rows.reduce((sum, p) => sum + p.total, 0);
+  // what the patrons gave so far against a year of running it
+  const bar = document.querySelector("[data-costs-bar]");
+  if (bar && raised) {
+    bar.style.setProperty("--k", Math.min(1, raised / RUNNING_A_YEAR).toFixed(3));
+    bar.querySelector("[data-costs-note]").textContent = `$${raised.toLocaleString("en-US")} of a year’s $${RUNNING_A_YEAR.toLocaleString("en-US")} covered by patrons so far`;
+    bar.hidden = false;
+  }
   const stats = document.querySelector("[data-counts]");
   const plural = (k, one, many) => `${k.toLocaleString("en-US")} ${k === 1 ? one : many}`;
   stats.innerHTML = [
     ...(n.colors ? [`<span>${plural(n.colors, "color", "colors")} adopted by ${plural(n.patrons, "patron", "patrons")}</span>`] : []),
+    // all of it together, never one person's share
+    ...(n.colors ? [`<span>$${raised.toLocaleString("en-US")} raised</span>`] : []),
     `<span>${n.founding === 50 ? "All 50 founding spots open" : n.founding ? `${n.founding} of 50 founding spots left` : "All 50 founding spots taken"}</span>`,
   ].join("");
   stats.hidden = false;

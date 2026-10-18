@@ -666,6 +666,74 @@ a:hover {
   margin-block-start: var(--space-s);
 }
 
+/* the running costs, on paper below the patrons */
+.costs__lead,
+.costs__list,
+.costs__bar {
+  max-inline-size: 36rem;
+}
+
+.costs__list {
+  display: grid;
+  gap: var(--space-2xs);
+  margin: 0;
+}
+
+.costs__list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-s);
+}
+
+.costs__list dd {
+  margin: 0;
+  font-feature-settings: "tnum" 1;
+  white-space: nowrap;
+}
+
+.costs__sum {
+  margin-block: var(--space-2xs) var(--space-s);
+  font-weight: var(--weight-display);
+}
+
+.costs__bar {
+  margin-block-start: var(--space-m);
+}
+
+.costs__bar[hidden] {
+  display: none;
+}
+
+.costs__track {
+  block-size: 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+  overflow: hidden;
+}
+
+.costs__fill {
+  display: block;
+  block-size: 100%;
+  inline-size: calc(var(--k, 0) * 100%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, #fff1b0, #f2c230 55%, #c8901a);
+}
+
+.adopt__costs {
+  max-inline-size: 36rem;
+  margin-block: var(--space-s);
+}
+
+.costs__note a {
+  color: inherit;
+}
+
+.costs__note {
+  margin: var(--space-2xs) 0 0;
+  font-size: var(--text-xs);
+  opacity: 0.75;
+}
+
 .supporters__list {
   display: grid;
   gap: var(--space-m);
