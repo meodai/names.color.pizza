@@ -5714,8 +5714,12 @@ html.is-arriving {
   display: none;
 }
 
-/* nothing left in the group then but its frosted padding */
-.wall.is-az:not(.is-away) .wall__zoom {
+/* the list has no space to go back to the whole of: no center button, no frosted group */
+.wall.is-az .wall__zoom [data-home] {
+  display: none;
+}
+
+.wall.is-az .wall__zoom {
   backdrop-filter: none;
 }
 

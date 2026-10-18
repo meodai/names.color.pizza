@@ -5,11 +5,12 @@ const KEY = "cn-pixel";
 // site may read it into WebGL (CORS)
 const MEDIA = location.hostname === "localhost" ? `${location.origin}/media/` : "https://media.color.pizza/";
 
-// on for the visit, or asked for by the address (?view=pixel)
-let on = new URLSearchParams(location.search).get("view") === "pixel";
+// on unless turned off for the visit or asked off by the address (?view=colors or cells)
+const view = new URLSearchParams(location.search).get("view");
+let on = view === "pixel" || (view !== "colors" && view !== "cells");
 try {
-  if (on) sessionStorage.setItem(KEY, "1");
-  on ||= sessionStorage.getItem(KEY) === "1";
+  if (view === "pixel") sessionStorage.setItem(KEY, "1");
+  else if (on && sessionStorage.getItem(KEY) === "0") on = false;
 } catch {}
 document.documentElement.classList.toggle("is-pixel", on);
 
@@ -34,8 +35,7 @@ export function setPixelMode(next) {
   if (next === on) return;
   on = next;
   try {
-    if (on) sessionStorage.setItem(KEY, "1");
-    else sessionStorage.removeItem(KEY);
+    sessionStorage.setItem(KEY, on ? "1" : "0");
   } catch {}
   document.documentElement.classList.toggle("is-pixel", on);
   if (on) pixelCards(document);

@@ -2086,7 +2086,8 @@ export async function initWall(root) {
       try {
         const url = new URL(location.href);
         const was = url.searchParams.get("view");
-        if (now === "colors") url.searchParams.delete("view");
+        // pixel art is the space's default: the address only says otherwise
+        if (now === "pixel") url.searchParams.delete("view");
         else url.searchParams.set("view", now);
         if (url.searchParams.get("view") !== was) history.replaceState(history.state, "", url);
       } catch {}
