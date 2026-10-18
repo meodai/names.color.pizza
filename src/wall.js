@@ -977,7 +977,7 @@ export async function initWall(root) {
   function cardAt(sx, sy) {
     if (spot?.on) {
       const b = drawnBox(spot.i);
-      if (Math.abs(sx - b.x) <= b.w / 2 && Math.abs(sy - b.y) <= (b.w * H) / 2) return spot.i;
+      if (Math.abs(sx - b.x) <= b.w / 2 && Math.abs(sy - b.y) <= (b.w * H) / W / 2) return spot.i;
     }
     if (cellsMix > 0.5) return cellAt(sx, sy);
     // the hovered card keeps the mouse while the cards in front of it are away
@@ -1252,7 +1252,7 @@ export async function initWall(root) {
     request();
   }
 
-  const boxRect = (b) => ({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, y0: b.y - (b.w * H) / 2, y1: b.y + (b.w * H) / 2 });
+  const boxRect = (b) => ({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, y0: b.y - (b.w * H) / W / 2, y1: b.y + (b.w * H) / W / 2 });
 
   function placeMark() {
     if (marked < 0) return;
@@ -1445,7 +1445,7 @@ export async function initWall(root) {
       : null;
 
   function placeCopy({ copy, card }, box, r = 0) {
-    copy.style.transform = `translate(${box.x - box.w / 2}px, ${box.y - (box.w * H) / 2}px) rotate(${r}deg)`;
+    copy.style.transform = `translate(${box.x - box.w / 2}px, ${box.y - (box.w * H) / W / 2}px) rotate(${r}deg)`;
     sizeCard(card, box.w);
   }
 
@@ -1605,9 +1605,16 @@ export async function initWall(root) {
       // back past every color visited since
       onClose: () => history.go(-colorPage.depth),
     });
-    // and the page's own drawing ready before the copy goes
-    await drawable(layer.querySelector(".swatchcard__pixel--now"));
-    requestAnimationFrame(() => copy.remove());
+    // the copy stays over the page until the page's own card shows, its drawing decoded
+    copy.classList.add("is-arriving");
+    const own = layer.querySelector(".swatchcard__pixel--now");
+    await drawable(own);
+    await own?.decode?.().catch(() => {});
+    const card = layer.querySelector(".color-hero__card .swatchcard");
+    const until = performance.now() + 600;
+    while (card && !card.classList.contains("swatchcard--visible") && performance.now() < until)
+      await new Promise((done) => requestAnimationFrame(done));
+    requestAnimationFrame(() => requestAnimationFrame(() => copy.remove()));
   }
 
   // each neighbor visited is one more history entry

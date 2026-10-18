@@ -5004,7 +5004,8 @@ html.is-arriving {
   transition: opacity 0.3s ease;
 }
 
-.wall__handoff.is-returning {
+.wall__handoff.is-returning,
+.wall__handoff.is-arriving {
   z-index: 6;
 }
 
