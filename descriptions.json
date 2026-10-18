@@ -59800,8 +59800,8 @@
     "ai": true,
     "kind": "reference",
     "reference": "Metallica, Creeping Death",
-    "description": "Metallica's darkest riff, the one that crushes all light out of the room.",
-    "model": "describer"
+    "description": "The blue-black of the night the Angel of Death crept from door to door over Egypt, the plague Metallica turned into a riff.",
+    "model": "claude"
   },
   {
     "name": "Crema",
