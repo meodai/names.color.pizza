@@ -674,15 +674,18 @@ a:hover {
   list-style: none;
 }
 
+/* the rank on top of the face, however long the number gets */
 .supporter {
   display: grid;
-  grid-template-columns: 2.6rem auto 1fr;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: var(--space-2xs) var(--space-s);
 }
 
 .supporter__rank {
-  grid-row: span 2;
+  grid-column: 1;
+  justify-self: center;
+  line-height: 1;
   font-size: var(--text-lg);
   font-weight: var(--weight-display);
   letter-spacing: -0.02em;
@@ -718,9 +721,23 @@ a:hover {
   position: relative;
   right: auto;
   bottom: auto;
-  grid-row: span 2;
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
   transform: none;
   animation: none;
+}
+
+/* the name on the rank's line, the colors beside the face */
+.supporter__who {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.supporter__colors {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
 }
 
 .supporter__name {
@@ -745,11 +762,14 @@ a:hover {
 @media (max-width: 40rem) {
   .supporter {
     grid-template-columns: auto 1fr;
+    align-items: center;
   }
 
   .supporter__rank,
   .supporter .supporter__face {
+    grid-column: auto;
     grid-row: auto;
+    justify-self: start;
   }
 
   .supporter .supporter__face {
@@ -759,6 +779,8 @@ a:hover {
   .supporter__who,
   .supporter__colors {
     grid-column: 1 / -1;
+    grid-row: auto;
+    align-self: auto;
   }
 }
 
