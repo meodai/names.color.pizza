@@ -271257,5 +271257,13 @@
     "reference": "Yoda",
     "description": "The soft green of the small, wise Jedi master from Star Wars.",
     "model": "claude"
+  },
+  {
+    "name": "Cheese-Spot",
+    "hex": "#e0c968",
+    "ai": true,
+    "kind": "pun",
+    "description": "Hard to find, impossible to forget: that one golden, perfectly melted spot of cheese. Some say it’s a myth. Those who found it know better.",
+    "model": "claude"
   }
 ]
