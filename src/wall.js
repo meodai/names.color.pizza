@@ -970,10 +970,19 @@ export async function initWall(root) {
     // the hovered card keeps the mouse while the cards in front of it are away
     if (clearing.i >= 0 && clearing.v > 0) {
       const p = project(posOf(clearing.i));
-      if (Math.abs(sx - p.x) <= (W / 2) * p.s && Math.abs(sy - p.y) <= (H / 2) * p.s) return clearing.i;
+      const top = p.y - (H / 2) * p.s;
+      const bottom = pixelArt.k > 0.5 ? top + W * p.s : p.y + (H / 2) * p.s;
+      if (Math.abs(sx - p.x) <= (W / 2) * p.s && sy >= top && sy <= bottom) return clearing.i;
     }
+    // nor do the cards cleared away in front of it, as the shader clears them
+    const h = clearing.i >= 0 && clearing.v > 0.5 ? project(posOf(clearing.i)) : null;
+    const [rw, rh] = pixelArt.k > 0.5 ? [W * 0.6, W * 0.6] : [W, H];
+    const cleared = (c) =>
+      h && c.i !== clearing.i && c.z < h.z && Math.abs((c.x0 + c.x1) / 2 - h.x) < (rw / 2) * (c.s + h.s) && Math.abs((c.y0 + c.y1) / 2 - h.y) < (rh / 2) * (c.s + h.s);
     for (const c of onScreen()) {
-      if (c.near > 0.5 && sx >= c.x0 && sx <= c.x1 && sy >= c.y0 && sy <= c.y1) return c.i;
+      // in pixel art a card is only its drawing, the square at its top
+      const y1 = pixelArt.k > 0.5 ? c.y0 + W * c.s : c.y1;
+      if (c.near > 0.5 && sx >= c.x0 && sx <= c.x1 && sy >= c.y0 && sy <= y1 && !cleared(c)) return c.i;
     }
     return -1;
   }
