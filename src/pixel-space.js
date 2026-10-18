@@ -80,7 +80,7 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
       if (slot !== undefined) return void (detail.seen[slot] = time);
       if (pixelArt.slots[i] < 0 || queued.has(i)) return;
       missing++;
-      if (detail.loading.has(i) || (detail.failed.get(i) ?? 0) > time) return;
+      if (detail.loading.has(i) || (detail.failed.get(i)?.until ?? 0) > time) return;
       queued.add(i);
       queue.push(i);
     };
@@ -100,7 +100,9 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
       detail.loading.add(i);
       const round = detail.round;
       detail.busy++;
-      fetch(pixelArt.index.tileURL(pixelArt.slots[i]))
+      // a retry asks past the caches, which may keep the error
+      const tries = detail.failed.get(i)?.tries ?? 0;
+      fetch(pixelArt.index.tileURL(pixelArt.slots[i]) + (tries ? `&try=${tries}` : ""))
         .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
         .then((blob) => createImageBitmap(blob, { premultiplyAlpha: "none" }))
         .then((image) => {
@@ -113,6 +115,7 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
             detail.of.delete(was);
             getDraw().pixelDetailOf(was, -1);
           }
+          detail.failed.delete(i);
           detail.owner[slot] = i;
           detail.of.set(i, slot);
           detail.seen[slot] = performance.now();
@@ -123,7 +126,7 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
         })
         .catch(() => {
           if (round !== detail.round) return;
-          detail.failed.set(i, performance.now() + 2000);
+          detail.failed.set(i, { until: performance.now() + 2000 * 2 ** Math.min(tries, 4), tries: tries + 1 });
           lookSoon(2100);
         })
         .finally(() => {
