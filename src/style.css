@@ -4789,6 +4789,16 @@ html.is-arriving {
   line-height: 1.2;
 }
 
+.wall__intro p.wall__intro-adopt {
+  margin-block-start: var(--space-s);
+}
+
+.wall__intro-adopt i {
+  font-style: normal;
+  font-weight: var(--weight-label);
+  white-space: nowrap;
+}
+
 .wall__intro-links {
   display: flex;
   align-items: center;
@@ -4797,7 +4807,9 @@ html.is-arriving {
   padding-block-start: var(--space-2xs);
 }
 
-.wall__intro-links a {
+.wall__intro-links a,
+.wall__intro-links button {
+  white-space: nowrap;
   color: inherit;
   font-weight: var(--weight-label);
 }
