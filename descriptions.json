@@ -260705,9 +260705,9 @@
     "hex": "#8a96a0",
     "ai": true,
     "kind": "reference",
-    "reference": "Wet Seal retailer",
-    "description": "Faded denim, like a pair of jeans left out in the California mist.",
-    "model": "describer"
+    "reference": "Earless seal",
+    "description": "A seal just out of the sea, its grey coat slick and shining on the rocks.",
+    "model": "claude"
   },
   {
     "name": "Wet Suit",
