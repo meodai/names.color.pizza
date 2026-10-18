@@ -12,7 +12,8 @@ export const DETAIL_IN_MS = 320;
 
 // getDraw, getItems: the renderer and cards now (a new list brings new ones); onScreen: the
 // cards on screen bigger than a size, nearest first; request: a frame
-export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceMotion, onToggle }) {
+// getFocus: the card looked at (found, opened), which comes first
+export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceMotion, onToggle, getFocus }) {
   const pixelArt = { on: false, k: 0, index: null, slots: null, sheets: [], loading: null, fadingUntil: 0 };
   async function pixelSlots() {
     pixelArt.names ??= slugsOf((await getList("default")).items);
@@ -60,12 +61,17 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
       return;
     }
     detail.looked = time;
+    // the card looked at first, then the nearest that show: not those gone, too close to the
+    // eye, which would only hold the others up
     const queue = [];
-    for (const { i } of onScreen(DETAIL_PX, DETAIL_SLOTS / 2)) {
+    const want = (i) => {
       const slot = detail.of.get(i);
       if (slot !== undefined) detail.seen[slot] = time;
-      else if (!detail.loading.has(i) && pixelArt.slots[i] >= 0) queue.push(i);
-    }
+      else if (!detail.loading.has(i) && pixelArt.slots[i] >= 0 && !queue.includes(i)) queue.push(i);
+    };
+    const focus = getFocus?.() ?? -1;
+    if (focus >= 0) want(focus);
+    for (const { i, near } of onScreen(DETAIL_PX, DETAIL_SLOTS / 2)) if (near > 0) want(i);
     detail.queue = queue;
     fetchDetail();
   }

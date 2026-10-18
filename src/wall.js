@@ -709,6 +709,7 @@ export async function initWall(root) {
     request: () => request(),
     reduceMotion,
     onToggle: (on) => on && (tip.hidden = true),
+    getFocus: () => opening?.i ?? spot?.i ?? -1,
   });
   window.addEventListener("pixelmode", (e) => {
     if (e.detail !== pixelArt.on) pixelArt.toggle();
