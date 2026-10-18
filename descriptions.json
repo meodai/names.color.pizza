@@ -229930,9 +229930,10 @@
     "name": "Statued",
     "hex": "#d0bcb1",
     "ai": true,
-    "kind": "plain",
-    "description": "Faded bronze, like a monument left out in the weather.",
-    "model": "describer"
+    "kind": "reference",
+    "description": "The pale pinkish stone of someone who looked Medusa in the eye, frozen mid-step forever.",
+    "model": "claude",
+    "reference": "Medusa"
   },
   {
     "name": "Statuesque",
