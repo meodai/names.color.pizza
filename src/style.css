@@ -430,11 +430,17 @@ a:hover {
 
 .adopt__pick {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-xs);
   margin: var(--space-m) 0 0;
   font-size: var(--text-lg);
   font-weight: 300;
+}
+
+/* over the wheel and the name it lands on, a line of its own */
+.adopt__pick-label {
+  flex-basis: 100%;
 }
 
 .adopt__pick[hidden] {
