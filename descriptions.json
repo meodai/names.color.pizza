@@ -270300,5 +270300,962 @@
     "reference": "Pele, the Hawaiian goddess of volcanoes and fire",
     "description": "Lava cooling at the edge of the sea, the glowing orange of Pele, who made Hawaii's islands.",
     "model": "claude"
+  },
+  {
+    "name": "Amber Coast Tide",
+    "hex": "#3aa098",
+    "ai": true,
+    "kind": "place",
+    "description": "Green water rolling in on the Baltic shore, where amber washes up after storms.",
+    "model": "claude"
+  },
+  {
+    "name": "Ancient Oak",
+    "hex": "#665b4e",
+    "ai": true,
+    "kind": "thing",
+    "description": "The grey-brown bark of an oak that has stood for five hundred years.",
+    "model": "claude"
+  },
+  {
+    "name": "Apricot Fondant",
+    "hex": "#f4e3d2",
+    "ai": true,
+    "kind": "thing",
+    "description": "The soft, sugary glaze on a petit four, barely blushing apricot.",
+    "model": "claude"
+  },
+  {
+    "name": "Apricot Lassi",
+    "hex": "#fce9d1",
+    "ai": true,
+    "kind": "thing",
+    "description": "A chilled yoghurt drink with a spoonful of apricot stirred through.",
+    "model": "claude"
+  },
+  {
+    "name": "Arctic Floe",
+    "hex": "#e6efec",
+    "ai": true,
+    "kind": "place",
+    "description": "A drifting slab of sea ice, white with a faint green cold beneath.",
+    "model": "claude"
+  },
+  {
+    "name": "Baked Earth",
+    "hex": "#cc7733",
+    "ai": true,
+    "kind": "thing",
+    "description": "Clay left in the summer sun until it cracks and turns to warm orange.",
+    "model": "claude"
+  },
+  {
+    "name": "Barely Sky",
+    "hex": "#d9e4e5",
+    "ai": true,
+    "kind": "mood",
+    "description": "Just a breath of blue, a sky so pale it is almost not there.",
+    "model": "claude"
+  },
+  {
+    "name": "Bashful Smile",
+    "hex": "#f7d2c4",
+    "ai": true,
+    "kind": "mood",
+    "description": "The warm pink that rises in a cheek when someone smiles back.",
+    "model": "claude"
+  },
+  {
+    "name": "Bloodstained",
+    "hex": "#980001",
+    "ai": true,
+    "kind": "thing",
+    "description": "Dried red on a blade or a battlefield shirt, deep and dark.",
+    "model": "claude"
+  },
+  {
+    "name": "Blossom Tempest",
+    "hex": "#fbe9dd",
+    "ai": true,
+    "kind": "thing",
+    "description": "Spring wind tearing through an orchard, a storm of pale pink petals.",
+    "model": "claude"
+  },
+  {
+    "name": "Bridesmaid Sash",
+    "hex": "#f6dfd8",
+    "ai": true,
+    "kind": "thing",
+    "description": "The soft blush ribbon tied around a bridesmaid’s waist.",
+    "model": "claude"
+  },
+  {
+    "name": "Brooch Ivory",
+    "hex": "#f3e2c3",
+    "ai": true,
+    "kind": "thing",
+    "description": "The carved ivory face of a grandmother’s cameo brooch.",
+    "model": "claude"
+  },
+  {
+    "name": "Burnt Letters",
+    "hex": "#b8b5ad",
+    "ai": true,
+    "kind": "thing",
+    "description": "The grey ash left when old love letters are thrown into the fire.",
+    "model": "claude"
+  },
+  {
+    "name": "Butter Pat",
+    "hex": "#fffd74",
+    "ai": true,
+    "kind": "thing",
+    "description": "A small square of fresh butter, yellow and soft on the plate.",
+    "model": "claude"
+  },
+  {
+    "name": "Buttercup Field",
+    "hex": "#fcd93b",
+    "ai": true,
+    "kind": "place",
+    "description": "A meadow in May, all glowing yellow buttercups.",
+    "model": "claude"
+  },
+  {
+    "name": "Byzantine Robe",
+    "hex": "#602f6b",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Byzantine Empire",
+    "description": "The deep imperial purple worn only by emperors in Constantinople.",
+    "model": "claude"
+  },
+  {
+    "name": "Canvas Sneaker",
+    "hex": "#f6ebd3",
+    "ai": true,
+    "kind": "thing",
+    "description": "The off-white canvas of a well-loved pair of sneakers.",
+    "model": "claude"
+  },
+  {
+    "name": "Carved Pumpkin",
+    "hex": "#fb7d07",
+    "ai": true,
+    "kind": "thing",
+    "description": "The bright orange of a Halloween pumpkin, a candle glowing inside.",
+    "model": "claude"
+  },
+  {
+    "name": "Carved Shell",
+    "hex": "#eed8ba",
+    "ai": true,
+    "kind": "thing",
+    "description": "Shell cut into a cameo, warm cream with a hint of peach.",
+    "model": "claude"
+  },
+  {
+    "name": "Celadon Dream",
+    "hex": "#dbe7e1",
+    "ai": true,
+    "kind": "thing",
+    "description": "The soft green-grey glaze of old celadon porcelain.",
+    "model": "claude"
+  },
+  {
+    "name": "Celebration Fizz",
+    "hex": "#e8d6b3",
+    "ai": true,
+    "kind": "thing",
+    "description": "The pale gold of champagne bubbling up in a raised glass.",
+    "model": "claude"
+  },
+  {
+    "name": "Chewbacca",
+    "hex": "#71563b",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Chewbacca",
+    "description": "The shaggy brown fur of Han Solo’s loyal Wookiee co-pilot.",
+    "model": "claude"
+  },
+  {
+    "name": "Chimney Rain",
+    "hex": "#5a5f68",
+    "ai": true,
+    "kind": "mood",
+    "description": "Slate grey rooftops and chimney pots on a wet afternoon.",
+    "model": "claude"
+  },
+  {
+    "name": "Coastal Thicket",
+    "hex": "#2d5360",
+    "ai": true,
+    "kind": "place",
+    "description": "Dense dark green-blue shrubs clinging to a windswept coast.",
+    "model": "claude"
+  },
+  {
+    "name": "Cold Hearth",
+    "hex": "#c1b5a9",
+    "ai": true,
+    "kind": "thing",
+    "description": "The pale grey ash in a fireplace long after the fire has died.",
+    "model": "claude"
+  },
+  {
+    "name": "Cracked Shell",
+    "hex": "#f3e4dc",
+    "ai": true,
+    "kind": "thing",
+    "description": "The pinkish white of an eggshell cracked open on the kitchen counter.",
+    "model": "claude"
+  },
+  {
+    "name": "Cradle Song",
+    "hex": "#c8d7d2",
+    "ai": true,
+    "kind": "mood",
+    "description": "A quiet blue-green, the colour of a lullaby sung to a sleeping child.",
+    "model": "claude"
+  },
+  {
+    "name": "Delicate Marzipan",
+    "hex": "#dfd5ca",
+    "ai": true,
+    "kind": "thing",
+    "description": "Pale almond paste, smooth and faintly sweet.",
+    "model": "claude"
+  },
+  {
+    "name": "Distant Chime",
+    "hex": "#dfdee5",
+    "ai": true,
+    "kind": "mood",
+    "description": "A faint lilac grey, like bells heard from far across a valley.",
+    "model": "claude"
+  },
+  {
+    "name": "Distant Hills",
+    "hex": "#bcc8cc",
+    "ai": true,
+    "kind": "place",
+    "description": "Hills fading blue-grey into the haze on the horizon.",
+    "model": "claude"
+  },
+  {
+    "name": "Dry Meadow",
+    "hex": "#e0d8b0",
+    "ai": true,
+    "kind": "place",
+    "description": "Late summer grass bleached to straw under the sun.",
+    "model": "claude"
+  },
+  {
+    "name": "Dune Crest",
+    "hex": "#eace6a",
+    "ai": true,
+    "kind": "place",
+    "description": "The golden sand at the top of a dune, lit by the low sun.",
+    "model": "claude"
+  },
+  {
+    "name": "Electric Pool",
+    "hex": "#01f1f1",
+    "ai": true,
+    "kind": "thing",
+    "description": "A swimming pool lit from below at night, shocking cyan.",
+    "model": "claude"
+  },
+  {
+    "name": "Engine Sludge",
+    "hex": "#3b3131",
+    "ai": true,
+    "kind": "thing",
+    "description": "Old black oil drained from a tired engine.",
+    "model": "claude"
+  },
+  {
+    "name": "Favourite Afternoon",
+    "hex": "#ffe9ba",
+    "ai": true,
+    "kind": "mood",
+    "description": "Warm golden light falling across the table on a lazy afternoon.",
+    "model": "claude"
+  },
+  {
+    "name": "Fireside Linen",
+    "hex": "#e4e3d8",
+    "ai": true,
+    "kind": "thing",
+    "description": "Soft grey-beige linen draped over a chair by the fire.",
+    "model": "claude"
+  },
+  {
+    "name": "Fogged Pool",
+    "hex": "#bcdbdb",
+    "ai": true,
+    "kind": "place",
+    "description": "A swimming pool on a misty morning, its blue softened to grey.",
+    "model": "claude"
+  },
+  {
+    "name": "Ghost of Summer",
+    "hex": "#f0e8c6",
+    "ai": true,
+    "kind": "mood",
+    "description": "The pale yellow memory of summer light, fading into autumn.",
+    "model": "claude"
+  },
+  {
+    "name": "Grandmother’s Pantry",
+    "hex": "#644847",
+    "ai": true,
+    "kind": "thing",
+    "description": "The dark wood shelves and plum jam jars of an old pantry.",
+    "model": "claude"
+  },
+  {
+    "name": "Graphite Smudge",
+    "hex": "#343434",
+    "ai": true,
+    "kind": "thing",
+    "description": "The grey smear left on paper when a pencil drawing is rubbed.",
+    "model": "claude"
+  },
+  {
+    "name": "Heather at First Light",
+    "hex": "#a89b9c",
+    "ai": true,
+    "kind": "place",
+    "description": "Moorland heather, grey-mauve before the sun is fully up.",
+    "model": "claude"
+  },
+  {
+    "name": "Hedgerow Plumage",
+    "hex": "#c6795f",
+    "ai": true,
+    "kind": "thing",
+    "description": "The russet feathers of a bird flitting through a hedgerow.",
+    "model": "claude"
+  },
+  {
+    "name": "Heirloom Sparkle",
+    "hex": "#f6f1d7",
+    "ai": true,
+    "kind": "thing",
+    "description": "The soft pale glint of an old diamond passed down for generations.",
+    "model": "claude"
+  },
+  {
+    "name": "Hen’s Treasure",
+    "hex": "#f5eedb",
+    "ai": true,
+    "kind": "thing",
+    "description": "A freshly laid egg, warm cream in the straw.",
+    "model": "claude"
+  },
+  {
+    "name": "Humidor",
+    "hex": "#6d5843",
+    "ai": true,
+    "kind": "thing",
+    "description": "The rich brown cedar box where good cigars are kept.",
+    "model": "claude"
+  },
+  {
+    "name": "Kiln Fired",
+    "hex": "#da7631",
+    "ai": true,
+    "kind": "thing",
+    "description": "Terracotta just out of the kiln, glowing orange-brown.",
+    "model": "claude"
+  },
+  {
+    "name": "Kite Day",
+    "hex": "#bad9e5",
+    "ai": true,
+    "kind": "mood",
+    "description": "A breezy pale blue sky, perfect for flying kites.",
+    "model": "claude"
+  },
+  {
+    "name": "Kyoto Rain",
+    "hex": "#1b8192",
+    "ai": true,
+    "kind": "place",
+    "description": "Teal temple roofs glistening under a shower in Kyoto.",
+    "model": "claude"
+  },
+  {
+    "name": "Lagoon Shallows",
+    "hex": "#b5dfc9",
+    "ai": true,
+    "kind": "place",
+    "description": "Clear green water over white sand at the edge of a lagoon.",
+    "model": "claude"
+  },
+  {
+    "name": "Lahaina Bay",
+    "hex": "#52a2b4",
+    "ai": true,
+    "kind": "place",
+    "description": "The bright turquoise water off Maui’s old whaling town.",
+    "model": "claude"
+  },
+  {
+    "name": "Library Hush",
+    "hex": "#e6e4e4",
+    "ai": true,
+    "kind": "mood",
+    "description": "The quiet pale grey of a reading room where no one speaks.",
+    "model": "claude"
+  },
+  {
+    "name": "Lilac Veil",
+    "hex": "#c9c6df",
+    "ai": true,
+    "kind": "thing",
+    "description": "A sheer veil of pale lilac, soft and dreamy.",
+    "model": "claude"
+  },
+  {
+    "name": "Linden Flower",
+    "hex": "#f4f2d3",
+    "ai": true,
+    "kind": "thing",
+    "description": "The pale yellow-green blossoms of the lime tree, sweet in June.",
+    "model": "claude"
+  },
+  {
+    "name": "Lullaby of Frost",
+    "hex": "#e5e8f2",
+    "ai": true,
+    "kind": "mood",
+    "description": "The faint blue-white of a frosted window on a winter night.",
+    "model": "claude"
+  },
+  {
+    "name": "Mangeto",
+    "hex": "#fcb001",
+    "ai": true,
+    "kind": "pun",
+    "description": "Mango and gelato in one scoop, bright orange-yellow.",
+    "model": "claude"
+  },
+  {
+    "name": "Marked Passage",
+    "hex": "#f1e740",
+    "ai": true,
+    "kind": "thing",
+    "description": "The yellow highlighter stripe across the sentence that matters.",
+    "model": "claude"
+  },
+  {
+    "name": "Mediterranean Harvest",
+    "hex": "#d87839",
+    "ai": true,
+    "kind": "place",
+    "description": "Sun-ripened oranges piled high in a Mediterranean market.",
+    "model": "claude"
+  },
+  {
+    "name": "Memories of Rain",
+    "hex": "#d2dde0",
+    "ai": true,
+    "kind": "mood",
+    "description": "A pale blue-grey, like a window after the rain has passed.",
+    "model": "claude"
+  },
+  {
+    "name": "Meringue Kiss",
+    "hex": "#ebe2e5",
+    "ai": true,
+    "kind": "thing",
+    "description": "A little baked meringue, white with a hint of pink.",
+    "model": "claude"
+  },
+  {
+    "name": "Mermaid’s Glass",
+    "hex": "#a1d4d1",
+    "ai": true,
+    "kind": "thing",
+    "description": "Sea glass worn smooth by the waves, frosted aqua.",
+    "model": "claude"
+  },
+  {
+    "name": "Meteor Dust",
+    "hex": "#6e6970",
+    "ai": true,
+    "kind": "thing",
+    "description": "The grey-violet dust a shooting star leaves behind.",
+    "model": "claude"
+  },
+  {
+    "name": "Michaelmas Daisy",
+    "hex": "#8881b0",
+    "ai": true,
+    "kind": "thing",
+    "description": "The soft violet asters that bloom in late September.",
+    "model": "claude"
+  },
+  {
+    "name": "Milk Skin",
+    "hex": "#f0e9d6",
+    "ai": true,
+    "kind": "thing",
+    "description": "The thin cream skin that forms on warm milk.",
+    "model": "claude"
+  },
+  {
+    "name": "Mint Breath",
+    "hex": "#e3eee3",
+    "ai": true,
+    "kind": "thing",
+    "description": "A cool whisper of pale mint green.",
+    "model": "claude"
+  },
+  {
+    "name": "Moon Oyster",
+    "hex": "#f1e3bc",
+    "ai": true,
+    "kind": "thing",
+    "description": "The pale gold lustre inside an oyster shell, like moonlight.",
+    "model": "claude"
+  },
+  {
+    "name": "Moonlit Sonata",
+    "hex": "#37525f",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Moonlight Sonata",
+    "description": "Deep blue-grey night, as quiet and slow as Beethoven’s sonata.",
+    "model": "claude"
+  },
+  {
+    "name": "Myth of the Plains",
+    "hex": "#8b6a4f",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Centaur",
+    "description": "The chestnut brown of a centaur galloping across a legend.",
+    "model": "claude"
+  },
+  {
+    "name": "Nave Stone",
+    "hex": "#aba9a7",
+    "ai": true,
+    "kind": "place",
+    "description": "The cool grey stone of a cathedral nave.",
+    "model": "claude"
+  },
+  {
+    "name": "Northern Sea Glass",
+    "hex": "#00a49a",
+    "ai": true,
+    "kind": "thing",
+    "description": "Teal sea glass washed up on a cold northern beach.",
+    "model": "claude"
+  },
+  {
+    "name": "Northern Stone",
+    "hex": "#547d80",
+    "ai": true,
+    "kind": "thing",
+    "description": "Labradorite catching the light, a deep green-blue gleam.",
+    "model": "claude"
+  },
+  {
+    "name": "Nuptial Lingerie",
+    "hex": "#f9f0de",
+    "ai": true,
+    "kind": "thing",
+    "description": "Soft ivory silk and lace for a wedding night.",
+    "model": "claude"
+  },
+  {
+    "name": "Old Piano Keys",
+    "hex": "#efeedc",
+    "ai": true,
+    "kind": "thing",
+    "description": "The yellowed ivory of keys on an old upright piano.",
+    "model": "claude"
+  },
+  {
+    "name": "Orchard in April",
+    "hex": "#f4ecdb",
+    "ai": true,
+    "kind": "place",
+    "description": "Apple trees in full white blossom on a spring morning.",
+    "model": "claude"
+  },
+  {
+    "name": "Overcast Concrete",
+    "hex": "#727171",
+    "ai": true,
+    "kind": "thing",
+    "description": "A grey concrete wall under a grey sky.",
+    "model": "claude"
+  },
+  {
+    "name": "Owl Hour",
+    "hex": "#545883",
+    "ai": true,
+    "kind": "mood",
+    "description": "Deep blue dusk, when owls begin to call.",
+    "model": "claude"
+  },
+  {
+    "name": "Oyster Lustre",
+    "hex": "#ede1d1",
+    "ai": true,
+    "kind": "thing",
+    "description": "The pearly pink-white sheen inside an oyster shell.",
+    "model": "claude"
+  },
+  {
+    "name": "Pack Leader",
+    "hex": "#acaeb1",
+    "ai": true,
+    "kind": "thing",
+    "description": "The silver-grey coat of the wolf at the head of the pack.",
+    "model": "claude"
+  },
+  {
+    "name": "Paper Castles",
+    "hex": "#e5e2da",
+    "ai": true,
+    "kind": "thing",
+    "description": "Pale grey-white folded paper, built into towers.",
+    "model": "claude"
+  },
+  {
+    "name": "Papyrus Reed",
+    "hex": "#99be85",
+    "ai": true,
+    "kind": "thing",
+    "description": "The fresh green stems of papyrus along the Nile.",
+    "model": "claude"
+  },
+  {
+    "name": "Pepper Brine",
+    "hex": "#8c8e51",
+    "ai": true,
+    "kind": "thing",
+    "description": "Olive green jalapeños floating in their pickling jar.",
+    "model": "claude"
+  },
+  {
+    "name": "Pier Feather",
+    "hex": "#d9d9d2",
+    "ai": true,
+    "kind": "thing",
+    "description": "A seagull feather resting on the weathered boards of a pier.",
+    "model": "claude"
+  },
+  {
+    "name": "Pigeon Breast",
+    "hex": "#7f92a0",
+    "ai": true,
+    "kind": "thing",
+    "description": "The soft blue-grey feathers on a pigeon’s chest.",
+    "model": "claude"
+  },
+  {
+    "name": "Pirouette",
+    "hex": "#f9e4e9",
+    "ai": true,
+    "kind": "thing",
+    "description": "A ballerina’s pale pink tutu spinning on stage.",
+    "model": "claude"
+  },
+  {
+    "name": "Prospector’s Find",
+    "hex": "#bf961f",
+    "ai": true,
+    "kind": "thing",
+    "description": "A gold nugget glinting in the prospector’s pan.",
+    "model": "claude"
+  },
+  {
+    "name": "Provence Wind",
+    "hex": "#b4b9b9",
+    "ai": true,
+    "kind": "place",
+    "description": "The cool silver-grey sky after the mistral sweeps through Provence.",
+    "model": "claude"
+  },
+  {
+    "name": "Puddle Mirror",
+    "hex": "#ccd7e1",
+    "ai": true,
+    "kind": "thing",
+    "description": "A puddle on the pavement reflecting a pale blue sky.",
+    "model": "claude"
+  },
+  {
+    "name": "Quarry Face",
+    "hex": "#6b6869",
+    "ai": true,
+    "kind": "place",
+    "description": "Grey granite cut sheer in an old quarry wall.",
+    "model": "claude"
+  },
+  {
+    "name": "Radioactive Lawn",
+    "hex": "#65fe08",
+    "ai": true,
+    "kind": "pun",
+    "description": "Grass so bright green it almost glows.",
+    "model": "claude"
+  },
+  {
+    "name": "Raven Sheen",
+    "hex": "#112f4b",
+    "ai": true,
+    "kind": "thing",
+    "description": "The deep blue gleam on a raven’s black feathers.",
+    "model": "claude"
+  },
+  {
+    "name": "Reef Bloom",
+    "hex": "#f3774d",
+    "ai": true,
+    "kind": "place",
+    "description": "Coral glowing orange-pink on a tropical reef.",
+    "model": "claude"
+  },
+  {
+    "name": "Resort",
+    "hex": "#8ac6bd",
+    "ai": true,
+    "kind": "place",
+    "description": "Turquoise water lapping against the edge of a resort pool.",
+    "model": "claude"
+  },
+  {
+    "name": "Ripe on the Vine",
+    "hex": "#ec2d01",
+    "ai": true,
+    "kind": "thing",
+    "description": "A tomato at its reddest, ready to pick.",
+    "model": "claude"
+  },
+  {
+    "name": "Roman Quarry",
+    "hex": "#d6d7db",
+    "ai": true,
+    "kind": "place",
+    "description": "Pale grey-white stone cut for ancient Roman temples.",
+    "model": "claude"
+  },
+  {
+    "name": "Rosebud Tea",
+    "hex": "#eec6c3",
+    "ai": true,
+    "kind": "thing",
+    "description": "A cup of tea with dried rosebuds unfurling, soft pink.",
+    "model": "claude"
+  },
+  {
+    "name": "Rumbling Sky",
+    "hex": "#57534c",
+    "ai": true,
+    "kind": "mood",
+    "description": "Dark grey clouds rolling in before the thunder.",
+    "model": "claude"
+  },
+  {
+    "name": "Sakura Panic",
+    "hex": "#ffb7c5",
+    "ai": true,
+    "kind": "pun",
+    "description": "Cherry blossom season, everyone rushing to see the pink before it falls.",
+    "model": "claude"
+  },
+  {
+    "name": "Salt on Her Lips",
+    "hex": "#f6dacb",
+    "ai": true,
+    "kind": "mood",
+    "description": "Pale pink, sun-kissed skin after a day by the sea.",
+    "model": "claude"
+  },
+  {
+    "name": "Seer’s Cloak",
+    "hex": "#745d83",
+    "ai": true,
+    "kind": "thing",
+    "description": "The deep violet robe of a fortune teller.",
+    "model": "claude"
+  },
+  {
+    "name": "Seraph’s Blush",
+    "hex": "#f4d9cb",
+    "ai": true,
+    "kind": "mood",
+    "description": "A heavenly peach-pink, like an angel’s cheek.",
+    "model": "claude"
+  },
+  {
+    "name": "Signpost Oak",
+    "hex": "#756657",
+    "ai": true,
+    "kind": "thing",
+    "description": "The weathered brown wood of an old countryside signpost.",
+    "model": "claude"
+  },
+  {
+    "name": "Siren’s Swirl",
+    "hex": "#a7d0c5",
+    "ai": true,
+    "kind": "thing",
+    "description": "Sea foam swirling in pale green-blue water.",
+    "model": "claude"
+  },
+  {
+    "name": "Snowfall Hush",
+    "hex": "#ebe6d8",
+    "ai": true,
+    "kind": "mood",
+    "description": "The quiet off-white of the world after a fresh snowfall.",
+    "model": "claude"
+  },
+  {
+    "name": "Sprinkle Frosting",
+    "hex": "#f6cac3",
+    "ai": true,
+    "kind": "thing",
+    "description": "Pink icing on a cake pop, scattered with sprinkles.",
+    "model": "claude"
+  },
+  {
+    "name": "Squirrel’s Cache",
+    "hex": "#675850",
+    "ai": true,
+    "kind": "thing",
+    "description": "Brown pine cones and nuts hidden away for winter.",
+    "model": "claude"
+  },
+  {
+    "name": "Strait Fog",
+    "hex": "#6f6a68",
+    "ai": true,
+    "kind": "place",
+    "description": "Grey fog rolling through the Strait of Gibraltar.",
+    "model": "claude"
+  },
+  {
+    "name": "Strawberry Mallow",
+    "hex": "#f7e5e6",
+    "ai": true,
+    "kind": "thing",
+    "description": "A pale pink marshmallow with a hint of strawberry.",
+    "model": "claude"
+  },
+  {
+    "name": "Streets of London",
+    "hex": "#59656d",
+    "ai": true,
+    "kind": "place",
+    "description": "Grey-blue slate and rain-wet pavements in London.",
+    "model": "claude"
+  },
+  {
+    "name": "Suburban Dream",
+    "hex": "#f0efeb",
+    "ai": true,
+    "kind": "thing",
+    "description": "The crisp white of a picket fence around a suburban lawn.",
+    "model": "claude"
+  },
+  {
+    "name": "Sunflower Burst",
+    "hex": "#ffd44d",
+    "ai": true,
+    "kind": "thing",
+    "description": "The bright yellow of a sunflower in full bloom.",
+    "model": "claude"
+  },
+  {
+    "name": "Tarnished Epistles",
+    "hex": "#e6ddcd",
+    "ai": true,
+    "kind": "thing",
+    "description": "Old letters, their ivory paper yellowed with age.",
+    "model": "claude"
+  },
+  {
+    "name": "Tide Whisper",
+    "hex": "#fff6de",
+    "ai": true,
+    "kind": "mood",
+    "description": "Pale cream foam left on the sand as the tide pulls back.",
+    "model": "claude"
+  },
+  {
+    "name": "Tin Moon",
+    "hex": "#8c8d91",
+    "ai": true,
+    "kind": "thing",
+    "description": "A dull silver moon cut from tin.",
+    "model": "claude"
+  },
+  {
+    "name": "Torched Custard",
+    "hex": "#ffe19d",
+    "ai": true,
+    "kind": "thing",
+    "description": "The golden caramelised top of a crème brûlée.",
+    "model": "claude"
+  },
+  {
+    "name": "Ultramarine Vein",
+    "hex": "#215f96",
+    "ai": true,
+    "kind": "thing",
+    "description": "The deep blue streak running through a lapis lazuli stone.",
+    "model": "claude"
+  },
+  {
+    "name": "Watercolour Seascape",
+    "hex": "#91b4b3",
+    "ai": true,
+    "kind": "thing",
+    "description": "A soft blue-green seascape painted in watercolour.",
+    "model": "claude"
+  },
+  {
+    "name": "Windless Morning",
+    "hex": "#aba9a0",
+    "ai": true,
+    "kind": "mood",
+    "description": "The still grey calm of a morning with no wind at all.",
+    "model": "claude"
+  },
+  {
+    "name": "Wool Blanket",
+    "hex": "#c5c3b4",
+    "ai": true,
+    "kind": "thing",
+    "description": "A soft grey wool blanket folded on the end of the bed.",
+    "model": "claude"
+  },
+  {
+    "name": "Worn Suede",
+    "hex": "#dcccc0",
+    "ai": true,
+    "kind": "thing",
+    "description": "Light brown suede, soft and scuffed with wear.",
+    "model": "claude"
+  },
+  {
+    "name": "Yoda",
+    "hex": "#53a079",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Yoda",
+    "description": "The soft green of the small, wise Jedi master from Star Wars.",
+    "model": "claude"
   }
 ]
