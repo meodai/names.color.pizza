@@ -5578,6 +5578,11 @@ html.is-arriving {
   display: none;
 }
 
+/* nothing left in the group then but its frosted padding */
+.wall.is-az:not(.is-away) .wall__zoom {
+  backdrop-filter: none;
+}
+
 /* the certificate on the thank-you page: paper, a double frame, the color's rosette and seal */
 .adopt-cert {
   display: grid;
