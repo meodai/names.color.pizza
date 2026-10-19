@@ -340,7 +340,18 @@ function datasetLine({ name, hex, url, said, looked, pixel }) {
 // ONLY=slug,slug: just those pages, for a quick local preview
 const ONLY = process.env.ONLY && new Set(process.env.ONLY.split(","));
 
+// where it is, every tenth of the way, as a build waits on this the longest
+const began = Date.now();
+const minutes = (ms) => `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
+const tenth = Math.ceil(items.length / 10);
+
 for (const [i, { name, hex }] of items.entries()) {
+  if (!ONLY && i && i % tenth === 0) {
+    const spent = Date.now() - began;
+    console.log(
+      `pages.mjs: ${i.toLocaleString("en-US")} of ${items.length.toLocaleString("en-US")} pages, ${minutes(spent)}, about ${minutes((spent / i) * (items.length - i))} left`,
+    );
+  }
   const slug = slugs.get(name);
   if (ONLY && !ONLY.has(slug)) continue;
   const copy = copyOf(slug);
