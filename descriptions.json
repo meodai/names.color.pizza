@@ -129295,13 +129295,12 @@
     "model": "describer"
   },
   {
-    "name": "Lavender Blue Shadow",
+    "name": "Perikinkle",
     "hex": "#8b88f8",
     "ai": true,
-    "kind": "thing",
-    "reference": "lavender flowers",
-    "description": "Bright periwinkle, like a field of lavender in full bloom.",
-    "model": "describer"
+    "kind": "pun",
+    "description": "Periwinkle that met Rik Oostenbroek and came back with a kink: bent, twisted and glossy, like one of his swirls. Straight lines were not invited.",
+    "model": "claude"
   },
   {
     "name": "Lavender Blush",
