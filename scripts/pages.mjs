@@ -6,6 +6,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
+import { availableParallelism } from "node:os";
+import { Worker } from "node:worker_threads";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
 import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
@@ -81,6 +83,7 @@ const copyOf = (slug) => {
 // (and a fingerprint of all of it, with the code that picks from it)
 const artPrint = createHash("sha1").update(readFileSync(resolve(here, "../src/art.js")));
 // the picks rest on the museums alone: the Wikipedia copies only swap in pictures later
+const artTexts = [];
 async function collection(name, picked = true) {
   const local = process.env.ART_DATA && join(process.env.ART_DATA, `${name}.json`);
   let text = "[]";
@@ -89,7 +92,10 @@ async function collection(name, picked = true) {
     const res = await fetch(`${MEDIA}/data/${name}.json?t=${Date.now()}`).catch(() => null);
     if (res?.ok) text = await res.text();
   }
-  if (picked) artPrint.update(name).update(text);
+  if (picked) {
+    artPrint.update(name).update(text);
+    artTexts.push([name, text]);
+  }
   return JSON.parse(text);
 }
 const works = [];
@@ -104,7 +110,11 @@ const wikimedia = new Map(
 );
 if (!works.length) console.log("pages.mjs: no art data; no page has art");
 const near = works.length ? bucketed(works) : null;
-const artFor = (hex) => (near ? pickArt(near, hex) : null);
+// a color's art list as its text, "" for none
+const artText = (hex) => {
+  const art = near ? pickArt(near, hex) : null;
+  return art?.length ? JSON.stringify(art) : "";
+};
 const ART_PRINT = artPrint.digest("hex");
 
 const template = readFileSync(join(DIST, "color/index.html"), "utf8").replace(/"\.\.\//g, '"../../');
@@ -345,6 +355,53 @@ const began = Date.now();
 const minutes = (ms) => `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
 const tenth = Math.ceil(items.length / 10);
 
+// picked before and its list already up (or, locally, already written): known
+const readyFor = (slug, hex) => {
+  const known = picks[hex];
+  return (
+    known !== undefined &&
+    (!known || (LOCAL ? existsSync(join(DIST, "lists", `${slug}.json`)) : listed[slug] === known))
+  );
+};
+
+// the colors to pick again, on every core at once: each list as its text, "" for none
+async function pickAll(hexes) {
+  const lists = new Map();
+  if (!near || !hexes.length) return lists;
+  const cores = Math.max(1, Math.min(availableParallelism(), 8, Math.ceil(hexes.length / 500)));
+  const step = Math.ceil(hexes.length / 10);
+  let next = step;
+  await Promise.all(
+    Array.from({ length: cores }, (_, n) => {
+      const worker = new Worker(new URL("./pick-art.mjs", import.meta.url), {
+        workerData: { texts: artTexts, hexes: hexes.filter((_, i) => i % cores === n) },
+      });
+      worker.on("message", (batch) => {
+        for (const [hex, body] of batch) lists.set(hex, body);
+        if (lists.size >= next) {
+          const spent = Date.now() - began;
+          console.log(
+            `pages.mjs: art picked for ${lists.size.toLocaleString("en-US")} of ${hexes.length.toLocaleString("en-US")} colors on ${cores} cores, ${minutes(spent)}, about ${minutes((spent / lists.size) * (hexes.length - lists.size))} left`,
+          );
+          next += step;
+        }
+      });
+      return new Promise((done, failed) => {
+        worker.on("error", failed);
+        worker.on("exit", (code) => (code ? failed(new Error(`pick-art.mjs stopped with ${code}`)) : done()));
+      });
+    }),
+  );
+  return lists;
+}
+const lists = await pickAll([
+  ...new Set(
+    items
+      .filter(({ name, hex }) => !(ONLY && !ONLY.has(slugs.get(name))) && !readyFor(slugs.get(name), hex))
+      .map(({ hex }) => hex),
+  ),
+]);
+
 for (const [i, { name, hex }] of items.entries()) {
   if (!ONLY && i && i % tenth === 0) {
     const spent = Date.now() - began;
@@ -357,12 +414,9 @@ for (const [i, { name, hex }] of items.entries()) {
   const copy = copyOf(slug);
   if (copy) withCopy++;
   const looked = hosted(copy?.looked || null);
-  // picked before and its list already up (or, locally, already written): known
-  const known = picks[hex];
-  const ready =
-    known !== undefined &&
-    (!known || (LOCAL ? existsSync(join(DIST, "lists", `${slug}.json`)) : listed[slug] === known));
-  const art = ready ? (known ? true : null) : artFor(hex);
+  const ready = readyFor(slug, hex);
+  const art = ready ? (picks[hex] ? true : null) : (lists.get(hex) ?? artText(hex));
+  lists.delete(hex);
   if (!ready) picked++;
   const url = `${SITE}color/${slug}/`;
   const lines = intro(name, hex);
@@ -476,7 +530,7 @@ ${preview.join("\n")}
   else if (!art?.length) picks[hex] = "";
   else {
     withArt++;
-    const body = JSON.stringify(art);
+    const body = art;
     picks[hex] = createHash("sha1").update(body).digest("hex");
     if (LOCAL) {
       mkdirSync(join(DIST, "lists"), { recursive: true });
