@@ -1,3 +1,4 @@
+import { convertRgbToOklab, convertOklabToRgb } from "culori";
 import { loadList } from "./api.js";
 
 let release;
@@ -60,7 +61,6 @@ export function cardPlace() {
   const between = (a, b) => a + Math.random() * (b - a);
   return { x: between(0.6, 0.92), y: between(-0.55, 0.45), r: between(-14, 14) };
 }
-import { toLinear, toGamma, linearToOklab, oklabToLinear } from "./okhsl.js";
 
 export const LISTS = {
   default: "Full",
@@ -93,7 +93,10 @@ export function hexToRgb(hex) {
 
 export const rgbToHex = (rgb) => "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
 
-export const rgbToOklab = (rgb) => linearToOklab(...rgb.map((v) => toLinear(v / 255)));
+export const rgbToOklab = ([r, g, b]) => {
+  const { l, a, b: bb } = convertRgbToOklab({ r: r / 255, g: g / 255, b: b / 255 });
+  return [l, a, bb];
+};
 
 // hue turned half way; a very dark or very light color also flips its lightness
 export const complementOf = ([L, a, b]) => [L < 0.3 || L > 0.85 ? 1 - L : L, -a, -b];
@@ -105,8 +108,10 @@ export const tidySenses = (senses) =>
     .filter((d, i) => !senses.slice(0, i).some((e) => e.includes(d)))
     .map((d) => d.split("\n")[0].trim().replace(/:$/, "."));
 
-export const oklabToRgb = (L, a, b) =>
-  oklabToLinear(L, a, b).map((c) => Math.round(clamp(toGamma(clamp(c, 0, 1)), 0, 1) * 255));
+export const oklabToRgb = (L, a, b) => {
+  const { r, g, b: bb } = convertOklabToRgb({ l: L, a, b });
+  return [r, g, bb].map((c) => Math.round(clamp(c, 0, 1) * 255));
+};
 
 export function oklchString(L, a, b) {
   const C = Math.hypot(a, b);

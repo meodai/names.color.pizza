@@ -36,7 +36,6 @@ export default defineConfig({
     rolldownOptions: {
       input: {
         main: resolve(import.meta.dirname, "index.html"),
-        classic: resolve(import.meta.dirname, "classic/index.html"),
         color: resolve(import.meta.dirname, "color/index.html"),
         adopt: resolve(import.meta.dirname, "adopt/index.html"),
         supporters: resolve(import.meta.dirname, "supporters/index.html"),
