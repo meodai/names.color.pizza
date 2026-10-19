@@ -2707,7 +2707,9 @@ export async function initWall(root) {
     setAway(!wasHome);
     if (new URLSearchParams(location.search).get("view") === "cells") setCells(true);
     idle = false;
-    if (start) {
+    // back from a color's page: flown to that color, the one it ended on
+    if (start && returning) focusCard(nearest(start));
+    else if (start) {
       marked = nearest(start);
       spot = { i: marked, on: true, t: performance.now() };
     }

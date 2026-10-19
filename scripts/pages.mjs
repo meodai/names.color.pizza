@@ -347,7 +347,8 @@ for (const [i, { name, hex }] of items.entries()) {
     `<link rel="canonical" href="${url}" />`,
     `<link rel="site.standard.document" href="${documentURI(slug, day)}" />`,
     ...preview,
-    meta("name", "theme-color", hex),
+    // the browser's bar as the hero under it, as on the wall
+    meta("name", "theme-color", "#000"),
     `<script type="application/ld+json">${scriptJSON(structured({ name, hex, url, description, lines }))}</script>`,
   ].join("\n    ");
 
@@ -356,6 +357,8 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(/<title>[\s\S]*?<\/title>/, "")
     .replace(/\s*<meta\s+(?:property|name)="(?:og|twitter):[^>]*>/g, "")
     .replace(/<meta\s+name="description"[\s\S]*?\/>/, () => head)
+    // its scrollbar in its color from the first frame, not once the script runs
+    .replace('class="color-root"', () => `class="color-root" style="--page-color:${hex}"`)
     .replace(/(<h1[^>]*data-name[^>]*>)[\s\S]*?(<\/h1>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
     // the line under it as the page's script lays it out, so the hero holds still when it does
     .replace(/(<p[^>]*data-stats[^>]*>)(<\/p>)/, (_, open, close) => `${open}${statsHTML(hex, adopted[slug])}${close}`)

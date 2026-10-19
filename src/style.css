@@ -2631,6 +2631,13 @@ h2:hover > .anchor,
     rotate(var(--r, 6deg));
 }
 
+/* not before it's placed, where it came from or at random (detail.js) */
+@media (scripting: enabled) {
+  .color-hero:not(.adopt) .color-hero__card:not(.is-placed) {
+    visibility: hidden;
+  }
+}
+
 .color-hero__card .swatchcard {
   --card-w: clamp(13rem, 21vw, 24rem);
   inline-size: var(--card-w);
@@ -4238,8 +4245,13 @@ html:has(.wall-page) {
   background: var(--ink);
 }
 
+/* behind the sections, as the hero: browsers tint their bar with it (Safari) */
+body:has(> .color-page) {
+  background: var(--ink);
+}
+
 /* no scrollbar while arriving: it would narrow the page and shift the card */
-html.is-arriving {
+html.is-arriving:not(.is-passed-on) {
   overflow: hidden;
 }
 

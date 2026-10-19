@@ -109,6 +109,30 @@
             </div>
           </div>
         </div>
+        <script>
+          try {
+            const h = JSON.parse(sessionStorage.getItem("card-handoff"));
+            const html = document.documentElement;
+            const own = html.style.getPropertyValue("--page-color");
+            if (h?.whole && (!own || own === h.hex)) {
+              const place = document.currentScript.previousElementSibling;
+              const card = place.firstElementChild;
+              html.classList.add("is-arriving", "is-passed-on");
+              place.style.cssText = `--x:${h.place.x.toFixed(3)};--y:${h.place.y.toFixed(3)};--r:${h.place.r.toFixed(1)}deg`;
+              place.classList.add("is-placed");
+              card.style.cssText = h.style;
+              card.classList.add("swatchcard--reset", "swatchcard--visible");
+              card.querySelector("[data-value]").textContent = h.hex;
+              card.querySelector("[data-card-name]").textContent = h.name;
+              if (h.pixel) {
+                html.classList.add("is-pixel");
+                const img = Object.assign(new Image(), { className: "swatchcard__pixel swatchcard__pixel--now", alt: "", src: h.pixel.src });
+                img.dataset.slug = h.pixel.slug;
+                card.querySelector(".swatchcard__upper").append(img);
+              }
+            }
+          } catch {}
+        </script>
 
         <div class="hero__content">
           <h1 class="hero__title" data-name></h1>

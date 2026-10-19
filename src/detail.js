@@ -239,7 +239,8 @@ const neighborsHTML = (items, data) =>
     )
     .join("");
 
-const named = (data, steps) => steps.map((step) => ({ hex: step, name: closestAny(data, step).item.name }));
+// each step as the named color nearest to it, which its card opens: the same color on both
+const named = (data, steps) => steps.map((step) => closestAny(data, step).item);
 
 let neighborWatch = null;
 function revealNeighbors() {
@@ -345,6 +346,7 @@ function placeCard(place = cardPlace()) {
   page.place.style.setProperty("--x", place.x.toFixed(3));
   page.place.style.setProperty("--y", place.y.toFixed(3));
   page.place.style.setProperty("--r", `${place.r.toFixed(1)}deg`);
+  page.place.classList.add("is-placed");
 }
 
 // what Wikipedia and Wiktionary say; a page built for the name has it already
@@ -400,15 +402,22 @@ async function render(hex) {
     sessionStorage.removeItem("card-handoff");
   } catch {}
   const handedOver = handoff?.hex === hex;
+  // from another color's page the card came whole and stays as it is; from the wall in pixel
+  // art only its drawing came, and the card builds up under it
+  const whole = handedOver && !!handoff.whole;
   placeCard(handedOver && handoff.place ? handoff.place : undefined);
-  // in pixel art its drawing came along: it stays, and the card builds up under it
-  if (handedOver && handoff.pixel) {
-    card.querySelector(".swatchcard__upper").append(
-      Object.assign(document.createElement("img"), { className: "swatchcard__pixel swatchcard__pixel--now", src: handoff.pixel.src, alt: "" }),
-    );
-    card.querySelector(".swatchcard__pixel--now").dataset.slug = handoff.pixel.slug;
+  // the drawing may be there already: the script after the card sets a handed-over card up
+  // before the page's first frame (color/index.html)
+  if (handedOver && handoff.pixel && !card.querySelector(".swatchcard__pixel--now")) {
+    const img = Object.assign(document.createElement("img"), { className: "swatchcard__pixel swatchcard__pixel--now", src: handoff.pixel.src, alt: "" });
+    img.dataset.slug = handoff.pixel.slug;
+    card.querySelector(".swatchcard__upper").append(img);
+  }
+  if (handedOver && handoff.pixel && !whole)
     requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("swatchcard--visible")));
-  } else if (handedOver) card.classList.add("swatchcard--reset", "swatchcard--visible");
+  else if (handedOver) card.classList.add("swatchcard--reset", "swatchcard--visible");
+  // the page it left had its scrollbar: this one keeps it, so it doesn't change width
+  document.documentElement.classList.toggle("is-passed-on", whole);
   // the text comes in once its description is there, so it doesn't move after: handed over
   // from the wall, or come from another color's page, where the description is still loading
   if (handedOver || builtPage?.hex !== hex) {
@@ -1142,6 +1151,94 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   page.tilt = tiltCard(page.card);
   signal?.addEventListener("abort", () => page.tilt.stop());
 
+  // a related color opened as the wall opens one: its card glides, whole, to where the big card
+  // sits, over the hero's own background, and the next page shows it there as it is
+  let passing = null;
+  const unpass = () => {
+    if (!passing) return;
+    passing.backdrop.remove();
+    passing.copy.remove();
+    passing.hide.cancel();
+    passing.card.style.visibility = "";
+    passing = null;
+  };
+  page.root.addEventListener(
+    "click",
+    (e) => {
+      const a = e.target.closest("a.neighbor");
+      if (!a || passing || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const card = a.querySelector(".swatchcard");
+      const hex = card.querySelector(".swatchcard__row1")?.textContent.trim().toLowerCase();
+      const slot = page.card.parentElement;
+      if (!hex || !slot) return;
+      e.preventDefault();
+      const img = card.querySelector(".swatchcard__pixel");
+      const place = {
+        x: parseFloat(slot.style.getPropertyValue("--x")) || 0.5,
+        y: parseFloat(slot.style.getPropertyValue("--y")) || 0,
+        r: parseFloat(slot.style.getPropertyValue("--r")) || 6,
+      };
+      try {
+        sessionStorage.setItem(
+          "card-handoff",
+          JSON.stringify({
+            hex,
+            name: card.querySelector(".swatchcard__row2")?.textContent.trim(),
+            place,
+            whole: true,
+            style: card.getAttribute("style"),
+            pixel: img && document.documentElement.classList.contains("is-pixel") ? { src: img.src, slug: img.dataset.slug } : null,
+          }),
+        );
+      } catch {}
+      // centers, so the turned boxes don't matter; the big card's where it is with the page at
+      // its top (the page scrolls itself, or the window does), its slot as it doesn't tilt
+      const from = card.getBoundingClientRect();
+      const to = slot.getBoundingClientRect();
+      const scroller = page.card.closest(".wall__page");
+      const start = { x: from.left + from.width / 2, y: from.top + from.height / 2 };
+      const end = { x: to.left + to.width / 2, y: to.top + to.height / 2 + (scroller ? scroller.scrollTop : scrollY) };
+      const backdrop = document.createElement("div");
+      Object.assign(backdrop.style, {
+        position: "fixed",
+        inset: "0",
+        // under the logo, which is the same on every page
+        zIndex: "7",
+        background: getComputedStyle(page.card.closest(".color-hero")).backgroundColor,
+      });
+      const copy = card.cloneNode(true);
+      copy.classList.add("swatchcard--visible", "swatchcard--reset");
+      // laid out at its size on every frame, not a small card scaled up: sharp all the way, and
+      // at the end exactly the big card, to the pixel
+      const size = (el, { x, y }, r) => ({
+        left: `${x}px`,
+        top: `${y}px`,
+        inlineSize: getComputedStyle(el).inlineSize,
+        fontSize: getComputedStyle(el).fontSize,
+        transform: `translate(-50%, -50%) rotate(${r}deg)`,
+      });
+      const frames = [size(card, start, 0), size(page.card, end, place.r)];
+      Object.assign(copy.style, frames[0], { position: "fixed", margin: "0", zIndex: "100" });
+      document.body.append(backdrop, copy);
+      card.style.visibility = "hidden";
+      // the next page brings its close button in with its text
+      const hide = close.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: "ease", fill: "forwards" });
+      passing = { backdrop, copy, card, hide };
+      const go = () => {
+        location.href = a.href;
+        // the same page, a new color: it shows the card at once, so the copy can go
+        if (new URL(a.href).pathname === location.pathname)
+          requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(unpass)));
+      };
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return go();
+      backdrop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: "ease" });
+      copy.animate(frames, { duration: 650, easing: "cubic-bezier(0.3, 0.7, 0, 1)", fill: "forwards" }).finished.then(go, go);
+    },
+    { signal },
+  );
+  // back here from the next page (kept in memory): as it was before
+  addEventListener("pageshow", unpass, { signal });
+
   q("[data-share]").addEventListener("click", async () => {
     const url = page.pageLink.href;
     if (navigator.share) {
@@ -1185,7 +1282,11 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       try {
         sessionStorage.setItem("wall-return", "1");
       } catch {}
-      location.href = wallView;
+      // the color this page shows now, which may be a related one: the wall comes back to it
+      const back = new URL(wallView);
+      const now = hexFromHash() || builtPage?.hex;
+      if (now) back.searchParams.set("c", now.replace("#", ""));
+      location.href = back.href;
     }
   });
   // embedded, every link home closes too
