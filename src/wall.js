@@ -2207,9 +2207,18 @@ export async function initWall(root) {
     };
     requestAnimationFrame(step);
   }
+  // "View" beside the switch on every visit, until it's first opened: it glides into it and goes
+  const modeHint = q("[data-mode-hint]");
+  modeHint.hidden = false;
+  function dropModeHint() {
+    if (modeHint.hidden || modeHint.classList.contains("is-leaving")) return;
+    modeHint.classList.add("is-leaving");
+    setTimeout(() => (modeHint.hidden = true), reduceMotion ? 0 : 350);
+  }
   let modeTimer = 0;
   function openModes() {
     clearTimeout(modeTimer);
+    dropModeHint();
     modes.classList.add("is-open", "is-marked");
     followThumb(modeActive(), MODE_MS);
   }
