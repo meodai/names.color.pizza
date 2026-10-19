@@ -99,7 +99,9 @@ for (const museum of Object.keys(MUSEUMS)) {
     if (work) works.push(work);
   }
 }
-const wikimedia = new Map((await collection("wikimedia-art", false)).filter((w) => w.thumb).map((w) => [w.accession, w]));
+const wikimedia = new Map(
+  (await collection("wikimedia-art", false)).filter((w) => w.thumb).map((w) => [w.accession, w]),
+);
 if (!works.length) console.log("pages.mjs: no art data; no page has art");
 const near = works.length ? bucketed(works) : null;
 const artFor = (hex) => (near ? pickArt(near, hex) : null);
@@ -153,7 +155,9 @@ function hosted(looked) {
     }),
     pictures: (looked.pictures || []).flatMap((p) => {
       const w = copy(p);
-      return w ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w), palette: paletteOf(w) }] : [];
+      return w
+        ? [{ ...p, image: `${MEDIA}/${w.thumb}`, ratio: w.width / w.height, credit: credit(w), palette: paletteOf(w) }]
+        : [];
     }),
     images: (looked.images || [])
       .filter((img) => !leads.has(fileTitle(img.link)))
@@ -260,11 +264,16 @@ const statsHTML = (hex, adopted) =>
       ? `Adopted ${escapeHTML(longDate(adopted.at))} by <span class="hero__adopter">${escapeHTML(handle(adopted.by, adopted.on))}</span>${adopted.founding ? ", founding patron" : ""}`
       : `<a class="adopt-cta" href="../../adopt/#${hex.slice(1)}">Adopt this color <span class="hero__heart">\u2665\uFE0E</span></a>`
   }</span>`;
-const pixelOf = (slug) => pixels[slug] && { src: `https://media.color.pizza/pixel/${slug}.webp?v=${pixels[slug].v}`, subject: pixels[slug].subject };
+const pixelOf = (slug) =>
+  pixels[slug] && {
+    src: `https://media.color.pizza/pixel/${slug}.webp?v=${pixels[slug].v}`,
+    subject: pixels[slug].subject,
+  };
 
 // a color's link preview comes through the worker, which picks it when asked: the color's
 // adopted card the moment there is one, else its plain card, no build needed in between
-const previewOf = (slug, it) => `https://color-names-upload.cloudflare-54bbeb.workers.dev/og/${slug}.png?k=${cardKey(it)}`;
+const previewOf = (slug, it) =>
+  `https://color-names-upload.cloudflare-54bbeb.workers.dev/og/${slug}.png?k=${cardKey(it)}`;
 let withArt = 0;
 let withCopy = 0;
 // each name's art list lives on media.color.pizza (lists/<slug>.json), not in
@@ -297,11 +306,34 @@ function datasetLine({ name, hex, url, said, looked, pixel }) {
     name,
     hex,
     description: said || null,
-    formats: Object.fromEntries(Object.entries(FORMATS).filter(([k]) => k !== "hex").map(([k, f]) => [k, f.fn(hex)])),
-    words: { describe: some(lore.descriptiveWords), means: some(lore.meanings), makesYou: some(lore.effects), fits: some(lore.usage) },
-    meaning: (looked?.entries || []).map((e) => ({ title: e.title, wikipedia: e.link, ...(e.wikidata ? { wikidata: `https://www.wikidata.org/wiki/${e.wikidata}` } : {}) })),
+    formats: Object.fromEntries(
+      Object.entries(FORMATS)
+        .filter(([k]) => k !== "hex")
+        .map(([k, f]) => [k, f.fn(hex)]),
+    ),
+    words: {
+      describe: some(lore.descriptiveWords),
+      means: some(lore.meanings),
+      makesYou: some(lore.effects),
+      fits: some(lore.usage),
+    },
+    meaning: (looked?.entries || []).map((e) => ({
+      title: e.title,
+      wikipedia: e.link,
+      ...(e.wikidata ? { wikidata: `https://www.wikidata.org/wiki/${e.wikidata}` } : {}),
+    })),
     definitions: (looked?.definitions || []).map((d) => ({ term: d.term, wiktionary: d.link })),
-    ...(pixel ? { pixelArt: { image: pixel.src, subject: pixel.subject, license: "https://creativecommons.org/licenses/by/4.0/", credit: "Pixel art by Retro Diffusion, gifted to Color Names", creditUrl: "https://retrodiffusion.ai/" } } : {}),
+    ...(pixel
+      ? {
+          pixelArt: {
+            image: pixel.src,
+            subject: pixel.subject,
+            license: "https://creativecommons.org/licenses/by/4.0/",
+            credit: "Pixel art by Retro Diffusion, gifted to Color Names",
+            creditUrl: "https://retrodiffusion.ai/",
+          },
+        }
+      : {}),
   });
 }
 
@@ -316,7 +348,9 @@ for (const [i, { name, hex }] of items.entries()) {
   const looked = hosted(copy?.looked || null);
   // picked before and its list already up (or, locally, already written): known
   const known = picks[hex];
-  const ready = known !== undefined && (!known || (LOCAL ? existsSync(join(DIST, "lists", `${slug}.json`)) : listed[slug] === known));
+  const ready =
+    known !== undefined &&
+    (!known || (LOCAL ? existsSync(join(DIST, "lists", `${slug}.json`)) : listed[slug] === known));
   const art = ready ? (known ? true : null) : artFor(hex);
   if (!ready) picked++;
   const url = `${SITE}color/${slug}/`;
@@ -383,7 +417,8 @@ for (const [i, { name, hex }] of items.entries()) {
   const meaning = meaningHTML(looked);
   const pictures = looked?.entries?.some((e) => e.image) || looked?.images?.length || looked?.pictures?.length;
   if (!meaning) html = html.replace(/(<section[^>]*data-meaning-slide)([^>]*?)(\s*>)/, "$1$2 hidden$3");
-  if (!pictures && !(art === true || art?.length)) html = html.replace(/(<section[^>]*data-art-slide)([^>]*?)(\s*>)/, "$1$2 hidden$3");
+  if (!pictures && !(art === true || art?.length))
+    html = html.replace(/(<section[^>]*data-art-slide)([^>]*?)(\s*>)/, "$1$2 hidden$3");
   if (meaning) {
     html = html
       .replace('slide--dense is-filling" id="meaning"', 'slide--dense" id="meaning"')
@@ -557,7 +592,8 @@ if (existsSync(ADOPT_PAGE)) {
       .catch(() => null);
   const stars = (await json("https://api.github.com/repos/meodai/color-names"))?.stargazers_count;
   const npm = (await json("https://api.npmjs.org/downloads/point/last-year/color-name-list"))?.downloads;
-  const millions = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(/\.0$/, "")} million` : n.toLocaleString("en-US"));
+  const millions = (n) =>
+    n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(/\.0$/, "")} million` : n.toLocaleString("en-US");
   writeFileSync(
     ADOPT_PAGE,
     readFileSync(ADOPT_PAGE, "utf8")

@@ -50,7 +50,8 @@ export function printViz(cmyk) {
       const at = 3 - i;
       let d = "";
       for (let y = 2; y < 10; y++)
-        for (let x = edges[at] + 2; x < edges[at + 1] - 1; x++) if (BAYER[(y % 4) * 4 + (x % 4)] < level) d += `M${x} ${y}h1v1h-1z`;
+        for (let x = edges[at] + 2; x < edges[at + 1] - 1; x++)
+          if (BAYER[(y % 4) * 4 + (x % 4)] < level) d += `M${x} ${y}h1v1h-1z`;
       return d ? `<path class="mix-${"cmyk"[i]}" d="${d}" fill="currentColor"/>` : "";
     })
     .join("");
@@ -61,7 +62,10 @@ export function printViz(cmyk) {
 const COOLEST = 12000;
 const WARMEST = 1000;
 export function lightViz(kelvin) {
-  const warm = Math.min(1, Math.max(0, (Math.log(COOLEST) - Math.log(kelvin)) / (Math.log(COOLEST) - Math.log(WARMEST))));
+  const warm = Math.min(
+    1,
+    Math.max(0, (Math.log(COOLEST) - Math.log(kelvin)) / (Math.log(COOLEST) - Math.log(WARMEST))),
+  );
   // one outline, the bulb flowing into a tube rounded only at its end; inside it, a pixel
   // clear all round, the mercury: the bulb full, the tube as far as the color is warm
   const join = Math.sqrt(5.5 ** 2 - 3.5 ** 2) + 6;

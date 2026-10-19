@@ -27,13 +27,16 @@ export async function initSupportersPage() {
   const bar = document.querySelector("[data-costs-bar]");
   if (bar && raised) {
     bar.style.setProperty("--k", Math.min(1, raised / RUNNING_A_YEAR).toFixed(3));
-    bar.querySelector("[data-costs-note]").textContent = `$${raised.toLocaleString("en-US")} of a year’s $${RUNNING_A_YEAR.toLocaleString("en-US")} covered by patrons so far`;
+    bar.querySelector("[data-costs-note]").textContent =
+      `$${raised.toLocaleString("en-US")} of a year’s $${RUNNING_A_YEAR.toLocaleString("en-US")} covered by patrons so far`;
     bar.hidden = false;
   }
   const stats = document.querySelector("[data-counts]");
   const plural = (k, one, many) => `${k.toLocaleString("en-US")} ${k === 1 ? one : many}`;
   stats.innerHTML = [
-    ...(n.colors ? [`<span>${plural(n.colors, "color", "colors")} adopted by ${plural(n.patrons, "patron", "patrons")}</span>`] : []),
+    ...(n.colors
+      ? [`<span>${plural(n.colors, "color", "colors")} adopted by ${plural(n.patrons, "patron", "patrons")}</span>`]
+      : []),
     // all of it together, never one person's share
     ...(n.colors ? [`<span>$${raised.toLocaleString("en-US")} raised</span>`] : []),
     `<span>${n.founding === 50 ? "All 50 founding spots open" : n.founding ? `${n.founding} of 50 founding spots left` : "All 50 founding spots taken"}</span>`,
@@ -59,8 +62,12 @@ export async function initSupportersPage() {
       const handle = handleOf(p.by, p.on);
       const href = PROFILES[p.on]?.(p.by);
       const wrap = (cls, inner) =>
-        href ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="${p.on === "website" ? "nofollow ugc noopener" : "noopener"}">${inner}</a>` : `<span class="${cls}">${inner}</span>`;
-      const face = p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" />` : `<span>${p.on === "anonymous" ? "\u2665\uFE0E" : esc(handle.replace(/^@/, "")[0]?.toUpperCase() || "?")}</span>`;
+        href
+          ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="${p.on === "website" ? "nofollow ugc noopener" : "noopener"}">${inner}</a>`
+          : `<span class="${cls}">${inner}</span>`;
+      const face = p.avatar
+        ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" />`
+        : `<span>${p.on === "anonymous" ? "\u2665\uFE0E" : esc(handle.replace(/^@/, "")[0]?.toUpperCase() || "?")}</span>`;
       return `<li class="supporter">
         <span class="supporter__rank">#${rank + 1}</span>
         ${wrap(`card-badge supporter__face${p.founding ? " card-badge--founding" : ""}`, face)}

@@ -113,7 +113,8 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     for (const { i, near } of onScreen(DETAIL_PX, DETAIL_SLOTS / 2)) if (near > 0) want(i);
     // only once every card showing has its own: the next ones never take a slot from them
     if (!missing)
-      for (const { i, near } of onScreen(AHEAD_PX, DETAIL_SLOTS / 4, AHEAD_MARGIN)) if (near > 0 && !detail.of.has(i)) want(i);
+      for (const { i, near } of onScreen(AHEAD_PX, DETAIL_SLOTS / 4, AHEAD_MARGIN))
+        if (near > 0 && !detail.of.has(i)) want(i);
     detail.queue = queue;
     fetchDetail();
     if (missing) lookSoon(400);

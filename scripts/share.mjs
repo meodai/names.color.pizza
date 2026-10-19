@@ -73,7 +73,9 @@ async function face(adopted) {
   if (adopted.avatar) {
     const res = await fetch(adopted.avatar).catch(() => null);
     if (res?.ok) {
-      const mask = Buffer.from(`<svg width="${inner}" height="${inner}"><circle cx="${inner / 2}" cy="${inner / 2}" r="${inner / 2}"/></svg>`);
+      const mask = Buffer.from(
+        `<svg width="${inner}" height="${inner}"><circle cx="${inner / 2}" cy="${inner / 2}" r="${inner / 2}"/></svg>`,
+      );
       picture = await sharp(Buffer.from(await res.arrayBuffer()))
         .resize(inner, inner, { fit: "cover" })
         .composite([{ input: mask, blend: "dest-in" }])
@@ -86,15 +88,23 @@ async function face(adopted) {
     const sign = adopted.on === "anonymous" ? "♥" : (adopted.by.replace(/^@/, "")[0] || "?").toUpperCase();
     const t = await line(sign, "Bold", 64);
     const meta = await sharp(t.img).metadata();
-    picture = await sharp({ create: { width: inner, height: inner, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-      .composite([{ input: t.img, left: Math.round((inner - meta.width) / 2), top: Math.round((inner - meta.height) / 2) }])
+    picture = await sharp({
+      create: { width: inner, height: inner, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+    })
+      .composite([
+        { input: t.img, left: Math.round((inner - meta.width) / 2), top: Math.round((inner - meta.height) / 2) },
+      ])
       .png()
       .toBuffer();
   }
-  return sharp(disc).composite([{ input: picture, left: 8, top: 8 }]).png().toBuffer();
+  return sharp(disc)
+    .composite([{ input: picture, left: 8, top: 8 }])
+    .png()
+    .toBuffer();
 }
 
-const handle = (a) => (a.on === "name" || a.on === "anonymous" || a.on === "website" ? a.by : `@${a.by.replace(/^@/, "")}`);
+const handle = (a) =>
+  a.on === "name" || a.on === "anonymous" || a.on === "website" ? a.by : `@${a.by.replace(/^@/, "")}`;
 
 export async function shareCard(it, adopted) {
   const top = H - STRIP;
@@ -110,8 +120,17 @@ export async function shareCard(it, adopted) {
   );
   const block = code.height + GAP + label.height;
   const y = top + Math.round((STRIP - block) / 2);
-  const parts = [{ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${STRIP}"><rect width="100%" height="100%" fill="#fff"/></svg>`), left: 0, top }];
-  if (adopted.shine && adopted.amount >= 10) parts.unshift({ input: Buffer.from(foilSVG(adopted.shine, W, top, rand)), left: 0, top: 0 });
+  const parts = [
+    {
+      input: Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${STRIP}"><rect width="100%" height="100%" fill="#fff"/></svg>`,
+      ),
+      left: 0,
+      top,
+    },
+  ];
+  if (adopted.shine && adopted.amount >= 10)
+    parts.unshift({ input: Buffer.from(foilSVG(adopted.shine, W, top, rand)), left: 0, top: 0 });
   parts.push(
     { input: code.img, left: PAD, top: y },
     { input: label.img, left: PAD, top: y + code.height + GAP },

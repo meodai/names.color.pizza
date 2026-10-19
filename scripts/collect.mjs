@@ -257,9 +257,9 @@ const todo = (
   NAMES
     ? items.filter((it) => NAMES.has(it.name))
     : PICTURES_ONLY
-    ? // copies without their pictures yet
-      items.filter((it) => fetched.has(slugs.get(it.name)) && !pictured.has(slugs.get(it.name)))
-    : [...(ALL ? missing : missing.slice(0, Math.max(renew, 500))), ...oldest]
+      ? // copies without their pictures yet
+        items.filter((it) => fetched.has(slugs.get(it.name)) && !pictured.has(slugs.get(it.name)))
+      : [...(ALL ? missing : missing.slice(0, Math.max(renew, 500))), ...oldest]
 ).slice(0, LIMIT);
 
 if (TOKEN) {

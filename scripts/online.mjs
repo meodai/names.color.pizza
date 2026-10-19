@@ -23,7 +23,9 @@ try {
 const live = listAt(now);
 const slugs = slugsOf(live);
 const onList = new Set(live.map((it) => it.name));
-const commits = git("log", "--reverse", "--format=%H", `${before}..${now}`, "--", "src/colornames.csv").split("\n").filter(Boolean);
+const commits = git("log", "--reverse", "--format=%H", `${before}..${now}`, "--", "src/colornames.csv")
+  .split("\n")
+  .filter(Boolean);
 
 for (const sha of commits) {
   const had = new Set(listAt(`${sha}^`).map((it) => it.name));
@@ -33,11 +35,17 @@ for (const sha of commits) {
   const SHOWN = 60;
   const lines = added.slice(0, SHOWN).map((it) => `- [${it.name}](${pageOf(slugs.get(it.name))}) \`${it.hex}\``);
   if (added.length > SHOWN) lines.push(`- …and ${added.length - SHOWN} more`);
-  const body = [`:art: ${added.length === 1 ? "This color is" : `These ${added.length} colors are`} online now:`, "", ...lines].join("\n");
+  const body = [
+    `:art: ${added.length === 1 ? "This color is" : `These ${added.length} colors are`} online now:`,
+    "",
+    ...lines,
+  ].join("\n");
   if (!process.env.GH_TOKEN) {
     console.log(`--- ${sha}\n${body}`);
     continue;
   }
-  execFileSync("gh", ["api", `repos/meodai/color-names/commits/${sha}/comments`, "-f", `body=${body}`], { stdio: "ignore" });
+  execFileSync("gh", ["api", `repos/meodai/color-names/commits/${sha}/comments`, "-f", `body=${body}`], {
+    stdio: "ignore",
+  });
   console.log(`online: ${added.length} on ${sha.slice(0, 8)}`);
 }

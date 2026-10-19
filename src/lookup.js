@@ -39,7 +39,6 @@ export function configure(options) {
   Object.assign(io, options);
 }
 
-
 const SMALL = ["the", "a", "in", "of", "an", "on"];
 
 const COMMON = [

@@ -53,7 +53,9 @@ function logoSVG() {
 // the parrot's shapes for the certificate's seal: in the seal's ink, its eye in the color
 function sealParrot() {
   const svg = document.querySelector(".brand__logo").cloneNode(true);
-  svg.querySelectorAll("[fill]").forEach((p) => p.setAttribute("fill", p.getAttribute("fill") === "#fff" ? "var(--cert-c)" : "currentColor"));
+  svg
+    .querySelectorAll("[fill]")
+    .forEach((p) => p.setAttribute("fill", p.getAttribute("fill") === "#fff" ? "var(--cert-c)" : "currentColor"));
   return svg.innerHTML;
 }
 
@@ -98,7 +100,9 @@ async function shareCard(q, it, adopted, session) {
   img.src = URL.createObjectURL(blob);
   img.alt = `${it.name}, adopted: the card that shows when its link is shared`;
   img.hidden = false;
-  await fetch(`${WORKER}/share?session=${encodeURIComponent(session)}`, { method: "POST", body: blob }).catch(() => null);
+  await fetch(`${WORKER}/share?session=${encodeURIComponent(session)}`, { method: "POST", body: blob }).catch(
+    () => null,
+  );
 }
 
 function shareRow(q, it, slug) {
@@ -106,7 +110,8 @@ function shareRow(q, it, slug) {
   const url = `https://names.color.pizza/color/${slug}/?adopted`;
   const text = `I adopted ${it.name} on Color Names.`;
   q("[data-share-bsky]").href = `https://bsky.app/intent/compose?text=${encodeURIComponent(`${text} ${url}`)}`;
-  q("[data-share-x]").href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  q("[data-share-x]").href =
+    `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   q("[data-share-page]").href = siteURL(`color/${slug}/`);
   q("[data-share-row]").hidden = false;
   const cta = q("[data-cta]");
@@ -133,7 +138,10 @@ function shareRow(q, it, slug) {
 function reference(slug, on, by) {
   for (let name = by; ; name = name.slice(0, -1)) {
     const bytes = new TextEncoder().encode(JSON.stringify([slug, on, name]));
-    const id = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const id = btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
     if (id.length <= 200 || !name) return id;
   }
 }
@@ -147,14 +155,18 @@ async function lookup(on, name, signal) {
       .then(async (r) => ({ status: r.status, body: r.ok ? await r.json() : null }))
       .catch(() => ({ status: 0 }));
   if (on === "bluesky") {
-    const r = await json(`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(name)}`);
+    const r = await json(
+      `https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(name)}`,
+    );
     return { missing: r.status === 400 || r.status === 404, src: r.body?.avatar };
   }
   if (on === "github") {
     const r = await json(`https://api.github.com/users/${encodeURIComponent(name)}`);
     return { missing: r.status === 404, src: r.body?.avatar_url };
   }
-  const res = await fetch(`https://unavatar.io/${UNAVATAR[on](encodeURIComponent(name))}?fallback=false`, { signal }).catch(() => null);
+  const res = await fetch(`https://unavatar.io/${UNAVATAR[on](encodeURIComponent(name))}?fallback=false`, {
+    signal,
+  }).catch(() => null);
   return { missing: res?.status === 404, src: res?.ok ? URL.createObjectURL(await res.blob()) : undefined };
 }
 
@@ -222,7 +234,8 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 // aside while they're in view
 function moreProjects(q) {
   q("[data-projects]").innerHTML = PROJECTS.map(
-    (p) => `<li><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a> <small>${p.year}</small><p>${esc(p.about)}</p></li>`,
+    (p) =>
+      `<li><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a> <small>${p.year}</small><p>${esc(p.about)}</p></li>`,
   ).join("");
   // the card steps aside for the certificate and the footer
   const place = q("[data-place]");
@@ -291,21 +304,34 @@ export async function initAdoptPage() {
   function show(it) {
     shown = it;
     slug = slugs.get(it.name);
-    q("[data-place]").querySelectorAll(".card-badge").forEach((b) => b.remove());
+    q("[data-place]")
+      .querySelectorAll(".card-badge")
+      .forEach((b) => b.remove());
     document.title = `Adopt ${it.name} — Color Names`;
     q("[data-name]").textContent = `Adopt ${it.name}.`;
-    q("[data-lead]").textContent = `Be the one and only patron of ${it.name}: every color can be adopted just once. It keeps the list, its API and these pages running for everyone.`;
+    q("[data-lead]").textContent =
+      `Be the one and only patron of ${it.name}: every color can be adopted just once. It keeps the list, its API and these pages running for everyone.`;
     const readme = Object.assign(document.createElement("a"), {
       href: "https://github.com/meodai/color-names#sponsors",
       target: "_blank",
       rel: "noopener",
       textContent: "README",
     });
-    const supporters = Object.assign(document.createElement("a"), { href: siteURL("supporters/"), textContent: "supporters" });
+    const supporters = Object.assign(document.createElement("a"), {
+      href: siteURL("supporters/"),
+      textContent: "supporters",
+    });
     // the color named, with a dot of it
     const named = Object.assign(document.createElement("span"), { className: "adopt__named", textContent: it.name });
     named.style.setProperty("--c", it.hex);
-    q("[data-tier5]").replaceChildren("your name and picture on ", named, ", with the ", supporters, " and in the ", readme);
+    q("[data-tier5]").replaceChildren(
+      "your name and picture on ",
+      named,
+      ", with the ",
+      supporters,
+      " and in the ",
+      readme,
+    );
     q("[data-tiers]").hidden = false;
     q("[data-act]").hidden = false;
     cta.textContent = `Adopt ${it.name}`;
@@ -335,7 +361,8 @@ export async function initAdoptPage() {
     const bar = q("[data-costs-bar]");
     bar.hidden = state !== "free" || !raised;
     bar.style.setProperty("--k", Math.min(1, raised / RUNNING_A_YEAR).toFixed(3));
-    q("[data-costs-note]").textContent = `$${raised.toLocaleString("en-US")} of the $${RUNNING_A_YEAR.toLocaleString("en-US")} a year it takes to run, covered by patrons so far.`;
+    q("[data-costs-note]").textContent =
+      `$${raised.toLocaleString("en-US")} of the $${RUNNING_A_YEAR.toLocaleString("en-US")} a year it takes to run, covered by patrons so far.`;
     if (mine?.amount >= ADOPT_FROM) {
       who?.clear();
       q("[data-who]").hidden = true;
@@ -358,7 +385,8 @@ export async function initAdoptPage() {
         return;
       }
       q("[data-name]").textContent = `${it.name} is adopted.`;
-      q("[data-lead]").textContent = `${handle(mine.by, mine.on)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
+      q("[data-lead]").textContent =
+        `${handle(mine.by, mine.on)} adopted it on ${longDate(mine.at)}. Every color has one adopter: pick another one.`;
       cta.textContent = "See the supporters";
       cta.href = siteURL("supporters/");
       cta.removeAttribute("target");
@@ -368,7 +396,8 @@ export async function initAdoptPage() {
       const wanted = data.items.find((i) => slugs.get(i.name) === missed.wanted)?.name || "your color";
       document.title = "So close — Color Names";
       q("[data-name]").textContent = "So close.";
-      q("[data-lead]").textContent = `Someone adopted ${wanted} moments before you. Pick another free color: your payment carries over.`;
+      q("[data-lead]").textContent =
+        `Someone adopted ${wanted} moments before you. Pick another free color: your payment carries over.`;
       q("[data-tiers]").hidden = true;
       q("[data-who]").hidden = true;
       q(".hero__stats").hidden = true;
@@ -388,7 +417,9 @@ export async function initAdoptPage() {
     if (state === "missed") {
       e.preventDefault();
       cta.setAttribute("aria-disabled", "true");
-      const res = await fetch(`${WORKER}/reassign`, { method: "POST", body: JSON.stringify({ session, slug }) }).catch(() => null);
+      const res = await fetch(`${WORKER}/reassign`, { method: "POST", body: JSON.stringify({ session, slug }) }).catch(
+        () => null,
+      );
       const got = await res?.json().catch(() => null);
       if (got?.slug) {
         bought = got;
@@ -409,7 +440,8 @@ export async function initAdoptPage() {
     if (fresh[slug]?.amount >= ADOPT_FROM) {
       adopted[slug] = fresh[slug];
       show(shown);
-      q("[data-lead]").textContent = `Someone adopted ${shown.name} just now. Every color has one adopter: pick another one.`;
+      q("[data-lead]").textContent =
+        `Someone adopted ${shown.name} just now. Every color has one adopter: pick another one.`;
       return;
     }
     location.href = go;

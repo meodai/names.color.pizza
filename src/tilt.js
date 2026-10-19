@@ -67,7 +67,10 @@ export function tiltCard(card) {
         { transform: `translate(${dx}px, ${dy}px) scale(0.2) rotate(180deg)`, opacity: 0 },
       ],
       { duration: 900 + Math.random() * 700, easing: "cubic-bezier(0.2, 0.7, 0.3, 1)" },
-    ).finished.then(() => el.remove(), () => el.remove());
+    ).finished.then(
+      () => el.remove(),
+      () => el.remove(),
+    );
   }
 
   const set = (px, py, shine) => {

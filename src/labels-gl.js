@@ -44,7 +44,7 @@ void main() {
   gl_Position.z -= 0.00002 * z;
   float slot = a_label.w;
   vec2 cell = vec2(mod(slot, ${COLS.toFixed(1)}), floor(slot / ${COLS.toFixed(1)}));
-  v_uv = (cell * vec2(${SLOT_W.toFixed(1)}, ${SLOT_H.toFixed(1)}) + a_corner * vec2(${SLOT_W.toFixed(1)}, ${(SLOT_W * (H - W) / W).toFixed(2)})) / vec2(${ATLAS.toFixed(1)}, ${TALL.toFixed(1)});
+  v_uv = (cell * vec2(${SLOT_W.toFixed(1)}, ${SLOT_H.toFixed(1)}) + a_corner * vec2(${SLOT_W.toFixed(1)}, ${((SLOT_W * (H - W)) / W).toFixed(2)})) / vec2(${ATLAS.toFixed(1)}, ${TALL.toFixed(1)});
   float near = ${W.toFixed(1)} * u_scale / px / min(u_view.x, u_view.y) > u_nearAt ? 0.0 : 1.0;
   int card = int(a_card.x + 0.5);
   // the hex comes as the strip is nearly out, the name just after
@@ -65,7 +65,7 @@ void main() {
 }`;
 
 // where the name's line starts, as a share of the strip's height (see paint)
-const NAME_AT = (0.2475 + 0.55 * 1.2 - 0.05 * 0.27) * 0.205 * SLOT_W / (SLOT_W * 0.3);
+const NAME_AT = ((0.2475 + 0.55 * 1.2 - 0.05 * 0.27) * 0.205 * SLOT_W) / (SLOT_W * 0.3);
 
 const FRAG = `#version 300 es
 precision highp float;
@@ -129,7 +129,23 @@ export function createLabelRenderer(gl, geo) {
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   const u = {};
-  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "nearAt", "nearIds", "nearAlpha", "atlas", "hover", "hoverPos", "hoverClear", "scale"])
+  for (const k of [
+    "eye",
+    "right",
+    "up",
+    "fwd",
+    "fpx",
+    "view",
+    "clip",
+    "nearAt",
+    "nearIds",
+    "nearAlpha",
+    "atlas",
+    "hover",
+    "hoverPos",
+    "hoverClear",
+    "scale",
+  ])
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
 
   const vao = gl.createVertexArray();
@@ -214,7 +230,15 @@ export function createLabelRenderer(gl, geo) {
           paint(ctx, font, items[c.i].hex, items[c.i].name);
           gl.bindTexture(gl.TEXTURE_2D, atlas);
           gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-          gl.texSubImage2D(gl.TEXTURE_2D, 0, (slot % COLS) * SLOT_W, Math.floor(slot / COLS) * SLOT_H, gl.RED, gl.UNSIGNED_BYTE, scratch);
+          gl.texSubImage2D(
+            gl.TEXTURE_2D,
+            0,
+            (slot % COLS) * SLOT_W,
+            Math.floor(slot / COLS) * SLOT_H,
+            gl.RED,
+            gl.UNSIGNED_BYTE,
+            scratch,
+          );
           painted++;
         }
         wanted[slot] = tick;

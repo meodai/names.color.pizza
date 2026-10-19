@@ -71,7 +71,8 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   const u = {};
-  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "px", "corner"]) u[k] = gl.getUniformLocation(prog, `u_${k}`);
+  for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "px", "corner"])
+    u[k] = gl.getUniformLocation(prog, `u_${k}`);
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
   const corner = gl.createBuffer();
@@ -82,7 +83,10 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
   gl.vertexAttribPointer(aCorner, 2, gl.FLOAT, false, 0, 0);
   const sparkBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, sparkBuf);
-  for (const [name, offset] of [["a_spark", 0], ["a_tint", 16]]) {
+  for (const [name, offset] of [
+    ["a_spark", 0],
+    ["a_tint", 16],
+  ]) {
     const at = gl.getAttribLocation(prog, name);
     gl.enableVertexAttribArray(at);
     gl.vertexAttribPointer(at, 4, gl.FLOAT, false, 32, offset);
@@ -100,7 +104,19 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
       if (data.length !== flashes.length * 8) data = new Float32Array(flashes.length * 8);
       flashes.forEach(({ i, flash, turn }, k) => {
         const p = i * 3;
-        data.set([positions[p], positions[p + 1], positions[p + 2], flash, colors[p] / 255, colors[p + 1] / 255, colors[p + 2] / 255, turn], k * 8);
+        data.set(
+          [
+            positions[p],
+            positions[p + 1],
+            positions[p + 2],
+            flash,
+            colors[p] / 255,
+            colors[p + 1] / 255,
+            colors[p + 2] / 255,
+            turn,
+          ],
+          k * 8,
+        );
       });
       gl.useProgram(prog);
       gl.bindVertexArray(vao);

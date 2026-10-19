@@ -3,7 +3,8 @@ import { handle, longDate } from "./adopter.js";
 // The certificate a patron gets on the thank-you page: very official, a little tongue in
 // cheek. A banknote's rosette and a round seal in the adopted color, the parrot in the seal.
 
-const escapeHTML = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+const escapeHTML = (s) =>
+  String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
 // a guilloche rosette: loops of a hypotrochoid, each turned a little, as on banknotes
 function rosette(cx, cy, size, loops = 18) {
@@ -66,7 +67,9 @@ export function certificateHTML({ it, adopted, number, logo, ink, shades, look }
   const facts = [
     ["Recorded", escapeHTML(when)],
     ...(adopted.founding ? [["Standing", "Founding patron"]] : []),
-    ...(adopted.shine && adopted.amount >= 10 ? [["Foil", escapeHTML(adopted.shine[0].toUpperCase() + adopted.shine.slice(1))]] : []),
+    ...(adopted.shine && adopted.amount >= 10
+      ? [["Foil", escapeHTML(adopted.shine[0].toUpperCase() + adopted.shine.slice(1))]]
+      : []),
   ];
   return `<article class="cert" data-tone="${look.tone}" style="--cert-c:${it.hex};--cert-on:${ink};--cert-line:${look.line};--cert-parrot:${look.parrot};--cert-key:${look.key}" aria-label="Certificate of adoption no. ${no}">
     <svg class="cert__guilloche" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${rosette(200, 200, 380)}</svg>

@@ -30,7 +30,9 @@ if (!existsSync(resolve(here, "../dist/color", slug))) console.warn(`no built pa
 async function avatarOf(handle, where) {
   if (where === "github") return `https://github.com/${handle}.png?size=96`;
   if (where !== "bluesky") return undefined;
-  const res = await fetch(`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(handle)}`);
+  const res = await fetch(
+    `https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(handle)}`,
+  );
   return res.ok ? (await res.json()).avatar : undefined;
 }
 

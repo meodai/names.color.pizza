@@ -48,10 +48,16 @@ export const cleanHandle = (typed, on) => {
   return on === "bluesky" && h && !h.includes(".") ? `${h}.bsky.social` : h;
 };
 export const longDate = (day) =>
-  new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+  new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 
 // a handle with its @, a plain name as it was given
-export const handle = (by, on) => (on === "name" || on === "anonymous" || on === "website" ? by : `@${by.replace(/^@/, "")}`);
+export const handle = (by, on) =>
+  on === "name" || on === "anonymous" || on === "website" ? by : `@${by.replace(/^@/, "")}`;
 // their profile, or just a span for someone who gave a name
 const profileLink = ({ by, on }, className) =>
   PROFILES[on]
@@ -75,10 +81,16 @@ export function adoptedHTML(adopted) {
 export function adopterBadge(adopted) {
   // the first fifty wear gold
   const a = profileLink(adopted, adopted.founding ? "card-badge card-badge--founding" : "card-badge");
-  a.setAttribute("aria-label", `${adopted.founding ? "Founding patron" : "Adopted by"} ${handle(adopted.by, adopted.on)}`);
+  a.setAttribute(
+    "aria-label",
+    `${adopted.founding ? "Founding patron" : "Adopted by"} ${handle(adopted.by, adopted.on)}`,
+  );
   const initial = () =>
     Object.assign(document.createElement("span"), {
-      textContent: adopted.on === "anonymous" ? "\u2665\uFE0E" : handle(adopted.by, adopted.on).replace(/^@/, "")[0]?.toUpperCase() || "?",
+      textContent:
+        adopted.on === "anonymous"
+          ? "\u2665\uFE0E"
+          : handle(adopted.by, adopted.on).replace(/^@/, "")[0]?.toUpperCase() || "?",
     });
   if (!adopted.avatar) a.append(initial());
   else {

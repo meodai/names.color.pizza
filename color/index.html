@@ -12,7 +12,10 @@
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Color Names" />
-    <meta property="og:description" content="31,935 colors, each named by a person: wander through them, hanging where their color is." />
+    <meta
+      property="og:description"
+      content="31,935 colors, each named by a person: wander through them, hanging where their color is."
+    />
     <meta property="og:url" content="https://names.color.pizza/" />
     <meta property="og:site_name" content="Color Names" />
     <meta property="og:image" content="https://names.color.pizza/og.jpg" />
@@ -126,7 +129,11 @@
               card.querySelector("[data-card-name]").textContent = h.name;
               if (h.pixel) {
                 html.classList.add("is-pixel");
-                const img = Object.assign(new Image(), { className: "swatchcard__pixel swatchcard__pixel--now", alt: "", src: h.pixel.src });
+                const img = Object.assign(new Image(), {
+                  className: "swatchcard__pixel swatchcard__pixel--now",
+                  alt: "",
+                  src: h.pixel.src,
+                });
                 img.dataset.slug = h.pixel.slug;
                 card.querySelector(".swatchcard__upper").append(img);
               }

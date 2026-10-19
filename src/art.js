@@ -108,7 +108,11 @@ export function pickArt(near, hex, count = ART_COUNT) {
   for (let n = 0; n < around.length; n++) {
     const [c, w, d] = around[n];
     let s = per.get(w);
-    if (!s) per.set(w, (s = { w, share: [0, 0, 0, 0, 0], best: [null, null, null, null, null], first: [-1, -1, -1, -1, -1] }));
+    if (!s)
+      per.set(
+        w,
+        (s = { w, share: [0, 0, 0, 0, 0], best: [null, null, null, null, null], first: [-1, -1, -1, -1, -1] }),
+      );
     for (let t = RADII.length - 1; t >= 0 && d < RADII[t]; t--) {
       s.share[t] += c[3];
       if (!s.best[t] || d < s.best[t].d) s.best[t] = { d, hex: c[4] };
@@ -120,7 +124,13 @@ export function pickArt(near, hex, count = ART_COUNT) {
     for (const s of per.values()) {
       if (s.first[t] < 0) continue;
       // a closer match counts for a little more
-      ring.push({ w: s.w, share: s.share[t], best: s.best[t], score: s.share[t] * (1 - (0.5 * s.best[t].d) / radius), first: s.first[t] });
+      ring.push({
+        w: s.w,
+        share: s.share[t],
+        best: s.best[t],
+        score: s.share[t] * (1 - (0.5 * s.best[t].d) / radius),
+        first: s.first[t],
+      });
     }
     return ring.sort((x, y) => y.score - x.score || x.first - y.first);
   });

@@ -2,3 +2,4 @@ dist
 .data
 .cache
 public
+src/references.json

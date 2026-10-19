@@ -53,7 +53,12 @@ export async function pixelCards(root) {
     const i = a.slot.get(card.dataset.slug);
     if (!upper || i === undefined || had?.dataset.slug === card.dataset.slug) continue;
     had?.remove();
-    const img = Object.assign(document.createElement("img"), { className: "swatchcard__pixel", src: a.tileURL(i), alt: "", decoding: "async" });
+    const img = Object.assign(document.createElement("img"), {
+      className: "swatchcard__pixel",
+      src: a.tileURL(i),
+      alt: "",
+      decoding: "async",
+    });
     img.dataset.slug = card.dataset.slug;
     upper.append(img);
   }
