@@ -402,9 +402,10 @@ const lists = await pickAll([
   ),
 ]);
 
+const writing = Date.now();
 for (const [i, { name, hex }] of items.entries()) {
   if (!ONLY && i && i % tenth === 0) {
-    const spent = Date.now() - began;
+    const spent = Date.now() - writing;
     console.log(
       `pages.mjs: ${i.toLocaleString("en-US")} of ${items.length.toLocaleString("en-US")} pages, ${minutes(spent)}, about ${minutes((spent / i) * (items.length - i))} left`,
     );
@@ -614,10 +615,23 @@ writeFileSync(join(DIST, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${S
 const { UPLOAD_URL, UPLOAD_KEY } = process.env;
 let uploaded = 0;
 if (UPLOAD_URL && UPLOAD_KEY && toUpload.length) {
+  // each one mostly waits on the worker's answer: many at once, and where it is every tenth
+  const sending = Date.now();
+  const total = toUpload.length;
+  const step = Math.ceil(total / 10);
+  let next = step;
   await Promise.all(
-    Array.from({ length: 16 }, async () => {
+    Array.from({ length: 48 }, async () => {
       while (toUpload.length) {
         const { slug, body, sum } = toUpload.pop();
+        if (total - toUpload.length >= next) {
+          const done = total - toUpload.length;
+          const spent = Date.now() - sending;
+          console.log(
+            `pages.mjs: ${done.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} art lists sent, ${minutes(spent)}, about ${minutes((spent / done) * (total - done))} left`,
+          );
+          next += step;
+        }
         for (let attempt = 1; attempt <= 4; attempt++) {
           const res = await fetch(`${UPLOAD_URL}/lists/${slug}.json`, {
             method: "PUT",
