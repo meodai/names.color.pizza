@@ -1424,7 +1424,8 @@ export async function initWall(root) {
   function focusCard(i) {
     marked = i;
     spot = { i, on: true, t: performance.now() };
-    flyTo({ target: posOf(i), dist: distFor(FOCUS_PX) });
+    // under the size where cards dissolve, so a narrow screen keeps it once the camera moves
+    flyTo({ target: posOf(i), dist: distFor(Math.min(FOCUS_PX, Math.min(view.w, view.h) * NEAR_AT * 0.8)) });
   }
 
   // the color asked for: the search's dot, its × and the address all follow it
