@@ -878,7 +878,7 @@ export async function initWall(root) {
     gone = now;
     nearIds.fill(-1);
     let k = 0;
-    for (const [i, f] of fading) {
+    for (const [i] of fading) {
       if (k >= NEAR_SLOTS) break;
       nearIds[k] = i;
       nearAlphas[k++] = nearAlpha(i, 0);

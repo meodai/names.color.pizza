@@ -39,13 +39,6 @@ export function configure(options) {
   Object.assign(io, options);
 }
 
-const caches = [];
-const cache = () => {
-  const c = new Map();
-  caches.push(c);
-  return c;
-};
-export const forget = () => caches.forEach((c) => c.clear());
 
 const SMALL = ["the", "a", "in", "of", "an", "on"];
 
@@ -109,7 +102,7 @@ function nameVariants(name) {
   return [...new Set([...ordered, ...extra])];
 }
 
-const wikiCache = cache();
+const wikiCache = new Map();
 function wikiSummary(title) {
   if (!wikiCache.has(title)) {
     if (wikiCache.size > 20000) wikiCache.clear();
@@ -155,7 +148,7 @@ async function wikiTitlesFor(name) {
   }
 }
 
-const mediaCache = cache();
+const mediaCache = new Map();
 function wikiMedia(title) {
   if (!mediaCache.has(title)) {
     if (mediaCache.size > 20000) mediaCache.clear();
@@ -309,7 +302,7 @@ function entriesOf(pages) {
     }));
 }
 
-const dictCache = cache();
+const dictCache = new Map();
 function wiktionary(term) {
   if (!dictCache.has(term)) {
     if (dictCache.size > 20000) dictCache.clear();

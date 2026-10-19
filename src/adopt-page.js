@@ -220,7 +220,7 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 // the studio's other projects, one under another; the side card steps
 // aside while they're in view
-function moreProjects(q, data) {
+function moreProjects(q) {
   q("[data-projects]").innerHTML = PROJECTS.map(
     (p) => `<li><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a> <small>${p.year}</small><p>${esc(p.about)}</p></li>`,
   ).join("");
@@ -252,7 +252,7 @@ export async function initAdoptPage() {
   }
   const [data, answer] = await Promise.all([getList("default"), session ? adoptedBy(session) : null]);
   const slugs = slugsOf(data.items);
-  moreProjects(q, data);
+  moreProjects(q);
   // paid, but someone adopted the color a moment earlier
   const missed = answer?.clash ? answer : null;
   let bought = missed ? null : answer;

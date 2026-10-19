@@ -24,7 +24,7 @@ export function foilSVG(shine, w, h, rand) {
         .map((c, k) => `<stop offset="${k / 6}" stop-color="${c}" stop-opacity="${a}"/>`)
         .join("")}</linearGradient>`;
   let defs = "";
-  let body = "";
+  let body;
   if (shine === "prism") {
     defs += rainbow("rb", 0.3) + `<pattern id="ln" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
       <rect width="3" height="9" fill="#fff" fill-opacity="0.14"/></pattern>`;

@@ -81,8 +81,6 @@ async function adoptedColors() {
 
 // about one just-noticeable difference in OKLab
 export const UNNAMED = 0.02;
-const G = UNNAMED; // grid cell size; must be >= UNNAMED for the 3x3x3 search
-const AB = 0.36; // OKLab a/b extent covered by the grid (sRGB peaks near 0.32)
 
 export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
@@ -130,12 +128,6 @@ export function normalizeHex(input) {
   return "#" + h;
 }
 
-const GL = Math.ceil(1 / G) + 1;
-const GA = Math.ceil((2 * AB) / G);
-const cellIndex = (L, a, b) =>
-  (clamp(Math.floor(L / G), 0, GL - 1) * GA + clamp(Math.floor((a + AB) / G), 0, GA - 1)) * GA +
-  clamp(Math.floor((b + AB) / G), 0, GA - 1);
-
 function prepare(colors) {
   const items = colors.map(({ name, hex }) => {
     hex = hex.toLowerCase();
@@ -143,32 +135,7 @@ function prepare(colors) {
     const [L, a, b] = rgbToOklab(rgb);
     return { hex, name, lower: fold(name), rgb, L, a, b };
   });
-  const n = items.length;
-  const pL = new Float32Array(n);
-  const pA = new Float32Array(n);
-  const pB = new Float32Array(n);
-  const cells = new Int32Array(n);
-  const start = new Int32Array(GL * GA * GA + 1);
-  items.forEach((it, k) => {
-    pL[k] = it.L;
-    pA[k] = it.a;
-    pB[k] = it.b;
-    cells[k] = cellIndex(it.L, it.a, it.b);
-    start[cells[k] + 1]++;
-  });
-  for (let c = 0; c < GL * GA * GA; c++) start[c + 1] += start[c];
-  const fill = start.slice(0, -1);
-  const order = new Int32Array(n);
-  for (let k = 0; k < n; k++) order[fill[cells[k]]++] = k;
-  return {
-    items,
-    pL,
-    pA,
-    pB,
-    start,
-    order,
-    byHex: new Map(items.map((i) => [i.hex, i])),
-  };
+  return { items, byHex: new Map(items.map((i) => [i.hex, i])) };
 }
 
 const prepared = new Map();
@@ -186,50 +153,3 @@ export const getList = (key) => {
 // the list if it has loaded already, so a name can show without waiting a frame
 export const loadedList = (key) => ready.get(key);
 
-// own cell first, then only neighbors that could still hold something closer
-const NEIGHBORS = [0, -1, 1];
-export function nearestIndex(d, L, a, b) {
-  const fl = L / G;
-  const fa = (a + AB) / G;
-  const fb = (b + AB) / G;
-  const li = Math.floor(fl);
-  const ai = Math.floor(fa);
-  const bi = Math.floor(fb);
-  // distance from the color to its cell's lower and upper faces, per axis
-  const gl = [0, (fl - li) * G, (li + 1 - fl) * G];
-  const ga = [0, (fa - ai) * G, (ai + 1 - fa) * G];
-  const gb = [0, (fb - bi) * G, (bi + 1 - fb) * G];
-  const { start, order, pL, pA, pB } = d;
-  let best = -1;
-  let bd = UNNAMED * UNNAMED;
-  for (let i = 0; i < 3; i++) {
-    const x = li + NEIGHBORS[i];
-    if (x < 0 || x >= GL) continue;
-    const dx = gl[i] * gl[i];
-    if (dx >= bd) continue;
-    for (let j = 0; j < 3; j++) {
-      const y = ai + NEIGHBORS[j];
-      if (y < 0 || y >= GA) continue;
-      const dxy = dx + ga[j] * ga[j];
-      if (dxy >= bd) continue;
-      const row = (x * GA + y) * GA;
-      for (let k = 0; k < 3; k++) {
-        const z = bi + NEIGHBORS[k];
-        if (z < 0 || z >= GA || dxy + gb[k] * gb[k] >= bd) continue;
-        const c = row + z;
-        for (let s = start[c], e = start[c + 1]; s < e; s++) {
-          const n = order[s];
-          const dl = pL[n] - L;
-          const da = pA[n] - a;
-          const db = pB[n] - b;
-          const dd = dl * dl + da * da + db * db;
-          if (dd < bd) {
-            bd = dd;
-            best = n;
-          }
-        }
-      }
-    }
-  }
-  return best;
-}

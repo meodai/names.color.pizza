@@ -3,7 +3,6 @@ import ColorDescription from "color-description";
 import {
   hexToRgb,
   rgbToOklab,
-  oklchString,
   normalizeHex,
   loadedList,
   getList,
@@ -862,7 +861,7 @@ function measureStrip(rows = strip.source) {
   strip.title.style.width = "max-content";
   strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + gap + row * 2.8);
   strip.title.style.width = `${strip.titleWidth}px`;
-  strip.rows = rows.map((r, k) => {
+  strip.rows = rows.map((r) => {
     let x = 0;
     const tiles = r.items.map((it) => {
       const w = (it.ratio || 1) * row;
