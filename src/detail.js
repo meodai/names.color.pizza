@@ -501,16 +501,17 @@ async function render(hex) {
     location.replace(siteURL(`color/${slugFor(data, exact.name)}/`));
     return;
   }
-  // a page built for this very color knows its name, even before the API's list has it
-  const ownPage = !exact && builtPage?.hex === hex ? { name: builtPage.name, hex } : null;
-  const near = exact || ownPage || closestAny(data, hex).item;
+  // a page built for this very color knows its name, even before the API's list has it, and
+  // over the list's old one when the color was renamed since its release
+  const ownPage = builtPage?.hex === hex ? { name: builtPage.name, hex } : null;
+  const near = ownPage || exact || closestAny(data, hex).item;
   if (!exact && !ownPage && import.meta.env.PROD && !page.embedded && builtPage?.name !== near.name) {
     location.replace(`${siteURL(`color/${slugFor(data, near.name)}/`)}#${hex.slice(1)}`);
     return;
   }
   current.name = near.name;
 
-  page.cardName.textContent = exact ? near.name : `≈ ${near.name}`;
+  page.cardName.textContent = exact || ownPage ? near.name : `≈ ${near.name}`;
   page.name.textContent = near.name;
   page.colophonColor.textContent = `${near.name} · ${hex}`;
   fitTitle();
@@ -606,7 +607,9 @@ async function render(hex) {
   filled(page.wordsSlide, !!page.words.innerHTML.trim());
   filled(page.neighborsSlide, true);
 
-  const own = exact && import.meta.env.PROD ? new URL(siteURL(`color/${slugFor(data, current.name)}/`)) : location;
+  // shared as its page, never with the address's #hex: also a name too new for the list
+  const ownSlug = ownPage ? builtPage.slug : exact ? slugFor(data, current.name) : null;
+  const own = ownSlug && import.meta.env.PROD ? new URL(siteURL(`color/${ownSlug}/`)) : location;
   page.pageLink.href = own.href;
   page.pageLink.textContent = `${own.host}${own.pathname}${own.hash}`;
   page.outro.textContent = "Use it, share it.";
