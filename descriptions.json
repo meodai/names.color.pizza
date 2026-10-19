@@ -270283,5 +270283,14 @@
     "kind": "pun",
     "description": "Hard to find, impossible to forget: that one golden, perfectly melted spot of cheese. Some say it’s a myth. Those who found it know better.",
     "model": "claude"
+  },
+  {
+    "name": "Estrogreen",
+    "hex": "#2dfe54",
+    "ai": true,
+    "kind": "pun",
+    "reference": "estrogen",
+    "description": "Hormone-hued green, all glow, bloom and big feelings.",
+    "model": "claude"
   }
 ]
