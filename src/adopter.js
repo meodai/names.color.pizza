@@ -1,6 +1,8 @@
 // who adopted a color: a link to them, and their face for the card's corner
 // from this many dollars a color is adopted, its adopter shown
 export const ADOPT_FROM = 5;
+// the adopt button's heart, in the color itself
+export const HEART = `<svg class="hero__heart" viewBox="0 1 24 22" aria-hidden="true"><path class="hero__heart-edge" d="M12 21.35 10.55 20C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /><path d="M12 21.35 10.55 20C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /></svg>`;
 
 export const PROFILES = {
   bluesky: (by) => `https://bsky.app/profile/${by}`,

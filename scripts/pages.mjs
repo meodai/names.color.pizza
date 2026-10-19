@@ -14,7 +14,7 @@ import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
 import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
 import { cardKey, cardURL } from "./cards.mjs";
 import { FORMATS } from "../src/formats.js";
-import { ADOPT_FROM, handle, longDate } from "../src/adopter.js";
+import { ADOPT_FROM, HEART, handle, longDate } from "../src/adopter.js";
 import { documentURI, documentKey, FIRST_DAY } from "../src/standard-site.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -272,7 +272,7 @@ const statsHTML = (hex, adopted) =>
   `<span>${hex}</span><span></span><span class="hero__adopted">${
     adopted?.amount >= ADOPT_FROM
       ? `Adopted ${escapeHTML(longDate(adopted.at))} by <span class="hero__adopter">${escapeHTML(handle(adopted.by, adopted.on))}</span>${adopted.founding ? ", founding patron" : ""}`
-      : `<a class="adopt-cta" href="../../adopt/#${hex.slice(1)}">Adopt this color <span class="hero__heart">\u2665\uFE0E</span></a>`
+      : `<a class="adopt-cta" href="../../adopt/#${hex.slice(1)}">Adopt this color ${HEART}</a>`
   }</span>`;
 const pixelOf = (slug) =>
   pixels[slug] && {

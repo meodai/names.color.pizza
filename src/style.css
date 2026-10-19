@@ -307,19 +307,50 @@ a:hover {
 
 .hero__stats a.adopt-cta {
   margin-block-start: var(--space-s);
-  padding: 0.6rem 1.1rem;
-}
-
-.adopt-cta .hero__heart {
-  margin-inline-start: 0.6em;
 }
 
 .hero__adopted:empty {
   display: none;
 }
 
+/* the heart in the color itself, outlined in the button's ink; over the button it swells out
+   past its right end, a little differently each time (detail.js) */
 .hero__heart {
-  display: inline-block;
+  inline-size: 1.4em;
+  block-size: 1.27em;
+  margin-block: -0.5em;
+  overflow: visible;
+  fill: var(--page-color, var(--bg));
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  transition:
+    scale 0.45s cubic-bezier(0.3, 1.6, 0.5, 1),
+    translate 0.45s cubic-bezier(0.3, 1.6, 0.5, 1),
+    rotate 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+/* and round that, a thin line in the button's own color, for where it swells past it */
+.hero__heart-edge {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 3.4;
+}
+
+.adopt-cta:hover .hero__heart,
+.adopt-cta:focus-visible .hero__heart,
+.footer__adopt a:hover .hero__heart,
+.footer__adopt a:focus-visible .hero__heart {
+  scale: var(--heart-scale, 2);
+  translate: var(--heart-x, 0.7em) var(--heart-y, -0.1em);
+  rotate: var(--heart-turn, 10deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__heart {
+    transition: none;
+  }
 }
 
 .hero__adopter {
@@ -1251,14 +1282,24 @@ a:hover {
 .footer__adopt a,
 .hero__stats a.adopt-cta,
 .not-found__more a {
-  display: inline-block;
-  padding: 0.85rem 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.75rem 1.3rem;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-display);
+  text-transform: uppercase;
   border-radius: 999px;
   color: var(--bg);
   background: var(--fg);
-  font-weight: var(--weight-display);
   text-decoration: none;
   transition: scale 0.2s ease;
+}
+
+/* the heart's box is wider than the heart, so its side gets less room to look even */
+.footer__adopt a:has(.hero__heart),
+.hero__stats a.adopt-cta {
+  padding-inline-end: 1.15rem;
 }
 
 .footer__adopt a:hover,

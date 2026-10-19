@@ -21,7 +21,6 @@ import parrot from "./favicon.svg?raw";
 import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
 import { pixelCards } from "./pixel-mode.js";
 
-// the heart in its own box, so the link's underline passes it by
 function adoptLink(hex, name, approx) {
   // an unnamed hex can't be adopted: its closest name can, so the link says which
   const a = Object.assign(document.createElement("a"), {
@@ -29,13 +28,24 @@ function adoptLink(hex, name, approx) {
     className: "adopt-cta",
     textContent: approx && name ? `Adopt ${name} ` : "Adopt this color ",
   });
-  a.append(Object.assign(document.createElement("span"), { className: "hero__heart", textContent: "\u2665\uFE0E" }));
+  a.insertAdjacentHTML("beforeend", HEART);
   return a;
 }
 const adoptHref = (hex, name, approx) =>
   approx && name ? siteURL(`adopt/?name=${encodeURIComponent(name)}`) : siteURL(`adopt/#${hex.slice(1)}`);
+// each time over an adopt button, its heart swells its own way
+for (const type of ["pointerover", "focusin"])
+  document.addEventListener(type, (e) => {
+    const a = e.target.closest?.(".adopt-cta, .footer__adopt a");
+    if (!a || a.contains(e.relatedTarget)) return;
+    const s = a.style;
+    s.setProperty("--heart-scale", between(1.7, 2.5).toFixed(2));
+    s.setProperty("--heart-x", `${between(0.8, 1.5).toFixed(2)}em`);
+    s.setProperty("--heart-y", `${between(-0.45, 0.1).toFixed(2)}em`);
+    s.setProperty("--heart-turn", `${between(-22, 22).toFixed(2)}deg`);
+  });
 import { tiltCard, previewShine } from "./tilt.js";
-import { adoptedHTML, adopterBadge } from "./adopter.js";
+import { adoptedHTML, adopterBadge, HEART } from "./adopter.js";
 
 const toLab = converter("lab");
 
