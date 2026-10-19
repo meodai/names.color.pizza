@@ -3748,12 +3748,26 @@ html.is-arriving:not(.is-passed-on) {
 }
 
 .wall__intro {
-  animation: wall-intro-in 0.55s cubic-bezier(0.3, 0.7, 0, 1) both;
-  padding: var(--space-s);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-xs);
+}
+
+/* frosted, the space showing through, under the white of what the list is */
+.wall__intro-card {
+  animation: wall-intro-in 0.55s cubic-bezier(0.3, 0.7, 0, 1) 0.35s both;
+  overflow: hidden;
+  padding: 0 var(--space-s) calc(var(--space-s) + 1.6rem);
   border-radius: 1rem;
   color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 60%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+
+.wall__intro-about {
+  margin-inline: calc(-1 * var(--space-s));
+  padding: var(--space-s);
   background: var(--paper);
-  font-size: var(--text-xs);
 }
 
 .wall__intro p {
@@ -3787,7 +3801,7 @@ html.is-arriving:not(.is-passed-on) {
 
 /* the way there, in the adoption's own foil */
 .wall__intro-links .wall__intro-cta {
-  padding: 0.45rem 0.9rem;
+  padding: 0 0.9rem;
   border-radius: 999px;
   color: var(--ink);
   text-decoration: none;
@@ -3799,7 +3813,9 @@ html.is-arriving:not(.is-passed-on) {
     12em 100%;
   background-repeat: repeat, repeat-x;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6);
-  animation: holo-drift 5s linear infinite;
+  animation:
+    wall-intro-up 0.5s cubic-bezier(0.3, 0.7, 0, 1) 0.55s both,
+    holo-drift 5s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3814,12 +3830,34 @@ html.is-arriving:not(.is-passed-on) {
   white-space: nowrap;
 }
 
+/* a row as high as the tabs beside it, its buttons as high as theirs and on their line,
+   the card's end under their middle; they come in after the card, one after the other */
+@keyframes wall-intro-up {
+  from {
+    opacity: 0;
+    translate: 0 1rem;
+  }
+}
+
 .wall__intro-links {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-s);
-  padding-block-start: var(--space-2xs);
+  gap: var(--space-2xs);
+  block-size: 3.2rem;
+  margin-block-start: -1.6rem;
+  padding-inline: var(--space-s);
+}
+
+.wall__intro-links > * {
+  display: inline-flex;
+  align-items: center;
+  block-size: 2.6rem;
+  animation: wall-intro-up 0.5s cubic-bezier(0.3, 0.7, 0, 1) 0.55s both;
+}
+
+.wall__intro-links > * + * {
+  animation-delay: 0.65s;
 }
 
 .wall__intro-links a,
@@ -3840,8 +3878,10 @@ html.is-arriving:not(.is-passed-on) {
 }
 
 .wall__intro-links button {
-  padding: 0.45rem 0.9rem;
+  padding: 0 0.9rem;
   border-radius: 999px;
+  color: var(--ink);
+  background: var(--paper);
 }
 
 .wall__bar,
@@ -4015,6 +4055,11 @@ html.is-arriving:not(.is-passed-on) {
   transition:
     opacity 0.35s ease,
     translate 0.55s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+/* held at their start while the rest is away, so they come in after it (index.html) */
+.wall.is-opening :is(.wall__intro-card, .wall__intro-links > *) {
+  animation-play-state: paused;
 }
 
 .wall.is-opening .wall__dock {
@@ -4552,7 +4597,7 @@ html.is-arriving:not(.is-passed-on) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wall__intro {
+  :is(.wall__intro-card, .wall__intro-links > *) {
     animation: none;
   }
 }

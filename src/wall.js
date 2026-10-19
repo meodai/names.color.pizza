@@ -631,6 +631,10 @@ export async function initWall(root) {
     } catch {}
   });
 
+  // the page starts with all of this away (index.html) and brings it in as a color page's
+  // close does: as the space flies in, at once when it's restored or can't load
+  const enter = () => root.classList.remove("is-opening");
+
   let listKey = new URLSearchParams(location.search).get("list");
   if (!LISTS[listKey]) listKey = "default";
   let list;
@@ -638,6 +642,7 @@ export async function initWall(root) {
     list = await getList(listKey);
   } catch {
     status.textContent = "The names didn’t load. Check your connection and reload the page.";
+    enter();
     return;
   }
   let items = list.items;
@@ -682,6 +687,7 @@ export async function initWall(root) {
   }
   if (!draw) {
     status.textContent = "This view needs WebGL, which this browser doesn’t offer.";
+    enter();
     return;
   }
   // the names in the 3D view; without them the HTML labels stay
@@ -2802,6 +2808,7 @@ export async function initWall(root) {
       spot = { i: marked, on: true, t: performance.now() };
     }
     request();
+    requestAnimationFrame(() => requestAnimationFrame(enter));
   } else {
     const h = home();
     const startCells = new URLSearchParams(location.search).get("view") === "cells";
@@ -2814,12 +2821,14 @@ export async function initWall(root) {
       Object.assign(cam, h);
       update();
       then();
+      enter();
     } else {
       Object.assign(cam, { ...h, dist: h.dist * 0.07, yaw: cam.yaw - 0.6 });
       update();
       flyTo(h, BANG_MS);
       bang = { start: performance.now(), center: h.target, then };
       busy = true;
+      setTimeout(enter, BANG_MS * 0.75);
     }
     request();
   }

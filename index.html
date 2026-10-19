@@ -38,7 +38,7 @@
     ></script>
   </head>
   <body class="wall-page">
-    <main class="wall" data-wall>
+    <main class="wall is-opening" data-wall>
       <a class="brand wall__brand" href="./"
         ><svg class="brand__logo" viewBox="20 12 130 158" aria-hidden="true">
           <path d="M30 170h80v-60a39.8 39.8 0 0 0-5.25-19.81A80 80 0 0 0 30 170z" fill="#f69" />
@@ -129,21 +129,25 @@
       <div class="wall__corner">
         <p class="wall__status" data-status aria-live="polite">Loading the names…</p>
         <aside class="wall__intro" data-intro hidden>
-          <p class="wall__intro-title"><span data-count>31,912</span> colors, each named by a person.</p>
-          <p>
-            Color Names is an open list, grown over the years from many sources and thousands of suggestions. Every name
-            is unique, and anyone can add one. It’s free to use, under the MIT license: as an npm package, a JSON or CSV
-            file, or through the API.
-          </p>
-          <p class="wall__intro-adopt">
-            <span class="label wall__intro-stat" data-adopted-count hidden></span>
-            <b>Adopt a color to support my work.</b> Pick your favourite, open it and hit <i>Adopt this color</i>: from
-            $5, with your name on it for good. Each color can be adopted only once.
-          </p>
-          <p class="wall__intro-links">
+          <div class="wall__intro-card">
+            <div class="wall__intro-about">
+              <p class="wall__intro-title"><span data-count>31,912</span> colors, each named by a person.</p>
+              <p>
+                Color Names is an open list, grown over the years from many sources and thousands of suggestions. Every
+                name is unique, and anyone can add one. It’s free to use, under the MIT license: as an npm package, a
+                JSON or CSV file, or through the API.
+              </p>
+            </div>
+            <p class="wall__intro-adopt">
+              <span class="label wall__intro-stat" data-adopted-count hidden></span>
+              <b>Adopt a color to support my work.</b> Pick your favourite, open it and hit <i>Adopt this color</i>:
+              from $5, with your name on it for good. Each color can be adopted only once.
+            </p>
+          </div>
+          <div class="wall__intro-links">
             <a class="wall__intro-cta" href="./adopt/">Adopt a color</a>
             <button type="button" data-intro-close>Got it</button>
-          </p>
+          </div>
         </aside>
       </div>
 
