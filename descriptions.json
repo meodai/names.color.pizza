@@ -1562,14 +1562,6 @@
     "model": "describer"
   },
   {
-    "name": "Advertising Green",
-    "hex": "#53a079",
-    "ai": true,
-    "kind": "plain",
-    "description": "Grassy, like a lawn where billboards rise.",
-    "model": "describer"
-  },
-  {
     "name": "Aebleskiver",
     "hex": "#e6d3b6",
     "ai": true,
@@ -3611,14 +3603,6 @@
     "model": "describer"
   },
   {
-    "name": "Almond Beige",
-    "hex": "#dfd5ca",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale, bare nutshell color, empty and smooth.",
-    "model": "describer"
-  },
-  {
     "name": "Almond Biscuit",
     "hex": "#e9c9a9",
     "ai": true,
@@ -4451,14 +4435,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Crumpled, thin, and metallic: the kitchen wrap.",
-    "model": "describer"
-  },
-  {
-    "name": "Aluminium Silver",
-    "hex": "#8c8d91",
-    "ai": true,
-    "kind": "plain",
-    "description": "Metallic grey, polished to a sheen like aluminium or silver.",
     "model": "describer"
   },
   {
@@ -5853,14 +5829,6 @@
     "model": "describer"
   },
   {
-    "name": "Ancient",
-    "hex": "#efeedc",
-    "ai": true,
-    "kind": "plain",
-    "description": "Faded parchment, worn smooth by time.",
-    "model": "describer"
-  },
-  {
     "name": "Ancient Bamboo",
     "hex": "#da6304",
     "ai": true,
@@ -6480,14 +6448,6 @@
     "ai": true,
     "kind": "mood",
     "description": "Sunbeam bright, like a feather floating down from above.",
-    "model": "describer"
-  },
-  {
-    "name": "Angelic Pink",
-    "hex": "#f4d9cb",
-    "ai": true,
-    "kind": "plain",
-    "description": "Heavenly pale, though more dusty rose petal than blushing cheek.",
     "model": "describer"
   },
   {
@@ -8736,15 +8696,6 @@
     "model": "describer"
   },
   {
-    "name": "Aqua Bay",
-    "hex": "#b5dfc9",
-    "ai": true,
-    "kind": "place",
-    "reference": "coastal bay",
-    "description": "Shallow water at the edge of a calm bay, where sea meets shore.",
-    "model": "describer"
-  },
-  {
     "name": "Aqua Belt",
     "hex": "#7acad0",
     "ai": true,
@@ -8775,14 +8726,6 @@
     "kind": "thing",
     "reference": "water, a breeze",
     "description": "Sea mist on a still morning, the palest breath of ocean air.",
-    "model": "describer"
-  },
-  {
-    "name": "Aqua Cyan",
-    "hex": "#01f1f1",
-    "ai": true,
-    "kind": "plain",
-    "description": "Sparkling bright cyan, like a splash of water under sunlight.",
     "model": "describer"
   },
   {
@@ -10922,15 +10865,6 @@
     "model": "describer"
   },
   {
-    "name": "Artful Aqua",
-    "hex": "#91b4b3",
-    "ai": true,
-    "kind": "thing",
-    "reference": "water",
-    "description": "Dusty water, with a hint of grey stone at the river's edge.",
-    "model": "describer"
-  },
-  {
     "name": "Artful Magenta",
     "hex": "#80505d",
     "ai": true,
@@ -11332,14 +11266,6 @@
     "model": "describer"
   },
   {
-    "name": "Ash Grey",
-    "hex": "#c1b5a9",
-    "ai": true,
-    "kind": "plain",
-    "description": "Warm dust, like the soft remains of a fire.",
-    "model": "describer"
-  },
-  {
     "name": "Ash Grove",
     "hex": "#b9b3bf",
     "ai": true,
@@ -11526,14 +11452,6 @@
     "kind": "reference",
     "reference": "Asher Benjamin, American architect",
     "description": "Dusty architectural grey, like stone walls and old blueprints.",
-    "model": "describer"
-  },
-  {
-    "name": "Ashes",
-    "hex": "#b8b5ad",
-    "ai": true,
-    "kind": "thing",
-    "description": "Cold fireplace grey, after the flames have gone out.",
     "model": "describer"
   },
   {
@@ -11928,14 +11846,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Faded aster flower, delicate as the thin edge of a petal.",
-    "model": "describer"
-  },
-  {
-    "name": "Aster Purple",
-    "hex": "#8881b0",
-    "ai": true,
-    "kind": "thing",
-    "description": "Dusty purple petals, like the flowers that bloom in autumn.",
     "model": "describer"
   },
   {
@@ -15961,15 +15871,6 @@
     "model": "describer"
   },
   {
-    "name": "Baltic Green",
-    "hex": "#3aa098",
-    "ai": true,
-    "kind": "place",
-    "reference": "Baltic Sea",
-    "description": "Frosty teal, like seaweed in icy Baltic currents.",
-    "model": "describer"
-  },
-  {
     "name": "Baltic Prince",
     "hex": "#135952",
     "ai": true,
@@ -15994,14 +15895,6 @@
     "kind": "place",
     "reference": "Baltic Sea",
     "description": "Frosty, dark teal depths, cold as the sea that gave it a name.",
-    "model": "describer"
-  },
-  {
-    "name": "Baltic Turquoise",
-    "hex": "#00a49a",
-    "ai": true,
-    "kind": "plain",
-    "description": "Vivid turquoise, icy as the Baltic Sea, but warm as a gemstone.",
     "model": "describer"
   },
   {
@@ -19792,14 +19685,6 @@
     "model": "claude"
   },
   {
-    "name": "Beige Green",
-    "hex": "#e0d8b0",
-    "ai": true,
-    "kind": "plain",
-    "description": "Faded sand, a little greenish, like a dried herb.",
-    "model": "describer"
-  },
-  {
     "name": "Beige Intenso",
     "hex": "#c5a88d",
     "ai": true,
@@ -22166,14 +22051,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Greyish blue, like overcast sky on a day the birds stay in their nests.",
-    "model": "describer"
-  },
-  {
-    "name": "Bird Blue Grey",
-    "hex": "#7f92a0",
-    "ai": true,
-    "kind": "plain",
-    "description": "Sky on a cloudy day, or a bird's back when it's not singing.",
     "model": "describer"
   },
   {
@@ -25751,14 +25628,6 @@
     "model": "describer"
   },
   {
-    "name": "Blue Bayberry",
-    "hex": "#2d5360",
-    "ai": true,
-    "kind": "thing",
-    "description": "Dusty teal, like the shadow of a bayberry bush on a winter's day.",
-    "model": "describer"
-  },
-  {
     "name": "Blue Bayou",
     "hex": "#bec4d3",
     "ai": true,
@@ -27267,15 +27136,6 @@
     "model": "describer"
   },
   {
-    "name": "Blue Lullaby",
-    "hex": "#c8d7d2",
-    "ai": true,
-    "kind": "mood",
-    "reference": "lullaby music",
-    "description": "A gentle grey, like the quiet moment before a baby's eyes drift shut.",
-    "model": "describer"
-  },
-  {
     "name": "Blue Luna",
     "hex": "#b2c4cd",
     "ai": true,
@@ -27513,14 +27373,6 @@
     "kind": "place",
     "reference": "Blue Nile river",
     "description": "Soft blue of a cloudy day over the Ethiopian highlands where it rises.",
-    "model": "describer"
-  },
-  {
-    "name": "Blue Nuance",
-    "hex": "#d2dde0",
-    "ai": true,
-    "kind": "plain",
-    "description": "Subtle grey with a hint of blue, the nuance being the blue part.",
     "model": "describer"
   },
   {
@@ -27860,15 +27712,6 @@
     "model": "describer"
   },
   {
-    "name": "Blue Reflection",
-    "hex": "#ccd7e1",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Blue Reflection video game",
-    "description": "Gust's role-playing game, a pale echo of blue on still water.",
-    "model": "describer"
-  },
-  {
     "name": "Blue Refrain",
     "hex": "#b0d8e7",
     "ai": true,
@@ -28177,14 +28020,6 @@
     "kind": "thing",
     "reference": "skylight windows",
     "description": "Dusty glass above, filtering the blue out of the sky.",
-    "model": "describer"
-  },
-  {
-    "name": "Blue Slate",
-    "hex": "#5a5f68",
-    "ai": true,
-    "kind": "plain",
-    "description": "Grey rock, or a turkey's feathers, a medium, dusty, slate grey.",
     "model": "describer"
   },
   {
@@ -32078,14 +31913,6 @@
     "model": "describer"
   },
   {
-    "name": "Breezy Blue",
-    "hex": "#bad9e5",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale, serene blue, like a cloudy sky with a gentle wind.",
-    "model": "describer"
-  },
-  {
     "name": "Breezy Day",
     "hex": "#bdc4b8",
     "ai": true,
@@ -32812,14 +32639,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Glowing citrus green, like a slice of lime lit from within.",
-    "model": "describer"
-  },
-  {
-    "name": "Bright Lime Green",
-    "hex": "#65fe08",
-    "ai": true,
-    "kind": "plain",
-    "description": "Electric citrus, shining like a just-cut lime wedge.",
     "model": "describer"
   },
   {
@@ -36891,14 +36710,6 @@
     "model": "describer"
   },
   {
-    "name": "Butter Yellow",
-    "hex": "#fffd74",
-    "ai": true,
-    "kind": "plain",
-    "description": "Creamy, sunny, and spreadable as the dairy product it's named after.",
-    "model": "describer"
-  },
-  {
     "name": "Butterball",
     "hex": "#fff4c4",
     "ai": true,
@@ -38254,15 +38065,6 @@
     "model": "describer"
   },
   {
-    "name": "Cake Pop Pink",
-    "hex": "#f6cac3",
-    "ai": true,
-    "kind": "thing",
-    "reference": "cake pop dessert",
-    "description": "Frosted birthday cake in a pale pink wrapper, one bite on a stick.",
-    "model": "describer"
-  },
-  {
     "name": "Cakepop Sorbet",
     "hex": "#f8c649",
     "ai": true,
@@ -39172,14 +38974,6 @@
     "model": "describer"
   },
   {
-    "name": "Cameo Cream",
-    "hex": "#f3e2c3",
-    "ai": true,
-    "kind": "thing",
-    "description": "Cream as in dairy, not theatrical, and pale as alabaster carved for a brooch.",
-    "model": "describer"
-  },
-  {
     "name": "Cameo Green",
     "hex": "#dce6e5",
     "ai": true,
@@ -39231,15 +39025,6 @@
     "kind": "thing",
     "reference": "cameo carving",
     "description": "Delicate portrait carved into a pale, creamy stone.",
-    "model": "describer"
-  },
-  {
-    "name": "Cameo White",
-    "hex": "#eed8ba",
-    "ai": true,
-    "kind": "thing",
-    "reference": "cameo jewelry",
-    "description": "Pale as the face on a carved cameo brooch, delicate and worn smooth.",
     "model": "describer"
   },
   {
@@ -43150,15 +42935,6 @@
     "model": "describer"
   },
   {
-    "name": "Cathedral Grey",
-    "hex": "#aba9a7",
-    "ai": true,
-    "kind": "place",
-    "reference": "cathedral stone",
-    "description": "Weathered stone, worn smooth by city rain and pigeon feet.",
-    "model": "describer"
-  },
-  {
     "name": "Cathedral Stone",
     "hex": "#80796e",
     "ai": true,
@@ -44347,15 +44123,6 @@
     "model": "claude"
   },
   {
-    "name": "Centaur Brown",
-    "hex": "#8b6a4f",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Greek mythology, centaurs",
-    "description": "Earth-toned hide of a centaur, where human meets horse in the forest.",
-    "model": "describer"
-  },
-  {
     "name": "Centennial Rose",
     "hex": "#b3a7a6",
     "ai": true,
@@ -45145,14 +44912,6 @@
     "kind": "mood",
     "reference": "champagne, the drink",
     "description": "Fizzy celebration in a pale, delicate glass.",
-    "model": "describer"
-  },
-  {
-    "name": "Champagne Gold",
-    "hex": "#e8d6b3",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale, bubbly beige, like the inside of a champagne flute after the drink is gone.",
     "model": "describer"
   },
   {
@@ -46530,15 +46289,6 @@
     "kind": "thing",
     "reference": "sakura flowers",
     "description": "Soft pink petals falling from the Japanese cherry tree.",
-    "model": "describer"
-  },
-  {
-    "name": "Cherry Blossom Pink",
-    "hex": "#ffb7c5",
-    "ai": true,
-    "kind": "thing",
-    "reference": "cherry blossoms",
-    "description": "Delicate as the pale blossoms on a sakura branch, not the fruit itself.",
     "model": "describer"
   },
   {
@@ -54398,14 +54148,6 @@
     "model": "describer"
   },
   {
-    "name": "Comforting Grey",
-    "hex": "#c5c3b4",
-    "ai": true,
-    "kind": "mood",
-    "description": "Soothing fog, wrapped around you like a blanket.",
-    "model": "describer"
-  },
-  {
     "name": "Comfrey",
     "hex": "#64856b",
     "ai": true,
@@ -56507,14 +56249,6 @@
     "model": "describer"
   },
   {
-    "name": "Coral Rose",
-    "hex": "#f3774d",
-    "ai": true,
-    "kind": "thing",
-    "description": "Salmon-orange, like the first blush of a rose or the inside of a coral shell.",
-    "model": "describer"
-  },
-  {
     "name": "Coral Sand",
     "hex": "#ca884e",
     "ai": true,
@@ -58055,14 +57789,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Undyed cotton, as pale and quiet as a whispered secret.",
-    "model": "describer"
-  },
-  {
-    "name": "Cotton White",
-    "hex": "#e4e3d8",
-    "ai": true,
-    "kind": "thing",
-    "description": "Undyed cotton, the soft, fluffy kind, not quite pure white.",
     "model": "describer"
   },
   {
@@ -59647,14 +59373,6 @@
     "model": "describer"
   },
   {
-    "name": "Creamy Orange",
-    "hex": "#fce9d1",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale, creamy citrus.",
-    "model": "describer"
-  },
-  {
     "name": "Creamy Orange Blush",
     "hex": "#fe9c7b",
     "ai": true,
@@ -59717,14 +59435,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Softly whipped, like the inside of a vanilla pod.",
-    "model": "describer"
-  },
-  {
-    "name": "Creamy White",
-    "hex": "#f0e9d6",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale as whipped cream.",
     "model": "describer"
   },
   {
@@ -60132,14 +59842,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Ember red, warm as coals that still glow.",
-    "model": "describer"
-  },
-  {
-    "name": "Crimson Red",
-    "hex": "#980001",
-    "ai": true,
-    "kind": "plain",
-    "description": "Deep, bold, and rich, like the heart of a Valentine's rose.",
     "model": "describer"
   },
   {
@@ -60620,14 +60322,6 @@
     "kind": "thing",
     "reference": "Crow bird",
     "description": "Glossy as a crow's wing, black that shines like the bird's sharp eye.",
-    "model": "describer"
-  },
-  {
-    "name": "Crow Black Blue",
-    "hex": "#112f4b",
-    "ai": true,
-    "kind": "plain",
-    "description": "Dark as a crow's wing, where blue meets black in the shadows.",
     "model": "describer"
   },
   {
@@ -61168,14 +60862,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Fresh as a just-picked Granny Smith, with a hint of sparkle.",
-    "model": "describer"
-  },
-  {
-    "name": "Crystal Aqua",
-    "hex": "#a1d4d1",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale turquoise, like a water droplet on a polished crystal.",
     "model": "describer"
   },
   {
@@ -63348,15 +63034,6 @@
     "kind": "thing",
     "reference": "dandelion flowers",
     "description": "Faded yellow petals, the exact color of a wish that's blown away.",
-    "model": "describer"
-  },
-  {
-    "name": "Dandelion Yellow",
-    "hex": "#fcd93b",
-    "ai": true,
-    "kind": "thing",
-    "reference": "dandelion flowers",
-    "description": "Dandelion flowers shining like miniature suns in a green lawn.",
     "model": "describer"
   },
   {
@@ -67474,14 +67151,6 @@
     "model": "describer"
   },
   {
-    "name": "Delicacy White",
-    "hex": "#ebe2e5",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pristine white, almost too delicate to notice.",
-    "model": "describer"
-  },
-  {
     "name": "Delicate Ballet Blue",
     "hex": "#c2d1e2",
     "ai": true,
@@ -67669,15 +67338,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Pale, gentle as a rose petal.",
-    "model": "describer"
-  },
-  {
-    "name": "Delicate Pink Rose",
-    "hex": "#eec6c3",
-    "ai": true,
-    "kind": "thing",
-    "reference": "rose flower",
-    "description": "Petals of a rose, softly faded as if already dropped.",
     "model": "describer"
   },
   {
@@ -68149,14 +67809,6 @@
     "ai": true,
     "kind": "mood",
     "description": "Blush of the shy, the modest, and the quietly reserved.",
-    "model": "describer"
-  },
-  {
-    "name": "Demure Pink",
-    "hex": "#f7d2c4",
-    "ai": true,
-    "kind": "plain",
-    "description": "Blushing, but not too much, a quiet, ladylike pink.",
     "model": "describer"
   },
   {
@@ -73389,14 +73041,6 @@
     "model": "describer"
   },
   {
-    "name": "Dull",
-    "hex": "#727171",
-    "ai": true,
-    "kind": "plain",
-    "description": "Grey with no opinion, neither here nor there.",
-    "model": "describer"
-  },
-  {
     "name": "Dull Apricot",
     "hex": "#d09c97",
     "ai": true,
@@ -76331,14 +75975,6 @@
     "model": "describer"
   },
   {
-    "name": "Eggshell Cream",
-    "hex": "#f5eedb",
-    "ai": true,
-    "kind": "thing",
-    "description": "Inside an egg, the first whisper of cream.",
-    "model": "describer"
-  },
-  {
     "name": "Eggshell Paper",
     "hex": "#e2be9f",
     "ai": true,
@@ -76352,14 +75988,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Eggshell beige, like the interior of a quail's nest lined with soft pongee silk.",
-    "model": "describer"
-  },
-  {
-    "name": "Eggshell White",
-    "hex": "#f3e4dc",
-    "ai": true,
-    "kind": "thing",
-    "description": "Inside an egg, the delicate layer that isn't quite see-through.",
     "model": "describer"
   },
   {
@@ -80154,14 +79782,6 @@
     "kind": "thing",
     "reference": "espresso coffee",
     "description": "Dark, pressed espresso, as if the air had been squeezed out too.",
-    "model": "describer"
-  },
-  {
-    "name": "Ethereal Green",
-    "hex": "#f0e8c6",
-    "ai": true,
-    "kind": "mood",
-    "description": "Airy mist that's barely green at all, more the glow after dawn.",
     "model": "describer"
   },
   {
@@ -96426,15 +96046,6 @@
     "model": "describer"
   },
   {
-    "name": "Gibraltar Grey",
-    "hex": "#6f6a68",
-    "ai": true,
-    "kind": "place",
-    "reference": "Gibraltar",
-    "description": "Grey limestone of the Rock, standing guard where two seas meet.",
-    "model": "claude"
-  },
-  {
     "name": "Gibraltar Sea",
     "hex": "#133a54",
     "ai": true,
@@ -98842,14 +98453,6 @@
     "model": "describer"
   },
   {
-    "name": "Gold Pheasant",
-    "hex": "#c6795f",
-    "ai": true,
-    "kind": "thing",
-    "description": "Pheasant feathers, not the metal, in a warm, earthy brown.",
-    "model": "describer"
-  },
-  {
     "name": "Gold Plate",
     "hex": "#e6bd8f",
     "ai": true,
@@ -100177,14 +99780,6 @@
     "kind": "thing",
     "reference": "Russian tea urn",
     "description": "Polished brass from a Russian samovar, where tea is always being poured.",
-    "model": "describer"
-  },
-  {
-    "name": "Golden Sand",
-    "hex": "#eace6a",
-    "ai": true,
-    "kind": "thing",
-    "description": "Dunes at sunrise, where grains of sand shine like tiny scraps of gold leaf.",
     "model": "describer"
   },
   {
@@ -101813,14 +101408,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Morning fog that clings to granite peaks, softening their edges.",
-    "model": "describer"
-  },
-  {
-    "name": "Granite Grey",
-    "hex": "#6b6869",
-    "ai": true,
-    "kind": "plain",
-    "description": "Solid, stony grey, like the mountain core.",
     "model": "describer"
   },
   {
@@ -104140,14 +103727,6 @@
     "model": "describer"
   },
   {
-    "name": "Green Jalapeño",
-    "hex": "#8c8e51",
-    "ai": true,
-    "kind": "thing",
-    "description": "Unripe jalapeño, the soft green before the heat kicks in.",
-    "model": "describer"
-  },
-  {
     "name": "Green Jeans",
     "hex": "#7a796e",
     "ai": true,
@@ -105063,14 +104642,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Uninvited guest in the garden, with leaves this dull green.",
-    "model": "describer"
-  },
-  {
-    "name": "Green Whisper",
-    "hex": "#e3eee3",
-    "ai": true,
-    "kind": "mood",
-    "description": "Silent as a whisper, pale as a mist that hasn't decided to rain.",
     "model": "describer"
   },
   {
@@ -106198,14 +105769,6 @@
     "model": "describer"
   },
   {
-    "name": "Grey Timberwolf",
-    "hex": "#acaeb1",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale grey fur, not the eyes or howl of the wolf, just its coat.",
-    "model": "describer"
-  },
-  {
     "name": "Grey Tote",
     "hex": "#81807d",
     "ai": true,
@@ -106244,14 +105807,6 @@
     "kind": "reference",
     "reference": "mythical werewolf",
     "description": "Full moon fur, but the color is just a medium grey, no transformation in sight.",
-    "model": "describer"
-  },
-  {
-    "name": "Grey Whisper",
-    "hex": "#e6e4e4",
-    "ai": true,
-    "kind": "mood",
-    "description": "Soft grey, the colour of a quiet room.",
     "model": "describer"
   },
   {
@@ -109724,14 +109279,6 @@
     "model": "describer"
   },
   {
-    "name": "Hazy Blue",
-    "hex": "#bcc8cc",
-    "ai": true,
-    "kind": "plain",
-    "description": "Grey sky with fog, not a cloud in sight, just a uniform mist.",
-    "model": "describer"
-  },
-  {
     "name": "Hazy Day",
     "hex": "#f2cc99",
     "ai": true,
@@ -112513,15 +112060,6 @@
     "model": "describer"
   },
   {
-    "name": "Highlighter Yellow",
-    "hex": "#f1e740",
-    "ai": true,
-    "kind": "thing",
-    "reference": "stationery",
-    "description": "Fluorescent marker ink, screaming for attention on a page.",
-    "model": "describer"
-  },
-  {
     "name": "Highway",
     "hex": "#bdb388",
     "ai": true,
@@ -113340,14 +112878,6 @@
     "kind": "reference",
     "reference": "Lindsey Buckingham song",
     "description": "The pale blue stretch of highway to a summer getaway, windows down.",
-    "model": "describer"
-  },
-  {
-    "name": "Holiday Turquoise",
-    "hex": "#8ac6bd",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pastel turquoise, like a tropical resort pool at low season.",
     "model": "describer"
   },
   {
@@ -115484,14 +115014,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Dusty purple-brown, like a basket of overripe wild berries.",
-    "model": "describer"
-  },
-  {
-    "name": "Huckleberry Brown",
-    "hex": "#71563b",
-    "ai": true,
-    "kind": "thing",
-    "description": "Forest floor brown, like the earth under huckleberry bushes.",
     "model": "describer"
   },
   {
@@ -117892,14 +117414,6 @@
     "ai": true,
     "kind": "mood",
     "description": "Blushing, but tapping its foot.",
-    "model": "describer"
-  },
-  {
-    "name": "Imperial",
-    "hex": "#602f6b",
-    "ai": true,
-    "kind": "plain",
-    "description": "Rich, dark, regal purple, fit for an emperor.",
     "model": "describer"
   },
   {
@@ -121594,14 +121108,6 @@
     "model": "describer"
   },
   {
-    "name": "Ivory Memories",
-    "hex": "#e6ddcd",
-    "ai": true,
-    "kind": "mood",
-    "description": "Faded piano keys, holding the ghosts of old melodies.",
-    "model": "describer"
-  },
-  {
     "name": "Ivory Mist",
     "hex": "#efeade",
     "ai": true,
@@ -122300,14 +121806,6 @@
     "kind": "place",
     "reference": "Jaffa, Israel",
     "description": "Sunset over Jaffa's old port, where the Mediterranean light turns orange.",
-    "model": "describer"
-  },
-  {
-    "name": "Jaffa Orange",
-    "hex": "#d87839",
-    "ai": true,
-    "kind": "thing",
-    "description": "Vibrant orange, the colour of a popular seedless variety from Israel.",
     "model": "describer"
   },
   {
@@ -123241,14 +122739,6 @@
     "reference": "court jester",
     "description": "Rich red of a jester's hat, pointing to the fool in the royal court.",
     "model": "describer"
-  },
-  {
-    "name": "Jet",
-    "hex": "#343434",
-    "ai": true,
-    "kind": "thing",
-    "description": "Polished fossil wood, the glossy near-black of Victorian mourning jewellery.",
-    "model": "claude"
   },
   {
     "name": "Jet Black",
@@ -127926,15 +127416,6 @@
     "model": "describer"
   },
   {
-    "name": "Labradorite Green",
-    "hex": "#547d80",
-    "ai": true,
-    "kind": "thing",
-    "reference": "Labradorite mineral",
-    "description": "Dusty teal like the matte side of labradorite, before it catches the light.",
-    "model": "describer"
-  },
-  {
     "name": "Labrador’s Locks",
     "hex": "#d6c575",
     "ai": true,
@@ -128844,14 +128325,6 @@
     "model": "describer"
   },
   {
-    "name": "Landmark Brown",
-    "hex": "#756657",
-    "ai": true,
-    "kind": "plain",
-    "description": "Dusty, weathered stone, the kind that marks a corner of a property.",
-    "model": "describer"
-  },
-  {
     "name": "Landscape",
     "hex": "#c1cfa9",
     "ai": true,
@@ -129018,15 +128491,6 @@
     "kind": "thing",
     "reference": "semi-precious stone",
     "description": "Ancient royal blue, cut from a stone that made ultramarine pigment precious.",
-    "model": "describer"
-  },
-  {
-    "name": "Lapis Lazuli Blue",
-    "hex": "#215f96",
-    "ai": true,
-    "kind": "thing",
-    "reference": "lapis lazuli gemstone",
-    "description": "Ancient blue gemstone, polished to a dark, sparkling finish.",
     "model": "describer"
   },
   {
@@ -135718,14 +135182,6 @@
     "model": "describer"
   },
   {
-    "name": "Lime Blossom",
-    "hex": "#f4f2d3",
-    "ai": true,
-    "kind": "thing",
-    "description": "Pale petals from the linden tree, not the citrus one, in soft focus.",
-    "model": "describer"
-  },
-  {
     "name": "Lime Cake",
     "hex": "#dae3d0",
     "ai": true,
@@ -136218,14 +135674,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Dusty stone, the faded green of weathered quarries.",
-    "model": "describer"
-  },
-  {
-    "name": "Limestone Mauve",
-    "hex": "#d6d7db",
-    "ai": true,
-    "kind": "thing",
-    "description": "Weathered limestone, pale as the dust that settles on it.",
     "model": "describer"
   },
   {
@@ -144393,14 +143841,6 @@
     "model": "describer"
   },
   {
-    "name": "Marshmallow Rose",
-    "hex": "#f7e5e6",
-    "ai": true,
-    "kind": "thing",
-    "description": "Fluffy as whipped marshmallow, pale as the inside of a rose petal.",
-    "model": "describer"
-  },
-  {
     "name": "Marshmallow Whip",
     "hex": "#f9efe0",
     "ai": true,
@@ -145108,15 +144548,6 @@
     "model": "describer"
   },
   {
-    "name": "Maui Blue",
-    "hex": "#52a2b4",
-    "ai": true,
-    "kind": "place",
-    "reference": "Maui island, Hawaii",
-    "description": "Ocean spray off Maui's coast, on a morning that's not quite sunny.",
-    "model": "describer"
-  },
-  {
     "name": "Maui Mai Tai",
     "hex": "#b66044",
     "ai": true,
@@ -145189,14 +144620,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Dusty, faded mauve, like the mallow flower after a long day.",
-    "model": "describer"
-  },
-  {
-    "name": "Mauve Dusk",
-    "hex": "#545883",
-    "ai": true,
-    "kind": "plain",
-    "description": "Soft, greyish blue of a summer evening, after the purple flowers have closed.",
     "model": "describer"
   },
   {
@@ -151873,14 +151296,6 @@
     "model": "describer"
   },
   {
-    "name": "Misty Aqua",
-    "hex": "#bcdbdb",
-    "ai": true,
-    "kind": "plain",
-    "description": "Water on a grey day, so still it reflects the mist.",
-    "model": "describer"
-  },
-  {
     "name": "Misty Beach Cattle",
     "hex": "#f1eedf",
     "ai": true,
@@ -154119,14 +153534,6 @@
     "ai": true,
     "kind": "mood",
     "description": "Grey as a midnight path, illuminated only by the sky.",
-    "model": "describer"
-  },
-  {
-    "name": "Moonlight White",
-    "hex": "#f9f0de",
-    "ai": true,
-    "kind": "plain",
-    "description": "Soft glow of moonbeams on a still night.",
     "model": "describer"
   },
   {
@@ -158325,14 +157732,6 @@
     "model": "describer"
   },
   {
-    "name": "Mystical Purple",
-    "hex": "#745d83",
-    "ai": true,
-    "kind": "plain",
-    "description": "Soft, muted purple, like a twilight sky or a bruise.",
-    "model": "describer"
-  },
-  {
     "name": "Mystical Sea",
     "hex": "#dce3d1",
     "ai": true,
@@ -162266,15 +161665,6 @@
     "model": "describer"
   },
   {
-    "name": "Nile Green",
-    "hex": "#99be85",
-    "ai": true,
-    "kind": "place",
-    "reference": "the Nile River",
-    "description": "Soft green like the first shoots on the riverbank after the flood.",
-    "model": "describer"
-  },
-  {
     "name": "Nile Reed",
     "hex": "#968f5f",
     "ai": true,
@@ -162782,15 +162172,6 @@
     "kind": "reference",
     "reference": "nocturne in music",
     "description": "Nightfall grey, as Chopin's fingers wander in moonlit improvisation.",
-    "model": "describer"
-  },
-  {
-    "name": "Nocturne Blue",
-    "hex": "#37525f",
-    "ai": true,
-    "kind": "reference",
-    "reference": "nocturne music",
-    "description": "Nightfall's dusty grey-blue, the colour of a Chopin melody.",
     "model": "describer"
   },
   {
@@ -163974,14 +163355,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Golden, like a small chunk of precious ore.",
-    "model": "describer"
-  },
-  {
-    "name": "Nugget Gold",
-    "hex": "#bf961f",
-    "ai": true,
-    "kind": "thing",
-    "description": "Olive-toned nugget, crumbly and earthy, like a prospector's find.",
     "model": "describer"
   },
   {
@@ -165449,14 +164822,6 @@
     "model": "describer"
   },
   {
-    "name": "Ochre Maroon",
-    "hex": "#cc7733",
-    "ai": true,
-    "kind": "thing",
-    "description": "Burnt orange, like the iron-rich earth pigment ochre, but darker.",
-    "model": "describer"
-  },
-  {
     "name": "Ochre Pigment",
     "hex": "#c77135",
     "ai": true,
@@ -165940,14 +165305,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Engine grime, the greenish tint that clings to motor oil.",
-    "model": "describer"
-  },
-  {
-    "name": "Oil Grey",
-    "hex": "#3b3131",
-    "ai": true,
-    "kind": "plain",
-    "description": "Dark engine grease, the kind that stains your hands.",
     "model": "describer"
   },
   {
@@ -168171,14 +167528,6 @@
     "model": "describer"
   },
   {
-    "name": "Orange Confection",
-    "hex": "#f4e3d2",
-    "ai": true,
-    "kind": "thing",
-    "description": "Pale sugar dust on a candied peel, almost too delicate to be orange.",
-    "model": "describer"
-  },
-  {
     "name": "Orange Creamsicle",
     "hex": "#ffb710",
     "ai": true,
@@ -168393,15 +167742,6 @@
     "kind": "thing",
     "reference": "orange nectar bat species",
     "description": "Rich orange, like the sunset where a small, flying mammal sips nectar.",
-    "model": "describer"
-  },
-  {
-    "name": "Orange Ochre",
-    "hex": "#da7631",
-    "ai": true,
-    "kind": "thing",
-    "reference": "butterfly and pigment",
-    "description": "Vibrant as a butterfly's wings, and the earth pigment that matches their glow.",
     "model": "describer"
   },
   {
@@ -169357,15 +168697,6 @@
     "kind": "thing",
     "reference": "paper folding, clover plant",
     "description": "Faded green of a paper scrap, creased and folded into a lucky leaf.",
-    "model": "describer"
-  },
-  {
-    "name": "Origami White",
-    "hex": "#e5e2da",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Japanese paper folding art",
-    "description": "Paper folded into a crane, or just a blank sheet waiting for creases.",
     "model": "describer"
   },
   {
@@ -170952,15 +170283,6 @@
     "kind": "thing",
     "reference": "Asian architecture",
     "description": "Tile-roof blue, like the eaves of a temple, stacked up to the sky.",
-    "model": "describer"
-  },
-  {
-    "name": "Pagoda Blue",
-    "hex": "#1b8192",
-    "ai": true,
-    "kind": "place",
-    "reference": "Asian pagodas",
-    "description": "Ceremonial teal, like glazed tiles on a temple roof.",
     "model": "describer"
   },
   {
@@ -175349,14 +174671,6 @@
     "model": "describer"
   },
   {
-    "name": "Peach Crème Brûlée",
-    "hex": "#ffe19d",
-    "ai": true,
-    "kind": "thing",
-    "description": "Peach custard, soft as the fruit's downy skin, before the sugar crust.",
-    "model": "describer"
-  },
-  {
     "name": "Peach Damask",
     "hex": "#f6c4a6",
     "ai": true,
@@ -176478,14 +175792,6 @@
     "kind": "thing",
     "reference": "pearl",
     "description": "Luminous as the inside of a shell, smooth and calm as a pearl.",
-    "model": "describer"
-  },
-  {
-    "name": "Pearl Yellow",
-    "hex": "#f1e3bc",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale beige like the inside of an oyster shell.",
     "model": "describer"
   },
   {
@@ -180374,14 +179680,6 @@
     "model": "describer"
   },
   {
-    "name": "Pine Cone Brown",
-    "hex": "#675850",
-    "ai": true,
-    "kind": "thing",
-    "description": "Forest floor, under pine needles and small, scaly cones.",
-    "model": "describer"
-  },
-  {
     "name": "Pine Cone Pass",
     "hex": "#5c6456",
     "ai": true,
@@ -180929,15 +180227,6 @@
     "kind": "mood",
     "reference": "bliss, perfect happiness",
     "description": "Pastel pink happiness, as soft as a fluffy cloud on a serene day.",
-    "model": "describer"
-  },
-  {
-    "name": "Pink Blossom",
-    "hex": "#fbe9dd",
-    "ai": true,
-    "kind": "thing",
-    "reference": "cherry blossoms",
-    "description": "Delicate as the inside of a flower, a pale petal color.",
     "model": "describer"
   },
   {
@@ -182296,14 +181585,6 @@
     "model": "describer"
   },
   {
-    "name": "Pink Sea Salt",
-    "hex": "#f6dacb",
-    "ai": true,
-    "kind": "thing",
-    "description": "Flaky salt from the ocean, pale as the foam that washes it up.",
-    "model": "describer"
-  },
-  {
     "name": "Pink Sentiment",
     "hex": "#f0d4ca",
     "ai": true,
@@ -182491,14 +181772,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Netting the color of ballet skirts, warm as backstage lights.",
-    "model": "describer"
-  },
-  {
-    "name": "Pink Tutu",
-    "hex": "#f9e4e9",
-    "ai": true,
-    "kind": "thing",
-    "description": "Netting of a ballet skirt, pale as the inside of a rose.",
     "model": "describer"
   },
   {
@@ -184457,14 +183730,6 @@
     "model": "describer"
   },
   {
-    "name": "Plum Raisin",
-    "hex": "#644847",
-    "ai": true,
-    "kind": "thing",
-    "description": "Dried fruit, not fresh: a plum and a raisin, both wrinkled.",
-    "model": "describer"
-  },
-  {
     "name": "Plum Rich",
     "hex": "#64475e",
     "ai": true,
@@ -185350,14 +184615,6 @@
     "kind": "reference",
     "reference": "Polaris, the pole star",
     "description": "Faint grey light, like the North Star on a hazy night, guiding through the ice.",
-    "model": "describer"
-  },
-  {
-    "name": "Polar White",
-    "hex": "#e6efec",
-    "ai": true,
-    "kind": "plain",
-    "description": "Fresh snow, the kind that crunches, not the dirty city kind.",
     "model": "describer"
   },
   {
@@ -186500,14 +185757,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Fragile, pale china with the softness of unpolished jasper stone.",
-    "model": "describer"
-  },
-  {
-    "name": "Porcelain Mint",
-    "hex": "#dbe7e1",
-    "ai": true,
-    "kind": "thing",
-    "description": "Delicate as a mint-condition ceramic, pale as the glaze on a fine china plate.",
     "model": "describer"
   },
   {
@@ -190252,14 +189501,6 @@
     "model": "describer"
   },
   {
-    "name": "Pumpkin Orange",
-    "hex": "#fb7d07",
-    "ai": true,
-    "kind": "thing",
-    "description": "Jack-o'-lantern orange, carved from a gourd.",
-    "model": "describer"
-  },
-  {
     "name": "Pumpkin Patch",
     "hex": "#d59466",
     "ai": true,
@@ -190874,15 +190115,6 @@
     "ai": true,
     "kind": "mood",
     "description": "Purple turned up to the highest note, a crescendo in violet.",
-    "model": "describer"
-  },
-  {
-    "name": "Purple Comet",
-    "hex": "#6e6970",
-    "ai": true,
-    "kind": "thing",
-    "reference": "comet",
-    "description": "Grey dust, comet trail remnants after the purple glow has burned off.",
     "model": "describer"
   },
   {
@@ -191664,14 +190896,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Dusty glove, after the punch has been thrown, but missed its mark.",
-    "model": "describer"
-  },
-  {
-    "name": "Purple Purity",
-    "hex": "#c9c6df",
-    "ai": true,
-    "kind": "plain",
-    "description": "Purified lavender, watered down to a gentle mist.",
     "model": "describer"
   },
   {
@@ -212479,15 +211703,6 @@
     "model": "describer"
   },
   {
-    "name": "Seagull Grey",
-    "hex": "#d9d9d2",
-    "ai": true,
-    "kind": "thing",
-    "reference": "seagull bird",
-    "description": "Overcast sky, like the belly of a gull flying low over the shore.",
-    "model": "describer"
-  },
-  {
     "name": "Seagull Wail",
     "hex": "#c7bda8",
     "ai": true,
@@ -212696,14 +211911,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Empty shell interior, pale as the inside of a conch.",
-    "model": "describer"
-  },
-  {
-    "name": "Seashell Peach",
-    "hex": "#fff6de",
-    "ai": true,
-    "kind": "thing",
-    "description": "Pale inside of a shell, empty and smooth, like the first bite of a peach.",
     "model": "describer"
   },
   {
@@ -216571,14 +215778,6 @@
     "model": "describer"
   },
   {
-    "name": "Shoelace Beige",
-    "hex": "#f6ebd3",
-    "ai": true,
-    "kind": "thing",
-    "description": "Undone shoelace, frayed and pale as the dusty floor it trails on.",
-    "model": "describer"
-  },
-  {
     "name": "Shojo’s Blood",
     "hex": "#e2041b",
     "ai": true,
@@ -218652,14 +217851,6 @@
     "model": "describer"
   },
   {
-    "name": "Silver Mistral",
-    "hex": "#b4b9b9",
-    "ai": true,
-    "kind": "plain",
-    "description": "Polished silver dulled by the mistral, a cold wind off the Mediterranean.",
-    "model": "describer"
-  },
-  {
     "name": "Silver Moon",
     "hex": "#d9d7c9",
     "ai": true,
@@ -220474,14 +219665,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Mossy green, like the first growth on weathered slate rooftops.",
-    "model": "describer"
-  },
-  {
-    "name": "Slate Grey",
-    "hex": "#59656d",
-    "ai": true,
-    "kind": "plain",
-    "description": "Grey as a piece of slate, cool and dusty from the quarry.",
     "model": "describer"
   },
   {
@@ -230535,14 +229718,6 @@
     "model": "describer"
   },
   {
-    "name": "Still Grey",
-    "hex": "#aba9a0",
-    "ai": true,
-    "kind": "mood",
-    "description": "Calm, unmoving, a quiet moment in a dusty room.",
-    "model": "describer"
-  },
-  {
     "name": "Still Life in Grey",
     "hex": "#a1a39f",
     "ai": true,
@@ -231129,15 +230304,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Faded jeans, worn soft by stones and years of use.",
-    "model": "describer"
-  },
-  {
-    "name": "Stonewashed Brown",
-    "hex": "#dcccc0",
-    "ai": true,
-    "kind": "thing",
-    "reference": "stonewashed denim",
-    "description": "Faded jeans, tumbled with stones until the fabric and the color are worn soft.",
     "model": "describer"
   },
   {
@@ -232766,14 +231932,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Grey so pale it barely registers, a whisper of a shadow.",
-    "model": "describer"
-  },
-  {
-    "name": "Subtle Blue",
-    "hex": "#d9e4e5",
-    "ai": true,
-    "kind": "plain",
-    "description": "Faint mist of blue, barely a whisper of the primary colour.",
     "model": "describer"
   },
   {
@@ -234667,14 +233825,6 @@
     "ai": true,
     "kind": "mood",
     "description": "Warm sand, softly glowing as if someone had just walked away.",
-    "model": "describer"
-  },
-  {
-    "name": "Sun-Kissed Yellow",
-    "hex": "#ffe9ba",
-    "ai": true,
-    "kind": "plain",
-    "description": "Soft, warm, and gentle as a summer morning.",
     "model": "describer"
   },
   {
@@ -243099,14 +242249,6 @@
     "model": "describer"
   },
   {
-    "name": "Thunder Grey",
-    "hex": "#57534c",
-    "ai": true,
-    "kind": "plain",
-    "description": "Storm cloud grey, warm as the air before thunder breaks.",
-    "model": "describer"
-  },
-  {
     "name": "Thunder Mountain Longhorn Pepper",
     "hex": "#ce1b1f",
     "ai": true,
@@ -244889,14 +244031,6 @@
     "model": "describer"
   },
   {
-    "name": "Tobacco Brown",
-    "hex": "#6d5843",
-    "ai": true,
-    "kind": "thing",
-    "description": "Dried, cured, and worn, like a well-handled leather pouch.",
-    "model": "describer"
-  },
-  {
     "name": "Tobacco Leaf",
     "hex": "#8c724f",
     "ai": true,
@@ -245259,14 +244393,6 @@
     "kind": "thing",
     "reference": "tomato fruit",
     "description": "Vibrant as a prize-winning tomato at the county fair.",
-    "model": "describer"
-  },
-  {
-    "name": "Tomato Red",
-    "hex": "#ec2d01",
-    "ai": true,
-    "kind": "thing",
-    "description": "Ripe tomato, red as a just-picked berry.",
     "model": "describer"
   },
   {
@@ -247008,14 +246134,6 @@
     "ai": true,
     "kind": "thing",
     "description": "Forest floor underfoot, the rough side of a trunk worn smooth.",
-    "model": "describer"
-  },
-  {
-    "name": "Tree Bark Brown",
-    "hex": "#665b4e",
-    "ai": true,
-    "kind": "thing",
-    "description": "Forest floor brown, rough as the bark that sheds and protects the tree.",
     "model": "describer"
   },
   {
@@ -254655,14 +253773,6 @@
     "model": "describer"
   },
   {
-    "name": "Vibrant",
-    "hex": "#ffd44d",
-    "ai": true,
-    "kind": "plain",
-    "description": "Sunshine in a pastel cup, full of citrus.",
-    "model": "describer"
-  },
-  {
     "name": "Vibrant Amber",
     "hex": "#d1902e",
     "ai": true,
@@ -255998,27 +255108,11 @@
     "model": "describer"
   },
   {
-    "name": "Violet Dawn",
-    "hex": "#a89b9c",
-    "ai": true,
-    "kind": "mood",
-    "description": "Grey morning, before violet breaks through the haze.",
-    "model": "describer"
-  },
-  {
     "name": "Violet Dusk",
     "hex": "#b59c9c",
     "ai": true,
     "kind": "mood",
     "description": "Twilight's hush, when violet hours turn grey and stars start to show.",
-    "model": "describer"
-  },
-  {
-    "name": "Violet Echo",
-    "hex": "#dfdee5",
-    "ai": true,
-    "kind": "mood",
-    "description": "Faded whisper of a flower, and a sound that's gone.",
     "model": "describer"
   },
   {
@@ -260125,14 +259219,6 @@
     "model": "describer"
   },
   {
-    "name": "Wedding Pink",
-    "hex": "#f6dfd8",
-    "ai": true,
-    "kind": "plain",
-    "description": "Pale, sugary icing, the kind that dusts a wedding cake.",
-    "model": "describer"
-  },
-  {
     "name": "Wedge of Lime",
     "hex": "#e1eca5",
     "ai": true,
@@ -261317,15 +260403,6 @@
     "model": "describer"
   },
   {
-    "name": "Whirlpool Green",
-    "hex": "#a7d0c5",
-    "ai": true,
-    "kind": "thing",
-    "reference": "whirlpool water",
-    "description": "Pale, serene green of water swirling around a quiet drain.",
-    "model": "describer"
-  },
-  {
     "name": "Whirlwind",
     "hex": "#e2d5d3",
     "ai": true,
@@ -261417,14 +260494,6 @@
     "kind": "mood",
     "reference": "the sound of whispering",
     "description": "Silence with a hint of breath, the quietest voice.",
-    "model": "describer"
-  },
-  {
-    "name": "Whisper Blue",
-    "hex": "#e5e8f2",
-    "ai": true,
-    "kind": "mood",
-    "description": "The quietest sky on a still morning, before the world wakes up.",
     "model": "describer"
   },
   {
@@ -261710,14 +260779,6 @@
     "kind": "thing",
     "reference": "blaze, a fire",
     "description": "Ashen remains of a blaze, reduced to smoldering embers.",
-    "model": "describer"
-  },
-  {
-    "name": "White Blossom",
-    "hex": "#f4ecdb",
-    "ai": true,
-    "kind": "thing",
-    "description": "Delicate as a cherry blossom, pale as the ones that fall.",
     "model": "describer"
   },
   {
@@ -262371,30 +261432,12 @@
     "model": "describer"
   },
   {
-    "name": "White Pearl",
-    "hex": "#ede1d1",
-    "ai": true,
-    "kind": "thing",
-    "reference": "pearl",
-    "description": "Luminous, like the inside of an oyster shell, but dry and pale as a worn pearl.",
-    "model": "describer"
-  },
-  {
     "name": "White Pepper",
     "hex": "#ae9e86",
     "ai": true,
     "kind": "thing",
     "reference": "the spice",
     "description": "Dusty seed of black pepper, without the shell, warm and faded as old spice racks.",
-    "model": "describer"
-  },
-  {
-    "name": "White Picket Fence",
-    "hex": "#f0efeb",
-    "ai": true,
-    "kind": "thing",
-    "reference": "suburban ideal",
-    "description": "Freshly painted, a symbol of suburban dreams, tidy and serene.",
     "model": "describer"
   },
   {
@@ -262556,15 +261599,6 @@
     "kind": "reference",
     "reference": "White Shoulders perfume",
     "description": "Powder-pale skin, a hint of vintage perfume lingering on the collarbone.",
-    "model": "describer"
-  },
-  {
-    "name": "White Silence",
-    "hex": "#ebe6d8",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Cave In, White Silence",
-    "description": "Cave In's empty page, a blank where sound should be, in pure white.",
     "model": "describer"
   },
   {
@@ -267959,14 +266993,6 @@
     "model": "describer"
   },
   {
-    "name": "Yellow Diamond",
-    "hex": "#f6f1d7",
-    "ai": true,
-    "kind": "thing",
-    "description": "Faded diamond, a gemstone that lost its sparkle and its color too.",
-    "model": "describer"
-  },
-  {
     "name": "Yellow Dragon",
     "hex": "#f8e47e",
     "ai": true,
@@ -268217,14 +267243,6 @@
     "kind": "place",
     "reference": "Izamal, Mexico",
     "description": "Sun-baked walls of Izamal, Yucatán's golden city.",
-    "model": "describer"
-  },
-  {
-    "name": "Yellow Orange",
-    "hex": "#fcb001",
-    "ai": true,
-    "kind": "plain",
-    "description": "Sunny citrus, halfway to lemon.",
     "model": "describer"
   },
   {
