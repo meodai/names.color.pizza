@@ -5,12 +5,13 @@ const KEY = "cn-pixel";
 // site may read it into WebGL (CORS)
 const MEDIA = location.hostname === "localhost" ? `${location.origin}/media/` : "https://media.color.pizza/";
 
-// on unless turned off for the visit or asked off by the address (?view=colors or cells)
+// off unless turned on for the visit or asked for by the address (?view=pixel); the address
+// asking for the colors or the cells has the last word
 const view = new URLSearchParams(location.search).get("view");
-let on = view === "pixel" || (view !== "colors" && view !== "cells");
+let on = view === "pixel";
 try {
-  if (view === "pixel") sessionStorage.setItem(KEY, "1");
-  else if (on && sessionStorage.getItem(KEY) === "0") on = false;
+  if (on) sessionStorage.setItem(KEY, "1");
+  else if (view !== "colors" && view !== "cells") on = sessionStorage.getItem(KEY) === "1";
 } catch {}
 document.documentElement.classList.toggle("is-pixel", on);
 
