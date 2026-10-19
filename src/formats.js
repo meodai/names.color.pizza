@@ -1,13 +1,20 @@
 import { converter } from "culori";
-import { hexToRgb, oklchString, rgbToOklab } from "./names.js";
 
 // a color written every way the color page shows it (and the dataset gives)
 const toLab = converter("lab");
 const toRgb = converter("rgb");
 const toHsl = converter("hsl");
+const toOklch = converter("oklch");
 
 const pct = (v) => `${Math.round(v * 100)}%`;
 const round = (v) => Math.round(v);
+
+// culori has no CMYK: the plain one, without a print profile
+export function cmykOf(c) {
+  const { r, g, b } = toRgb(c);
+  const k = 1 - Math.max(r, g, b);
+  return k === 1 ? [0, 0, 0, 1] : [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
+}
 
 export const FORMATS = {
   hex: { label: "Hex", fn: (c) => c },
@@ -27,7 +34,11 @@ export const FORMATS = {
   },
   oklch: {
     label: "OKLCH",
-    fn: (c) => oklchString(...rgbToOklab(hexToRgb(c))).replace(/^oklch\(|\)$/g, ""),
+    fn: (c) => {
+      const { l, c: chroma, h } = toOklch(c);
+      // a gray has no hue, however small a tint rounding leaves it
+      return `${(l * 100).toFixed(1)}% ${chroma.toFixed(3)} ${(chroma < 0.0005 ? 0 : h).toFixed(1)}`;
+    },
   },
   lab: {
     label: "LAB",
@@ -38,11 +49,6 @@ export const FORMATS = {
   },
   cmyk: {
     label: "CMYK",
-    fn: (c) => {
-      const { r, g, b } = toRgb(c);
-      const k = 1 - Math.max(r, g, b);
-      if (k === 1) return "0% 0% 0% 100%";
-      return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k].map(pct).join(" ");
-    },
+    fn: (c) => cmykOf(c).map(pct).join(" "),
   },
 };

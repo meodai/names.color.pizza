@@ -3,18 +3,17 @@
 // foils are SVG, so the browser (drawShareCard, right after paying) and the
 // build (scripts/share.mjs, with sharp) draw the same card.
 
+import { wcagLuminance } from "culori";
+
 // black or white, whichever reads better on the color
-export function inkOn(hex) {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.32 ? "#000" : "#fff";
-}
+export const inkOn = (hex) => (wcagLuminance(hex) > 0.32 ? "#000" : "#fff");
 
 export const SHARE = { W: 1200, H: 630, STRIP: 170, PAD: 56, GAP: 12, LOGO: 92, FACE: 112 };
 
 // a steady random per color, so a card looks the same each time it's made
 export function seeded(text) {
   let h = [...text].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
-  return () => ((h = (h * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+  return () => (h = (h * 1664525 + 1013904223) >>> 0) / 2 ** 32;
 }
 
 // the foils of src/shines.js, drawn for a still image
@@ -26,7 +25,9 @@ export function foilSVG(shine, w, h, rand) {
   let defs = "";
   let body;
   if (shine === "prism") {
-    defs += rainbow("rb", 0.3) + `<pattern id="ln" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+    defs +=
+      rainbow("rb", 0.3) +
+      `<pattern id="ln" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
       <rect width="3" height="9" fill="#fff" fill-opacity="0.14"/></pattern>`;
     body = `<rect width="${w}" height="${h}" fill="url(#rb)"/><rect width="${w}" height="${h}" fill="url(#ln)"/>`;
   } else if (shine === "galaxy") {
@@ -45,7 +46,9 @@ export function foilSVG(shine, w, h, rand) {
     const stripes = [];
     for (let x = mid - half; x < mid + half; x += 6 + rand() * 6) {
       const near = 1 - Math.abs(x - mid) / half;
-      stripes.push(`<rect x="${x.toFixed(1)}" width="${(1.5 + rand() * 3).toFixed(1)}" height="${h}" fill="hsl(${Math.round(((x - mid) / half) * 120 + 40 + rand() * 30)} 100% 80%)" fill-opacity="${(0.15 + near * 0.6).toFixed(2)}"/>`);
+      stripes.push(
+        `<rect x="${x.toFixed(1)}" width="${(1.5 + rand() * 3).toFixed(1)}" height="${h}" fill="hsl(${Math.round(((x - mid) / half) * 120 + 40 + rand() * 30)} 100% 80%)" fill-opacity="${(0.15 + near * 0.6).toFixed(2)}"/>`,
+      );
     }
     body = `${stripes.join("")}<ellipse cx="${mid.toFixed(1)}" cy="${(h * (0.45 + rand() * 0.2)).toFixed(1)}" rx="${(w * 0.045).toFixed(1)}" ry="${(h * 0.3).toFixed(1)}" fill="#fff" fill-opacity="0.55" filter="url(#soft)"/>`;
   } else if (shine === "radiant") {
@@ -103,12 +106,14 @@ export function foilSVG(shine, w, h, rand) {
       ["#7ad7ff", 0.55, 0.55],
       ["#b38cff", 0.85, 0.3],
     ]
-      .map(([c, x, y]) => `<ellipse cx="${x * w}" cy="${y * h}" rx="${w * 0.32}" ry="${h * 0.18}" fill="${c}" fill-opacity="0.45" filter="url(#soft)" transform="rotate(-12 ${x * w} ${y * h})"/>`)
+      .map(
+        ([c, x, y]) =>
+          `<ellipse cx="${x * w}" cy="${y * h}" rx="${w * 0.32}" ry="${h * 0.18}" fill="${c}" fill-opacity="0.45" filter="url(#soft)" transform="rotate(-12 ${x * w} ${y * h})"/>`,
+      )
       .join("");
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs>${defs}</defs>${body}</svg>`;
 }
-
 
 const loadImage = (src) =>
   new Promise((resolve, reject) => {
@@ -119,7 +124,8 @@ const loadImage = (src) =>
     img.src = src;
   });
 
-const handleOf = (a) => (a.on === "name" || a.on === "anonymous" || a.on === "website" ? a.by : `@${a.by.replace(/^@/, "")}`);
+const handleOf = (a) =>
+  a.on === "name" || a.on === "anonymous" || a.on === "website" ? a.by : `@${a.by.replace(/^@/, "")}`;
 
 // the same card as scripts/share.mjs, drawn on a canvas: a PNG blob
 export async function drawShareCard(it, adopted, logoSVG) {
@@ -163,7 +169,12 @@ export async function drawShareCard(it, adopted, logoSVG) {
   ctx.font = "700 30px Inter";
   ctx.fillStyle = inkOn(it.hex);
   ctx.textBaseline = "alphabetic";
-  ctx.fillText(`${adopted.founding ? "Founding patron" : "Adopted by"} ${handleOf(adopted)}`, PAD, top - 34, W - 2 * PAD);
+  ctx.fillText(
+    `${adopted.founding ? "Founding patron" : "Adopted by"} ${handleOf(adopted)}`,
+    PAD,
+    top - 34,
+    W - 2 * PAD,
+  );
 
   const logo = await loadImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(logoSVG)}`);
   const logoW = (logo.width / logo.height) * LOGO;
@@ -188,14 +199,24 @@ export async function drawShareCard(it, adopted, logoSVG) {
     ctx.arc(fx + r, fy + r, r - 8, 0, Math.PI * 2);
     ctx.clip();
     const s = Math.max((FACE - 16) / picture.width, (FACE - 16) / picture.height);
-    ctx.drawImage(picture, fx + r - (picture.width * s) / 2, fy + r - (picture.height * s) / 2, picture.width * s, picture.height * s);
+    ctx.drawImage(
+      picture,
+      fx + r - (picture.width * s) / 2,
+      fy + r - (picture.height * s) / 2,
+      picture.width * s,
+      picture.height * s,
+    );
     ctx.restore();
   } else {
     ctx.fillStyle = "#000";
     ctx.font = "700 64px Inter";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(adopted.on === "anonymous" ? "♥" : (adopted.by.replace(/^@/, "")[0] || "?").toUpperCase(), fx + r, fy + r + 2);
+    ctx.fillText(
+      adopted.on === "anonymous" ? "♥" : (adopted.by.replace(/^@/, "")[0] || "?").toUpperCase(),
+      fx + r,
+      fy + r + 2,
+    );
     ctx.textAlign = "start";
   }
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));

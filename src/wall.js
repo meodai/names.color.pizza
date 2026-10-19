@@ -1,3 +1,4 @@
+import { convertLabToLch, convertRgbToHsl } from "culori";
 import {
   getList,
   LISTS,
@@ -31,17 +32,8 @@ const LY = 180; // lightness → world height
 const R = 100;
 
 function hsl([r, g, b]) {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const d = max - min;
-  if (!d) return [0, 0, l];
-  const s = d / (1 - Math.abs(2 * l - 1));
-  const h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-  return [h * 60, s, l];
+  const c = convertRgbToHsl({ r: r / 255, g: g / 255, b: b / 255 });
+  return [c.h ?? 0, c.s, c.l];
 }
 
 const polar = (deg, radius, y) => {
@@ -70,12 +62,10 @@ export const MODELS = {
   // lightness as the radius, chroma as the height
   oklch: {
     label: "OKLCH",
-    place: (it) =>
-      polar(
-        (Math.atan2(it.b, it.a) * 180) / Math.PI,
-        it.L * R * 1.2,
-        (Math.hypot(it.a, it.b) / 0.32) * LY * 0.55 - LY * 0.25,
-      ),
+    place: (it) => {
+      const { c, h = 0 } = convertLabToLch({ l: it.L, a: it.a, b: it.b }, "oklch");
+      return polar(h, it.L * R * 1.2, (c / 0.32) * LY * 0.55 - LY * 0.25);
+    },
   },
   hsl: {
     label: "HSL",
@@ -386,7 +376,11 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
     const loc = gl.getAttribLocation(prog, name);
     buffers[name] = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers[name]);
-    gl.bufferData(gl.ARRAY_BUFFER, array, ["a_pos", "a_strip", "a_star"].includes(name) ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      array,
+      ["a_pos", "a_strip", "a_star"].includes(name) ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW,
+    );
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, size, type, normalized, 0, 0);
     gl.vertexAttribDivisor(loc, divisor);
@@ -729,7 +723,9 @@ export async function initWall(root) {
 
   function markStars() {
     glitter = [];
-    items.forEach((it, i) => adoptedNames.has(it.name) && glitter.push({ i, cell: null, at: -1e9, rest: 0, flash: 0, turn: 0 }));
+    items.forEach(
+      (it, i) => adoptedNames.has(it.name) && glitter.push({ i, cell: null, at: -1e9, rest: 0, flash: 0, turn: 0 }),
+    );
     request();
   }
   // Each card has tiny facets that come round as the view turns, zooms or travels;
@@ -750,7 +746,11 @@ export async function initWall(root) {
       const len = Math.hypot(...v) || 1e-6;
       const seed = (g.i * 2.399963) % 6.2832;
       const a = [Math.sin(seed * 3.1), Math.cos(seed * 5.7), Math.sin(seed * 1.3 + 1)];
-      const facet = Math.floor(((v[0] * a[0] + v[1] * a[1] + v[2] * a[2]) / len) * 24 + ((v[0] * a[2] - v[2] * a[0]) / len) * 15 + Math.log(len) * 6);
+      const facet = Math.floor(
+        ((v[0] * a[0] + v[1] * a[1] + v[2] * a[2]) / len) * 24 +
+          ((v[0] * a[2] - v[2] * a[0]) / len) * 15 +
+          Math.log(len) * 6,
+      );
       if (g.cell !== null && facet !== g.cell && time - g.at > g.rest && hash(facet + seed) < 0.5) {
         g.at = time;
         const [lo, hi] = idle ? REST_MS.drift : REST_MS.moved;
@@ -768,7 +768,11 @@ export async function initWall(root) {
   }
   Promise.all([loadAdoptions(), getList("default")]).then(([adopted, all]) => {
     const names = new Map([...slugsOf(all.items)].map(([name, slug]) => [slug, name]));
-    adoptedNames = new Set(Object.entries(adopted).filter(([, a]) => a.amount >= 5).map(([slug]) => names.get(slug)));
+    adoptedNames = new Set(
+      Object.entries(adopted)
+        .filter(([, a]) => a.amount >= 5)
+        .map(([slug]) => names.get(slug)),
+    );
     markStars();
   });
 
@@ -986,18 +990,36 @@ export async function initWall(root) {
       const top = p.y - (H / 2) * p.s;
       const bottom = pixelArt.k > 0.5 ? top + W * p.s : p.y + (H / 2) * p.s;
       const left = p.x - (W / 2) * p.s;
-      if (sx >= left && sx <= left + W * p.s && sy >= top && sy <= bottom && drawnAt(clearing.i, (sx - left) / (W * p.s), (sy - top) / (W * p.s)))
+      if (
+        sx >= left &&
+        sx <= left + W * p.s &&
+        sy >= top &&
+        sy <= bottom &&
+        drawnAt(clearing.i, (sx - left) / (W * p.s), (sy - top) / (W * p.s))
+      )
         return clearing.i;
     }
     // nor do the cards cleared away in front of it, as the shader clears them
     const h = clearing.i >= 0 && clearing.v > 0.5 ? project(posOf(clearing.i)) : null;
     const [rw, rh] = pixelArt.k > 0.5 ? [W * 0.6, W * 0.6] : [W, H];
     const cleared = (c) =>
-      h && c.i !== clearing.i && c.z < h.z && Math.abs((c.x0 + c.x1) / 2 - h.x) < (rw / 2) * (c.s + h.s) && Math.abs((c.y0 + c.y1) / 2 - h.y) < (rh / 2) * (c.s + h.s);
+      h &&
+      c.i !== clearing.i &&
+      c.z < h.z &&
+      Math.abs((c.x0 + c.x1) / 2 - h.x) < (rw / 2) * (c.s + h.s) &&
+      Math.abs((c.y0 + c.y1) / 2 - h.y) < (rh / 2) * (c.s + h.s);
     for (const c of onScreen()) {
       // in pixel art a card is only its drawing, the square at its top
       const y1 = pixelArt.k > 0.5 ? c.y0 + W * c.s : c.y1;
-      if (c.near > 0.5 && sx >= c.x0 && sx <= c.x1 && sy >= c.y0 && sy <= y1 && !cleared(c) && drawnAt(c.i, (sx - c.x0) / (c.x1 - c.x0), (sy - c.y0) / (W * c.s)))
+      if (
+        c.near > 0.5 &&
+        sx >= c.x0 &&
+        sx <= c.x1 &&
+        sy >= c.y0 &&
+        sy <= y1 &&
+        !cleared(c) &&
+        drawnAt(c.i, (sx - c.x0) / (c.x1 - c.x0), (sy - c.y0) / (W * c.s))
+      )
         return c.i;
     }
     return -1;
@@ -1167,15 +1189,34 @@ export async function initWall(root) {
     const stripping = folding
       ? trackStrips(time, new Set())
       : opening
-      ? trackStrips(time, pixelArt.on ? new Set() : new Set([opening.i]))
-      : textInGL()
-        ? trackStrips(time, pixelNames(texts.ready))
-        : false;
+        ? trackStrips(time, pixelArt.on ? new Set() : new Set([opening.i]))
+        : textInGL()
+          ? trackStrips(time, pixelNames(texts.ready))
+          : false;
     const glittering = trackGlitter(time);
     render(time);
     placeLabels();
     placeMark();
-    if (time < pixelArt.fadingUntil || anim || moving() || idle || morph || opening || spot || bang || cellsFade || flip || listShift || fadingNear || stripping || rushing || clearingWay || held.size || glittering) request();
+    if (
+      time < pixelArt.fadingUntil ||
+      anim ||
+      moving() ||
+      idle ||
+      morph ||
+      opening ||
+      spot ||
+      bang ||
+      cellsFade ||
+      flip ||
+      listShift ||
+      fadingNear ||
+      stripping ||
+      rushing ||
+      clearingWay ||
+      held.size ||
+      glittering
+    )
+      request();
     else lastTime = 0;
   }
 
@@ -1252,7 +1293,12 @@ export async function initWall(root) {
     request();
   }
 
-  const boxRect = (b) => ({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, y0: b.y - (b.w * H) / W / 2, y1: b.y + (b.w * H) / W / 2 });
+  const boxRect = (b) => ({
+    x0: b.x - b.w / 2,
+    x1: b.x + b.w / 2,
+    y0: b.y - (b.w * H) / W / 2,
+    y1: b.y + (b.w * H) / W / 2,
+  });
 
   function placeMark() {
     if (marked < 0) return;
@@ -1423,7 +1469,14 @@ export async function initWall(root) {
     card.style.cssText = `--c-color:${hex};--c-shade0:${hex};--c-shade1:${hex}`;
     card.querySelector(".swatchcard__row1").textContent = hex;
     card.querySelector(".swatchcard__row2").textContent = name;
-    if (pixel) card.querySelector(".swatchcard__upper").append(Object.assign(document.createElement("img"), { className: "swatchcard__pixel swatchcard__pixel--now", src: pixel.src, alt: "" }));
+    if (pixel)
+      card.querySelector(".swatchcard__upper").append(
+        Object.assign(document.createElement("img"), {
+          className: "swatchcard__pixel swatchcard__pixel--now",
+          src: pixel.src,
+          alt: "",
+        }),
+      );
     sizeCard(card, w);
     return { copy, card };
   }
@@ -1507,10 +1560,13 @@ export async function initWall(root) {
       busy = folding = true;
       tip.hidden = true;
       request();
-      setTimeout(() => {
-        busy = folding = false;
-        open(i, true);
-      }, reduceMotion ? 0 : STRIP_MS + 40);
+      setTimeout(
+        () => {
+          busy = folding = false;
+          open(i, true);
+        },
+        reduceMotion ? 0 : STRIP_MS + 40,
+      );
       return;
     }
     busy = true;
@@ -1676,8 +1732,13 @@ export async function initWall(root) {
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     // animated here, as the copy's card takes no transitions (swatchcard--reset)
     if (c.card.querySelector(".swatchcard__pixel")) {
-      const shed = [...c.card.querySelectorAll(".swatchcard__swatch, .swatchcard__label")].map((el) =>
-        el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduceMotion ? 0 : SHED_MS, easing: "ease", fill: "forwards" }).finished,
+      const shed = [...c.card.querySelectorAll(".swatchcard__swatch, .swatchcard__label")].map(
+        (el) =>
+          el.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: reduceMotion ? 0 : SHED_MS,
+            easing: "ease",
+            fill: "forwards",
+          }).finished,
       );
       await Promise.all(shed).catch(() => {});
       c.copy.classList.add("is-pixel");
@@ -2008,7 +2069,15 @@ export async function initWall(root) {
     }
     if (!cellsDraw || cellsMix <= 0) {
       draw(cam, dpr);
-      if (!opening && !morph && !bang && !listShift) sparkles?.draw(cam, dpr, canvas, glitter.filter((g) => g.flash > 0), positions, colors);
+      if (!opening && !morph && !bang && !listShift)
+        sparkles?.draw(
+          cam,
+          dpr,
+          canvas,
+          glitter.filter((g) => g.flash > 0),
+          positions,
+          colors,
+        );
       if (textInGL()) {
         if (textsFor !== draw) {
           texts.reset();
@@ -2019,13 +2088,23 @@ export async function initWall(root) {
         const named = rushing
           ? []
           : onScreen(LABEL_PX * 0.85, texts.slots).filter((c) => c.x1 - c.x0 >= LABEL_PX || showing.has(c.i));
-        if (hoverI >= 0 && !rushing && cellsMix <= 0.5 && !named.some((c) => c.i === hoverI)) named.unshift({ i: hoverI });
-        texts.draw(cam, dpr, canvas, named, items, positions, {
-          at: NEAR_AT,
-          ids: nearIds,
-          alphas: nearAlphas,
-          hover: clearing.i >= 0 ? { i: clearing.i, pos: posOf(clearing.i), clear: easeInOut(clearing.v) } : null,
-        }, draw.strips);
+        if (hoverI >= 0 && !rushing && cellsMix <= 0.5 && !named.some((c) => c.i === hoverI))
+          named.unshift({ i: hoverI });
+        texts.draw(
+          cam,
+          dpr,
+          canvas,
+          named,
+          items,
+          positions,
+          {
+            at: NEAR_AT,
+            ids: nearIds,
+            alphas: nearAlphas,
+            hover: clearing.i >= 0 ? { i: clearing.i, pos: posOf(clearing.i), clear: easeInOut(clearing.v) } : null,
+          },
+          draw.strips,
+        );
       }
       if (leaving) leaving(cam, dpr, { clear: false, keepAll: listShift?.leave ?? 0 });
       return;
@@ -2383,7 +2462,8 @@ export async function initWall(root) {
     };
     const end = textBox(q(".wall__nav a")) || q("[data-menu]").getBoundingClientRect();
     if (logo?.width) list.style.setProperty("--az-left", `${Math.round(logo.left - box.left)}px`);
-    if (end) list.style.setProperty("--az-right", `${Math.max(8, Math.round(box.left + list.clientWidth - end.right))}px`);
+    if (end)
+      list.style.setProperty("--az-right", `${Math.max(8, Math.round(box.left + list.clientWidth - end.right))}px`);
   };
   addEventListener("resize", () => azOn && placeAz());
 
@@ -2420,7 +2500,10 @@ export async function initWall(root) {
         // where the list was, for coming back from the color page
         onLeave: (scroll, href) => {
           try {
-            sessionStorage.setItem("az-view", JSON.stringify({ text: search.value, scroll, page: new URL(href).pathname, at: Date.now() }));
+            sessionStorage.setItem(
+              "az-view",
+              JSON.stringify({ text: search.value, scroll, page: new URL(href).pathname, at: Date.now() }),
+            );
           } catch {}
         },
       });
@@ -2491,7 +2574,12 @@ export async function initWall(root) {
       b.addEventListener("click", () => setModel(key));
       return b;
     }),
-    Object.assign(document.createElement("button"), { type: "button", textContent: "A–Z", title: "Every name, A to Z", onclick: () => setAz(true) }),
+    Object.assign(document.createElement("button"), {
+      type: "button",
+      textContent: "A–Z",
+      title: "Every name, A to Z",
+      onclick: () => setAz(true),
+    }),
   );
   picker.lastElementChild.dataset.az = "";
   showModel();

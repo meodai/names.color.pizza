@@ -12,7 +12,7 @@ import {
   slugsOf,
   tidySenses,
 } from "./names.js";
-import { FORMATS } from "./formats.js";
+import { FORMATS, cmykOf } from "./formats.js";
 import { screenViz, printViz, lightViz } from "./mix-viz.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
 import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
@@ -379,11 +379,7 @@ async function render(hex) {
   const adoption = (adopted) => {
     page.tilt.holo(adopted?.amount >= HOLO_FROM && adopted.shine ? adopted.shine : previewShine(hex));
     const shown = adopted?.amount >= ADOPT_FROM;
-    adoptedLine.replaceChildren(
-      ...(shown
-        ? adoptedHTML(adopted)
-        : [adoptLink(hex, known, approx)]),
-    );
+    adoptedLine.replaceChildren(...(shown ? adoptedHTML(adopted) : [adoptLink(hex, known, approx)]));
     card.parentElement.querySelector(".card-badge")?.remove();
     if (shown) card.parentElement.append(adopterBadge(adopted));
     // and once more at the end of the page, while it's free
@@ -408,7 +404,11 @@ async function render(hex) {
   // the drawing may be there already: the script after the card sets a handed-over card up
   // before the page's first frame (color/index.html)
   if (handedOver && handoff.pixel && !card.querySelector(".swatchcard__pixel--now")) {
-    const img = Object.assign(document.createElement("img"), { className: "swatchcard__pixel swatchcard__pixel--now", src: handoff.pixel.src, alt: "" });
+    const img = Object.assign(document.createElement("img"), {
+      className: "swatchcard__pixel swatchcard__pixel--now",
+      src: handoff.pixel.src,
+      alt: "",
+    });
     img.dataset.slug = handoff.pixel.slug;
     card.querySelector(".swatchcard__upper").append(img);
   }
@@ -451,7 +451,11 @@ async function render(hex) {
   const built = builtPage?.hex === hex;
   if (!built) page.intro.replaceChildren();
   const createdLine = document.createElement("span");
-  page.stats.replaceChildren(Object.assign(document.createElement("span"), { textContent: hex }), createdLine, adoptedLine);
+  page.stats.replaceChildren(
+    Object.assign(document.createElement("span"), { textContent: hex }),
+    createdLine,
+    adoptedLine,
+  );
   page.formats.innerHTML = formatsHTML(hex);
   page.fillHex.textContent = hex;
   page.fill.style.setProperty("--fill", hex);
@@ -560,14 +564,20 @@ async function render(hex) {
   const print = lore.percentageWords("cmyk");
   const light = lore.temperatureWords;
   const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
-  const k = 1 - Math.max(r, g, b);
-  const cmyk = k === 1 ? [0, 0, 0, 1] : [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
+  const cmyk = cmykOf(hex);
   page.mix.innerHTML = [
     ["On screen", `${mix[0]} red, ${mix[1]} green and ${mix[2]} blue`, screenViz([r, g, b])],
     ["In print", `${print[0]} cyan, ${print[1]} magenta, ${print[2]} yellow and ${print[3]} black`, printViz(cmyk)],
-    ["As light", `about ${light.value.toLocaleString("en-US")} K, ${light.descriptive.join(", ")}`, lightViz(light.value)],
+    [
+      "As light",
+      `about ${light.value.toLocaleString("en-US")} K, ${light.descriptive.join(", ")}`,
+      lightViz(light.value),
+    ],
   ]
-    .map(([label, v, viz]) => `<div class="color-specs__pair"><dt class="label color-specs__mix"><span>${label}</span>${viz}</dt><dd>${escapeHTML(v)}</dd></div>`)
+    .map(
+      ([label, v, viz]) =>
+        `<div class="color-specs__pair"><dt class="label color-specs__mix"><span>${label}</span>${viz}</dt><dd>${escapeHTML(v)}</dd></div>`,
+    )
     .join("");
 
   page.about.innerHTML = lore.description.map((t) => `<p>${escapeHTML(t)}</p>`).join("");
@@ -711,11 +721,16 @@ function pixelOnCard() {
   canvas.setAttribute("role", "img");
   canvas.setAttribute("aria-label", pixel.subject);
   open.append(canvas);
-  open.addEventListener("click", () => openPicture(open, { kind: "pixel", image: pixel.src, title: pixel.subject, ratio: 1 }));
+  open.addEventListener("click", () =>
+    openPicture(open, { kind: "pixel", image: pixel.src, title: pixel.subject, ratio: 1 }),
+  );
   upper.append(open);
   const img = new Image();
   img.src = pixel.src;
-  img.decode().then(() => revealPixels(img, canvas, upper.closest(".swatchcard")), () => {});
+  img.decode().then(
+    () => revealPixels(img, canvas, upper.closest(".swatchcard")),
+    () => {},
+  );
   // a button now: no longer only decoration
   upper.closest(".gallery__swatch").removeAttribute("aria-hidden");
 }
@@ -731,7 +746,8 @@ function revealPixels(img, canvas, card) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return ctx.drawImage(img, 0, 0);
   const due = new Float32Array(w * h);
   for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) due[y * w + x] = ((h - 1 - y) / (h - 1)) * (REVEAL_MS - REVEAL_RAGGED) + Math.random() * REVEAL_RAGGED;
+    for (let x = 0; x < w; x++)
+      due[y * w + x] = ((h - 1 - y) / (h - 1)) * (REVEAL_MS - REVEAL_RAGGED) + Math.random() * REVEAL_RAGGED;
   }
   const order = [...due.keys()].sort((a, b) => due[a] - due[b]);
   let next = 0;
@@ -745,7 +761,10 @@ function revealPixels(img, canvas, card) {
     if (next < order.length && canvas.isConnected) requestAnimationFrame(step);
   };
   // after the card's own entrance, as the picture used to fade in
-  const wait = () => (card?.classList.contains("swatchcard--visible") ? setTimeout(() => requestAnimationFrame(step), 550) : requestAnimationFrame(wait));
+  const wait = () =>
+    card?.classList.contains("swatchcard--visible")
+      ? setTimeout(() => requestAnimationFrame(step), 550)
+      : requestAnimationFrame(wait);
   wait();
 }
 
@@ -945,7 +964,8 @@ const link = (href, text) =>
   href ? `<a href="${escapeHTML(href)}" target="_blank" rel="noopener">${escapeHTML(text)}</a>` : escapeHTML(text);
 
 function sourceHTML(it) {
-  if (it.kind === "pixel") return `${link("https://retrodiffusion.ai/", "Pixel art by Retro Diffusion")}, gifted to Color Names`;
+  if (it.kind === "pixel")
+    return `${link("https://retrodiffusion.ai/", "Pixel art by Retro Diffusion")}, gifted to Color Names`;
   if (it.work) {
     const museum = MUSEUMS[it.work.museum];
     return museum ? link(museum.url, museum.name) : "";
@@ -979,7 +999,9 @@ function openPicture(tile, it) {
   const box = document.createElement("div");
   const wide = (it.ratio || 1) > 1;
   // wider than tall: the palette along the top, else down the right
-  box.className = [wide ? "lightbox lightbox--wide" : "lightbox", it.kind === "pixel" && "lightbox--pixel"].filter(Boolean).join(" ");
+  box.className = [wide ? "lightbox lightbox--wide" : "lightbox", it.kind === "pixel" && "lightbox--pixel"]
+    .filter(Boolean)
+    .join(" ");
   const grow = wide ? "1 0" : "0 1";
   box.innerHTML = pictureHTML(it);
   (page.embedded ? page.root : document.body).append(box);
@@ -1091,7 +1113,14 @@ function anchors(root, signal) {
     // headings whose text is set later lose it, so it comes back each time
     const add = () =>
       h.querySelector(".anchor") ||
-      h.append(Object.assign(document.createElement("a"), { className: "anchor", href: `#${el.id}`, textContent: "#", ariaLabel: "Link to this part" }));
+      h.append(
+        Object.assign(document.createElement("a"), {
+          className: "anchor",
+          href: `#${el.id}`,
+          textContent: "#",
+          ariaLabel: "Link to this part",
+        }),
+      );
     add();
     const keep = new MutationObserver(add);
     keep.observe(h, { childList: true });
@@ -1186,7 +1215,10 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
             place,
             whole: true,
             style: card.getAttribute("style"),
-            pixel: img && document.documentElement.classList.contains("is-pixel") ? { src: img.src, slug: img.dataset.slug } : null,
+            pixel:
+              img && document.documentElement.classList.contains("is-pixel")
+                ? { src: img.src, slug: img.dataset.slug }
+                : null,
           }),
         );
       } catch {}
@@ -1231,7 +1263,9 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       };
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return go();
       backdrop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: "ease" });
-      copy.animate(frames, { duration: 650, easing: "cubic-bezier(0.3, 0.7, 0, 1)", fill: "forwards" }).finished.then(go, go);
+      copy
+        .animate(frames, { duration: 650, easing: "cubic-bezier(0.3, 0.7, 0, 1)", fill: "forwards" })
+        .finished.then(go, go);
     },
     { signal },
   );

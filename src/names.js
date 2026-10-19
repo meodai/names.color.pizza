@@ -74,7 +74,11 @@ export const LISTS = {
 async function adoptedColors() {
   const { loadAdoptions, ADOPT_FROM } = await import("./shines.js");
   const [adopted, all] = await Promise.all([loadAdoptions(), loadList("default")]);
-  const kept = new Set(Object.entries(adopted).filter(([, a]) => a.amount >= ADOPT_FROM).map(([slug]) => slug));
+  const kept = new Set(
+    Object.entries(adopted)
+      .filter(([, a]) => a.amount >= ADOPT_FROM)
+      .map(([slug]) => slug),
+  );
   const slugs = slugsOf(all);
   return all.filter((c) => kept.has(slugs.get(c.name)));
 }
@@ -111,12 +115,6 @@ export const oklabToRgb = (L, a, b) => {
   return [r, g, bb].map((c) => Math.round(clamp(c, 0, 1) * 255));
 };
 
-export function oklchString(L, a, b) {
-  const C = Math.hypot(a, b);
-  const h = C < 0.0005 ? 0 : ((Math.atan2(b, a) * 180) / Math.PI + 360) % 360;
-  return `oklch(${(L * 100).toFixed(1)}% ${C.toFixed(3)} ${h.toFixed(1)})`;
-}
-
 export function normalizeHex(input) {
   const m = String(input ?? "")
     .trim()
@@ -144,12 +142,9 @@ export const getList = (key) => {
   if (!prepared.has(key))
     prepared.set(
       key,
-      (key === "adopted" ? adoptedColors() : loadList(key))
-        .then(prepare)
-        .then((d) => (ready.set(key, d), d)),
+      (key === "adopted" ? adoptedColors() : loadList(key)).then(prepare).then((d) => (ready.set(key, d), d)),
     );
   return prepared.get(key);
 };
 // the list if it has loaded already, so a name can show without waiting a frame
 export const loadedList = (key) => ready.get(key);
-

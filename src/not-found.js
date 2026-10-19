@@ -1,3 +1,4 @@
+import { convertHslToRgb } from "culori";
 import { getList, slugsOf, siteURL, rgbToOklab } from "./names.js";
 
 // a page that isn't there: #404404 in the middle of a spiral of names, each where its
@@ -23,13 +24,10 @@ if (asked) {
   missing.hidden = false;
 }
 
-function hslToRgb(h, s, l) {
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = l - c / 2;
-  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
-  return [r + m, g + m, b + m].map((v) => Math.round(v * 255));
-}
+const rgbOf = (h, s, l) => {
+  const { r, g, b } = convertHslToRgb({ h, s, l });
+  return [r, g, b].map((v) => Math.round(v * 255));
+};
 
 // the spiral as points, its length, and the point at any length along it
 function spiral() {
@@ -43,7 +41,8 @@ function spiral() {
     pts.push([C + r * Math.cos(a), C + r * Math.sin(a)]);
   }
   const at = [0];
-  for (let i = 1; i < pts.length; i++) at[i] = at[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  for (let i = 1; i < pts.length; i++)
+    at[i] = at[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
   let k = 0;
   return {
     d: pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join(""),
@@ -58,7 +57,11 @@ function spiral() {
 }
 
 async function wheel() {
-  const [best, all] = await Promise.all([getList("bestOf"), getList("default"), document.fonts?.load(`600 ${SIZE}px Inter`).catch(() => {})]);
+  const [best, all] = await Promise.all([
+    getList("bestOf"),
+    getList("default"),
+    document.fonts?.load(`600 ${SIZE}px Inter`).catch(() => {}),
+  ]);
   const slugs = slugsOf(all.items);
   const items = best.items;
   const used = new Uint8Array(items.length);
@@ -72,7 +75,7 @@ async function wheel() {
   for (let pos = 0; pos < path.total && picks.length < 2000; ) {
     const [x, y] = path.point(Math.min(pos + ahead, path.total));
     const hue = ((Math.atan2(y - C, x - C) * 180) / Math.PI + TURN + 360) % 360;
-    const [L, A, B] = rgbToOklab(hslToRgb(hue, SAT, Math.min(1, Math.hypot(x - C, y - C) / OUTER)));
+    const [L, A, B] = rgbToOklab(rgbOf(hue, SAT, Math.min(1, Math.hypot(x - C, y - C) / OUTER)));
     let best = -1;
     let bd = Infinity;
     for (let i = 0; i < items.length; i++) {
@@ -116,6 +119,8 @@ async function wheel() {
   text.append(along);
   document.querySelector("[data-wheel-names]").append(text);
   // a frame later, so the names start hidden and come in one by one
-  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelector("[data-wheel]").classList.add("is-in")));
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => document.querySelector("[data-wheel]").classList.add("is-in")),
+  );
 }
 wheel();
