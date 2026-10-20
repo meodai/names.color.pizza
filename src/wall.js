@@ -14,7 +14,6 @@ import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from ".
 import { createLabelRenderer } from "./labels-gl.js";
 import { counts, loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
-import { createAz } from "./az.js";
 import { pixelMode, setPixelMode, withPixel } from "./pixel-mode.js";
 import { readAddress, writeAddress } from "./address.js";
 import { createPixelSpace } from "./pixel-space.js";
@@ -23,6 +22,7 @@ import { CARD_W, CARD_H, cardScale, MODELS, DEFAULT_MODEL, GEO, CELL_REACH } fro
 import { createRenderer, NEAR, FAR, NEAR_SLOTS } from "./wall/renderer.js";
 import { createViewSwitch } from "./wall/views.js";
 import { createSearch } from "./wall/search.js";
+import { createList } from "./wall/list.js";
 
 // a short list's cards grow, so a handful don't drown in the space: as big as the
 // Short list's cards would be at the same density, up to 8 times
@@ -38,8 +38,6 @@ const DAMPING = 0.1; // share of the remaining motion per frame (OrbitControls: 
 const MORPH_MS = 1400;
 const BANG_MS = 2600;
 const LIST_SHIFT_MS = 600;
-// into the A–Z list: the camera pulls all the way out as the space fades, then the rows come
-const AZ_MS = 700;
 // [start, length] in ms; the parts overlap so it reads as one movement
 const IN = { fly: 800, clear: [0, 450], repel: [150, 500], fade: [420, 380], glide: 640, travel: 760 };
 const OUT = { leave: 300, travel: 760, fade: [380, 420], repel: [520, 520], fly: 900 };
@@ -188,12 +186,26 @@ export async function initWall(root) {
   } catch (e) {
     console.error(e);
   }
-  // how far the space has faded for the A–Z list, 0 to 1
-  let azMix = 0;
-  let azFade = null;
-  // the camera from before the list, to go back to after it
-  let azFrom = null;
-  const textInGL = () => texts && !opening && !spot && cellsMix <= 0 && azMix <= 0 && !morph && !bang && !listShift;
+  // the A–Z list, over the space when it's up
+  const azList = createList(root, {
+    items: () => items,
+    get search() {
+      return searchBox;
+    },
+    saveable: () => saveable(),
+    flyTo: (to, ms) => flyTo(to, ms),
+    home: () => home(),
+    busy: () => busy,
+    stopIdle: () => stopIdle(),
+    request: () => request(),
+    showModel: () => showModel(),
+    showView: () => showView(),
+    pixelOn: () => pixelArt.on,
+    pixelOf: (i) => pixelOf(i),
+    maxDist: MAX_DIST,
+  });
+  const textInGL = () =>
+    texts && !opening && !spot && cellsMix <= 0 && azList.mix() <= 0 && !morph && !bang && !listShift;
   status.hidden = true;
   // the adopted colors glitter among the rest: by name, so it holds in every list
   let adoptedNames = new Set();
@@ -214,13 +226,13 @@ export async function initWall(root) {
     reduceMotion,
     onToggle: (on) => on && (tip.hidden = true),
     // the list's drawings, once the space knows which name has which
-    onSlots: () => azOn && az?.refresh(),
+    onSlots: () => azList.refresh(),
     getFocus: () => opening?.i ?? spot?.i ?? -1,
   });
   window.addEventListener("pixelmode", (e) => {
     if (e.detail !== pixelArt.on) pixelArt.toggle();
     showMode();
-    if (azOn) az?.refresh();
+    azList.refresh();
   });
   if (pixelMode()) pixelArt.toggle();
 
@@ -711,7 +723,7 @@ export async function initWall(root) {
       // a page open over the wall hides it whole; a found card is still once it's in
       (opening && !colorPage) ||
       (spot && (!spot.on || time - spot.t < 500)) ||
-      azFade ||
+      azList.fading() ||
       bang ||
       cellsFade ||
       flip ||
@@ -747,7 +759,7 @@ export async function initWall(root) {
     let used = 0;
     const one = (i) => [{ i, ...boxRect(drawnBox(i)), s: drawnBox(i).w / W }].filter((c) => c.x1 - c.x0 > 36);
     const near =
-      azMix > 0
+      azList.mix() > 0
         ? []
         : opening
           ? opening.handed
@@ -1495,10 +1507,10 @@ export async function initWall(root) {
     e.preventDefault();
     if (colorPage) history.go(-colorPage.depth);
     // from the list, back to the space as it was last shown
-    else if (azOn) leaveList();
+    else if (azList.on()) leaveList();
     else goHome();
   });
-  q("[data-home]").addEventListener("click", () => (azOn ? leaveList() : goHome()));
+  q("[data-home]").addEventListener("click", () => (azList.on() ? leaveList() : goHome()));
   canvas.addEventListener("dblclick", (e) => {
     const rect = canvas.getBoundingClientRect();
     if (cardAt(e.clientX - rect.left, e.clientY - rect.top) < 0) goHome();
@@ -1530,22 +1542,11 @@ export async function initWall(root) {
       search.focus();
     }
   }
-  // the list's: the arrows, Page and Home End move it, from a row as from anywhere else
-  function listKeys(e) {
-    if (az?.scrollKey(e.key)) return e.preventDefault();
-    if (e.key === "/" && !e.target.closest?.("button, a")) {
-      e.preventDefault();
-      search.focus();
-    }
-  }
 
   const cellsData = {};
   const building = {};
   let cellsDraw = null;
   let cellsOn = false;
-  // the A–Z list, over the space when it's up
-  let azOn = false;
-  let az = null;
   let cellsMix = 0;
   let cellsFade = null;
   let cellsModel = model;
@@ -1578,11 +1579,8 @@ export async function initWall(root) {
   };
 
   function render(time) {
-    if (azFade) {
-      const k = reduceMotion ? 1 : clamp((time - azFade.t0) / AZ_MS, 0, 1);
-      azMix = azFade.from + (azFade.to - azFade.from) * easeInOut(k);
-      if (k >= 1) azFade = null;
-    }
+    azList.step(time);
+    const azMix = azList.mix();
     if (cellsFade) {
       const k = clamp((time - cellsFade.t0) / 700, 0, 1);
       cellsMix = cellsFade.from + (cellsFade.to - cellsFade.from) * easeInOut(k);
@@ -1684,13 +1682,13 @@ export async function initWall(root) {
   const modeNow = () => (pixelMode() ? "pixel" : cellsOn ? "cells" : "colors");
   // what's shown, as one value: the space's own view (colors, cells, pixel), or the list over
   // it. The address says it, but for the colors, the space's default
-  const viewNow = () => (azOn ? "az" : modeNow());
+  const viewNow = () => (azList.on() ? "az" : modeNow());
   const showView = () => writeAddress({ view: viewNow() === "colors" ? null : viewNow() });
   // the one way to change it. Leaving the list is going back to the space's own view, which
   // stays as it was under the list; restore: a page that opens on the list, where it was left
   function setView(next, restore = null) {
-    if (next === "az") return setAz(true, restore);
-    if (azOn) setAz(false);
+    if (next === "az") return azList.set(true, restore);
+    if (azList.on()) azList.set(false);
     if (next === modeNow()) return;
     setPixelMode(next === "pixel");
     setCells(next === "cells");
@@ -1698,7 +1696,7 @@ export async function initWall(root) {
   const leaveList = () => setView(modeNow());
   const views = createViewSwitch(root, {
     now: modeNow,
-    picking: () => azOn && leaveList(),
+    picking: () => azList.on() && leaveList(),
     pick: (want) => setView(want),
   });
   function showMode() {
@@ -1849,7 +1847,7 @@ export async function initWall(root) {
     showCount();
     markStars();
     pixelArt.restore();
-    if (azOn) az?.open(items, search.value, 0);
+    azList.reopen();
   }
 
   // true once a model's cells are drawable, false if they can't be; null when the list changed
@@ -1885,103 +1883,8 @@ export async function initWall(root) {
     }
   }
 
-  // A–Z: the list as one long column instead of the space; the model stays as it was
-  // the list starts as far below the top bar's controls as they are below the top
-  // where a bar rests, from its layout: the bars slide in on every arrival, and a rect would
-  // catch them on the way
-  const rest = (el) => {
-    let top = 0;
-    for (let e = el; e; e = e.offsetParent) top += e.offsetTop;
-    return { top, bottom: top + el.offsetHeight, height: el.offsetHeight };
-  };
-  const placeAz = () => {
-    const list = root.querySelector(".az__list");
-    if (!list) return;
-    const find = rest(q("[data-find]"));
-    const onTop = find.top < innerHeight / 2;
-    const top = onTop ? find : rest(q("[data-menu]"));
-    list.style.setProperty("--az-top", `${Math.round(top.bottom + top.top)}px`);
-    // and room at the end for whatever floats at the bottom: the models and lists, or the search
-    const below = [q(".wall__dock"), onTop ? null : q("[data-find]")]
-      .map((el) => el && rest(el))
-      .filter((b) => b && b.height && b.top > innerHeight / 2);
-    const lowest = below.length ? Math.min(...below.map((b) => b.top)) : innerHeight;
-    const gap = below.length ? innerHeight - Math.max(...below.map((b) => b.bottom)) : 0;
-    list.style.setProperty("--az-bottom", `${Math.round(innerHeight - lowest + gap)}px`);
-    // names start under the parrot, hexes end under GitHub (on a phone, the menu)
-    const box = list.getBoundingClientRect();
-    const logo = q(".wall__brand .brand__logo")?.getBoundingClientRect();
-    // the text's own edge, the last 0 of the version, not the link's padded box
-    const textBox = (el) => {
-      if (!el?.offsetWidth) return null;
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      return range.getBoundingClientRect();
-    };
-    const end = textBox(q(".wall__nav a")) || q("[data-menu]").getBoundingClientRect();
-    if (logo?.width) list.style.setProperty("--az-left", `${Math.round(logo.left - box.left)}px`);
-    if (end)
-      list.style.setProperty("--az-right", `${Math.max(8, Math.round(box.left + list.clientWidth - end.right))}px`);
-  };
-  addEventListener("resize", () => azOn && placeAz());
-  // pages are named by the full list's slugs, whichever list is shown
-  let azSlugs = null;
-  let azIndex = {};
-  // the chip, the address and the list follow at once; the list fills once its names are in
-  function setAz(on, restore = null) {
-    if (on === azOn) return;
-    azOn = on;
-    root.classList.toggle("is-az", on);
-    root.scrollLeft = 0;
-    showModel();
-    showView();
-    // the space fades out under the list as the camera pulls all the way out, and back after to
-    // where it was; a page that opens on the list (restore) has it there at once
-    const t0 = performance.now();
-    azFade = restore || reduceMotion ? null : { from: azMix, to: on ? 1 : 0, t0 };
-    if (!azFade) azMix = on ? 1 : 0;
-    if (!on) {
-      az?.close();
-      if (!busy) flyTo(azFrom ?? home(), AZ_MS);
-      azFrom = null;
-      return request();
-    }
-    stopIdle();
-    if (!restore) azFrom = saveable();
-    if (azFade && !busy) flyTo({ dist: MAX_DIST }, AZ_MS);
-    request();
-    searchBox.clearResults();
-    if (restore?.text) searchBox.restoreText(restore.text);
-    getList("default").then((full) => {
-      if (!azOn) return;
-      azSlugs ||= slugsOf(full.items);
-      az ||= createAz(q(".wall__dock"), {
-        hrefOf: (it) => siteURL(`color/${azSlugs.get(it.name)}/`),
-        // in pixel art, each name with its drawing in front
-        iconOf: (it) => {
-          if (!pixelArt.on) return null;
-          if (azIndex.items !== items) azIndex = { items, at: new Map(items.map((x, i) => [x, i])) };
-          // a name not drawn yet keeps the room, so the names stay in line
-          return pixelOf(azIndex.at.get(it))?.src ?? "";
-        },
-        // where the list was, for coming back from the color page
-        onLeave: (scroll, href) => {
-          try {
-            sessionStorage.setItem(
-              "az-view",
-              JSON.stringify({ text: search.value, scroll, page: new URL(href).pathname, at: Date.now() }),
-            );
-          } catch {}
-        },
-      });
-      // the rows start coming in soon after the space starts to fade; at once when the page opens on the list
-      az.open(items, search.value, restore?.scroll, azFade ? Math.max(0, AZ_MS * 0.25 - (performance.now() - t0)) : -1);
-      placeAz();
-    });
-  }
-
   function setModel(key) {
-    if (azOn) leaveList();
+    if (azList.on()) leaveList();
     if (key === model || !MODELS[key]) return;
     dropSpot();
     // cells can't morph: they dip into the dark and come back reshaped
@@ -2013,7 +1916,7 @@ export async function initWall(root) {
   thumb.setAttribute("aria-hidden", "true");
   function showModel() {
     picker.querySelectorAll("[data-model], [data-az]").forEach((b) => {
-      const on = azOn ? b.hasAttribute("data-az") : b.dataset.model === model;
+      const on = azList.on() ? b.hasAttribute("data-az") : b.dataset.model === model;
       b.setAttribute("aria-pressed", String(on));
       if (on) {
         thumb.style.setProperty("--x", `${b.offsetLeft}px`);
@@ -2081,8 +1984,8 @@ export async function initWall(root) {
     dropSpot,
     goHome,
     busy: () => busy,
-    listUp: () => azOn,
-    list: () => az,
+    listUp: () => azList.on(),
+    list: () => azList.az(),
   });
   const choose = searchBox.choose;
 
@@ -2103,7 +2006,7 @@ export async function initWall(root) {
     }
     if (typing(t)) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return held.clear();
-    if (azOn) return listKeys(e);
+    if (azList.on()) return azList.keys(e);
     spaceKeys(e);
   });
 
@@ -2123,7 +2026,7 @@ export async function initWall(root) {
         view: viewNow(),
         chosen: searchBox.chosen(),
         spot: !!spot?.on,
-        azMix,
+        azMix: azList.mix(),
         cellsMix,
       }),
       open: (hex) => open(nearest(hex)),
@@ -2184,8 +2087,8 @@ export async function initWall(root) {
     idle = false;
     // back from a color's page: flown to that color, the one it ended on; under the list the
     // space has no card to show, only its label would linger over the names
-    if (start && !azOn && returning) focusCard(nearest(start));
-    else if (start && !azOn) {
+    if (start && !azList.on() && returning) focusCard(nearest(start));
+    else if (start && !azList.on()) {
       marked = nearest(start);
       spot = { i: marked, on: true, t: performance.now() };
     }
@@ -2195,15 +2098,15 @@ export async function initWall(root) {
     const h = home();
     const startCells = startView === "cells";
     const then = () => {
-      if (start && !azOn) focusCard(nearest(start));
+      if (start && !azList.on()) focusCard(nearest(start));
       else idle = !reduceMotion;
       if (startCells) setView("cells");
     };
     // under the list there's no space to fly into
-    if (reduceMotion || azOn) {
+    if (reduceMotion || azList.on()) {
       Object.assign(cam, h);
       update();
-      if (!azOn) then();
+      if (!azList.on()) then();
       enter();
     } else {
       Object.assign(cam, { ...h, dist: h.dist * 0.07, yaw: cam.yaw - 0.6 });
