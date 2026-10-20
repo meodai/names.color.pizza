@@ -52,10 +52,11 @@ export default defineConfig({
         const slugs = slugsOf(items);
         const hexOf = new Map(items.map((it) => [slugs.get(it.name), it.hex]));
         server.middlewares.use((req, res, next) => {
-          const path = req.url.split("?")[0];
+          const [path, query] = req.url.split("?");
           if (!/^\/color\/[^/.]+\//.test(path)) return next();
           const hex = hexOf.get(path.match(/^\/color\/([^/]+)\/$/)?.[1]);
-          res.writeHead(302, { Location: hex ? `/color/#${hex.slice(1)}` : "/color/" });
+          const search = query ? `?${query}` : "";
+          res.writeHead(302, { Location: hex ? `/color/${search}#${hex.slice(1)}` : `/color/${search}` });
           res.end();
         });
       },

@@ -704,6 +704,8 @@ export async function initWall(root) {
   // how far the space has faded for the A–Z list, 0 to 1
   let azMix = 0;
   let azFade = null;
+  // the camera from before the list, to go back to after it
+  let azFrom = null;
   const textInGL = () => texts && !opening && !spot && cellsMix <= 0 && azMix <= 0 && !morph && !bang && !listShift;
   status.hidden = true;
   // the adopted colors glitter among the rest: by name, so it holds in every list
@@ -724,11 +726,14 @@ export async function initWall(root) {
     request: () => request(),
     reduceMotion,
     onToggle: (on) => on && (tip.hidden = true),
+    // the list's drawings, once the space knows which name has which
+    onSlots: () => azOn && az?.refresh(),
     getFocus: () => opening?.i ?? spot?.i ?? -1,
   });
   window.addEventListener("pixelmode", (e) => {
     if (e.detail !== pixelArt.on) pixelArt.toggle();
     showMode();
+    if (azOn) az?.refresh();
   });
   if (pixelMode()) pixelArt.toggle();
 
@@ -2131,7 +2136,7 @@ export async function initWall(root) {
           draw.strips,
         );
       }
-      if (leaving) leaving(cam, dpr, { clear: false, keepAll: listShift?.leave ?? 0 });
+      if (leaving) leaving(cam, dpr, { clear: false, keepAll: (listShift?.leave ?? 0) * (1 - azMix) });
       return;
     }
     // lower resolution while anything moves
@@ -2523,15 +2528,19 @@ export async function initWall(root) {
       else if (url.searchParams.get("view") === "az") url.searchParams.delete("view");
       history.replaceState(history.state, "", url);
     } catch {}
-    // the space fades out under the list as the camera pulls all the way out, and back after
+    // the space fades out under the list as the camera pulls all the way out, and back after to
+    // where it was; a page that opens on the list (restore) has it there at once
     const t0 = performance.now();
     azFade = restore || reduceMotion ? null : { from: azMix, to: on ? 1 : 0, t0 };
     if (!azFade) azMix = on ? 1 : 0;
     if (!on) {
       az?.close();
-      if (!busy) flyTo(home(), AZ_MS);
+      if (!busy) flyTo(azFrom ?? home(), AZ_MS);
+      azFrom = null;
       return request();
     }
+    stopIdle();
+    if (!restore) azFrom = saveable();
     if (azFade && !busy) flyTo({ dist: MAX_DIST }, AZ_MS);
     request();
     found = [];
@@ -2852,7 +2861,7 @@ export async function initWall(root) {
     try {
       if (nav === "back_forward" || returning || fromColorPage) was = JSON.parse(sessionStorage.getItem("az-view"));
     } catch {}
-    setAz(true, was);
+    setAz(true, was ?? {});
   }
   if (saved && Number.isFinite(saved.dist) && saved.target?.length === 3) {
     const { home: wasHome, ...restored } = saved;
@@ -2877,10 +2886,11 @@ export async function initWall(root) {
       else idle = !reduceMotion;
       if (startCells) setCells(true);
     };
-    if (reduceMotion) {
+    // under the list there's no space to fly into
+    if (reduceMotion || azOn) {
       Object.assign(cam, h);
       update();
-      then();
+      if (!azOn) then();
       enter();
     } else {
       Object.assign(cam, { ...h, dist: h.dist * 0.07, yaw: cam.yaw - 0.6 });

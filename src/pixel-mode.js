@@ -43,11 +43,12 @@ export function setPixelMode(next) {
   window.dispatchEvent(new CustomEvent("pixelmode", { detail: on }));
 }
 
-// a color's address says so while pixel art is on, so a link passed along opens it the same way
+// a color's address says so while pixel art is on, so a link passed along opens it the same way;
+// once it's off, no longer, or the address would turn it back on
 export function withPixel(href) {
-  if (!on) return href;
   const url = new URL(href, location.href);
-  url.searchParams.set("view", "pixel");
+  if (on) url.searchParams.set("view", "pixel");
+  else if (url.searchParams.get("view") === "pixel") url.searchParams.delete("view");
   return url.href;
 }
 

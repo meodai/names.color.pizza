@@ -13,7 +13,7 @@ export const DETAIL_IN_MS = 320;
 // getDraw, getItems: the renderer and cards now (a new list brings new ones); onScreen: the
 // cards on screen bigger than a size, nearest first; request: a frame
 // getFocus: the card looked at (found, opened), which comes first
-export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceMotion, onToggle, getFocus }) {
+export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceMotion, onToggle, onSlots, getFocus }) {
   const pixelArt = { on: false, k: 0, index: null, slots: null, sheets: [], loading: null, fadingUntil: 0 };
   async function pixelSlots() {
     pixelArt.names ??= slugsOf((await getList("default")).items);
@@ -50,6 +50,7 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     getDraw().pixelInit(pixelArt.index.sheets.length);
     pixelArt.slots = await pixelSlots();
     getDraw().pixelSlots(pixelArt.slots);
+    onSlots?.();
     await Promise.all(
       pixelArt.index.sheets.map(async (_, n) => {
         const blob = await fetch(pixelArt.index.sheetURL(n)).then((r) => r.blob());
@@ -175,6 +176,7 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     pixelArt.slots = null;
     pixelArt.slots = await pixelSlots();
     getDraw().pixelSlots(pixelArt.slots);
+    onSlots?.();
     pixelArt.sheets.forEach((sheet, n) => sheet && getDraw().pixelSheet(n, sheet));
     getDraw().pixelMix(pixelArt.k);
     request();

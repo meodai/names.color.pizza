@@ -101,6 +101,14 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
     if (row) onLeave?.(scrollEl.scrollTop, row.href);
   });
   scrollEl.addEventListener("scroll", () => (frame ||= requestAnimationFrame(render)), { passive: true });
+  // the rows' entrance is over once someone takes the list in hand: rows drawn again after
+  // that would only start it over
+  const settle = () => {
+    clearTimeout(entering);
+    el.classList.remove("is-entering");
+  };
+  for (const type of ["wheel", "touchstart", "keydown", "pointerdown"])
+    scrollEl.addEventListener(type, settle, { passive: true });
   new ResizeObserver(() => !el.hidden && render()).observe(scrollEl);
 
   return {
@@ -109,7 +117,7 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
     open(items, text, keepScroll = true, delay = -1) {
       all = [...items].sort((x, y) => x.lower.localeCompare(y.lower));
       el.hidden = false;
-      clearTimeout(entering);
+      settle();
       el.classList.toggle("is-entering", delay >= 0);
       el.style.setProperty("--az-delay", `${Math.max(0, delay)}ms`);
       filter(text, keepScroll);
@@ -119,11 +127,18 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
       }
     },
     close() {
-      clearTimeout(entering);
-      el.classList.remove("is-entering");
+      settle();
       el.hidden = true;
     },
-    filter,
-    closest,
+    filter: (text, keepScroll) => {
+      settle();
+      filter(text, keepScroll);
+    },
+    closest: (hex, keepScroll) => {
+      settle();
+      closest(hex, keepScroll);
+    },
+    // drawn again as they are, say once their drawings are known
+    refresh: () => !el.hidden && render(),
   };
 }
