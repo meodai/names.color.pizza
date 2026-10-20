@@ -21,7 +21,8 @@ export default defineConfig({
   // the bucket under the local preview's own address: it lets only the site read it into
   // WebGL, and its edge cache would hand a local origin's answer to the site. Asked as the
   // site, so what lands in the cache is just what the site gets
-  server: { proxy: { "/media": MEDIA } },
+  // and the submit form reads ../tests/protected-targets.json
+  server: { proxy: { "/media": MEDIA }, fs: { allow: [".."] } },
   preview: { proxy: { "/media": MEDIA } },
   plugins: [
     {
@@ -71,9 +72,5 @@ export default defineConfig({
         notFound: resolve(import.meta.dirname, "not-found/index.html"),
       },
     },
-  },
-  // the submit form reads ../tests/protected-targets.json
-  server: {
-    fs: { allow: [".."] },
   },
 });
