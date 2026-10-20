@@ -577,6 +577,11 @@ a:hover {
   background-repeat: no-repeat;
 }
 
+/* in from the edge as far as the fields' own text and icons */
+.adopt__who .adopt__note {
+  padding-inline: calc(1rem + 1px);
+}
+
 .adopt__who .adopt__note:empty {
   display: none;
 }
@@ -585,11 +590,86 @@ a:hover {
   color: var(--ink);
 }
 
-.adopt__who input {
+/* each way to be shown with its mark, where the select can hold more than text; elsewhere
+   the options are their words alone */
+.adopt__on-icon {
+  flex: none;
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  fill: currentColor;
+}
+
+.adopt__on-icon .is-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+@supports (appearance: base-select) {
+  .adopt__who select,
+  .adopt__who ::picker(select) {
+    appearance: base-select;
+  }
+
+  .adopt__who select {
+    padding-inline-end: 1rem;
+    background-image: none;
+  }
+
+  .adopt__who selectedcontent,
+  .adopt__who select option {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+
+  .adopt__who ::picker(select) {
+    margin-block: var(--space-2xs);
+    padding: 0.4rem;
+    border: 1px solid currentColor;
+    border-radius: 1.2rem;
+    color: var(--fg);
+    background: var(--bg);
+  }
+
+  .adopt__who select option {
+    padding: 0.55rem 0.8rem;
+    border-radius: 0.8rem;
+    color: inherit;
+  }
+
+  .adopt__who select option:hover,
+  .adopt__who select option:focus-visible {
+    outline: none;
+    color: var(--bg);
+    background: var(--fg);
+  }
+
+  .adopt__who select option:checked {
+    font-weight: var(--weight-label);
+  }
+
+  .adopt__who select option::checkmark {
+    display: none;
+  }
+}
+
+.adopt__by {
+  position: relative;
+  display: flex;
   flex: 1;
 }
 
-.adopt__who input[hidden] {
+.adopt__by[hidden] {
+  display: none;
+}
+
+.adopt__by input {
+  flex: 1;
+}
+
+/* who was found, in the field: only on a phone, where the card is out of sight */
+.adopt__by .card-badge {
   display: none;
 }
 
@@ -597,6 +677,43 @@ a:hover {
 @media (max-width: 40rem) {
   .adopt__who-row {
     flex-direction: column;
+  }
+
+  .adopt__by:has(.card-badge) input {
+    padding-inline-end: 3.2rem;
+  }
+
+  .adopt__by .card-badge {
+    inset: 50% 0.4rem auto auto;
+    display: grid;
+    inline-size: 2.2rem;
+    block-size: 2.2rem;
+    translate: 0 -50%;
+    box-shadow: none;
+    font-size: var(--text-xs);
+    animation: none;
+  }
+
+  .adopt__by .card-badge--founding {
+    box-shadow: 0 0 0 2px #e9b52b;
+  }
+}
+
+/* wider, one field split in two: the select's end and the input's start meet in a single line */
+@media (min-width: 40.01rem) {
+  .adopt__who-row {
+    gap: 0;
+  }
+
+  .adopt__who-row:has(.adopt__by:not([hidden])) select {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+    border-inline-end: 0;
+  }
+
+  .adopt__who-row input {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
   }
 }
 

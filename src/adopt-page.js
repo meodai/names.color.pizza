@@ -174,21 +174,28 @@ async function lookup(on, name, signal) {
 function askWho(q, slugNow, place) {
   const on = q("[data-on]");
   const by = q("[data-by]");
+  const byBox = q("[data-by-box]");
   const cta = q("[data-cta]");
   const note = q("[data-who-note]");
-  const label = () => on.selectedOptions[0].textContent;
+  const label = () => on.selectedOptions[0].textContent.trim();
   let badge;
+  let mini;
   let timer;
   let asking;
   const show = (name, avatar) => {
     badge?.remove();
+    mini?.remove();
     badge = name ? adopterBadge({ by: name, on: on.value, avatar }) : null;
-    if (badge) place.append(badge);
+    if (!badge) return;
+    place.append(badge);
+    // on a phone the card is out of sight above, so the field shows who was found too
+    mini = adopterBadge({ by: name, on: on.value, avatar });
+    byBox.append(mini);
   };
   const update = () => {
     const name = cleanHandle(by.value, on.value);
     by.placeholder = on.value === "name" ? "Your name" : on.value === "website" ? "example.com" : "@handle";
-    by.hidden = on.value === "anonymous";
+    byBox.hidden = on.value === "anonymous";
     // not before the account is known to exist; a site only needs a real address
     const site = on.value === "website";
     const checking = Boolean(name && UNAVATAR[on.value] && !site);
@@ -199,7 +206,7 @@ function askWho(q, slugNow, place) {
     timer = setTimeout(async () => {
       note.textContent = "";
       if (on.value === "website" && name && !isHost(name)) {
-        note.textContent = "That doesn't look like a website address, like example.com.";
+        note.textContent = "That doesn’t look like a website address, like example.com.";
         return show(null);
       }
       if (!name || !UNAVATAR[on.value]) return show(name);
@@ -377,7 +384,7 @@ export async function initAdoptPage() {
         q(".hero__stats").hidden = true;
         q("[data-pick]").hidden = true;
         q("[data-lead]").textContent = `Thank you! ${it.name} carries your name from today, for everyone to see.${
-          mine.founding ? " And you're one of the first fifty: a founding patron, for good." : ""
+          mine.founding ? " And you’re one of the first fifty: a founding patron, for good." : ""
         }`;
         shareRow(q, it, slug);
         shareCard(q, it, mine, session);
@@ -429,7 +436,7 @@ export async function initAdoptPage() {
       if (got?.error === "taken") {
         adopted[slug] = { amount: ADOPT_FROM, by: "someone", on: "name" };
         q("[data-note]").textContent = `${shown.name} was just taken too. Pick another.`;
-      } else q("[data-note]").textContent = "That didn't go through. Try again, or write to tschou@elastiq.ch.";
+      } else q("[data-note]").textContent = "That didn’t go through. Try again, or write to tschou@elastiq.ch.";
       return;
     }
     // one last look before paying: someone may have adopted it since the page opened
