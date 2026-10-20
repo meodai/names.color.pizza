@@ -3,18 +3,24 @@
 export const ADOPT_FROM = 5;
 // the adopt button's heart, in the color itself
 export const HEART = `<svg class="hero__heart" viewBox="0 1 24 22" aria-hidden="true"><path class="hero__heart-edge" d="M12 21.35 10.55 20C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /><path d="M12 21.35 10.55 20C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /></svg>`;
-const between = (a, b) => a + Math.random() * (b - a);
-// each time over an adopt button, its heart swells its own way
-for (const type of ["pointerover", "focusin"])
-  document.addEventListener(type, (e) => {
-    const a = e.target.closest?.(".adopt-cta, .footer__adopt a, .adopt__cta");
-    if (!a || a.contains(e.relatedTarget)) return;
-    const s = a.style;
-    s.setProperty("--heart-scale", between(1.7, 2.5).toFixed(2));
-    s.setProperty("--heart-x", `${between(0.8, 1.5).toFixed(2)}em`);
-    s.setProperty("--heart-y", `${between(-0.45, 0.1).toFixed(2)}em`);
-    s.setProperty("--heart-turn", `${between(-22, 22).toFixed(2)}deg`);
-  });
+export const between = (a, b) => a + Math.random() * (b - a);
+// each time over an adopt button, its heart swells its own way. Called by the pages that show
+// one: this module is also read by the build, where there's no document
+let swelling = false;
+export function swellHearts() {
+  if (swelling) return;
+  swelling = true;
+  for (const type of ["pointerover", "focusin"])
+    document.addEventListener(type, (e) => {
+      const a = e.target.closest?.(".adopt-cta, .footer__adopt a, .adopt__cta");
+      if (!a?.querySelector(".hero__heart") || a.contains(e.relatedTarget)) return;
+      const s = a.style;
+      s.setProperty("--heart-scale", between(1.7, 2.5).toFixed(2));
+      s.setProperty("--heart-x", `${between(0.8, 1.5).toFixed(2)}em`);
+      s.setProperty("--heart-y", `${between(-0.45, 0.1).toFixed(2)}em`);
+      s.setProperty("--heart-turn", `${between(-22, 22).toFixed(2)}deg`);
+    });
+}
 
 export const PROFILES = {
   bluesky: (by) => `https://bsky.app/profile/${by}`,

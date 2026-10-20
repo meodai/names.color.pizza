@@ -33,8 +33,9 @@ function adoptLink(hex, name, approx) {
 }
 const adoptHref = (hex, name, approx) =>
   approx && name ? siteURL(`adopt/?name=${encodeURIComponent(name)}`) : siteURL(`adopt/#${hex.slice(1)}`);
+swellHearts();
 import { tiltCard, previewShine } from "./tilt.js";
-import { adoptedHTML, adopterBadge, HEART } from "./adopter.js";
+import { adoptedHTML, adopterBadge, between, HEART, swellHearts } from "./adopter.js";
 
 const toLab = converter("lab");
 
@@ -304,7 +305,6 @@ function indexHTML(words, entries) {
   return rows.length ? `<div class="wiki-index">${rows.join("")}</div>` : "";
 }
 
-const between = (a, b) => a + Math.random() * (b - a);
 async function copy(text, btn, done) {
   try {
     await navigator.clipboard.writeText(text);

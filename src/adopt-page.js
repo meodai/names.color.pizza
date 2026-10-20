@@ -3,13 +3,14 @@ import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlac
 import { tiltCard } from "./tilt.js";
 import { certificateHTML } from "./certificate.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, RUNNING_A_YEAR, counts, loadAdoptions } from "./shines.js";
-import { HEART, UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
+import { HEART, UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate, swellHearts } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
 import { PROJECTS } from "./projects.js";
 
 // the button's words, then the heart in the color it adopts
+swellHearts();
 const heartCTA = (cta, text, hex) => {
-  cta.textContent = `${text} `;
+  cta.textContent = text;
   cta.insertAdjacentHTML("beforeend", HEART);
   cta.style.setProperty("--page-color", hex);
 };
