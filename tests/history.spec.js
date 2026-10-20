@@ -429,6 +429,26 @@ test.describe("the supporters page", () => {
     await expect(badge).toHaveAttribute("title", "One of the first 50 patrons");
     expect(await badge.evaluate((b) => getComputedStyle(b).whiteSpace)).toBe("nowrap");
   });
+
+  test("on a phone a long name sends the badge to the next line, whole", async ({ page }) => {
+    await page.route(/adoptions-test/, (r) =>
+      r.fulfill({
+        json: {
+          "color-0": { amount: 5, by: "averyverylongpatronname", on: "name", at: "2026-01-01", founding: true },
+        },
+      }),
+    );
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto("/supporters/");
+    const badge = page.locator(".supporter__founding").first();
+    await expect(badge).toBeVisible();
+    const name = await page.locator(".supporter__name").first().boundingBox();
+    const b = await badge.boundingBox();
+    // below the name, and one line high
+    expect(b.y).toBeGreaterThan(name.y + name.height / 2);
+    const line = await badge.evaluate((el) => parseFloat(getComputedStyle(el).fontSize) * 2);
+    expect(b.height).toBeLessThan(line);
+  });
 });
 
 test.describe("on a phone", () => {

@@ -1032,7 +1032,10 @@ a:hover {
   text-decoration: none;
 }
 
+/* whole, on the name's line if it fits, else on the next: a box of its own lets the line
+   break before it, never inside it */
 .supporter__founding {
+  display: inline-block;
   margin-inline-start: 0.6em;
   padding: 0.15em 0.6em;
   border-radius: 999px;
