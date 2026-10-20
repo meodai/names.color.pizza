@@ -19,10 +19,16 @@ const LIVE = typeof location !== "undefined" && location.hostname === "names.col
 export const PAYMENT = LIVE
   ? "https://buy.stripe.com/4gMdRa7YhgZ21FPbqI7N600"
   : "https://donate.stripe.com/test_8x25kEenHdR70p121M9k400";
-// written by the upload worker the moment Stripe says a color was adopted
+// written by the upload worker the moment Stripe says a color was adopted. Anywhere else the
+// test payments' own; ?live in the address reads the site's real patrons there too (to see
+// pages as they are), paying staying a test
+const REAL = LIVE || (typeof location !== "undefined" && new URLSearchParams(location.search).has("live"));
 export const ADOPTIONS = LIVE
   ? "https://media.color.pizza/data/adopted.json"
-  : "https://color-names-upload.cloudflare-54bbeb.workers.dev/adoptions-test";
+  : REAL
+    ? // through the local server's /media, the bucket reading only to the site itself (vite.config.js)
+      `${location.origin}/media/data/adopted.json`
+    : "https://color-names-upload.cloudflare-54bbeb.workers.dev/adoptions-test";
 export const loadAdoptions = () =>
   // the edge would serve an old copy for hours: a fresh address every few seconds
   fetch(`${ADOPTIONS}${ADOPTIONS.includes("?") ? "&" : "?"}t=${Math.floor(Date.now() / 5000)}`, { cache: "no-cache" })

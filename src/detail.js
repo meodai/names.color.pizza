@@ -1036,7 +1036,8 @@ function openPicture(tile, it) {
     return [{ transform: `translate(${dx}px, ${dy}px) scale(${scale})` }, { transform: "none" }];
   };
   const go = () => {
-    tile.style.visibility = "hidden";
+    // see-through, not hidden: focus goes back to it on closing, before it shows again
+    tile.style.opacity = "0";
     page.art.classList.add("is-behind");
     if (still()) return;
     frame.animate(fly(), { duration: 560, easing: EASE });
@@ -1088,7 +1089,7 @@ function closePicture(now = false) {
   opened = null;
   page.art.classList.remove("is-behind");
   const done = () => {
-    tile.style.visibility = "";
+    tile.style.opacity = "";
     box.remove();
   };
   if (box.contains(document.activeElement))
