@@ -33,17 +33,6 @@ function adoptLink(hex, name, approx) {
 }
 const adoptHref = (hex, name, approx) =>
   approx && name ? siteURL(`adopt/?name=${encodeURIComponent(name)}`) : siteURL(`adopt/#${hex.slice(1)}`);
-// each time over an adopt button, its heart swells its own way
-for (const type of ["pointerover", "focusin"])
-  document.addEventListener(type, (e) => {
-    const a = e.target.closest?.(".adopt-cta, .footer__adopt a");
-    if (!a || a.contains(e.relatedTarget)) return;
-    const s = a.style;
-    s.setProperty("--heart-scale", between(1.7, 2.5).toFixed(2));
-    s.setProperty("--heart-x", `${between(0.8, 1.5).toFixed(2)}em`);
-    s.setProperty("--heart-y", `${between(-0.45, 0.1).toFixed(2)}em`);
-    s.setProperty("--heart-turn", `${between(-22, 22).toFixed(2)}deg`);
-  });
 import { tiltCard, previewShine } from "./tilt.js";
 import { adoptedHTML, adopterBadge, HEART } from "./adopter.js";
 

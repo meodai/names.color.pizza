@@ -3,9 +3,16 @@ import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlac
 import { tiltCard } from "./tilt.js";
 import { certificateHTML } from "./certificate.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, RUNNING_A_YEAR, counts, loadAdoptions } from "./shines.js";
-import { UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
+import { HEART, UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
 import { PROJECTS } from "./projects.js";
+
+// the button's words, then the heart in the color it adopts
+const heartCTA = (cta, text, hex) => {
+  cta.textContent = `${text} `;
+  cta.insertAdjacentHTML("beforeend", HEART);
+  cta.style.setProperty("--page-color", hex);
+};
 
 const toLab = converter("lab");
 const shade = (hex, amount) => {
@@ -341,7 +348,7 @@ export async function initAdoptPage() {
     );
     q("[data-tiers]").hidden = false;
     q("[data-act]").hidden = false;
-    cta.textContent = `Adopt ${it.name}`;
+    heartCTA(cta, `Adopt ${it.name}`, it.hex);
     q("[data-note]").textContent = "From $5, paid on Stripe.";
     q("[data-close]").href = siteURL(`color/${slug}/`);
 
@@ -408,7 +415,7 @@ export async function initAdoptPage() {
       q("[data-tiers]").hidden = true;
       q("[data-who]").hidden = true;
       q(".hero__stats").hidden = true;
-      cta.textContent = `Make ${it.name} mine`;
+      heartCTA(cta, `Make ${it.name} mine`, it.hex);
       cta.href = "#";
       cta.removeAttribute("aria-disabled");
       q("[data-note]").textContent = "";

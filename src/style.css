@@ -314,7 +314,7 @@ a:hover {
 }
 
 /* the heart in the color itself, outlined in the button's ink; over the button it swells out
-   past its right end, a little differently each time (detail.js) */
+   past its right end, a little differently each time (adopter.js) */
 .hero__heart {
   inline-size: 1.4em;
   block-size: 1.27em;
@@ -341,7 +341,9 @@ a:hover {
 .adopt-cta:hover .hero__heart,
 .adopt-cta:focus-visible .hero__heart,
 .footer__adopt a:hover .hero__heart,
-.footer__adopt a:focus-visible .hero__heart {
+.footer__adopt a:focus-visible .hero__heart,
+.adopt__cta:not([aria-disabled="true"]):hover .hero__heart,
+.adopt__cta:not([aria-disabled="true"]):focus-visible .hero__heart {
   scale: var(--heart-scale, 2);
   translate: var(--heart-x, 0.7em) var(--heart-y, -0.1em);
   rotate: var(--heart-turn, 10deg);
@@ -439,7 +441,9 @@ a:hover {
 }
 
 .adopt__cta {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
   padding: 0.85rem 1.6rem;
   border-radius: 999px;
   color: var(--ink);
