@@ -2,7 +2,6 @@ import {
   getList,
   LISTS,
   normalizeHex,
-  fold,
   colorURL,
   siteURL,
   slugsOf,
@@ -23,6 +22,7 @@ import { reduceMotion, ease, easeInOut, clamp, wrap, sub, add, scale, dot, cross
 import { CARD_W, CARD_H, cardScale, MODELS, DEFAULT_MODEL, GEO, CELL_REACH } from "./wall/models.js";
 import { createRenderer, NEAR, FAR, NEAR_SLOTS } from "./wall/renderer.js";
 import { createViewSwitch } from "./wall/views.js";
+import { createSearch } from "./wall/search.js";
 
 // a short list's cards grow, so a handful don't drown in the space: as big as the
 // Short list's cards would be at the same density, up to 8 times
@@ -94,9 +94,6 @@ export async function initWall(root) {
   const tip = q("[data-tip]");
   const status = q("[data-status]");
   const search = q("[data-search]");
-  const colorPicker = q("[data-picker]");
-  const clearButton = q("[data-clear]");
-  const results = q("[data-results]");
   const intro = q("[data-intro]");
 
   let introWanted = true;
@@ -937,20 +934,6 @@ export async function initWall(root) {
     spot = { i, on: true, t: performance.now() };
   }
 
-  // the color asked for: the search's dot, its × and the address all follow it
-  let chosen = null;
-  let chosenText = "";
-  function choose(hex, text) {
-    chosen = hex;
-    if (hex) colorPicker.value = hex;
-    colorPicker.parentElement.style.background = hex || "";
-    if (text !== undefined) search.value = text;
-    chosenText = search.value;
-    showClear();
-    writeAddress({ c: hex ? hex.slice(1) : null });
-  }
-  const showClear = () => (clearButton.hidden = !search.value && !chosen);
-
   // measured on a hidden copy, so it follows the color page's own CSS
   function slotOf(place) {
     // same layer as the color page, so the scrollbar width matches
@@ -1776,8 +1759,7 @@ export async function initWall(root) {
     dropSpot();
     marked = -1;
     mark.hidden = true;
-    found = [];
-    showResults();
+    searchBox.clearResults();
     const before = listKey;
     listKey = key;
     showListChoice();
@@ -1968,12 +1950,8 @@ export async function initWall(root) {
     if (!restore) azFrom = saveable();
     if (azFade && !busy) flyTo({ dist: MAX_DIST }, AZ_MS);
     request();
-    found = [];
-    showResults();
-    if (restore?.text) {
-      search.value = restore.text;
-      showClear();
-    }
+    searchBox.clearResults();
+    if (restore?.text) searchBox.restoreText(restore.text);
     getList("default").then((full) => {
       if (!azOn) return;
       azSlugs ||= slugsOf(full.items);
@@ -2082,9 +2060,6 @@ export async function initWall(root) {
   }
   picker.addEventListener("scroll", showModelEdges, { passive: true });
 
-  let found = [];
-  let active = 0;
-
   function nearest(hex) {
     const [L, a, b] = rgbToOklab(hexToRgb(hex));
     let best = 0;
@@ -2099,120 +2074,17 @@ export async function initWall(root) {
     return best;
   }
 
-  function find(text) {
-    const hex = normalizeHex(text);
-    if (hex) {
-      const i = nearest(hex);
-      return [{ i, note: items[i].hex === hex ? "" : `closest to ${hex}` }];
-    }
-    const t = fold(text.trim());
-    if (t.length < 2) return [];
-    const starts = [];
-    const within = [];
-    for (let i = 0; i < n && starts.length < 8; i++) {
-      const at = items[i].lower.indexOf(t);
-      if (at === 0) starts.push({ i });
-      else if (at > 0 && within.length < 8) within.push({ i });
-    }
-    return [...starts, ...within].slice(0, 8);
-  }
-
-  function showResults() {
-    results.replaceChildren(
-      ...found.map(({ i, note }, k) => {
-        const li = document.createElement("li");
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "wall__result";
-        b.setAttribute("aria-selected", String(k === active));
-        b.innerHTML = `<i class="wall__result-swatch"></i><span class="wall__result-name"></span><span class="wall__result-hex"></span>`;
-        b.firstChild.style.background = items[i].hex;
-        b.children[1].textContent = items[i].name;
-        b.children[2].textContent = note || items[i].hex;
-        b.addEventListener("click", () => pick(k));
-        li.append(b);
-        return li;
-      }),
-    );
-    results.hidden = !found.length;
-  }
-
-  function pick(k) {
-    if (!found[k] || busy) return;
-    choose(items[found[k].i].hex, items[found[k].i].name);
-    focusCard(found[k].i);
-    found = [];
-    showResults();
-  }
-
-  clearButton.addEventListener("click", () => {
-    if (azOn) {
-      choose(null, "");
-      az?.filter("");
-      return search.focus();
-    }
-    found = [];
-    showResults();
-    choose(null, "");
-    dropSpot();
-    goHome();
-    search.focus();
+  const searchBox = createSearch(root, {
+    items: () => items,
+    nearest,
+    focusCard,
+    dropSpot,
+    goHome,
+    busy: () => busy,
+    listUp: () => azOn,
+    list: () => az,
   });
-
-  // the hint shimmers until the search is first used, here or on an earlier visit
-  const SEARCHED = "cn-searched";
-  const hint = q("[data-hint]");
-  try {
-    if (!localStorage.getItem(SEARCHED)) hint.classList.add("is-new");
-  } catch {}
-  search.addEventListener(
-    "input",
-    () => {
-      hint.classList.remove("is-new");
-      try {
-        localStorage.setItem(SEARCHED, "1");
-      } catch {}
-    },
-    { once: true },
-  );
-
-  // what's typed decides the color: none once it's empty, a whole hex at once; in the list,
-  // where typing is the search itself, a name has none either
-  const typedHex = (text) => (text.replace("#", "").trim().length === 6 ? normalizeHex(text) : null);
-  search.addEventListener("input", () => {
-    const hex = typedHex(search.value);
-    // and a card found for another color lets go
-    if (!search.value.trim() || hex) {
-      choose(hex);
-      dropSpot();
-    } else if (azOn) choose(null);
-    showClear();
-    if (azOn) return az?.filter(search.value);
-    found = find(search.value);
-    active = 0;
-    showResults();
-  });
-  // the search's keys: up and down through its results (in the list, through the list),
-  // Escape back to what was chosen
-  function searchKeys(e) {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      // typing in the list's search: up and down go through the list itself
-      if (azOn) return az?.scrollKey(e.key);
-      if (!found.length) return;
-      active = (active + (e.key === "ArrowDown" ? 1 : found.length - 1)) % found.length;
-      showResults();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      // the list follows each keystroke, so there's nothing to go back to
-      if (azOn) return search.blur();
-      search.value = chosenText;
-      showClear();
-      found = [];
-      showResults();
-      search.blur();
-    }
-  }
+  const choose = searchBox.choose;
 
   // Every key goes to one owner, decided here in this order: the control that has the focus
   // (the list menu, the views, the search); none while a color's page opens or is open, it
@@ -2223,7 +2095,7 @@ export async function initWall(root) {
     const t = e.target;
     if (t.closest?.("[data-list-menu]")) return listMenuKeys(e);
     if (t.closest?.("[data-modes]")) return views.keys(e);
-    if (t === search) return searchKeys(e);
+    if (t === search) return searchBox.keys(e);
     if (busy) return;
     if (e.key === "Escape" && menuOpen() && listMenu.hidden) {
       toggleMenu(false);
@@ -2234,33 +2106,6 @@ export async function initWall(root) {
     if (azOn) return listKeys(e);
     spaceKeys(e);
   });
-  let pickTimer = 0;
-  let azPicking = 0;
-  colorPicker.addEventListener("input", () => {
-    if (azOn) {
-      choose(colorPicker.value, colorPicker.value);
-      // a drag sends many a value a frame: the list follows the last of them
-      if (!azPicking)
-        azPicking = requestAnimationFrame(() => {
-          azPicking = 0;
-          if (azOn) az?.closest(colorPicker.value);
-        });
-      return;
-    }
-    clearTimeout(pickTimer);
-    found = [];
-    showResults();
-    choose(colorPicker.value, colorPicker.value);
-    pickTimer = setTimeout(() => !busy && focusCard(nearest(colorPicker.value)), 180);
-  });
-
-  q("[data-find]").addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (azOn) return;
-    if (!found.length) found = find(search.value);
-    pick(active);
-  });
-  results.hidden = true;
 
   if (import.meta.env.DEV) {
     window.__wall = {
@@ -2276,7 +2121,7 @@ export async function initWall(root) {
         n,
         model,
         view: viewNow(),
-        chosen,
+        chosen: searchBox.chosen(),
         spot: !!spot?.on,
         azMix,
         cellsMix,
