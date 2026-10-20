@@ -20,12 +20,18 @@ export function createAz(before, { hrefOf, onLeave }) {
     <div class="az__list" data-az-list tabindex="-1">
       <div class="az__sizer" data-az-sizer></div>
       <div class="az__rows" data-az-rows></div>
+    </div>
+    <div class="az__none" data-az-none hidden>
+      <p class="az__none-title" data-az-none-title></p>
+      <a class="az__none-link" href="https://github.com/meodai/color-names/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Then name it yourself</a>
     </div>`;
   before.before(el);
   const countEl = el.querySelector("[data-az-count]");
   const scrollEl = el.querySelector("[data-az-list]");
   const sizerEl = el.querySelector("[data-az-sizer]");
   const rowsEl = el.querySelector("[data-az-rows]");
+  const noneEl = el.querySelector("[data-az-none]");
+  const noneTitle = el.querySelector("[data-az-none-title]");
 
   let all = [];
   let shown = [];
@@ -50,6 +56,7 @@ export function createAz(before, { hrefOf, onLeave }) {
     shown = list;
     sizerEl.style.height = `${list.length * ROW}px`;
     countEl.textContent = label;
+    noneEl.hidden = list.length > 0;
     if (scroll !== true) scrollEl.scrollTop = scroll || 0;
     render();
   }
@@ -72,6 +79,8 @@ export function createAz(before, { hrefOf, onLeave }) {
     if (hex && raw.replace("#", "").length === 6) return closest(hex, keepScroll);
     const q = fold(raw.replace(/^#/, ""));
     const found = all.filter((it) => it.lower.includes(q) || it.hex.includes(q));
+    // nothing found: the whole count, and a way to add the missing one
+    if (!found.length) noneTitle.textContent = `${count(all.length)} colors and you can’t find the one?!`;
     show(
       found,
       found.length ? `${count(found.length)} of ${count(all.length)} with “${raw}”` : `No name has “${raw}” in it`,

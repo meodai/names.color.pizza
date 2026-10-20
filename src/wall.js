@@ -2484,6 +2484,11 @@ export async function initWall(root) {
       list.style.setProperty("--az-right", `${Math.max(8, Math.round(box.left + list.clientWidth - end.right))}px`);
   };
   addEventListener("resize", () => azOn && placeAz());
+  // measured mid-slide while the bars come in, so again once they're in place
+  root.addEventListener("transitionend", (e) => {
+    if (azOn && e.propertyName === "translate" && e.target.matches(".wall__bar, .wall__models, .wall__pick-list"))
+      placeAz();
+  });
 
   // pages are named by the full list's slugs, whichever list is shown
   let azSlugs = null;
@@ -2813,9 +2818,10 @@ export async function initWall(root) {
     setAway(!wasHome);
     if (new URLSearchParams(location.search).get("view") === "cells") setCells(true);
     idle = false;
-    // back from a color's page: flown to that color, the one it ended on
-    if (start && returning) focusCard(nearest(start));
-    else if (start) {
+    // back from a color's page: flown to that color, the one it ended on; under the list the
+    // space has no card to show, only its label would linger over the names
+    if (start && !azOn && returning) focusCard(nearest(start));
+    else if (start && !azOn) {
       marked = nearest(start);
       spot = { i: marked, on: true, t: performance.now() };
     }
@@ -2825,7 +2831,7 @@ export async function initWall(root) {
     const h = home();
     const startCells = new URLSearchParams(location.search).get("view") === "cells";
     const then = () => {
-      if (start) focusCard(nearest(start));
+      if (start && !azOn) focusCard(nearest(start));
       else idle = !reduceMotion;
       if (startCells) setCells(true);
     };
