@@ -22,6 +22,7 @@ import { createPixelSpace } from "./pixel-space.js";
 import { reduceMotion, ease, easeInOut, clamp, wrap, sub, add, scale, dot, cross, norm, lerp3 } from "./wall/math.js";
 import { CARD_W, CARD_H, cardScale, MODELS, DEFAULT_MODEL, GEO, CELL_REACH } from "./wall/models.js";
 import { createRenderer, NEAR, FAR, NEAR_SLOTS } from "./wall/renderer.js";
+import { createViewSwitch } from "./wall/views.js";
 
 // a short list's cards grow, so a handful don't drown in the space: as big as the
 // Short list's cards would be at the same density, up to 8 times
@@ -1697,10 +1698,6 @@ export async function initWall(root) {
     cellsFade = { from: cellsMix, to: on ? 1 : 0, t0: performance.now() };
     request();
   }
-  // one button for how the space shows its names: as colors, as cells or as pixel art. It is
-  // the one shown; pressed, it opens into tabs of all three, and closes again once one's picked
-  const modes = q("[data-modes]");
-  const modeList = q("[data-mode-list]");
   const modeNow = () => (pixelMode() ? "pixel" : cellsOn ? "cells" : "colors");
   // what's shown, as one value: the space's own view (colors, cells, pixel), or the list over
   // it. The address says it, but for the colors, the space's default
@@ -1716,109 +1713,14 @@ export async function initWall(root) {
     setCells(next === "cells");
   }
   const leaveList = () => setView(modeNow());
-  // a black marker under the view shown while the tabs are open: picked, it slides to the new
-  // one, that one turns active, the tabs close round it, and only then the marker fades
-  const modeThumb = modeList.querySelector(".wall__mode-thumb");
-  const MODE_MS = reduceMotion ? 0 : 350;
-  const modeActive = () => modeList.querySelector('[aria-checked="true"]');
-  function showMode() {
-    const now = modeNow();
-    showView();
-    for (const b of modeList.querySelectorAll("[data-mode]")) {
-      b.setAttribute("aria-checked", String(b.dataset.mode === now));
-      if (!modes.classList.contains("is-marked")) b.classList.toggle("is-last", b.dataset.mode === now);
-    }
-  }
-  // the marker sits inside its tab, a little smaller, so the tabs needn't grow round it
-  const INSET = 4;
-  const placeThumb = (b) => {
-    modeThumb.style.translate = `${b.offsetLeft + INSET}px ${b.offsetTop + INSET}px`;
-    modeThumb.style.inlineSize = `${Math.max(0, b.offsetWidth - 2 * INSET)}px`;
-    modeThumb.style.blockSize = `${b.offsetHeight - 2 * INSET}px`;
-  };
-  // the marker keeps to its tab while the tabs open or close under it
-  function followThumb(b, ms) {
-    modes.classList.add("is-tracking");
-    const until = performance.now() + ms + 40;
-    const step = (t) => {
-      placeThumb(b);
-      if (t < until) requestAnimationFrame(step);
-      else modes.classList.remove("is-tracking");
-    };
-    requestAnimationFrame(step);
-  }
-  // "View" beside the switch on every visit, until it's first opened: it glides into it and goes
-  const modeHint = q("[data-mode-hint]");
-  modeHint.hidden = false;
-  function dropModeHint() {
-    if (modeHint.hidden || modeHint.classList.contains("is-leaving")) return;
-    modeHint.classList.add("is-leaving");
-    setTimeout(() => (modeHint.hidden = true), reduceMotion ? 0 : 350);
-  }
-  let modeTimer = 0;
-  function openModes() {
-    clearTimeout(modeTimer);
-    dropModeHint();
-    modes.classList.add("is-open", "is-marked");
-    followThumb(modeActive(), MODE_MS);
-  }
-  // closing: the other two icons fade, the farther first, and the marker with them; then the
-  // tabs fold into the one button. Once it's all still the view changes (turning to pixel art
-  // takes the page a moment, which would stutter the tabs)
-  const FADE_MS = reduceMotion ? 0 : 260;
-  function closeModes(then) {
-    if (!modes.classList.contains("is-open")) return;
-    const b = modeActive();
-    const all = [...modeList.querySelectorAll("[data-mode]")];
-    all
-      .filter((o) => o !== b)
-      .sort((x, y) => Math.abs(all.indexOf(y) - all.indexOf(b)) - Math.abs(all.indexOf(x) - all.indexOf(b)))
-      .forEach((o, k) => o.style.setProperty("--fade-delay", `${k * 80}ms`));
-    modes.classList.remove("is-marked");
-    modes.classList.add("is-fading");
-    clearTimeout(modeTimer);
-    modeTimer = setTimeout(() => {
-      modes.classList.remove("is-open", "is-fading");
-      modeTimer = setTimeout(() => {
-        then?.();
-        showMode();
-      }, MODE_MS);
-    }, FADE_MS);
-  }
-  modeList.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-mode]");
-    if (!b) return;
-    if (!modes.classList.contains("is-open")) return openModes();
-    if (b === modeActive()) return closeModes();
-    if (azOn) leaveList();
-    placeThumb(b);
-    // its icon turns white as the marker comes under it
-    modeList.querySelectorAll(".is-target").forEach((t) => t.classList.remove("is-target"));
-    b.classList.add("is-target");
-    modes.classList.add("is-picking");
-    clearTimeout(modeTimer);
-    modeTimer = setTimeout(() => {
-      modes.classList.remove("is-picking");
-      b.classList.remove("is-target");
-      for (const o of modeList.querySelectorAll("[data-mode]")) o.setAttribute("aria-checked", String(o === b));
-      const want = b.dataset.mode;
-      closeModes(() => setView(want));
-    }, MODE_MS);
+  const views = createViewSwitch(root, {
+    now: modeNow,
+    picking: () => azOn && leaveList(),
+    pick: (want) => setView(want),
   });
-  document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && closeModes());
-  // the views' keys: the arrows go from view to view (picking one, which closes the tabs, is
-  // Enter or Space), Escape closes them
-  function modeKeys(e) {
-    if (e.key === "Escape" && modes.classList.contains("is-open")) {
-      closeModes();
-      return modeActive().focus();
-    }
-    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-    const b = e.target.closest("[data-mode]");
-    if (!step || !b) return;
-    e.preventDefault();
-    const all = [...modeList.querySelectorAll("[data-mode]")].filter((o) => o.offsetParent);
-    all[(all.indexOf(b) + step + all.length) % all.length]?.focus();
+  function showMode() {
+    showView();
+    views.show();
   }
   showMode();
 
@@ -2320,7 +2222,7 @@ export async function initWall(root) {
   window.addEventListener("keydown", (e) => {
     const t = e.target;
     if (t.closest?.("[data-list-menu]")) return listMenuKeys(e);
-    if (t.closest?.("[data-modes]")) return modeKeys(e);
+    if (t.closest?.("[data-modes]")) return views.keys(e);
     if (t === search) return searchKeys(e);
     if (busy) return;
     if (e.key === "Escape" && menuOpen() && listMenu.hidden) {
