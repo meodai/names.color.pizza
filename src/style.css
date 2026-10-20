@@ -3969,17 +3969,23 @@ html.is-arriving:not(.is-passed-on) {
   }
 }
 
-/* under the chip with its ?, top right; on a phone, where that chip isn't, bottom left over
-   the dock. It comes from where it sits and goes back there */
+/* over the chip with its ?, top right, its buttons to the right; on a phone, where that chip
+   isn't, bottom left over the dock. It comes from where it sits and goes back there */
 .wall__intro {
   --intro-from: 0 -0.8rem;
   position: absolute;
-  inset: calc(var(--space-xs) + 2.5rem + 0.6rem) var(--space-s) auto auto;
-  z-index: 3;
+  inset: var(--space-xs) var(--space-s) auto auto;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   inline-size: min(22rem, calc(100% - 2 * var(--space-s)));
   font-size: var(--text-xs);
+}
+
+@media (min-width: 56.01rem) {
+  .wall__intro-links {
+    justify-content: flex-end;
+  }
 }
 
 @media (max-width: 56rem) {

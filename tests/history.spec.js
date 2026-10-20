@@ -290,23 +290,26 @@ test.describe("first visits", () => {
     await expect(fold).not.toHaveAttribute("open");
   });
 
-  test("the ? beside GitHub opens and closes it, and says which", async ({ page }) => {
+  test("over the GitHub chip, top right; the ? beside GitHub brings it back and says so", async ({ page }) => {
     await openWall(page, "/", { intro: true });
     const help = page.locator("[data-intro-open]");
     const intro = page.locator("[data-intro]");
-    await expect(help).toBeVisible();
+    await expect(intro).toBeVisible();
     await expect(help).toHaveAttribute("aria-expanded", "true");
-    await help.click();
+    // over the chip: its top with the chip's, its right edge with the chip's
+    const [h, i] = [await help.boundingBox(), await intro.boundingBox()];
+    expect(i.y).toBeLessThanOrEqual(h.y + 1);
+    expect(Math.abs(i.x + i.width - (h.x + h.width))).toBeLessThan(2);
+    // the buttons to the right
+    const got = await page.locator("[data-intro-close]").boundingBox();
+    expect(i.x + i.width - (got.x + got.width)).toBeLessThan(40);
+    await page.locator("[data-intro-close]").click();
     await expect(intro).toBeHidden();
     await expect(help).toHaveAttribute("aria-expanded", "false");
     await help.click();
     await expect(intro).toBeVisible();
     await expect(help).toHaveAttribute("aria-expanded", "true");
     await expect(page.locator("[data-intro-close]")).toBeFocused();
-    // under the chip, top right
-    const [h, i] = [await help.boundingBox(), await intro.boundingBox()];
-    expect(i.y).toBeGreaterThan(h.y + h.height - 1);
-    expect(Math.abs(i.x + i.width - (h.x + h.width))).toBeLessThan(2);
   });
 
   test("its × closes it too, and it goes as it came", async ({ page }) => {
