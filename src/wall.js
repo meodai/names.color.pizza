@@ -1332,7 +1332,9 @@ export async function initWall(root) {
   new ResizeObserver(resize).observe(canvas);
   resize();
 
+  // a found card is only kept by focusCard, which marks it once its flight is set
   function flyTo(to, duration = 1100, done, easing = ease) {
+    dropSpot();
     setAway(!to.home);
     stopMoving();
     stopIdle();
@@ -1422,10 +1424,10 @@ export async function initWall(root) {
   const distFor = (px) => (W * cam.fpx) / px;
 
   function focusCard(i) {
-    marked = i;
-    spot = { i, on: true, t: performance.now() };
     // under the size where cards dissolve, so a narrow screen keeps it once the camera moves
     flyTo({ target: posOf(i), dist: distFor(Math.min(FOCUS_PX, Math.min(view.w, view.h) * NEAR_AT * 0.8)) });
+    marked = i;
+    spot = { i, on: true, t: performance.now() };
   }
 
   // the color asked for: the search's dot, its × and the address all follow it
