@@ -43,6 +43,11 @@ export const cleanHandle = (typed, on) => {
   const h = typed
     .trim()
     .replace(/^https?:\/\/[^/]+\/(profile\/|in\/)?/, "")
+    // without its https://, only a site we know, so a handle like name.bsky.social stays whole
+    .replace(
+      /^((www|m)\.)?(bsky\.app|github\.com|x\.com|twitter\.com|instagram\.com|tiktok\.com|twitch\.tv|linkedin\.com)\/(profile\/|in\/)?/i,
+      "",
+    )
     .replace(/^@/, "")
     .replace(/[/?#].*$/, "")
     .slice(0, 60);
