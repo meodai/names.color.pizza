@@ -5579,6 +5579,37 @@ html.is-arriving:not(.is-passed-on) {
     translate 0.35s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
+/* on a wide screen, the open views' names, left of them, the one hovered */
+.wall__mode-name {
+  display: none;
+}
+
+@media (hover: hover) and (min-width: 56.01rem) {
+  .wall__mode-name {
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 0.6rem);
+    display: block;
+    color: var(--paper);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-label);
+    line-height: 1.2;
+    white-space: nowrap;
+    text-shadow: 0 0 0.6rem rgb(0 0 0 / 0.6);
+    pointer-events: none;
+    opacity: 0;
+    translate: 0.5rem -50%;
+    transition:
+      opacity 0.18s ease,
+      translate 0.35s cubic-bezier(0.3, 0.7, 0, 1);
+  }
+
+  .wall__modes.is-open:not(.is-fading):has([data-mode]:hover) .wall__mode-name {
+    opacity: 1;
+    translate: 0 -50%;
+  }
+}
+
 .wall__mode-hint[hidden] {
   display: none;
 }

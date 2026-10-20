@@ -289,8 +289,8 @@
               role="radio"
               aria-checked="true"
               data-mode="colors"
+              data-name="Swatches"
               aria-label="Colors"
-              title="Colors"
             >
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
@@ -304,8 +304,8 @@
               role="radio"
               aria-checked="false"
               data-mode="cells"
+              data-name="Voronoi"
               aria-label="Each name’s part of the space"
-              title="Cells"
             >
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
@@ -319,8 +319,8 @@
               role="radio"
               aria-checked="false"
               data-mode="pixel"
+              data-name="Pixelart"
               aria-label="Each color’s pixel art"
-              title="Pixel art"
             >
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
@@ -329,6 +329,7 @@
                 </g>
               </svg>
             </button>
+            <span class="wall__mode-name" aria-hidden="true"></span>
           </div>
           <span class="wall__mode-hint" data-mode-hint hidden>View</span>
         </div>

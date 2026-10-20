@@ -97,6 +97,13 @@ export function createViewSwitch(root, { now, picking, pick }) {
       closeModes(() => pick(want));
     }, MODE_MS);
   });
+  // on a wide screen, the name of the view hovered, left of the open tabs (the CSS shows it);
+  // it keeps its text as it fades
+  const modeName = modeList.querySelector(".wall__mode-name");
+  modeList.addEventListener("pointerover", (e) => {
+    const b = e.target.closest("[data-mode]");
+    if (b) modeName.textContent = b.dataset.name;
+  });
   document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && closeModes());
   // its keys: the arrows go from view to view (picking one, which closes the tabs, is Enter or
   // Space), Escape closes them

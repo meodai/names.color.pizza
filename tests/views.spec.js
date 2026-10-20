@@ -118,4 +118,26 @@ test.describe("the address and the views", () => {
     expect(s.view).toBe("colors");
     expect(s.model).toBe("oklch");
   });
+
+  test("on a wide screen, the open views say the hovered one's name to their left, and only then", async ({ page }) => {
+    await openWall(page);
+    const name = page.locator(".wall__mode-name");
+    const opacity = () => name.evaluate((n) => getComputedStyle(n).opacity);
+    await page.locator('[data-mode="colors"]').click();
+    await expect(page.locator("[data-modes]")).toHaveClass(/is-open/);
+    for (const [mode, said] of [
+      ["cells", "Voronoi"],
+      ["pixel", "Pixelart"],
+      ["colors", "Swatches"],
+    ]) {
+      await page.locator(`[data-mode="${mode}"]`).hover();
+      await expect(name).toHaveText(said);
+      await expect.poll(opacity).toBe("1");
+      const n = await name.boundingBox();
+      const tabs = await page.locator("[data-mode-list]").boundingBox();
+      expect(n.x + n.width).toBeLessThan(tabs.x);
+    }
+    await page.mouse.move(10, 400);
+    await expect.poll(opacity).toBe("0");
+  });
 });
