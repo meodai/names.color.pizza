@@ -315,6 +315,36 @@ export async function initAdoptPage() {
   // free, taken, missed (paid for one that went to someone else) or bought
   let state = "free";
 
+  // a color taken already: the free ones nearest it, to adopt instead
+  const othersEl = Object.assign(document.createElement("p"), { className: "adopt__others", hidden: true });
+  q("[data-act]").before(othersEl);
+  function others(it) {
+    othersEl.hidden = !it;
+    if (!it) return;
+    const near = data.items
+      .filter((o) => !(adopted[slugs.get(o.name)]?.amount >= ADOPT_FROM))
+      .map((o) => [o, (o.L - it.L) ** 2 + (o.a - it.a) ** 2 + (o.b - it.b) ** 2])
+      .sort((x, y) => x[1] - y[1])
+      .slice(0, 6);
+    othersEl.replaceChildren(
+      "Free and close by: ",
+      ...near.flatMap(([o], k) => {
+        const a = Object.assign(document.createElement("a"), {
+          className: "adopt__named",
+          href: `?c=${encodeURIComponent(slugs.get(o.name))}`,
+          textContent: o.name,
+        });
+        a.style.setProperty("--c", o.hex);
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          history.replaceState(history.state, "", a.href);
+          show(o);
+        });
+        return k ? [", ", a] : [a];
+      }),
+    );
+  }
+
   // one color on the page; picking another redoes it all
   function show(it) {
     shown = it;
@@ -367,7 +397,7 @@ export async function initAdoptPage() {
 
     // taken already: who has it, and where everyone else is
     const mine = bought || adopted[slug];
-    state = bought ? "bought" : mine?.amount >= ADOPT_FROM ? "taken" : missed ? "missed" : "free";
+    state = bought ? "bought" : missed ? "missed" : mine?.amount >= ADOPT_FROM ? "taken" : "free";
     const left = counts(adopted).founding;
     q("[data-founding]").hidden = state !== "free" || !left;
     q("[data-founding-left]").textContent = left === 1 ? "The last spot is open." : `${left} of 50 spots left.`;
@@ -378,7 +408,8 @@ export async function initAdoptPage() {
     bar.style.setProperty("--k", Math.min(1, raised / RUNNING_A_YEAR).toFixed(3));
     q("[data-costs-note]").textContent =
       `$${raised.toLocaleString("en-US")} of the $${RUNNING_A_YEAR.toLocaleString("en-US")} a year it takes to run, covered by patrons so far.`;
-    if (mine?.amount >= ADOPT_FROM) {
+    others(state === "taken" ? it : null);
+    if (state === "taken" || state === "bought") {
       who?.clear();
       q("[data-who]").hidden = true;
       q("[data-place]").append(adopterBadge(mine));
@@ -416,10 +447,12 @@ export async function initAdoptPage() {
       q("[data-tiers]").hidden = true;
       q("[data-who]").hidden = true;
       q(".hero__stats").hidden = true;
+      // one taken meanwhile can't be picked; the next can
+      const gone = mine?.amount >= ADOPT_FROM;
       heartCTA(cta, `Make ${it.name} mine`, it.hex);
       cta.href = "#";
-      cta.removeAttribute("aria-disabled");
-      q("[data-note]").textContent = "";
+      cta.setAttribute("aria-disabled", String(gone));
+      q("[data-note]").textContent = gone ? `${it.name} is taken. Pick another.` : "";
       return;
     }
     q("[data-who]").hidden = false;
@@ -431,6 +464,8 @@ export async function initAdoptPage() {
     // the payment that missed goes to this color instead
     if (state === "missed") {
       e.preventDefault();
+      // one ask at a time: a second click while it's on its way would undo the first's answer
+      if (cta.getAttribute("aria-disabled") === "true") return;
       cta.setAttribute("aria-disabled", "true");
       const res = await fetch(`${WORKER}/reassign`, { method: "POST", body: JSON.stringify({ session, slug }) }).catch(
         () => null,
@@ -443,6 +478,7 @@ export async function initAdoptPage() {
       cta.removeAttribute("aria-disabled");
       if (got?.error === "taken") {
         adopted[slug] = { amount: ADOPT_FROM, by: "someone", on: "name" };
+        show(shown);
         q("[data-note]").textContent = `${shown.name} was just taken too. Pick another.`;
       } else q("[data-note]").textContent = "That didn’t go through. Try again, or write to tschou@elastiq.ch.";
       return;

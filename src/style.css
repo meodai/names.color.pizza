@@ -365,7 +365,7 @@ a:hover {
   margin: var(--space-s) 0 0;
   padding: 0;
   list-style: none;
-  font-size: var(--text-s, 1rem);
+  font-size: var(--text-base);
 }
 
 .adopt__tiers[hidden] {
@@ -480,6 +480,21 @@ a:hover {
 
 .adopt__named {
   white-space: nowrap;
+}
+
+/* a taken color's free neighbors, each a dot and its name to adopt instead */
+.adopt__others {
+  max-inline-size: 40rem;
+  margin: var(--space-m) 0 0;
+  line-height: 1.8;
+}
+
+.adopt__others[hidden] {
+  display: none;
+}
+
+.adopt__others a {
+  color: inherit;
 }
 
 .adopt__named::before {
@@ -863,7 +878,6 @@ a:hover {
 
 .supporters__content {
   inline-size: min(100%, 48rem);
-  margin-inline: var(--gutter);
 }
 
 .supporters__stats {
@@ -1326,10 +1340,6 @@ a:hover {
 .btn:hover {
   background: var(--fg);
   color: var(--bg);
-}
-
-.wall {
-  gap: var(--space-l);
 }
 
 .footer {
