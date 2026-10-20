@@ -430,6 +430,26 @@ test.describe("the supporters page", () => {
     expect(await badge.evaluate((b) => getComputedStyle(b).whiteSpace)).toBe("nowrap");
   });
 
+  test("each year covered fills one of the ten lines, and the bar starts over", async ({ page }) => {
+    // two years and a half of running it
+    await page.route(/adoptions-test/, (r) =>
+      r.fulfill({ json: { "color-0": { amount: 2450, by: "patron", on: "name", at: "2026-01-01" } } }),
+    );
+    await page.goto("/supporters/");
+    const bar = page.locator("[data-costs-bar]");
+    await expect(bar).toBeVisible();
+    await expect(bar.locator("[data-costs-years] li")).toHaveCount(10);
+    await expect(bar.locator("[data-costs-years] li.is-full")).toHaveCount(2);
+    expect(await bar.evaluate((b) => b.style.getPropertyValue("--k"))).toBe("0.500");
+    await expect(bar.locator("[data-costs-note]")).toContainText("2 years of running it covered");
+    // the past ten years, last year and the one before covered
+    const year = new Date().getFullYear();
+    await expect(bar.locator("li").last()).toHaveAttribute("data-year", `${year - 1}`);
+    await expect(bar.locator("li").last()).toHaveClass(/is-full/);
+    await expect(bar.locator("li").nth(7)).not.toHaveClass(/is-full/);
+    await expect(bar.locator("li").first()).toHaveAttribute("data-year", `${year - 10}`);
+  });
+
   test("on a phone a long name sends the badge to the next line, whole", async ({ page }) => {
     await page.route(/adoptions-test/, (r) =>
       r.fulfill({
