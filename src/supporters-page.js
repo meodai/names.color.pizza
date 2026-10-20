@@ -39,7 +39,10 @@ export async function initSupportersPage() {
       : []),
     // all of it together, never one person's share
     ...(n.colors ? [`<span>$${raised.toLocaleString("en-US")} raised</span>`] : []),
-    `<span>${n.founding === 50 ? "All 50 founding spots open" : n.founding ? `${n.founding} of 50 founding spots left` : "All 50 founding spots taken"}</span>`,
+    // the founding spots while there are some; once they're all gone the badges tell it
+    ...(n.founding
+      ? [`<span>${n.founding === 50 ? "All 50 founding spots open" : `${n.founding} of 50 founding spots left`}</span>`]
+      : []),
   ].join("");
   stats.hidden = false;
   // nobody yet: the first place, waiting
@@ -71,7 +74,7 @@ export async function initSupportersPage() {
       return `<li class="supporter">
         <span class="supporter__rank">#${rank + 1}</span>
         ${wrap(`card-badge supporter__face${p.founding ? " card-badge--founding" : ""}`, face)}
-        <span class="supporter__who">${wrap("supporter__name", esc(handle))}${p.founding ? '<span class="supporter__founding">Founding patron</span>' : ""}</span>
+        <span class="supporter__who">${wrap("supporter__name", esc(handle))}${p.founding ? '<span class="supporter__founding" title="One of the first 50 patrons">Founding patron</span>' : ""}</span>
         <span class="supporter__colors">${p.colors
           .map(
             (c) =>
