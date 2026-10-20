@@ -3,7 +3,7 @@
 //   [--names "Name,Name" | --names @file]  (just these, fetched again: after a correction in src/references.json)
 
 import { AsyncLocalStorage } from "node:async_hooks";
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseHTML } from "linkedom";
@@ -217,33 +217,52 @@ const items = readFileSync(LIST, "utf8")
   });
 const slugs = slugsOf(items);
 const fileOf = (slug) => join(DATA, "names", slug[0], `${slug}.json`);
+// a copy that can't be read is no copy: it's fetched again, as a new one
+const readCopy = (file) => {
+  try {
+    return JSON.parse(readFileSync(file, "utf8"));
+  } catch {
+    return null;
+  }
+};
+// written beside it, then moved over it: a run cut short leaves the old copy, not half a new one
+const writeCopy = (slug, copy) => {
+  const file = fileOf(slug);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(`${file}.tmp`, JSON.stringify(copy));
+  renameSync(`${file}.tmp`, file);
+};
 
 const fetched = new Map();
 const pictured = new Set();
+const unreadable = new Set();
 const dir = join(DATA, "names");
 mkdirSync(dir, { recursive: true });
-for (const shard of readdirSync(dir)) {
-  for (const file of readdirSync(join(dir, shard))) {
+for (const shard of readdirSync(dir, { withFileTypes: true })) {
+  if (!shard.isDirectory()) continue;
+  for (const file of readdirSync(join(dir, shard.name))) {
+    if (!file.endsWith(".json")) continue;
     const slug = file.replace(/\.json$/, "");
-    try {
-      const copy = JSON.parse(readFileSync(join(dir, shard, file), "utf8"));
-      fetched.set(slug, copy.fetched);
-      if (copy.looked?.pictures) pictured.add(slug);
-    } catch {
-      fetched.set(slug, "0000-00-00");
+    const copy = readCopy(join(dir, shard.name, file));
+    if (!copy) {
+      unreadable.add(slug);
+      continue;
     }
+    fetched.set(slug, copy.fetched);
+    if (copy.looked?.pictures) pictured.add(slug);
   }
 }
 
 const wanted = new Set(slugs.values());
 let removed = 0;
-for (const slug of fetched.keys()) {
+for (const slug of [...fetched.keys(), ...unreadable]) {
   if (!wanted.has(slug)) {
     rmSync(fileOf(slug), { force: true });
     fetched.delete(slug);
     removed++;
   }
 }
+if (unreadable.size) console.log(`collect: ${unreadable.size} copies couldn't be read; fetched again`);
 
 const missing = items.filter((it) => !fetched.has(slugs.get(it.name)));
 const renew = Math.ceil(items.length / CYCLE_DAYS);
@@ -295,9 +314,10 @@ const pictureTerms = (it) => [it.name, new ColorDescription(it.hex).nouns[0]];
 async function collect(it) {
   const slug = slugs.get(it.name);
   const state = { failed: [] };
-  const previous = fetched.has(slug) ? JSON.parse(readFileSync(fileOf(slug), "utf8")) : null;
+  const previous = fetched.has(slug) ? readCopy(fileOf(slug)) : null;
   const copy = await forName
     .run(state, async () => {
+      if (PICTURES_ONLY && !previous) throw new Error("its copy can't be read");
       const looked = PICTURES_ONLY ? previous.looked : await lookupName(it.name);
       if (WITH_PICTURES) looked.pictures = await lookupPictures(it.hex, pictureTerms(it));
       // renewing keeps the pictures it had
@@ -313,8 +333,7 @@ async function collect(it) {
     failures.push(`${it.name}: ${state.failed[0]}`);
     return;
   }
-  mkdirSync(dirname(fileOf(slug)), { recursive: true });
-  writeFileSync(fileOf(slug), JSON.stringify(copy));
+  writeCopy(slug, copy);
   saved++;
 }
 

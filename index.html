@@ -4,24 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/src/favicon.svg" />
-    <title>Color Names — 31,912 colors, named by people</title>
+    <title>Color Names — {{colorCount}} colors, named by people</title>
     <meta
       name="description"
-      content="Wander through 31,912 color names, each one chosen by a person: a space of color cards, each hanging where its color is. Free, MIT-licensed."
+      content="Wander through {{colorCount}} color names, each one chosen by a person: a space of color cards, each hanging where its color is. Free, MIT-licensed."
     />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Color Names" />
     <meta
       property="og:description"
-      content="31,935 colors, each named by a person: wander through them, hanging where their color is."
+      content="{{colorCount}} colors, each named by a person: wander through them, hanging where their color is."
     />
     <meta property="og:url" content="https://names.color.pizza/" />
     <meta property="og:site_name" content="Color Names" />
     <meta property="og:image" content="https://names.color.pizza/og.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="The Color Names logo over a cube of 31,935 named colors" />
+    <meta property="og:image:alt" content="The Color Names logo over a cube of {{colorCount}} named colors" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -131,7 +131,7 @@
         <aside class="wall__intro" data-intro hidden>
           <div class="wall__intro-card">
             <div class="wall__intro-about">
-              <p class="wall__intro-title"><span data-count>31,912</span> colors, each named by a person.</p>
+              <p class="wall__intro-title"><span data-count>{{colorCount}}</span> colors, each named by a person.</p>
               <p>
                 Color Names is an open list, grown over the years from many sources and thousands of suggestions. Every
                 name is unique, and anyone can add one. It’s free to use, under the MIT license: as an npm package, a

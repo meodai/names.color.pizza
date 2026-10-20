@@ -15,7 +15,7 @@ export function counts(adopted) {
   return { colors: kept.length, patrons: people.size, founding: Math.max(0, FOUNDING - people.size) };
 }
 // real payments only on the site itself; anywhere else (localhost) is Stripe's test mode
-const LIVE = location.hostname === "names.color.pizza";
+const LIVE = typeof location !== "undefined" && location.hostname === "names.color.pizza";
 export const PAYMENT = LIVE
   ? "https://buy.stripe.com/4gMdRa7YhgZ21FPbqI7N600"
   : "https://donate.stripe.com/test_8x25kEenHdR70p121M9k400";

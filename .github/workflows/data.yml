@@ -48,18 +48,28 @@ jobs:
           node-version: 24
           cache: npm
       - if: steps.filling.outputs.skip != 'true'
+        id: install
         run: npm ci
-      - if: steps.filling.outputs.skip != 'true'
+      # each pass a step of its own, and what they collected saved even when one fails;
+      # a pass that overruns is stopped as a failure, not the job cancelled with it
+      - if: steps.install.outcome == 'success'
         name: Collect
+        timeout-minutes: 190
         env:
           WIKIMEDIA_TOKEN: ${{ secrets.WIKIMEDIA_TOKEN }}
-        run: |
-          node scripts/collect.mjs --with-pictures --minutes 180
-          node scripts/collect.mjs --pictures --minutes 110
-      - if: steps.filling.outputs.skip != 'true'
+        run: node scripts/collect.mjs --with-pictures --minutes 180
+      - if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        name: Collect pictures
+        timeout-minutes: 120
+        env:
+          WIKIMEDIA_TOKEN: ${{ secrets.WIKIMEDIA_TOKEN }}
+        run: node scripts/collect.mjs --pictures --minutes 110
+      - if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         name: Save
+        id: save
         working-directory: .data
         run: |
+          rm -f names/*/*.tmp
           git add -A
           if git diff --cached --quiet; then
             echo "Nothing new."
@@ -70,9 +80,10 @@ jobs:
               commit -q -m "data: $(date -u +%F)"
           git pull -q --rebase origin data
           git push origin HEAD:data
+          echo "saved=true" >> "$GITHUB_OUTPUT"
       # a push made with the workflow token doesn't start other workflows;
       # a dispatch does
-      - if: steps.filling.outputs.skip != 'true'
+      - if: ${{ !cancelled() && steps.save.outputs.saved == 'true' }}
         name: Rebuild the site
         env:
           GH_TOKEN: ${{ github.token }}

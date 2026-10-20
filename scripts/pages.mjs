@@ -84,19 +84,39 @@ const copyOf = (slug) => {
 const artPrint = createHash("sha1").update(readFileSync(resolve(here, "../src/art.js")));
 // the picks rest on the museums alone: the Wikipedia copies only swap in pictures later
 const artTexts = [];
+// a collection that can't be read is no collection at all, not an empty one: picking
+// without it would change every color's art, and send every list again
+const unread = [];
 async function collection(name, picked = true) {
   const local = process.env.ART_DATA && join(process.env.ART_DATA, `${name}.json`);
-  let text = "[]";
+  let text = null;
+  let why = "";
   if (local && existsSync(local)) text = readFileSync(local, "utf8");
   else {
-    const res = await fetch(`${MEDIA}/data/${name}.json?t=${Date.now()}`).catch(() => null);
+    const res = await fetch(`${MEDIA}/data/${name}.json?t=${Date.now()}`).catch((e) => {
+      why = e.message;
+      return null;
+    });
     if (res?.ok) text = await res.text();
+    else if (res) why = `HTTP ${res.status}`;
+  }
+  let list = null;
+  try {
+    list = text === null ? null : JSON.parse(text);
+    if (list && !Array.isArray(list)) [list, why] = [null, "not a list"];
+  } catch {
+    why = "not JSON";
+  }
+  if (!list) {
+    console.log(`pages.mjs: couldn't read the art data ${name}.json (${why || "no answer"})`);
+    if (picked) unread.push(name);
+    return [];
   }
   if (picked) {
     artPrint.update(name).update(text);
     artTexts.push([name, text]);
   }
-  return JSON.parse(text);
+  return list;
 }
 const works = [];
 for (const museum of Object.keys(MUSEUMS)) {
@@ -108,8 +128,11 @@ for (const museum of Object.keys(MUSEUMS)) {
 const wikimedia = new Map(
   (await collection("wikimedia-art", false)).filter((w) => w.thumb).map((w) => [w.accession, w]),
 );
-if (!works.length) console.log("pages.mjs: no art data; no page has art");
-const near = works.length ? bucketed(works) : null;
+// with a museum missing, the art stays as it was last picked: nothing picked, sent or saved
+const KEEP_ART = unread.length > 0;
+if (KEEP_ART) console.log(`pages.mjs: keeping the art picked before, as ${unread.join(", ")} couldn't be read`);
+else if (!works.length) console.log("pages.mjs: no art data; no page has art");
+const near = works.length && !KEEP_ART ? bucketed(works) : null;
 // a color's art list as its text, "" for none
 const artText = (hex) => {
   const art = near ? pickArt(near, hex) : null;
@@ -117,7 +140,11 @@ const artText = (hex) => {
 };
 const ART_PRINT = artPrint.digest("hex");
 
-const template = readFileSync(join(DIST, "color/index.html"), "utf8").replace(/"\.\.\//g, '"../../');
+// the build fills in {{colorCount}} (vite.config.js); counted again here from the same list,
+// so none is left in a page this writes
+const COUNT = items.length.toLocaleString("en-US");
+const withCount = (html) => html.replaceAll("{{colorCount}}", COUNT);
+const template = withCount(readFileSync(join(DIST, "color/index.html"), "utf8")).replace(/"\.\.\//g, '"../../');
 
 // as detail.js writes them
 function intro(name, hex) {
@@ -299,7 +326,7 @@ const toUpload = [];
 // art and the code that picks it stay the same: a color known here needn't be picked again
 const PICKS = join(LISTS, "picks.json");
 const cached = existsSync(PICKS) ? JSON.parse(readFileSync(PICKS, "utf8")) : null;
-const picks = cached?.print === ART_PRINT ? cached.byHex : {};
+const picks = cached?.print === ART_PRINT || (KEEP_ART && cached) ? cached.byHex : {};
 let picked = 0;
 const sitemap = [`<url><loc>${SITE}</loc></url>`];
 // the whole list as linked data, a color a line: what its page says, with Wikipedia and
@@ -356,12 +383,11 @@ const minutes = (ms) => `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 
 const tenth = Math.ceil(items.length / 10);
 
 // picked before and its list already up (or, locally, already written): known
+const isUp = (slug) => (LOCAL ? existsSync(join(DIST, "lists", `${slug}.json`)) : !!listed[slug]);
+// keeping the art, every color is: whatever list is up stays, and one without has none this time
 const readyFor = (slug, hex) => {
   const known = picks[hex];
-  return (
-    known !== undefined &&
-    (!known || (LOCAL ? existsSync(join(DIST, "lists", `${slug}.json`)) : listed[slug] === known))
-  );
+  return KEEP_ART || (known !== undefined && (!known || (LOCAL ? isUp(slug) : listed[slug] === known)));
 };
 
 // the colors to pick again, on every core at once: each list as its text, "" for none
@@ -416,7 +442,7 @@ for (const [i, { name, hex }] of items.entries()) {
   if (copy) withCopy++;
   const looked = hosted(copy?.looked || null);
   const ready = readyFor(slug, hex);
-  const art = ready ? (picks[hex] ? true : null) : (lists.get(hex) ?? artText(hex));
+  const art = ready ? (picks[hex] && (!KEEP_ART || isUp(slug)) ? true : null) : (lists.get(hex) ?? artText(hex));
   lists.delete(hex);
   if (!ready) picked++;
   const url = `${SITE}color/${slug}/`;
@@ -576,7 +602,7 @@ writeFileSync(
 const ROOT = new URL(SITE).pathname;
 writeFileSync(
   join(DIST, "404.html"),
-  readFileSync(join(DIST, "not-found/index.html"), "utf8")
+  withCount(readFileSync(join(DIST, "not-found/index.html"), "utf8"))
     .replace(/"\.\.\//g, `"${ROOT}`)
     .replace('data-root="../"', `data-root="${ROOT}"`)
     .replace(
@@ -651,7 +677,7 @@ if (UPLOAD_URL && UPLOAD_KEY && toUpload.length) {
   mkdirSync(LISTS, { recursive: true });
   writeFileSync(join(LISTS, "uploaded.json"), JSON.stringify(listed));
 }
-if (!ONLY && works.length) {
+if (!ONLY && works.length && !KEEP_ART) {
   mkdirSync(LISTS, { recursive: true });
   writeFileSync(PICKS, JSON.stringify({ print: ART_PRINT, byHex: picks }));
 }
@@ -675,7 +701,7 @@ if (existsSync(ADOPT_PAGE)) {
     n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(/\.0$/, "")} million` : n.toLocaleString("en-US");
   writeFileSync(
     ADOPT_PAGE,
-    readFileSync(ADOPT_PAGE, "utf8")
+    withCount(readFileSync(ADOPT_PAGE, "utf8"))
       .replaceAll("{{stars}}", stars ? stars.toLocaleString("en-US") : "Thousands of")
       .replaceAll("{{npmYear}}", npm ? millions(npm) : "Millions of"),
   );

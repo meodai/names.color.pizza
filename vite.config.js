@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 // changes whenever the names do, so browsers fetch a new list from the API then
 const csv = resolve(import.meta.dirname, "color-names/src/colornames.csv");
 const LIST_KEY = existsSync(csv) ? createHash("sha1").update(readFileSync(csv)).digest("hex").slice(0, 8) : "dev";
+const rows = existsSync(csv) ? readFileSync(csv, "utf8").split("\n").slice(1).filter(Boolean) : null;
 import { defineConfig } from "vite";
 
 // relative base: works as a GitHub project page without hardcoding the subpath
@@ -26,6 +27,20 @@ export default defineConfig({
   preview: { proxy: { "/media": MEDIA } },
   plugins: [
     {
+      // {{colorCount}} in a page's head, as many as the list has right now; a build
+      // without the list stops, where dev just words it loosely
+      name: "color-count",
+      apply: (_, { command }) => {
+        if (!rows && command === "build") throw new Error(`color-count: no list to count at ${csv}`);
+        return true;
+      },
+      transformIndexHtml: {
+        order: "pre",
+        handler: (html) =>
+          html.replaceAll("{{colorCount}}", rows ? rows.length.toLocaleString("en-US") : "thousands of"),
+      },
+    },
+    {
       name: "strip-html-comments",
       transformIndexHtml: {
         order: "post",
@@ -39,16 +54,10 @@ export default defineConfig({
       name: "color-pages-in-dev",
       async configureServer(server) {
         const { slugsOf } = await import("./src/names.js");
-        const items = existsSync(csv)
-          ? readFileSync(csv, "utf8")
-              .split("\n")
-              .slice(1)
-              .filter(Boolean)
-              .map((line) => {
-                const [name, hex] = line.split(",");
-                return { name, hex: hex.toLowerCase() };
-              })
-          : [];
+        const items = (rows || []).map((line) => {
+          const [name, hex] = line.split(",");
+          return { name, hex: hex.toLowerCase() };
+        });
         const slugs = slugsOf(items);
         const hexOf = new Map(items.map((it) => [slugs.get(it.name), it.hex]));
         server.middlewares.use((req, res, next) => {
