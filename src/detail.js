@@ -1348,10 +1348,11 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       try {
         sessionStorage.setItem("wall-return", "1");
       } catch {}
-      // the color this page shows now, which may be a related one: the wall comes back to it
+      // the color this page shows now, which may be a related one: the space comes back to it.
+      // The list comes back as it was left, its search and its place, no color chosen in it
       const back = new URL(wallView);
       const now = hexFromHash() || builtPage?.hex;
-      if (now) back.searchParams.set("c", now.replace("#", ""));
+      if (now && back.searchParams.get("view") !== "az") back.searchParams.set("c", now.replace("#", ""));
       location.href = back.href;
     }
   });

@@ -1879,7 +1879,6 @@ export async function initWall(root) {
     const before = listKey;
     listKey = key;
     showListChoice();
-    writeAddress({ list: key === "default" ? null : key });
     // that color may not be on this list
     choose(null, "");
 
@@ -1898,6 +1897,8 @@ export async function initWall(root) {
     clearTimeout(slow);
     if (next) {
       status.hidden = true;
+      // the address once it's there: a list that doesn't load leaves the one shown in it
+      writeAddress({ list: key === "default" ? null : key });
       const id = (it) => `${it.name}\u0000${it.hex}`;
       const coming = new Set(next.items.map(id));
       const staying = new Set(items.map(id));
