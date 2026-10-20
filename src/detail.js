@@ -362,7 +362,8 @@ function showMeaning(name, { definitions = [], entries = [], sounds = [] }) {
 
 async function render(hex) {
   const { card } = page;
-  (page.embedded ? page.root : window).scrollTo(0, 0);
+  // a link to one of its parts goes there (anchors), not to the top
+  if (!sectionOf(page.root)) (page.embedded ? page.root : window).scrollTo(0, 0);
 
   // restart the entrance from its first frame (forced reflow)
   card.classList.add("swatchcard--reset");
@@ -994,6 +995,7 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
 
 const EASE = "cubic-bezier(0.3, 0.7, 0, 1)";
 let opened = null;
+const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // grows from the tile it was clicked in, a frame settling round it just
 // before it lands; shrinks back into it
@@ -1007,7 +1009,14 @@ function openPicture(tile, it) {
     .join(" ");
   const grow = wide ? "1 0" : "0 1";
   box.innerHTML = pictureHTML(it);
+  // a dialog over the page: focus goes in, stays in, and back to the tile once it closes
+  box.setAttribute("role", "dialog");
+  box.setAttribute("aria-modal", "true");
+  box.setAttribute("aria-label", it.title || "Picture");
+  box.tabIndex = -1;
   (page.embedded ? page.root : document.body).append(box);
+  const focusBefore = document.activeElement;
+  box.focus({ preventScroll: true });
   const frame = box.querySelector(".lightbox__frame");
   const img = frame.querySelector("img");
   const mat = box.querySelector(".lightbox__mat");
@@ -1028,6 +1037,7 @@ function openPicture(tile, it) {
   const go = () => {
     tile.style.visibility = "hidden";
     page.art.classList.add("is-behind");
+    if (still()) return;
     frame.animate(fly(), { duration: 560, easing: EASE });
     mat.animate(
       [
@@ -1068,19 +1078,21 @@ function openPicture(tile, it) {
     }
   });
   box.querySelector(".lightbox__backdrop").addEventListener("click", () => closePicture());
-  opened = { box, tile, frame, mat, info, fly };
+  opened = { box, tile, frame, mat, info, fly, focusBefore };
 }
 
 function closePicture(now = false) {
   if (!opened) return;
-  const { box, tile, frame, mat, info, fly } = opened;
+  const { box, tile, frame, mat, info, fly, focusBefore } = opened;
   opened = null;
   page.art.classList.remove("is-behind");
   const done = () => {
     tile.style.visibility = "";
     box.remove();
   };
-  if (now) return done();
+  if (box.contains(document.activeElement))
+    (focusBefore?.isConnected ? focusBefore : tile).focus({ preventScroll: true });
+  if (now || still()) return done();
   const fade = [{ opacity: 1 }, { opacity: 0 }];
   const swatches = [...box.querySelectorAll(".lightbox__palette .art__palette > a")].reverse();
   swatches.forEach((swatch, i) =>
@@ -1098,6 +1110,15 @@ function closePicture(now = false) {
 }
 
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
+// the part of the page the address names, if it names one: looked up by its id as written,
+// so an odd hash (#-) can't break the lookup
+function sectionOf(root) {
+  let id = "";
+  try {
+    id = decodeURIComponent(location.hash.slice(1));
+  } catch {}
+  return /^[a-z][a-z-]*$/.test(id) ? root.querySelector(`[id="${id}"]`) : null;
+}
 
 const arrived = () => document.documentElement.classList.remove("is-arriving");
 let arriving = 0;
@@ -1125,12 +1146,21 @@ function anchors(root, signal) {
         }),
       );
     add();
+    // where the address holds the color's hex, a part's # scrolls without giving that up
+    h.addEventListener(
+      "click",
+      (e) => {
+        if (!e.target.closest(".anchor") || !hexFromHash()) return;
+        e.preventDefault();
+        el.scrollIntoView({ block: "start" });
+      },
+      { signal },
+    );
     const keep = new MutationObserver(add);
     keep.observe(h, { childList: true });
     signal?.addEventListener("abort", () => keep.disconnect());
   }
-  const id = decodeURIComponent(location.hash.slice(1));
-  const target = /^[a-z-]+$/.test(id) && root.querySelector(`#${id}`);
+  const target = sectionOf(root);
   if (!target) return;
   const go = () => !target.closest("[hidden]") && (target.scrollIntoView({ block: "start" }), true);
   if (go()) return;
@@ -1343,6 +1373,9 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   );
 
   const show = () => {
+    // a part of the page shown already: only go there
+    const part = current && sectionOf(root);
+    if (part) return part.scrollIntoView({ block: "start" });
     const hex = hexFromHash() || (!embedded && builtPage?.hex) || null;
     if (hex) render(hex);
     else if (!embedded) location.replace(siteURL());
@@ -1442,6 +1475,16 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       if (e.key === "Escape") {
         e.stopImmediatePropagation();
         closePicture();
+      } else if (e.key === "Tab") {
+        // round and round inside the picture's dialog
+        const stops = [...opened.box.querySelectorAll("a[href], button")];
+        const at = stops.indexOf(document.activeElement);
+        const next =
+          at < 0 ? stops.at(e.shiftKey ? -1 : 0) : stops[(at + (e.shiftKey ? -1 : 1) + stops.length) % stops.length];
+        if (next) {
+          e.preventDefault();
+          next.focus();
+        }
       } else if ([" ", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.key)) e.preventDefault();
     },
     { capture: true, signal },
