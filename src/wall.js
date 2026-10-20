@@ -2031,10 +2031,10 @@ export async function initWall(root) {
     e.preventDefault();
     if (colorPage) history.go(-colorPage.depth);
     // from the list, back to the space as it was last shown
-    else if (azOn) setAz(false);
+    else if (azOn) leaveList();
     else goHome();
   });
-  q("[data-home]").addEventListener("click", () => (azOn ? setAz(false) : goHome()));
+  q("[data-home]").addEventListener("click", () => (azOn ? leaveList() : goHome()));
   canvas.addEventListener("dblclick", (e) => {
     const rect = canvas.getBoundingClientRect();
     if (cardAt(e.clientX - rect.left, e.clientY - rect.top) < 0) goHome();
@@ -2222,10 +2222,20 @@ export async function initWall(root) {
   const modes = q("[data-modes]");
   const modeList = q("[data-mode-list]");
   const modeNow = () => (pixelMode() ? "pixel" : cellsOn ? "cells" : "colors");
-  // what's shown, as one value: the space's own view, or the list over it. The address says it,
-  // but for the colors, the space's default
+  // what's shown, as one value: the space's own view (colors, cells, pixel), or the list over
+  // it. The address says it, but for the colors, the space's default
   const viewNow = () => (azOn ? "az" : modeNow());
   const showView = () => writeAddress({ view: viewNow() === "colors" ? null : viewNow() });
+  // the one way to change it. Leaving the list is going back to the space's own view, which
+  // stays as it was under the list; restore: a page that opens on the list, where it was left
+  function setView(next, restore = null) {
+    if (next === "az") return setAz(true, restore);
+    if (azOn) setAz(false);
+    if (next === modeNow()) return;
+    setPixelMode(next === "pixel");
+    setCells(next === "cells");
+  }
+  const leaveList = () => setView(modeNow());
   // a black marker under the view shown while the tabs are open: picked, it slides to the new
   // one, that one turns active, the tabs close round it, and only then the marker fades
   const modeThumb = modeList.querySelector(".wall__mode-thumb");
@@ -2300,7 +2310,7 @@ export async function initWall(root) {
     if (!b) return;
     if (!modes.classList.contains("is-open")) return openModes();
     if (b === modeActive()) return closeModes();
-    if (azOn) setAz(false);
+    if (azOn) leaveList();
     placeThumb(b);
     // its icon turns white as the marker comes under it
     modeList.querySelectorAll(".is-target").forEach((t) => t.classList.remove("is-target"));
@@ -2312,10 +2322,7 @@ export async function initWall(root) {
       b.classList.remove("is-target");
       for (const o of modeList.querySelectorAll("[data-mode]")) o.setAttribute("aria-checked", String(o === b));
       const want = b.dataset.mode;
-      closeModes(() => {
-        setPixelMode(want === "pixel");
-        setCells(want === "cells");
-      });
+      closeModes(() => setView(want));
     }, MODE_MS);
   });
   // the arrows go from view to view; picking one, which closes the tabs, is Enter or Space
@@ -2617,7 +2624,7 @@ export async function initWall(root) {
   }
 
   function setModel(key) {
-    if (azOn) setAz(false);
+    if (azOn) leaveList();
     if (key === model || !MODELS[key]) return;
     dropSpot();
     // cells can't morph: they dip into the dark and come back reshaped
@@ -2678,7 +2685,7 @@ export async function initWall(root) {
       type: "button",
       textContent: "A–Z",
       title: "Every name, A to Z",
-      onclick: () => setAz(true),
+      onclick: () => setView("az"),
     }),
   );
   picker.lastElementChild.dataset.az = "";
@@ -2920,13 +2927,13 @@ export async function initWall(root) {
     try {
       if (nav === "back_forward" || returning || fromColorPage) was = JSON.parse(sessionStorage.getItem("az-view"));
     } catch {}
-    setAz(true, was ?? {});
+    setView("az", was ?? {});
   }
   if (saved && Number.isFinite(saved.dist) && saved.target?.length === 3) {
     const { home: wasHome, ...restored } = saved;
     Object.assign(cam, restored);
     setAway(!wasHome);
-    if (startView === "cells") setCells(true);
+    if (startView === "cells") setView("cells");
     idle = false;
     // back from a color's page: flown to that color, the one it ended on; under the list the
     // space has no card to show, only its label would linger over the names
@@ -2943,7 +2950,7 @@ export async function initWall(root) {
     const then = () => {
       if (start && !azOn) focusCard(nearest(start));
       else idle = !reduceMotion;
-      if (startCells) setCells(true);
+      if (startCells) setView("cells");
     };
     // under the list there's no space to fly into
     if (reduceMotion || azOn) {
