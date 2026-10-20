@@ -31,6 +31,34 @@ export default defineConfig({
         handler: (html) => html.replace(/\s*<!--[\s\S]*?-->/g, ""),
       },
     },
+    {
+      // a name's own page (color/<slug>/) is only written by the build; in dev that address
+      // would fall back to the wall, whose links then pile up under it. So it's the color page
+      // at the name's #hex; anything deeper keeps the #hex it came with
+      name: "color-pages-in-dev",
+      async configureServer(server) {
+        const { slugsOf } = await import("./src/names.js");
+        const items = existsSync(csv)
+          ? readFileSync(csv, "utf8")
+              .split("\n")
+              .slice(1)
+              .filter(Boolean)
+              .map((line) => {
+                const [name, hex] = line.split(",");
+                return { name, hex: hex.toLowerCase() };
+              })
+          : [];
+        const slugs = slugsOf(items);
+        const hexOf = new Map(items.map((it) => [slugs.get(it.name), it.hex]));
+        server.middlewares.use((req, res, next) => {
+          const path = req.url.split("?")[0];
+          if (!/^\/color\/[^/.]+\//.test(path)) return next();
+          const hex = hexOf.get(path.match(/^\/color\/([^/]+)\/$/)?.[1]);
+          res.writeHead(302, { Location: hex ? `/color/#${hex.slice(1)}` : "/color/" });
+          res.end();
+        });
+      },
+    },
   ],
   build: {
     rolldownOptions: {
