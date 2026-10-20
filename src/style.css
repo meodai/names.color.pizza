@@ -4974,7 +4974,13 @@ html.is-arriving:not(.is-passed-on) {
     translate: 50% -1rem;
   }
 
+  /* center comes between the list and the views, so while it's shown the views wait for it */
   .wall__zoom [data-home] {
+    --menu-in: 110ms;
+    --menu-out: 40ms;
+  }
+
+  .wall.is-away .wall__modes {
     --menu-in: 160ms;
     --menu-out: 0ms;
   }
