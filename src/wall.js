@@ -23,6 +23,7 @@ import { createRenderer, NEAR, FAR, NEAR_SLOTS } from "./wall/renderer.js";
 import { createViewSwitch } from "./wall/views.js";
 import { createSearch } from "./wall/search.js";
 import { createList } from "./wall/list.js";
+import { createKeys } from "./wall/keys.js";
 
 // a short list's cards grow, so a handful don't drown in the space: as big as the
 // Short list's cards would be at the same density, up to 8 times
@@ -58,16 +59,6 @@ const STRIP_SPREAD_MS = 350;
 // camera speed (share of its distance moved, plus radians turned, per second) past which
 // names stay away until it has been slower for CALM_MS
 const RUSH = 1.2;
-const FLY_KEYS = {
-  w: "forward",
-  s: "back",
-  a: "left",
-  d: "right",
-  ArrowLeft: "turnLeft",
-  ArrowRight: "turnRight",
-  ArrowUp: "turnUp",
-  ArrowDown: "turnDown",
-};
 const CALM_MS = 160;
 // the cards in front of a hovered one make way after HOVER_WAIT, over HOVER_MS
 const HOVER_WAIT = 140;
@@ -556,10 +547,34 @@ export async function initWall(root) {
   let listShift = null;
   let leaving = null;
   let opening = null;
-  const held = new Set();
-  const letGo = () => held.clear();
-  window.addEventListener("keyup", (e) => held.delete(FLY_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key]));
-  window.addEventListener("blur", letGo);
+  const keys = createKeys({
+    listMenu: (e) => listMenuKeys(e),
+    views: (e) => views.keys(e),
+    get search() {
+      return searchBox;
+    },
+    busy: () => busy,
+    escapeMenu: () => {
+      if (!menuOpen() || !listMenu.hidden) return false;
+      toggleMenu(false);
+      menuButton.focus();
+      return true;
+    },
+    list: azList,
+    space: {
+      flying: () => {
+        anim = null;
+        stopIdle();
+        dropSpot();
+        setAway(true);
+        request();
+      },
+      zoom: (factor) => step(factor)(),
+      home: () => goHome(),
+      toSearch: () => search.focus(),
+    },
+  });
+  const held = keys.held;
   // per 16 ms a key is held, fed into the same eased motion as the mouse
   function fly(dt) {
     const k = dt / 16;
@@ -1516,33 +1531,6 @@ export async function initWall(root) {
     if (cardAt(e.clientX - rect.left, e.clientY - rect.top) < 0) goHome();
   });
 
-  // the space's keys: held ones fly the camera (W S forward and back, A D sideways, the
-  // arrows turn it); + - zoom, 0 or Home go home, / goes to the search
-  const typing = (t) => t.closest?.("input, textarea, select, [contenteditable]");
-  function spaceKeys(e) {
-    const key = FLY_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
-    if (key) {
-      e.preventDefault();
-      if (!held.has(key)) {
-        held.add(key);
-        anim = null;
-        stopIdle();
-        dropSpot();
-        setAway(true);
-        request();
-      }
-      return;
-    }
-    if (e.target.closest?.("button, a")) return;
-    if (e.key === "+" || e.key === "=") step(1 / 1.8)();
-    else if (e.key === "-") step(1.8)();
-    else if (e.key === "0" || e.key === "Home") goHome();
-    else if (e.key === "/") {
-      e.preventDefault();
-      search.focus();
-    }
-  }
-
   const cellsData = {};
   const building = {};
   let cellsDraw = null;
@@ -1989,26 +1977,7 @@ export async function initWall(root) {
   });
   const choose = searchBox.choose;
 
-  // Every key goes to one owner, decided here in this order: the control that has the focus
-  // (the list menu, the views, the search); none while a color's page opens or is open, it
-  // has its own; Escape closes the phone menu; other fields keep their keys; a modifier lets
-  // go of held keys (⌘'s keyup never comes for them on a Mac); then the list when it's up,
-  // else the space
-  window.addEventListener("keydown", (e) => {
-    const t = e.target;
-    if (t.closest?.("[data-list-menu]")) return listMenuKeys(e);
-    if (t.closest?.("[data-modes]")) return views.keys(e);
-    if (t === search) return searchBox.keys(e);
-    if (busy) return;
-    if (e.key === "Escape" && menuOpen() && listMenu.hidden) {
-      toggleMenu(false);
-      return menuButton.focus();
-    }
-    if (typing(t)) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return held.clear();
-    if (azList.on()) return azList.keys(e);
-    spaceKeys(e);
-  });
+  keys.listen();
 
   if (import.meta.env.DEV) {
     window.__wall = {
