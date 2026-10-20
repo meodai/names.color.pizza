@@ -295,10 +295,10 @@ const pixels =
     .catch(() => ({}))) || {};
 // the hero's stats as the page's script fills them: the hex, the line it was added on (filled
 // later, on the same line) and its adoption, or the way to adopt it
-const statsHTML = (hex, adopted) =>
+const statsHTML = (hex, adopted, slug) =>
   `<span>${hex}</span><span></span><span class="hero__adopted">${
     adopted?.amount >= ADOPT_FROM
-      ? `Adopted ${escapeHTML(longDate(adopted.at))} by <span class="hero__adopter">${escapeHTML(handle(adopted.by, adopted.on))}</span>${adopted.founding ? ", founding patron" : ""}`
+      ? `Adopted ${escapeHTML(longDate(adopted.at))} by <span class="hero__adopter">${escapeHTML(handle(adopted.by, adopted.on))}</span>, <a class="hero__patron" href="../../supporters/#color-${slug}">${adopted.founding ? "founding patron" : "patron"}</a>`
       : `<a class="adopt-cta" href="../../adopt/#${hex.slice(1)}">Adopt this color ${HEART}</a>`
   }</span>`;
 const pixelOf = (slug) =>
@@ -487,7 +487,10 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace('class="color-root"', () => `class="color-root" style="--page-color:${hex}"`)
     .replace(/(<h1[^>]*data-name[^>]*>)[\s\S]*?(<\/h1>)/, (_, open, close) => `${open}${escapeHTML(name)}${close}`)
     // the line under it as the page's script lays it out, so the hero holds still when it does
-    .replace(/(<p[^>]*data-stats[^>]*>)(<\/p>)/, (_, open, close) => `${open}${statsHTML(hex, adopted[slug])}${close}`)
+    .replace(
+      /(<p[^>]*data-stats[^>]*>)(<\/p>)/,
+      (_, open, close) => `${open}${statsHTML(hex, adopted[slug], slug)}${close}`,
+    )
     .replace(
       /(<div[^>]*data-intro[^>]*>)[\s\S]*?(<\/div>)/,
       (_, open, close) =>

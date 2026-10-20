@@ -376,10 +376,10 @@ async function render(hex) {
   // holo when adopted with 10 or more, else as previewed; the adoption shows below once it's known
   // who adopted it, under the title, and its foil when it's 10 or more
   const adoptedLine = Object.assign(document.createElement("span"), { className: "hero__adopted" });
-  const adoption = (adopted) => {
+  const adoption = (adopted, slug) => {
     page.tilt.holo(adopted?.amount >= HOLO_FROM && adopted.shine ? adopted.shine : previewShine(hex));
     const shown = adopted?.amount >= ADOPT_FROM;
-    adoptedLine.replaceChildren(...(shown ? adoptedHTML(adopted) : [adoptLink(hex, known, approx)]));
+    adoptedLine.replaceChildren(...(shown ? adoptedHTML(adopted, slug) : [adoptLink(hex, known, approx)]));
     card.parentElement.querySelector(".card-badge")?.remove();
     if (shown) card.parentElement.append(adopterBadge(adopted));
     // and once more at the end of the page, while it's free
@@ -437,10 +437,10 @@ async function render(hex) {
     known = builtPage.name;
     approx = true;
   }
-  adoption(builtPage?.hex === hex ? builtPage.adopted : null);
   // the bucket knows about adoptions since the last build
   const slugNow = builtPage?.hex === hex ? builtPage.slug : null;
-  if (slugNow) loadAdoptions().then((all) => current?.hex === hex && all[slugNow] && adoption(all[slugNow]));
+  adoption(slugNow ? builtPage.adopted : null, slugNow);
+  if (slugNow) loadAdoptions().then((all) => current?.hex === hex && all[slugNow] && adoption(all[slugNow], slugNow));
   current = { hex };
   page.value.textContent = hex;
   page.cardName.textContent = known && approx ? `≈ ${known}` : known;
@@ -585,8 +585,9 @@ async function render(hex) {
   page.about.innerHTML = lore.description.map((t) => `<p>${escapeHTML(t)}</p>`).join("");
   page.wordsTitle.textContent = wordsTitle(lore);
   page.words.innerHTML = wordsHTML(lore);
-  const saved = savedLookup(current.name, slugFor(data, current.name));
-  if (builtPage?.hex !== hex) saved.then((c) => current?.hex === hex && adoption(c?.adopted));
+  const ownSlugNow = slugFor(data, current.name);
+  const saved = savedLookup(current.name, ownSlugNow);
+  if (builtPage?.hex !== hex) saved.then((c) => current?.hex === hex && adoption(c?.adopted, ownSlugNow));
   // the written description, or the made-up one if it's slow or missing: once, so the hero doesn't jump
   if (builtPage?.name !== current.name) {
     const late = setTimeout(() => current?.hex === hex && describe(null), 800);

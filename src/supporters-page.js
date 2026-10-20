@@ -78,10 +78,18 @@ export async function initSupportersPage() {
         <span class="supporter__colors">${p.colors
           .map(
             (c) =>
-              `<a class="supporter__color" href="${esc(siteURL(`color/${c.slug}/`))}" style="--c:${esc(c.hex)};--r:${lean(c.slug).toFixed(2)}" title="${esc(c.name)}"><i></i><b>${esc(c.hex)}</b><span>${esc(c.name)}</span></a>`,
+              `<a class="supporter__color" id="color-${esc(c.slug)}" href="${esc(siteURL(`color/${c.slug}/`))}" style="--c:${esc(c.hex)};--r:${lean(c.slug).toFixed(2)}" title="${esc(c.name)}"><i></i><b>${esc(c.hex)}</b><span>${esc(c.name)}</span></a>`,
           )
           .join("")}</span>
       </li>`;
     })
     .join("");
+  // come for one of them (a color's page links its patron here): drawn now, so the page
+  // goes there itself, and the row says it's the one
+  const asked = location.hash.startsWith("#color-") ? document.getElementById(location.hash.slice(1)) : null;
+  const row = asked?.closest(".supporter");
+  if (row) {
+    row.classList.add("is-asked");
+    row.scrollIntoView({ block: "center" });
+  }
 }

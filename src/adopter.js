@@ -1,3 +1,5 @@
+import { siteURL } from "./names.js";
+
 // who adopted a color: a link to them, and their face for the card's corner
 // from this many dollars a color is adopted, its adopter shown
 export const ADOPT_FROM = 5;
@@ -95,11 +97,17 @@ const profileLink = ({ by, on }, className) =>
       })
     : Object.assign(document.createElement("span"), { className });
 
-// "Adopted <date> by @handle"
-export function adoptedHTML(adopted) {
+// "Adopted <date> by @handle, patron": the patron to their place with the supporters, by the
+// color (slug) they adopted, as the anonymous have one place a color
+export function adoptedHTML(adopted, slug) {
   const a = profileLink(adopted, "hero__adopter");
   a.textContent = handle(adopted.by, adopted.on);
-  return [`Adopted ${longDate(adopted.at)} by `, a, ...(adopted.founding ? [", founding patron"] : [])];
+  const patron = Object.assign(document.createElement("a"), {
+    className: "hero__patron",
+    href: siteURL(`supporters/${slug ? `#color-${slug}` : ""}`),
+    textContent: adopted.founding ? "founding patron" : "patron",
+  });
+  return [`Adopted ${longDate(adopted.at)} by `, a, ", ", patron];
 }
 
 // their avatar, or their initial, pinned to the card's corner

@@ -451,6 +451,51 @@ test.describe("the supporters page", () => {
   });
 });
 
+test.describe("patrons, from a color to the supporters", () => {
+  test("a color's adoption line names the patron, not in capitals, and links their place", async ({ page }) => {
+    await page.goto("/color/#e56e24");
+    const line = await page.evaluate(async () => {
+      const { adoptedHTML } = await import("/src/adopter.js");
+      const el = document.createElement("span");
+      el.className = "hero__adopted";
+      document.querySelector("[data-stats]").append(el);
+      const out = [];
+      for (const founding of [true, false]) {
+        el.replaceChildren(
+          ...adoptedHTML({ by: "vale.rocks", on: "website", at: "2026-10-20", amount: 5, founding }, "liberty"),
+        );
+        const a = el.querySelector(".hero__patron");
+        out.push({
+          text: el.textContent,
+          link: a.textContent,
+          href: a.getAttribute("href"),
+          caps: getComputedStyle(a).textTransform,
+        });
+      }
+      return out;
+    });
+    expect(line[0].text).toBe("Adopted October 20, 2026 by vale.rocks, founding patron");
+    expect(line[1].link).toBe("patron");
+    for (const l of line) {
+      expect(l.href).toMatch(/supporters\/#color-liberty$/);
+      expect(l.caps).toBe("none");
+    }
+  });
+
+  test("the supporters page goes to the patron asked for, and lights their row", async ({ page }) => {
+    const adopted = {};
+    for (let k = 0; k < 40; k++)
+      adopted[`color-${k}`] = { amount: 5 + (40 - k), by: `patron${k}`, on: "name", at: "2026-01-01" };
+    adopted.liberty = { amount: 5, by: "vale.rocks", on: "website", at: "2026-10-20", founding: true };
+    await page.route(/adoptions-test/, (r) => r.fulfill({ json: adopted }));
+    await page.goto("/supporters/#color-liberty");
+    const row = page.locator(".supporter.is-asked");
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText("vale.rocks");
+    await expect(row).toBeInViewport();
+  });
+});
+
 test.describe("on a phone", () => {
   for (const path of ["/supporters/", "/adopt/#e56e24", "/legal/"])
     test(`${path} fits the screen, no sideways scroll (4848ecbf0)`, async ({ page }) => {

@@ -355,7 +355,8 @@ a:hover {
   }
 }
 
-.hero__adopter {
+.hero__adopter,
+.hero__patron {
   text-transform: none;
 }
 
@@ -1034,6 +1035,25 @@ a:hover {
 
 /* whole, on the name's line if it fits, else on the next: a box of its own lets the line
    break before it, never inside it */
+/* the one a color's page sent here for, lit for a moment */
+.supporter.is-asked {
+  animation: supporter-asked 2.4s ease-out;
+}
+
+@keyframes supporter-asked {
+  from,
+  40% {
+    background: rgb(255 255 255 / 0.14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .supporter.is-asked {
+    animation: none;
+    background: rgb(255 255 255 / 0.08);
+  }
+}
+
 .supporter__founding {
   display: inline-block;
   margin-inline-start: 0.6em;
