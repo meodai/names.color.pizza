@@ -16,7 +16,7 @@ export const PROJECTS = [
   [
     "Color Names Timeline",
     2026,
-    "The list's history, replayed as a cloud of points",
+    "The list’s history, replayed as a cloud of points",
     "https://meodai.github.io/color-names-timeline/",
   ],
   [
@@ -55,7 +55,7 @@ export const PROJECTS = [
     "https://github.com/meodai/color-router",
   ],
   ["Verloop", 2024, "A book of generative gradients, with Rik Oostenbroek", "https://verloop.xyz/"],
-  ["RYBitten", 2024, "Between RGB and Itten's RYB color spaces", "https://rybitten.space/"],
+  ["RYBitten", 2024, "Between RGB and Itten’s RYB color spaces", "https://rybitten.space/"],
   ["Albers", 2023, "A generative study of color interaction, after Josef Albers", "https://albers.elastiq.ch/"],
   ["Poline", 2023, "Palettes by interpolating HSL in cartesian space", "https://meodai.github.io/poline/"],
   ["Color Name API", 2022, "The name of any color, as an API", "https://meodai.github.io/color-name-api/"],
@@ -71,7 +71,7 @@ export const PROJECTS = [
   [
     "Color Name Distribution",
     2017,
-    "The list's names, plotted in 3D color models",
+    "The list’s names, plotted in 3D color models",
     "https://codepen.io/meodai/full/zdgXJj",
   ],
 ].map(([name, year, about, url]) => ({ name, year, about, url }));

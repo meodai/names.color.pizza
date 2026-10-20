@@ -41,7 +41,7 @@
   --line: 2px;
   --gutter: clamp(1.5rem, 6vw, 7rem);
   --bar-h: 3.2rem;
-  --measure: 24ch;
+  --measure: 38ch;
 
   color-scheme: light;
 }
@@ -64,7 +64,6 @@ body {
   line-height: 1.5;
   color: var(--fg);
   background: var(--bg);
-  font-feature-settings: "tnum" 1;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -126,7 +125,7 @@ a:hover {
   font-size: var(--text-xl);
   font-weight: var(--weight-display);
   line-height: 0.98;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   margin: 0;
   text-wrap: balance;
 }
@@ -145,6 +144,7 @@ a:hover {
 .prose {
   max-width: var(--measure);
   margin: 0;
+  text-wrap: pretty;
 }
 
 .prose + .prose {
@@ -155,7 +155,7 @@ a:hover {
   font-size: var(--text-2xl);
   font-weight: var(--weight-display);
   line-height: 0.92;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.025em;
   margin: 0;
 }
 
@@ -1249,7 +1249,7 @@ a:hover {
   font-size: var(--text-mega);
   font-weight: var(--weight-display);
   line-height: 0.85;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.035em;
   margin: 0;
 }
 
@@ -1911,7 +1911,6 @@ h2:hover > .anchor,
 }
 
 .lightbox__title {
-  font-feature-settings: normal;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -2063,13 +2062,10 @@ h2:hover > .anchor,
   max-width: 34ch;
 }
 
-/* page-wide tnum would widen the hyphen in names like Red-Handed */
-.color-page,
-.swatchcard__row2 {
-  font-feature-settings: normal;
-}
-
-.swatchcard__row1 {
+/* tabular figures only where hex codes and numbers line up; in a name they'd widen the
+   hyphen of Red-Handed */
+.hero__stats,
+.wall__result-hex {
   font-feature-settings: "tnum" 1;
 }
 
@@ -2766,6 +2762,19 @@ h2:hover > .anchor,
   line-height: 1.2;
 }
 
+/* a card's words in the optical size the space paints them at (labels-gl.js: the hex at
+   512 × 0.205 × 0.55 px, the name at × 0.27), so nothing shifts as one hands over to the
+   other; nor tabular figures, which a canvas can't set */
+.swatchcard__row1,
+.wall__label-hex {
+  font-variation-settings: "opsz" 32;
+}
+
+.swatchcard__row2,
+.wall__label-name {
+  font-variation-settings: "opsz" 28.34;
+}
+
 .swatchcard--visible .swatchcard__swatch {
   transform: translateY(0);
   transition: calc(var(--anim-appear-duration) * 0.566) transform cubic-bezier(0.8, 0.3, 0.25, 1)
@@ -3398,14 +3407,12 @@ html.is-arriving:not(.is-passed-on) {
   margin-top: 0.45em;
   font-size: 0.55em;
   font-weight: 700;
-  font-feature-settings: "tnum" 1;
 }
 
 .wall__label-name {
   margin-top: -0.05em;
   font-size: 0.27em;
   font-weight: 300;
-  font-feature-settings: normal;
 }
 
 /* the edge keeps a white dot visible */
