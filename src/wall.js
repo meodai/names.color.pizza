@@ -95,17 +95,17 @@ export async function initWall(root) {
       .catch(() => {});
   }
   if (introWanted) tellAdopted();
-  // once it's closed, a ? in its corner brings it back
+  // the ? beside GitHub opens and closes it
   const help = q("[data-intro-open]");
   // it goes as it came, sliding off and fading, before it's hidden
   function closeIntro() {
     if (intro.hidden || intro.classList.contains("is-leaving")) return;
     intro.classList.add("is-leaving");
+    help.setAttribute("aria-expanded", "false");
     setTimeout(
       () => {
         intro.classList.remove("is-leaving");
         intro.hidden = true;
-        help.hidden = false;
       },
       reduceMotion ? 0 : 300,
     );
@@ -116,9 +116,10 @@ export async function initWall(root) {
   q("[data-intro-close]").addEventListener("click", closeIntro);
   q("[data-intro-x]").addEventListener("click", closeIntro);
   help.addEventListener("click", () => {
+    if (!intro.hidden) return closeIntro();
     tellAdopted();
-    help.hidden = true;
     intro.hidden = false;
+    help.setAttribute("aria-expanded", "true");
     q("[data-intro-close]").focus({ preventScroll: true });
   });
 
@@ -147,8 +148,10 @@ export async function initWall(root) {
       el.textContent = n.toLocaleString("en-US");
     });
   showCount();
-  if (introWanted) intro.hidden = false;
-  else help.hidden = false;
+  if (introWanted) {
+    intro.hidden = false;
+    help.setAttribute("aria-expanded", "true");
+  }
 
   const colorsOf = (list) => {
     const out = new Uint8Array(list.length * 3);

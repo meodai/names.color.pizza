@@ -3510,8 +3510,47 @@ html.is-arriving:not(.is-passed-on) {
 .wall__nav {
   display: flex;
   grid-column: 3;
-  gap: 0.4rem;
   justify-self: end;
+}
+
+/* GitHub and, past a faint line in the same chip, the ? that opens the intro under it */
+.wall__nav a {
+  padding-inline-end: 0.75rem;
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.wall__help {
+  position: relative;
+  inline-size: 2.4rem;
+  block-size: 2.5rem;
+  padding: 0 0.2rem 0 0;
+  border: 0;
+  border-radius: 0 999px 999px 0;
+  color: var(--paper);
+  background: var(--ink);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.wall__help::before {
+  content: "";
+  position: absolute;
+  inset: 30% auto 30% 0;
+  inline-size: 1px;
+  background: rgb(255 255 255 / 0.25);
+}
+
+.wall__help:hover,
+.wall__help:focus-visible,
+.wall__help[aria-expanded="true"] {
+  color: var(--ink);
+  background: var(--paper);
 }
 
 .wall__nav a {
@@ -3908,36 +3947,6 @@ html.is-arriving:not(.is-passed-on) {
   pointer-events: auto;
 }
 
-/* the intro back, from where it was: a question mark alone, on a screen wide enough for it,
-   as easy to hit as the view switch */
-.wall__help {
-  display: grid;
-  place-items: center;
-  inline-size: 2.6rem;
-  block-size: 2.6rem;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  color: var(--paper);
-  background: none;
-  font: inherit;
-  font-size: var(--text-base);
-  font-weight: var(--weight-display);
-  line-height: 1;
-  text-shadow: 0 0 0.6rem rgb(0 0 0 / 0.6);
-  cursor: pointer;
-}
-
-.wall__help[hidden] {
-  display: none;
-}
-
-@media (max-width: 40rem) {
-  .wall__help {
-    display: none;
-  }
-}
-
 .wall__status {
   margin: 0;
   padding: 0.45rem 0.9rem;
@@ -3956,14 +3965,29 @@ html.is-arriving:not(.is-passed-on) {
 @keyframes wall-intro-in {
   from {
     opacity: 0;
-    translate: -1.5rem 0;
+    translate: var(--intro-from);
   }
 }
 
+/* under the chip with its ?, top right; on a phone, where that chip isn't, bottom left over
+   the dock. It comes from where it sits and goes back there */
 .wall__intro {
+  --intro-from: 0 -0.8rem;
+  position: absolute;
+  inset: calc(var(--space-xs) + 2.5rem + 0.6rem) var(--space-s) auto auto;
+  z-index: 3;
   display: flex;
   flex-direction: column;
+  inline-size: min(22rem, calc(100% - 2 * var(--space-s)));
   font-size: var(--text-xs);
+}
+
+@media (max-width: 56rem) {
+  .wall__intro {
+    --intro-from: -1.5rem 0;
+    inset: auto 1rem calc(1rem + env(safe-area-inset-bottom) + var(--bar-h) + 0.6rem) 1rem;
+    inline-size: auto;
+  }
 }
 
 /* frosted, the space showing through, under the white of what the list is */
@@ -4108,7 +4132,7 @@ html.is-arriving:not(.is-passed-on) {
 /* closed: it goes as it came */
 .wall__intro.is-leaving {
   opacity: 0;
-  translate: -1.5rem 0;
+  translate: var(--intro-from);
   transition:
     opacity 0.25s ease,
     translate 0.3s cubic-bezier(0.7, 0, 0.7, 0.3);

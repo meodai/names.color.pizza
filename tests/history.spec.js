@@ -290,17 +290,23 @@ test.describe("first visits", () => {
     await expect(fold).not.toHaveAttribute("open");
   });
 
-  test("once the intro is closed, a ? brings it back", async ({ page }) => {
+  test("the ? beside GitHub opens and closes it, and says which", async ({ page }) => {
     await openWall(page, "/", { intro: true });
     const help = page.locator("[data-intro-open]");
-    await expect(help).toBeHidden();
-    await page.locator("[data-intro-close]").click();
-    await expect(page.locator("[data-intro]")).toBeHidden();
+    const intro = page.locator("[data-intro]");
     await expect(help).toBeVisible();
+    await expect(help).toHaveAttribute("aria-expanded", "true");
     await help.click();
-    await expect(page.locator("[data-intro]")).toBeVisible();
-    await expect(help).toBeHidden();
+    await expect(intro).toBeHidden();
+    await expect(help).toHaveAttribute("aria-expanded", "false");
+    await help.click();
+    await expect(intro).toBeVisible();
+    await expect(help).toHaveAttribute("aria-expanded", "true");
     await expect(page.locator("[data-intro-close]")).toBeFocused();
+    // under the chip, top right
+    const [h, i] = [await help.boundingBox(), await intro.boundingBox()];
+    expect(i.y).toBeGreaterThan(h.y + h.height - 1);
+    expect(Math.abs(i.x + i.width - (h.x + h.width))).toBeLessThan(2);
   });
 
   test("its × closes it too, and it goes as it came", async ({ page }) => {
@@ -313,11 +319,13 @@ test.describe("first visits", () => {
     await expect(page.locator("[data-intro-open]")).toBeVisible();
   });
 
-  test("the ? is there on a later visit, not on a phone", async ({ page }) => {
-    await openWall(page);
-    await expect(page.locator("[data-intro-open]")).toBeVisible();
+  test("on a phone: no ?, and the intro bottom left as before", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
+    await openWall(page, "/", { intro: true });
     await expect(page.locator("[data-intro-open]")).toBeHidden();
+    const i = await page.locator("[data-intro]").boundingBox();
+    expect(i.x).toBeLessThan(30);
+    expect(i.y + i.height).toBeGreaterThan(500);
   });
 
   test("the View label beside the switch opens it too", async ({ page }) => {

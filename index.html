@@ -120,6 +120,9 @@
 
         <nav class="wall__nav" aria-label="Project">
           <a href="https://github.com/meodai/color-names">GitHub<span data-version></span></a>
+          <button type="button" class="wall__help" data-intro-open aria-label="About Color Names" aria-expanded="false">
+            ?
+          </button>
         </nav>
         <button type="button" class="wall__burger" data-menu aria-expanded="false" aria-label="Menu">
           <span></span><span></span>
@@ -128,35 +131,34 @@
 
       <div class="wall__corner">
         <p class="wall__status" data-status aria-live="polite">Loading the names…</p>
-        <aside class="wall__intro" data-intro hidden>
-          <div class="wall__intro-card">
-            <button type="button" class="wall__intro-x" data-intro-x aria-label="Close">
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-              </svg>
-            </button>
-            <div class="wall__intro-about">
-              <p class="wall__intro-title"><span data-count>{{colorCount}}</span> colors, named by people.</p>
-              <p>
-                Color Names is an open, community-grown collection of unique, human-authored color names. Free to use
-                under the MIT license, available as an npm package or through the API.
-              </p>
-            </div>
-            <details class="wall__intro-adopt">
-              <summary class="label wall__intro-stat" data-adopted-count>Support the list</summary>
-              <p>
-                <b>Adopt a color to support my work.</b> Pick your favourite, open it and hit <i>Adopt this color</i>:
-                from $5, with your name on it for good. Each color can be adopted only once.
-              </p>
-            </details>
-          </div>
-          <div class="wall__intro-links">
-            <a class="wall__intro-cta" href="./adopt/">Adopt a color</a>
-            <button type="button" data-intro-close>Got it</button>
-          </div>
-        </aside>
-        <button type="button" class="wall__help" data-intro-open aria-label="About Color Names" hidden>?</button>
       </div>
+      <aside class="wall__intro" data-intro hidden>
+        <div class="wall__intro-card">
+          <button type="button" class="wall__intro-x" data-intro-x aria-label="Close">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+          <div class="wall__intro-about">
+            <p class="wall__intro-title"><span data-count>{{colorCount}}</span> colors, named by people.</p>
+            <p>
+              Color Names is an open, community-grown collection of unique, human-authored color names. Free to use
+              under the MIT license, available as an npm package or through the API.
+            </p>
+          </div>
+          <details class="wall__intro-adopt">
+            <summary class="label wall__intro-stat" data-adopted-count>Support the list</summary>
+            <p>
+              <b>Adopt a color to support my work.</b> Pick your favourite, open it and hit <i>Adopt this color</i>:
+              from $5, with your name on it for good. Each color can be adopted only once.
+            </p>
+          </details>
+        </div>
+        <div class="wall__intro-links">
+          <a class="wall__intro-cta" href="./adopt/">Adopt a color</a>
+          <button type="button" data-intro-close>Got it</button>
+        </div>
+      </aside>
 
       <div class="wall__dock">
         <div class="wall__tabs">
