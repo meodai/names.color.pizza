@@ -84,6 +84,45 @@ test.describe("the keys", () => {
     expect((await cam(page)).yaw).toBeCloseTo(yaw, 1);
   });
 
+  test("the views close on Escape, focus on the one shown", async ({ page }) => {
+    await openWall(page);
+    await page.locator('[data-mode][aria-checked="true"]').click();
+    await expect(page.locator("[data-modes]")).toHaveClass(/is-open/);
+    await page.locator('[data-mode="cells"]').focus();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("[data-modes]")).not.toHaveClass(/is-open/);
+    await expect(page.locator('[data-mode][aria-checked="true"]')).toBeFocused();
+  });
+
+  test("the list menu: up and down through it, Escape closes it, and the camera stays", async ({ page }) => {
+    await openWall(page);
+    await page.locator("[data-lists]").click();
+    const menu = page.locator("[data-list-menu]");
+    await expect(menu).toBeVisible();
+    const items = menu.locator("[data-list]");
+    const first = await page.evaluate(() => document.activeElement.dataset.list);
+    const yaw = (await cam(page)).yaw;
+    await page.keyboard.press("ArrowDown");
+    expect(await page.evaluate(() => document.activeElement.dataset.list)).not.toBe(first);
+    await page.keyboard.press("ArrowUp");
+    expect(await page.evaluate(() => document.activeElement.dataset.list)).toBe(first);
+    expect((await cam(page)).yaw).toBeCloseTo(yaw, 1);
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
+    await expect(page.locator("[data-lists]")).toBeFocused();
+    expect(await items.count()).toBeGreaterThan(1);
+  });
+
+  test("on a phone, Escape closes the menu", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await openWall(page);
+    await page.locator("[data-menu]").click();
+    await expect(page.locator("[data-menu]")).toHaveAttribute("aria-expanded", "true");
+    await page.locator("body").press("Escape");
+    await expect(page.locator("[data-menu]")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.locator("[data-menu]")).toBeFocused();
+  });
+
   test("a list just opened ends its entrance at the first key", async ({ page }) => {
     await openWall(page);
     await page.locator("[data-az]").click();

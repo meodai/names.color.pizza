@@ -2040,16 +2040,12 @@ export async function initWall(root) {
     if (cardAt(e.clientX - rect.left, e.clientY - rect.top) < 0) goHome();
   });
 
-  // held keys fly the camera: W S forward and back, A D sideways, the arrows turn it.
-  // Never while typing, nor with a modifier, so shortcuts stay the browser's
+  // the space's keys: held ones fly the camera (W S forward and back, A D sideways, the
+  // arrows turn it); + - zoom, 0 or Home go home, / goes to the search
   const typing = (t) => t.closest?.("input, textarea, select, [contenteditable]");
-  window.addEventListener("keydown", (e) => {
-    if (busy || typing(e.target)) return;
-    // with a modifier down a held key's keyup may never come (⌘ on a Mac), so nothing stays held
-    if (e.metaKey || e.ctrlKey || e.altKey) return held.clear();
-    // under the list the arrows are the list's, and a radio group's are its own
-    const key = !azOn && FLY_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
-    if (key && !e.target.closest?.("[role=menu], [role=tablist], [role=listbox], [role=radiogroup]")) {
+  function spaceKeys(e) {
+    const key = FLY_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+    if (key) {
       e.preventDefault();
       if (!held.has(key)) {
         held.add(key);
@@ -2061,11 +2057,7 @@ export async function initWall(root) {
       }
       return;
     }
-    // the list moves with them, from a row as from anywhere else
-    if (azOn && !e.target.closest?.("[role=menu], [role=radiogroup], [role=listbox]") && az?.scrollKey(e.key))
-      return e.preventDefault();
     if (e.target.closest?.("button, a")) return;
-    if (azOn && e.key !== "/") return;
     if (e.key === "+" || e.key === "=") step(1 / 1.8)();
     else if (e.key === "-") step(1.8)();
     else if (e.key === "0" || e.key === "Home") goHome();
@@ -2073,7 +2065,15 @@ export async function initWall(root) {
       e.preventDefault();
       search.focus();
     }
-  });
+  }
+  // the list's: the arrows, Page and Home End move it, from a row as from anywhere else
+  function listKeys(e) {
+    if (az?.scrollKey(e.key)) return e.preventDefault();
+    if (e.key === "/" && !e.target.closest?.("button, a")) {
+      e.preventDefault();
+      search.focus();
+    }
+  }
 
   const cellsData = {};
   const building = {};
@@ -2325,21 +2325,21 @@ export async function initWall(root) {
       closeModes(() => setView(want));
     }, MODE_MS);
   });
-  // the arrows go from view to view; picking one, which closes the tabs, is Enter or Space
-  modeList.addEventListener("keydown", (e) => {
+  document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && closeModes());
+  // the views' keys: the arrows go from view to view (picking one, which closes the tabs, is
+  // Enter or Space), Escape closes them
+  function modeKeys(e) {
+    if (e.key === "Escape" && modes.classList.contains("is-open")) {
+      closeModes();
+      return modeActive().focus();
+    }
     const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
     const b = e.target.closest("[data-mode]");
     if (!step || !b) return;
     e.preventDefault();
     const all = [...modeList.querySelectorAll("[data-mode]")].filter((o) => o.offsetParent);
     all[(all.indexOf(b) + step + all.length) % all.length]?.focus();
-  });
-  document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && closeModes());
-  modes.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || !modes.classList.contains("is-open")) return;
-    closeModes();
-    modeActive().focus();
-  });
+  }
   showMode();
 
   const listButton = q("[data-lists]");
@@ -2365,7 +2365,8 @@ export async function initWall(root) {
   document.addEventListener("pointerdown", (e) => {
     if (!listMenu.hidden && !e.target.closest("[data-list-menu], [data-lists]")) toggleListMenu(false);
   });
-  listMenu.addEventListener("keydown", (e) => {
+  // the list menu's keys: up and down through it, Escape closes it
+  function listMenuKeys(e) {
     const all = [...listMenu.querySelectorAll("[data-list]")];
     const k = all.indexOf(document.activeElement);
     if (e.key === "Escape") {
@@ -2375,7 +2376,7 @@ export async function initWall(root) {
       e.preventDefault();
       all[(k + (e.key === "ArrowDown" ? 1 : all.length - 1)) % all.length].focus();
     }
-  });
+  }
   showListChoice();
 
   // on a phone the models, lists and zoom sit behind this button
@@ -2385,11 +2386,6 @@ export async function initWall(root) {
   menuButton.addEventListener("click", () => toggleMenu());
   document.addEventListener("pointerdown", (e) => {
     if (menuOpen() && !e.target.closest("[data-menu], .wall__dock, .wall__zoom")) toggleMenu(false);
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || !menuOpen() || !listMenu.hidden) return;
-    toggleMenu(false);
-    menuButton.focus();
   });
 
   async function setList(key) {
@@ -2813,7 +2809,9 @@ export async function initWall(root) {
     active = 0;
     showResults();
   });
-  search.addEventListener("keydown", (e) => {
+  // the search's keys: up and down through its results (in the list, through the list),
+  // Escape back to what was chosen
+  function searchKeys(e) {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       // typing in the list's search: up and down go through the list itself
@@ -2831,6 +2829,27 @@ export async function initWall(root) {
       showResults();
       search.blur();
     }
+  }
+
+  // Every key goes to one owner, decided here in this order: the control that has the focus
+  // (the list menu, the views, the search); none while a color's page opens or is open, it
+  // has its own; Escape closes the phone menu; other fields keep their keys; a modifier lets
+  // go of held keys (⌘'s keyup never comes for them on a Mac); then the list when it's up,
+  // else the space
+  window.addEventListener("keydown", (e) => {
+    const t = e.target;
+    if (t.closest?.("[data-list-menu]")) return listMenuKeys(e);
+    if (t.closest?.("[data-modes]")) return modeKeys(e);
+    if (t === search) return searchKeys(e);
+    if (busy) return;
+    if (e.key === "Escape" && menuOpen() && listMenu.hidden) {
+      toggleMenu(false);
+      return menuButton.focus();
+    }
+    if (typing(t)) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return held.clear();
+    if (azOn) return listKeys(e);
+    spaceKeys(e);
   });
   let pickTimer = 0;
   let azPicking = 0;
