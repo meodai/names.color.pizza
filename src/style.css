@@ -4793,6 +4793,30 @@ html.is-arriving:not(.is-passed-on) {
   display: none;
 }
 
+/* coming in: the fading space still shows through, then the rows in view arrive one after
+   another, 30ms apart (--i: a row's place among them, set in az.js) */
+.az.is-entering {
+  background: transparent;
+}
+
+.az.is-entering .az__row {
+  animation: az-row-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--az-delay, 0ms) + var(--i, 0) * 30ms);
+}
+
+@keyframes az-row-in {
+  from {
+    opacity: 0;
+    translate: 0 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .az.is-entering .az__row {
+    animation: none;
+  }
+}
+
 /* focus can't nudge the wall sideways while the list is up */
 .wall.is-az {
   overflow: clip;
@@ -4889,6 +4913,19 @@ html.is-arriving:not(.is-passed-on) {
   letter-spacing: -0.02em;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* in pixel art, the name's drawing in front of it; the name then takes the room between */
+.az__icon {
+  flex: none;
+  min-inline-size: 48px;
+  block-size: 48px;
+  margin-inline-end: calc(var(--space-xs) - var(--space-s));
+  image-rendering: pixelated;
+}
+
+.az__icon + strong {
+  flex: 1;
 }
 
 .az__row span {

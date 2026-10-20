@@ -5,13 +5,15 @@ import { fold, normalizeHex, rgbToOklab, hexToRgb } from "./names.js";
 // closest to a color.
 const ROW = 64; // px, as .az__row in the CSS
 const CLOSEST = 60;
+// rows coming in: each one 30ms after the one above it, each taking this long
+const ROW_IN_MS = 420;
 
 const escapeHTML = (s) => s.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 // light text on dark colors, as the first site decided it
 const isDark = ([r, g, b]) => (r * 299 + g * 587 + b * 114) / 1000 < 125;
 const count = (n) => n.toLocaleString("en-US");
 
-export function createAz(before, { hrefOf, onLeave }) {
+export function createAz(before, { hrefOf, iconOf, onLeave }) {
   const el = document.createElement("section");
   el.className = "az";
   el.hidden = true;
@@ -36,13 +38,18 @@ export function createAz(before, { hrefOf, onLeave }) {
   let all = [];
   let shown = [];
   let frame = 0;
+  let first = 0;
+  let entering = 0;
 
-  const rowHTML = (it, i) =>
-    `<a class="az__row${isDark(it.rgb) ? " is-dark" : ""}" href="${escapeHTML(hrefOf(it))}" data-i="${i}" style="--c:${it.hex}"><strong>${escapeHTML(it.name)}</strong><span>${it.hex}</span></a>`;
+  const rowHTML = (it, i) => {
+    const icon = iconOf?.(it);
+    return `<a class="az__row${isDark(it.rgb) ? " is-dark" : ""}" href="${escapeHTML(hrefOf(it))}" data-i="${i}" style="--c:${it.hex};--i:${Math.max(0, i - first)}">${icon ? `<img class="az__icon" src="${escapeHTML(icon)}" alt="" decoding="async">` : icon === "" ? `<i class="az__icon"></i>` : ""}<strong>${escapeHTML(it.name)}</strong><span>${it.hex}</span></a>`;
+  };
 
   function render() {
     frame = 0;
     const top = scrollEl.scrollTop;
+    first = Math.floor(top / ROW);
     const start = Math.max(0, Math.floor(top / ROW) - 8);
     const end = Math.min(shown.length, Math.ceil((top + scrollEl.clientHeight) / ROW) + 8);
     rowsEl.style.transform = `translateY(${start * ROW}px)`;
@@ -98,12 +105,22 @@ export function createAz(before, { hrefOf, onLeave }) {
 
   return {
     // items: the list in the wall, already prepared (name, hex, rgb, lower, OKLab)
-    open(items, text, keepScroll = true) {
+    // delay: when the rows start coming in, one after another; none, they're simply there
+    open(items, text, keepScroll = true, delay = -1) {
       all = [...items].sort((x, y) => x.lower.localeCompare(y.lower));
       el.hidden = false;
+      clearTimeout(entering);
+      el.classList.toggle("is-entering", delay >= 0);
+      el.style.setProperty("--az-delay", `${Math.max(0, delay)}ms`);
       filter(text, keepScroll);
+      if (delay >= 0) {
+        const rows = Math.ceil(scrollEl.clientHeight / ROW);
+        entering = setTimeout(() => el.classList.remove("is-entering"), delay + rows * 30 + ROW_IN_MS);
+      }
     },
     close() {
+      clearTimeout(entering);
+      el.classList.remove("is-entering");
       el.hidden = true;
     },
     filter,
