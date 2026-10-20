@@ -3646,19 +3646,22 @@ html.is-arriving:not(.is-passed-on) {
   overflow: hidden;
   translate: 0 -50%;
   cursor: pointer;
+  /* even steps of hue at one lightness and chroma, so no slice looks brighter than the next */
+  --l: 70%;
+  --c: 0.3;
   background: conic-gradient(
-    hsl(0 60% 50%) 0deg 30deg,
-    hsl(30 60% 50%) 30deg 60deg,
-    hsl(60 60% 50%) 60deg 90deg,
-    hsl(90 60% 50%) 90deg 120deg,
-    hsl(120 60% 50%) 120deg 150deg,
-    hsl(150 60% 50%) 150deg 180deg,
-    hsl(180 60% 50%) 180deg 210deg,
-    hsl(210 60% 50%) 210deg 240deg,
-    hsl(240 60% 50%) 240deg 270deg,
-    hsl(270 60% 50%) 270deg 300deg,
-    hsl(300 60% 50%) 300deg 330deg,
-    hsl(330 60% 50%) 330deg 360deg
+    oklch(var(--l) var(--c) 0) 0deg 30deg,
+    oklch(var(--l) var(--c) 30) 30deg 60deg,
+    oklch(var(--l) var(--c) 60) 60deg 90deg,
+    oklch(var(--l) var(--c) 90) 90deg 120deg,
+    oklch(var(--l) var(--c) 120) 120deg 150deg,
+    oklch(var(--l) var(--c) 150) 150deg 180deg,
+    oklch(var(--l) var(--c) 180) 180deg 210deg,
+    oklch(var(--l) var(--c) 210) 210deg 240deg,
+    oklch(var(--l) var(--c) 240) 240deg 270deg,
+    oklch(var(--l) var(--c) 270) 270deg 300deg,
+    oklch(var(--l) var(--c) 300) 300deg 330deg,
+    oklch(var(--l) var(--c) 330) 330deg 360deg
   );
 }
 
