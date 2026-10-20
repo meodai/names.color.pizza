@@ -32618,14 +32618,6 @@
     "model": "describer"
   },
   {
-    "name": "Bright Light Green",
-    "hex": "#2dfe54",
-    "ai": true,
-    "kind": "plain",
-    "description": "Glowing highlighter green, shining like a desk lamp.",
-    "model": "describer"
-  },
-  {
     "name": "Bright Lilac",
     "hex": "#d891ef",
     "ai": true,
