@@ -20,23 +20,31 @@ This is the upstream project the microsite promotes:
 
 Lives in `website/` of the color-names repo. Vite, plain ES modules, no
 framework: `npm run dev`, `npm run build`, `npm run preview`. Formatted with
-Prettier (`npm run format`); no tests or lint of its own. Comments only where
-the code would surprise, and none in the HTML. Heavy sections load lazily from `src/main.js`:
+Prettier (`npm run format`). Comments only where the code would surprise, and
+none in the HTML.
 
-- `src/color-space.js` — 3D point cloud across color spaces (three.js)
-- `src/name-map.js` — OkHSL wheel where every pixel belongs to its closest
-  name (OKLab); hatched ground has no name yet. Math in `src/okhsl.js`.
-- `src/explore.js` — virtualized list of every name
+`npm test` runs Playwright end-to-end tests (`tests/`) against the dev server:
+the address and views, the list, the search, the keys, a color's page over the
+wall, the adopt page, and regressions from the history. Any error the page
+throws fails a test. They use the wall's dev-only hook, `window.__wall`. Run
+them before and after any change to the wall.
 
 Data comes from `api.color.pizza` via `src/api.js`, one memoized fetch per list.
 
 Pages (multi-page Vite build):
 
 - `index.html` — the color wall (`src/wall.js`): every name as a card in WebGL,
-  hue across (wrapping), light to dark down, search by name or hex.
-- `classic/index.html` — the previous home, the scroll of slides.
-- `color/index.html` — one color at `color/#hex` (`src/detail.js`).
+  placed by color model (RGB, OKLab, OKLCH, HSL), shown as colors, cells or
+  pixel art, or as the A–Z list; search by name or hex. `src/wall.js` keeps the
+  camera, the drawing loop and the card's flights; the rest is in `src/wall/`:
+  `address.js` (in `src/`, the only code that reads or writes the wall's
+  query), `views.js` (the view switch), `search.js`, `list.js` (A–Z),
+  `keys.js` (one router giving each key to one owner), `page.js` (a color's
+  page over the wall), `renderer.js`, `models.js`, `math.js`.
+- `color/index.html` — one color at `color/#hex` (`src/detail.js`); the build
+  writes one page per name at `color/<slug>/`.
   Links between pages go through `siteURL()` / `colorURL()` in `src/names.js`.
+- `adopt/`, `supporters/`, `legal/`, `not-found/`.
 
 ## Source of truth for content
 
