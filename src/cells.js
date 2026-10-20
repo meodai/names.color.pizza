@@ -302,6 +302,11 @@ function program(gl, vert, frag) {
   gl.attachShader(p, make(gl.VERTEX_SHADER, vert));
   gl.attachShader(p, make(gl.FRAGMENT_SHADER, frag));
   gl.linkProgram(p);
+  // the program keeps what it needs; the shaders would only pile up, a pair per renderer
+  for (const sh of gl.getAttachedShaders(p)) {
+    gl.detachShader(p, sh);
+    gl.deleteShader(sh);
+  }
   if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
   return p;
 }

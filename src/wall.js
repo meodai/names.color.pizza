@@ -368,6 +368,11 @@ function createRenderer(canvas, positions, colors, grow = new Uint8Array(positio
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
   gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
   gl.linkProgram(prog);
+  // the program keeps what it needs; the shaders would only pile up, a pair per renderer
+  for (const sh of gl.getAttachedShaders(prog)) {
+    gl.detachShader(prog, sh);
+    gl.deleteShader(sh);
+  }
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   gl.useProgram(prog);
 
@@ -677,6 +682,8 @@ export async function initWall(root) {
 
   const picker = q("[data-models]");
   let model = new URLSearchParams(location.search).get("model");
+  // the view the address asked for, read before the controls rewrite the address to theirs
+  const startView = new URLSearchParams(location.search).get("view");
   if (!MODELS[model]) model = DEFAULT_MODEL;
   let positions = placeAll(model).slice();
   const posOf = (i) => [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]];
@@ -833,7 +840,8 @@ export async function initWall(root) {
   }
 
   // margin: also the cards this share of the view beyond its edges, about to come in
-  function onScreen(minPx = 0, limit = Infinity, margin = 0) {
+  // at: only the cards under that point of the screen, for picking one there
+  function onScreen(minPx = 0, limit = Infinity, margin = 0, at = null) {
     const out = [];
     const [ex, ey, ez] = cam.eye;
     const [fx, fy, fz] = cam.fwd;
@@ -858,6 +866,7 @@ export async function initWall(root) {
       const y = view.h / 2 - (vx * ux + vy * uy + vz * uz) * s;
       const hw = (W / 2) * s;
       const hh = (H / 2) * s;
+      if (at && (Math.abs(at[0] - x) > hw || Math.abs(at[1] - y) > hh)) continue;
       if (sp && i !== sp.i && z < sp.z && Math.abs(x - sp.x) < hw + sp.hw && Math.abs(y - sp.y) < hh + sp.hh) continue;
       const mx = view.w * margin;
       const my = view.h * margin;
@@ -1024,7 +1033,7 @@ export async function initWall(root) {
       c.z < h.z &&
       Math.abs((c.x0 + c.x1) / 2 - h.x) < (rw / 2) * (c.s + h.s) &&
       Math.abs((c.y0 + c.y1) / 2 - h.y) < (rh / 2) * (c.s + h.s);
-    for (const c of onScreen()) {
+    for (const c of onScreen(0, Infinity, 0, [sx, sy])) {
       // in pixel art a card is only its drawing, the square at its top
       const y1 = pixelArt.k > 0.5 ? c.y0 + W * c.s : c.y1;
       if (
@@ -1219,8 +1228,9 @@ export async function initWall(root) {
       moving() ||
       idle ||
       morph ||
-      opening ||
-      spot ||
+      // a page open over the wall hides it whole; a found card is still once it's in
+      (opening && !colorPage) ||
+      (spot && (!spot.on || time - spot.t < 500)) ||
       azFade ||
       bang ||
       cellsFade ||
@@ -1606,6 +1616,7 @@ export async function initWall(root) {
     toOwnURL(it);
 
     root.classList.add("is-opening");
+    pageAway(true);
     opening = { i, pos: posOf(i), t0: performance.now(), handed: false };
     zoomInto(i, pageCardWidth(), IN.fly);
 
@@ -1643,6 +1654,15 @@ export async function initWall(root) {
     });
   }
 
+  // while a card opens into its page, and until it's back, the wall's own controls are out of
+  // reach: unseen, they'd still take focus and clicks. The logo stays, it closes the page
+  let focusBefore = null;
+  function pageAway(away) {
+    for (const el of root.children) if (!el.matches(".brand, .wall__page, .wall__handoff")) el.inert = away;
+    if (away) focusBefore = document.activeElement;
+    else if (focusBefore?.isConnected && !focusBefore.closest("[inert]")) focusBefore.focus({ preventScroll: true });
+  }
+
   const later = (ms, fn) => setTimeout(fn, reduceMotion ? 0 : ms);
   // how long a card back from its page takes to shed its color, in pixel art
   const SHED_MS = 280;
@@ -1676,6 +1696,9 @@ export async function initWall(root) {
     for (const img of layer.querySelectorAll("img[src]")) img.src = new URL(img.getAttribute("src"), colorPageURL).href;
     document.documentElement.dataset.root = new URL("../", colorPageURL).href;
     root.append(layer);
+    // focus in the page, where reading it starts
+    layer.tabIndex = -1;
+    layer.focus({ preventScroll: true });
     const controller = new AbortController();
     colorPage = { layer, controller, returnTo, hex, depth: 1 };
     detail.initDetailPage(layer, {
@@ -1778,9 +1801,12 @@ export async function initWall(root) {
     task.cancelled = true;
     const from = opening?.now || { repel: 0, fade: 0, clear: 0 };
     anim = null;
-    if (task.c) {
+    // a copy only flies back once it's shown: in pixel art it waits, hidden, for its drawing,
+    // and gliding it then would leave nothing to see on the way
+    if (task.c && opening?.handed) {
       returnCard(task.c, task.i, task.before, from);
     } else {
+      task.c?.copy.remove();
       opening = {
         i: task.i,
         pos: posOf(task.i),
@@ -1797,6 +1823,7 @@ export async function initWall(root) {
     busy = false;
     opening = null;
     root.classList.remove("is-opening");
+    pageAway(false);
     draw.focus(-1, null, 0, 0);
     labels.hidden = false;
     root.querySelectorAll(".wall__handoff").forEach((el) => el.remove());
@@ -1948,7 +1975,7 @@ export async function initWall(root) {
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
     const i = cardAt(sx, sy);
-    const hit = i < 0 ? null : onScreen().find((c) => c.i === i) || { i, ...boxRect(drawnBox(i)) };
+    const hit = i < 0 ? null : { i, ...boxRect(drawnBox(i)) };
     canvas.style.cursor = hit ? "pointer" : "";
     // the card under the mouse shows its strip and name, however small
     if ((hit?.i ?? -1) !== hoverI) {
@@ -2020,9 +2047,12 @@ export async function initWall(root) {
   // Never while typing, nor with a modifier, so shortcuts stay the browser's
   const typing = (t) => t.closest?.("input, textarea, select, [contenteditable]");
   window.addEventListener("keydown", (e) => {
-    if (busy || typing(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
-    const key = FLY_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
-    if (key && !e.target.closest?.("[role=menu], [role=tablist], [role=listbox]")) {
+    if (busy || typing(e.target)) return;
+    // with a modifier down a held key's keyup may never come (⌘ on a Mac), so nothing stays held
+    if (e.metaKey || e.ctrlKey || e.altKey) return held.clear();
+    // under the list the arrows are the list's, and a radio group's are its own
+    const key = !azOn && FLY_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+    if (key && !e.target.closest?.("[role=menu], [role=tablist], [role=listbox], [role=radiogroup]")) {
       e.preventDefault();
       if (!held.has(key)) {
         held.add(key);
@@ -2034,7 +2064,11 @@ export async function initWall(root) {
       }
       return;
     }
+    // the list moves with them, from a row as from anywhere else
+    if (azOn && !e.target.closest?.("[role=menu], [role=radiogroup], [role=listbox]") && az?.scrollKey(e.key))
+      return e.preventDefault();
     if (e.target.closest?.("button, a")) return;
+    if (azOn && e.key !== "/") return;
     if (e.key === "+" || e.key === "=") step(1 / 1.8)();
     else if (e.key === "-") step(1.8)();
     else if (e.key === "0" || e.key === "Home") goHome();
@@ -2175,10 +2209,14 @@ export async function initWall(root) {
       else url.searchParams.delete("view");
       history.replaceState(history.state, "", url);
     } catch {}
-    if (on && !(await ensureCells(model))) {
-      cellsOn = false;
-      showMode();
-      return;
+    if (on) {
+      const ok = await cellsForModel();
+      if (ok === null) return;
+      if (!ok) {
+        cellsOn = false;
+        showMode();
+        return;
+      }
     }
     if (on && !cellsOn) return;
     cellsModel = model;
@@ -2291,6 +2329,15 @@ export async function initWall(root) {
         setCells(want === "cells");
       });
     }, MODE_MS);
+  });
+  // the arrows go from view to view; picking one, which closes the tabs, is Enter or Space
+  modeList.addEventListener("keydown", (e) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    const b = e.target.closest("[data-mode]");
+    if (!step || !b) return;
+    e.preventDefault();
+    const all = [...modeList.querySelectorAll("[data-mode]")].filter((o) => o.offsetParent);
+    all[(all.indexOf(b) + step + all.length) % all.length]?.focus();
   });
   document.addEventListener("pointerdown", (e) => !modes.contains(e.target) && closeModes());
   modes.addEventListener("keydown", (e) => {
@@ -2412,7 +2459,7 @@ export async function initWall(root) {
 
     busy = false;
     if (cellsOn) {
-      ensureCells(model).then((ok) => {
+      cellsForModel().then((ok) => {
         if (ok && cellsOn) {
           cellsModel = model;
           cellsFade = { from: cellsMix, to: 1, t0: performance.now() };
@@ -2444,22 +2491,29 @@ export async function initWall(root) {
     cellsDraw = null;
     cellsMix = 0;
     for (const l of pool) l.i = -1;
+    // a card under a resting mouse is the old list's index
+    hoverI = -1;
+    Object.assign(clearing, { i: -1, v: 0, from: 0 });
+    tip.hidden = true;
     showCount();
     markStars();
     pixelArt.restore();
     if (azOn) az?.open(items, search.value, 0);
   }
 
+  // true once a model's cells are drawable, false if they can't be; null when the list changed
+  // meanwhile, so these were the old list's and whoever switched it builds the new ones
   async function ensureCells(key) {
     if (cellsDraw?.has(key)) return true;
     status.textContent = "Working out each name’s part of the space…";
     status.hidden = false;
     try {
-      cellsDraw ??= createCellsRenderer(draw.gl, canvas, colors, GEO);
+      const renderer = (cellsDraw ??= createCellsRenderer(draw.gl, canvas, colors, GEO));
       const data = await (building[key] ??= buildOwners(placeAll(key), boundsOf(key), CELL_REACH, (k) => {
         status.textContent = `Working out each name’s part of the space… ${Math.round(k * 100)}%`;
       }));
-      if (!cellsDraw.has(key)) cellsDraw.add(key, data);
+      if (renderer !== cellsDraw) return null;
+      if (!renderer.has(key)) renderer.add(key, data);
       cellsData[key] = data;
       status.hidden = true;
       return true;
@@ -2468,6 +2522,15 @@ export async function initWall(root) {
       status.textContent = "The cells couldn’t be drawn in this browser.";
       setTimeout(() => (status.hidden = true), 3000);
       return false;
+    }
+  }
+
+  // the cells of the model shown, built again if the model changed while they were worked out
+  async function cellsForModel() {
+    for (;;) {
+      const key = model;
+      const ok = await ensureCells(key);
+      if (!ok || key === model) return ok;
     }
   }
 
@@ -2604,7 +2667,7 @@ export async function initWall(root) {
     try {
       const url = new URL(location.href);
       url.searchParams.set("model", key);
-      history.replaceState(null, "", url);
+      history.replaceState(history.state, "", url);
     } catch {}
     request();
   }
@@ -2774,6 +2837,8 @@ export async function initWall(root) {
   search.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
+      // typing in the list's search: up and down go through the list itself
+      if (azOn) return az?.scrollKey(e.key);
       if (!found.length) return;
       active = (active + (e.key === "ArrowDown" ? 1 : found.length - 1)) % found.length;
       showResults();
@@ -2789,10 +2854,17 @@ export async function initWall(root) {
     }
   });
   let pickTimer = 0;
+  let azPicking = 0;
   colorPicker.addEventListener("input", () => {
     if (azOn) {
       choose(colorPicker.value, colorPicker.value);
-      return az?.closest(colorPicker.value);
+      // a drag sends many a value a frame: the list follows the last of them
+      if (!azPicking)
+        azPicking = requestAnimationFrame(() => {
+          azPicking = 0;
+          if (azOn) az?.closest(colorPicker.value);
+        });
+      return;
     }
     clearTimeout(pickTimer);
     found = [];
@@ -2856,7 +2928,7 @@ export async function initWall(root) {
   }
 
   // a link to the A–Z list opens on it, whichever way the page was reached
-  if (new URLSearchParams(location.search).get("view") === "az") {
+  if (startView === "az") {
     let was = null;
     try {
       if (nav === "back_forward" || returning || fromColorPage) was = JSON.parse(sessionStorage.getItem("az-view"));
@@ -2867,7 +2939,7 @@ export async function initWall(root) {
     const { home: wasHome, ...restored } = saved;
     Object.assign(cam, restored);
     setAway(!wasHome);
-    if (new URLSearchParams(location.search).get("view") === "cells") setCells(true);
+    if (startView === "cells") setCells(true);
     idle = false;
     // back from a color's page: flown to that color, the one it ended on; under the list the
     // space has no card to show, only its label would linger over the names
@@ -2880,7 +2952,7 @@ export async function initWall(root) {
     requestAnimationFrame(() => requestAnimationFrame(enter));
   } else {
     const h = home();
-    const startCells = new URLSearchParams(location.search).get("view") === "cells";
+    const startCells = startView === "cells";
     const then = () => {
       if (start && !azOn) focusCard(nearest(start));
       else idle = !reduceMotion;

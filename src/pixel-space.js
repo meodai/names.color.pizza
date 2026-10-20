@@ -162,9 +162,17 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
         });
     }
   }
-  // a new list builds a new renderer: it gets the slots and sheets back, the close ones anew
+  // a new list builds a new renderer: it gets the slots and sheets back, the close ones anew.
+  // With pixel art off that waits until it's on again, so a list switch doesn't redo it all
+  let restoreLater = false;
   async function restorePixelArt() {
     if (!pixelArt.index) return;
+    if (!pixelArt.on && pixelArt.k === 0) {
+      restoreLater = true;
+      pixelArt.slots = null;
+      return;
+    }
+    restoreLater = false;
     getDraw().pixelInit(pixelArt.index.sheets.length);
     detail.round++;
     detail.of.clear();
@@ -181,14 +189,19 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     getDraw().pixelMix(pixelArt.k);
     request();
   }
+  let fades = 0;
   function togglePixelArt() {
     pixelArt.on = !pixelArt.on;
     onToggle?.(pixelArt.on);
     if (pixelArt.on) pixelArt.loading ??= loadPixelArt().catch((e) => console.error(e));
+    if (pixelArt.on && restoreLater) restorePixelArt();
+    // a toggle mid-fade takes over from the one before
+    const run = ++fades;
     const from = pixelArt.k;
     const to = pixelArt.on ? 1 : 0;
     const start = performance.now();
     const step = (now) => {
+      if (run !== fades) return;
       const t = reduceMotion ? 1 : Math.min(1, (now - start) / 600);
       pixelArt.k = from + (to - from) * t * t * (3 - 2 * t);
       getDraw().pixelMix(pixelArt.k);

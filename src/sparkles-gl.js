@@ -69,6 +69,11 @@ export function createSparkleRenderer(gl, { NEAR, FAR, W, H }) {
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
   gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
   gl.linkProgram(prog);
+  // the program keeps what it needs; the shaders would only pile up, a pair per renderer
+  for (const sh of gl.getAttachedShaders(prog)) {
+    gl.detachShader(prog, sh);
+    gl.deleteShader(sh);
+  }
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
   const u = {};
   for (const k of ["eye", "right", "up", "fwd", "fpx", "view", "clip", "px", "corner"])

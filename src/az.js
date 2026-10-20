@@ -70,11 +70,17 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
 
   function closest(hex, keepScroll) {
     const [L, a, b] = rgbToOklab(hexToRgb(hex));
-    const near = all
-      .map((it) => [it, (it.L - L) ** 2 + (it.a - a) ** 2 + (it.b - b) ** 2])
-      .sort((x, y) => x[1] - y[1])
-      .slice(0, CLOSEST)
-      .map(([it]) => it);
+    // the closest few in one pass, kept in order as it goes: no sorting all of them
+    const best = [];
+    for (const it of all) {
+      const d = (it.L - L) ** 2 + (it.a - a) ** 2 + (it.b - b) ** 2;
+      if (best.length === CLOSEST && d >= best[CLOSEST - 1][1]) continue;
+      let k = best.length;
+      while (k > 0 && best[k - 1][1] > d) k--;
+      best.splice(k, 0, [it, d]);
+      if (best.length > CLOSEST) best.pop();
+    }
+    const near = best.map(([it]) => it);
     show(near, `The ${CLOSEST} closest to ${hex}`, keepScroll);
   }
 
@@ -140,5 +146,17 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
     },
     // drawn again as they are, say once their drawings are known
     refresh: () => !el.hidden && render(),
+    // the keys that move through a list, wherever the focus is; true if it was one of them
+    scrollKey(key) {
+      if (el.hidden) return false;
+      const page = scrollEl.clientHeight - ROW;
+      const by = { ArrowDown: ROW, ArrowUp: -ROW, PageDown: page, PageUp: -page }[key];
+      if (by) scrollEl.scrollBy({ top: by });
+      else if (key === "Home") scrollEl.scrollTo({ top: 0 });
+      else if (key === "End") scrollEl.scrollTo({ top: scrollEl.scrollHeight });
+      else return false;
+      settle();
+      return true;
+    },
   };
 }
