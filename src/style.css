@@ -3978,7 +3978,8 @@ html.is-arriving:not(.is-passed-on) {
   z-index: 4;
   display: flex;
   flex-direction: column;
-  inline-size: min(22rem, calc(100% - 2 * var(--space-s)));
+  /* clear of the search in the middle (at most 26rem wide), with a margin's gap to it */
+  inline-size: min(22rem, calc(50% - 13rem - 2 * var(--space-s)));
   font-size: var(--text-xs);
 }
 

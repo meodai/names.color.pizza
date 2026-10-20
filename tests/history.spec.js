@@ -296,8 +296,12 @@ test.describe("first visits", () => {
     const intro = page.locator("[data-intro]");
     await expect(intro).toBeVisible();
     await expect(help).toHaveAttribute("aria-expanded", "true");
-    // over the chip: its top with the chip's, its right edge with the chip's
+    // measured once it has come in, its buttons too
+    await page.waitForTimeout(1500);
+    // over the chip: its top with the chip's, its right edge with the chip's, clear of the search
     const [h, i] = [await help.boundingBox(), await intro.boundingBox()];
+    const find = await page.locator("[data-find]").boundingBox();
+    expect(i.x).toBeGreaterThan(find.x + find.width + 8);
     expect(i.y).toBeLessThanOrEqual(h.y + 1);
     expect(Math.abs(i.x + i.width - (h.x + h.width))).toBeLessThan(2);
     // the buttons to the right
