@@ -15,3 +15,7 @@ public/added.json
 
 # the names repo, checked out (or linked) for the list and its history
 color-names
+
+# end-to-end runs (npm test)
+test-results
+playwright-report

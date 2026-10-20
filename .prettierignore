@@ -3,3 +3,5 @@ dist
 .cache
 public
 src/references.json
+test-results
+playwright-report

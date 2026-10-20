@@ -2884,7 +2884,22 @@ export async function initWall(root) {
   if (import.meta.env.DEV) {
     window.__wall = {
       cam,
-      state: () => ({ anim: !!anim, moving: moving(), idle, busy, marked, open: !!colorPage, list: listKey, n }),
+      state: () => ({
+        anim: !!anim,
+        moving: moving(),
+        idle,
+        busy,
+        marked,
+        open: !!colorPage,
+        list: listKey,
+        n,
+        model,
+        view: azOn ? "az" : modeNow(),
+        chosen,
+        spot: !!spot?.on,
+        azMix,
+        cellsMix,
+      }),
       open: (hex) => open(nearest(hex)),
       box: (hex) => drawnBox(nearest(hex)),
       nearest: (hex) => items[nearest(hex)],
