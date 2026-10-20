@@ -79,21 +79,47 @@ export async function initWall(root) {
   try {
     introWanted = !localStorage.getItem("wall-intro-seen");
   } catch {}
-  // how many are adopted so far, once the adoptions are in
-  if (introWanted)
+  // how many are adopted so far, once the adoptions are in; asked once the intro shows
+  let counted = false;
+  function tellAdopted() {
+    if (counted) return;
+    counted = true;
     loadAdoptions()
       .then((adopted) => {
         const n = counts(adopted);
-        const stat = q("[data-adopted-count]");
-        stat.textContent = `${n.colors.toLocaleString("en-US")} ${n.colors === 1 ? "color" : "colors"} adopted by ${n.patrons.toLocaleString("en-US")} ${n.patrons === 1 ? "patron" : "patrons"} so far`;
-        stat.hidden = !n.colors;
+        // the invitation's own line until there's a count to tell
+        if (n.colors)
+          q("[data-adopted-count]").textContent =
+            `${n.colors.toLocaleString("en-US")} ${n.colors === 1 ? "color" : "colors"} adopted by ${n.patrons.toLocaleString("en-US")} ${n.patrons === 1 ? "patron" : "patrons"} so far`;
       })
       .catch(() => {});
-  q("[data-intro-close]").addEventListener("click", () => {
-    intro.hidden = true;
+  }
+  if (introWanted) tellAdopted();
+  // once it's closed, a ? in its corner brings it back
+  const help = q("[data-intro-open]");
+  // it goes as it came, sliding off and fading, before it's hidden
+  function closeIntro() {
+    if (intro.hidden || intro.classList.contains("is-leaving")) return;
+    intro.classList.add("is-leaving");
+    setTimeout(
+      () => {
+        intro.classList.remove("is-leaving");
+        intro.hidden = true;
+        help.hidden = false;
+      },
+      reduceMotion ? 0 : 300,
+    );
     try {
       localStorage.setItem("wall-intro-seen", "1");
     } catch {}
+  }
+  q("[data-intro-close]").addEventListener("click", closeIntro);
+  q("[data-intro-x]").addEventListener("click", closeIntro);
+  help.addEventListener("click", () => {
+    tellAdopted();
+    help.hidden = true;
+    intro.hidden = false;
+    q("[data-intro-close]").focus({ preventScroll: true });
   });
 
   // the page starts with all of this away (index.html) and brings it in as a color page's
@@ -122,6 +148,7 @@ export async function initWall(root) {
     });
   showCount();
   if (introWanted) intro.hidden = false;
+  else help.hidden = false;
 
   const colorsOf = (list) => {
     const out = new Uint8Array(list.length * 3);

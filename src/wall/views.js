@@ -41,6 +41,8 @@ export function createViewSwitch(root, { now, picking, pick }) {
   // "View" beside the switch on every visit, until it's first opened: it glides into it and goes
   const modeHint = root.querySelector("[data-mode-hint]");
   modeHint.hidden = false;
+  // it's a way in too
+  modeHint.addEventListener("click", () => !modes.classList.contains("is-open") && openModes());
   function dropModeHint() {
     if (modeHint.hidden || modeHint.classList.contains("is-leaving")) return;
     modeHint.classList.add("is-leaving");

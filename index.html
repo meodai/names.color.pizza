@@ -130,25 +130,32 @@
         <p class="wall__status" data-status aria-live="polite">Loading the names…</p>
         <aside class="wall__intro" data-intro hidden>
           <div class="wall__intro-card">
+            <button type="button" class="wall__intro-x" data-intro-x aria-label="Close">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            </button>
             <div class="wall__intro-about">
-              <p class="wall__intro-title"><span data-count>{{colorCount}}</span> colors, each named by a person.</p>
+              <p class="wall__intro-title"><span data-count>{{colorCount}}</span> colors, named by people.</p>
               <p>
-                Color Names is an open list, grown over the years from many sources and thousands of suggestions. Every
-                name is unique, and anyone can add one. It’s free to use, under the MIT license: as an npm package, a
-                JSON or CSV file, or through the API.
+                Color Names is an open, community-grown collection of unique, human-authored color names. Free to use
+                under the MIT license, available as an npm package or through the API.
               </p>
             </div>
-            <p class="wall__intro-adopt">
-              <span class="label wall__intro-stat" data-adopted-count hidden></span>
-              <b>Adopt a color to support my work.</b> Pick your favourite, open it and hit <i>Adopt this color</i>:
-              from $5, with your name on it for good. Each color can be adopted only once.
-            </p>
+            <details class="wall__intro-adopt">
+              <summary class="label wall__intro-stat" data-adopted-count>Support the list</summary>
+              <p>
+                <b>Adopt a color to support my work.</b> Pick your favourite, open it and hit <i>Adopt this color</i>:
+                from $5, with your name on it for good. Each color can be adopted only once.
+              </p>
+            </details>
           </div>
           <div class="wall__intro-links">
             <a class="wall__intro-cta" href="./adopt/">Adopt a color</a>
             <button type="button" data-intro-close>Got it</button>
           </div>
         </aside>
+        <button type="button" class="wall__help" data-intro-open aria-label="About Color Names" hidden>?</button>
       </div>
 
       <div class="wall__dock">

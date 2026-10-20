@@ -1041,6 +1041,7 @@ a:hover {
   font-size: var(--text-xs);
   font-weight: var(--weight-label);
   text-transform: uppercase;
+  white-space: nowrap;
   vertical-align: 0.15em;
 }
 
@@ -3907,6 +3908,36 @@ html.is-arriving:not(.is-passed-on) {
   pointer-events: auto;
 }
 
+/* the intro back, from where it was: a question mark alone, on a screen wide enough for it,
+   as easy to hit as the view switch */
+.wall__help {
+  display: grid;
+  place-items: center;
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--paper);
+  background: none;
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: var(--weight-display);
+  line-height: 1;
+  text-shadow: 0 0 0.6rem rgb(0 0 0 / 0.6);
+  cursor: pointer;
+}
+
+.wall__help[hidden] {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  .wall__help {
+    display: none;
+  }
+}
+
 .wall__status {
   margin: 0;
   padding: 0.45rem 0.9rem;
@@ -3937,6 +3968,7 @@ html.is-arriving:not(.is-passed-on) {
 
 /* frosted, the space showing through, under the white of what the list is */
 .wall__intro-card {
+  position: relative;
   animation: wall-intro-in 0.55s cubic-bezier(0.3, 0.7, 0, 1) 0.35s both;
   overflow: hidden;
   padding: 0 var(--space-s) calc(var(--space-s) + 1.6rem);
@@ -3948,7 +3980,7 @@ html.is-arriving:not(.is-passed-on) {
 
 .wall__intro-about {
   margin-inline: calc(-1 * var(--space-s));
-  padding: var(--space-s);
+  padding: calc(var(--space-s) + 0.45rem) var(--space-s) var(--space-s);
   background: var(--paper);
 }
 
@@ -3966,19 +3998,78 @@ html.is-arriving:not(.is-passed-on) {
   line-height: 1.2;
 }
 
-.wall__intro p.wall__intro-adopt {
+/* the invitation folded under its count (others did it already), open and closed with a
+   glide where the browser can animate a details' content, at once where it can't */
+.wall__intro-adopt {
   margin-block-start: var(--space-s);
+  interpolate-size: allow-keywords;
 }
 
-/* the count above the invitation: others did it already */
+.wall__intro-adopt::details-content {
+  block-size: 0;
+  overflow: clip;
+  transition:
+    block-size 0.35s cubic-bezier(0.3, 0.7, 0, 1),
+    content-visibility 0.35s allow-discrete;
+}
+
+.wall__intro-adopt[open]::details-content {
+  block-size: auto;
+}
+
+/* the text comes in as it opens: down a little into place, fading in */
+.wall__intro-adopt p {
+  padding-block-start: 0.7em;
+  opacity: 0;
+  translate: 0 -0.4em;
+  transition:
+    opacity 0.3s ease,
+    translate 0.35s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.wall__intro-adopt[open] p {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 0.08s;
+}
+
 .wall__intro-stat {
-  display: block;
-  margin-block-end: 0.3em;
-  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  list-style: none;
+  cursor: pointer;
 }
 
-.wall__intro-stat[hidden] {
+.wall__intro-stat::-webkit-details-marker {
   display: none;
+}
+
+/* a chevron that turns as it opens */
+.wall__intro-stat::after {
+  content: "";
+  inline-size: 0.45em;
+  block-size: 0.45em;
+  margin-block-start: -0.2em;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  rotate: 45deg;
+  transition:
+    rotate 0.35s cubic-bezier(0.3, 0.7, 0, 1),
+    margin 0.35s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.wall__intro-adopt[open] .wall__intro-stat::after {
+  margin-block-start: 0.2em;
+  rotate: 225deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall__intro-adopt::details-content,
+  .wall__intro-adopt p,
+  .wall__intro-stat::after {
+    transition: none;
+  }
 }
 
 /* the way there, in the adoption's own foil */
@@ -4014,6 +4105,44 @@ html.is-arriving:not(.is-passed-on) {
 
 /* a row as high as the tabs beside it, its buttons as high as theirs and on their line,
    the card's end under their middle; they come in after the card, one after the other */
+/* closed: it goes as it came */
+.wall__intro.is-leaving {
+  opacity: 0;
+  translate: -1.5rem 0;
+  transition:
+    opacity 0.25s ease,
+    translate 0.3s cubic-bezier(0.7, 0, 0.7, 0.3);
+}
+
+/* a small × in the card's corner, for those who look for one */
+.wall__intro-x {
+  position: absolute;
+  inset: 0.35rem 0.35rem auto auto;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink);
+  background: none;
+  cursor: pointer;
+}
+
+.wall__intro-x svg {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+}
+
+.wall__intro-x:hover,
+.wall__intro-x:focus-visible {
+  outline: none;
+  color: var(--paper);
+  background: var(--ink);
+}
+
 @keyframes wall-intro-up {
   from {
     opacity: 0;
@@ -5327,7 +5456,7 @@ html.is-arriving:not(.is-passed-on) {
   line-height: 1.2;
   white-space: nowrap;
   text-shadow: 0 0 0.6rem rgb(0 0 0 / 0.6);
-  pointer-events: none;
+  cursor: pointer;
   translate: 0 -50%;
   transition:
     opacity 0.18s ease,

@@ -275,6 +275,59 @@ test.describe("first visits", () => {
     await expect(page.locator("[data-intro]")).toBeHidden();
   });
 
+  test("the intro's invitation folds under its count, opened and closed by it", async ({ page }) => {
+    await openWall(page, "/", { intro: true });
+    const fold = page.locator(".wall__intro-adopt");
+    const summary = page.locator("[data-adopted-count]");
+    await expect(summary).toBeVisible();
+    await expect(summary).toHaveText(/adopted by|Support the list/);
+    await expect(fold).not.toHaveAttribute("open");
+    await expect(fold.locator("p")).toBeHidden();
+    await summary.click();
+    await expect(fold).toHaveAttribute("open");
+    await expect(fold.locator("p")).toBeVisible();
+    await summary.click();
+    await expect(fold).not.toHaveAttribute("open");
+  });
+
+  test("once the intro is closed, a ? brings it back", async ({ page }) => {
+    await openWall(page, "/", { intro: true });
+    const help = page.locator("[data-intro-open]");
+    await expect(help).toBeHidden();
+    await page.locator("[data-intro-close]").click();
+    await expect(page.locator("[data-intro]")).toBeHidden();
+    await expect(help).toBeVisible();
+    await help.click();
+    await expect(page.locator("[data-intro]")).toBeVisible();
+    await expect(help).toBeHidden();
+    await expect(page.locator("[data-intro-close]")).toBeFocused();
+  });
+
+  test("its × closes it too, and it goes as it came", async ({ page }) => {
+    await openWall(page, "/", { intro: true });
+    const intro = page.locator("[data-intro]");
+    await expect(intro).toBeVisible();
+    await page.locator("[data-intro-x]").click();
+    await expect(intro).toHaveClass(/is-leaving/);
+    await expect(intro).toBeHidden();
+    await expect(page.locator("[data-intro-open]")).toBeVisible();
+  });
+
+  test("the ? is there on a later visit, not on a phone", async ({ page }) => {
+    await openWall(page);
+    await expect(page.locator("[data-intro-open]")).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 800 });
+    await expect(page.locator("[data-intro-open]")).toBeHidden();
+  });
+
+  test("the View label beside the switch opens it too", async ({ page }) => {
+    await openWall(page);
+    const hint = page.locator("[data-mode-hint]");
+    await expect(hint).toBeVisible();
+    await hint.click();
+    await expect(page.locator("[data-modes]")).toHaveClass(/is-open/);
+  });
+
   test("the search's hint shimmers until it's first used (dcde584c2)", async ({ page }) => {
     await openWall(page);
     await expect(page.locator("[data-hint]")).toHaveClass(/is-new/);
@@ -345,6 +398,21 @@ test.describe("the adopt page", () => {
     await expect(page.locator("[data-cta]")).toContainText("Adopt 24 Carrot");
     await page.goto("/adopt/");
     await expect(page.locator("[data-pick]")).toBeVisible();
+  });
+});
+
+test.describe("the supporters page", () => {
+  test("all founding spots gone isn't said, the badge tells it, on one line", async ({ page }) => {
+    const adopted = {};
+    for (let k = 0; k < 50; k++)
+      adopted[`color-${k}`] = { amount: 5, by: `patron${k}`, on: "name", at: "2026-01-01", founding: true };
+    await page.route(/adoptions-test/, (r) => r.fulfill({ json: adopted }));
+    await page.goto("/supporters/");
+    await expect(page.locator("[data-counts]")).toBeVisible();
+    await expect(page.locator("[data-counts]")).not.toContainText("founding spots");
+    const badge = page.locator(".supporter__founding").first();
+    await expect(badge).toHaveAttribute("title", "One of the first 50 patrons");
+    expect(await badge.evaluate((b) => getComputedStyle(b).whiteSpace)).toBe("nowrap");
   });
 });
 
