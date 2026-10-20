@@ -1,20 +1,9 @@
-import {
-  getList,
-  LISTS,
-  normalizeHex,
-  colorURL,
-  siteURL,
-  slugsOf,
-  hexToRgb,
-  rgbToOklab,
-  cardPlace,
-  showVersion,
-} from "./names.js";
+import { getList, LISTS, normalizeHex, slugsOf, hexToRgb, rgbToOklab, cardPlace, showVersion } from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 import { createLabelRenderer } from "./labels-gl.js";
 import { counts, loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
-import { pixelMode, setPixelMode, withPixel } from "./pixel-mode.js";
+import { pixelMode, setPixelMode } from "./pixel-mode.js";
 import { readAddress, writeAddress } from "./address.js";
 import { createPixelSpace } from "./pixel-space.js";
 import { reduceMotion, ease, easeInOut, clamp, wrap, sub, add, scale, dot, cross, norm, lerp3 } from "./wall/math.js";
@@ -24,6 +13,7 @@ import { createViewSwitch } from "./wall/views.js";
 import { createSearch } from "./wall/search.js";
 import { createList } from "./wall/list.js";
 import { createKeys } from "./wall/keys.js";
+import { createPage } from "./wall/page.js";
 
 // a short list's cards grow, so a handful don't drown in the space: as big as the
 // Short list's cards would be at the same density, up to 8 times
@@ -736,7 +726,7 @@ export async function initWall(root) {
       idle ||
       morph ||
       // a page open over the wall hides it whole; a found card is still once it's in
-      (opening && !colorPage) ||
+      (opening && !page.isOpen()) ||
       (spot && (!spot.on || time - spot.t < 500)) ||
       azList.fading() ||
       bang ||
@@ -1054,25 +1044,6 @@ export async function initWall(root) {
   const pageCardWidth = () => clamp(view.w * 0.21, 208, 384);
 
   let pending = null;
-  let slugs = null;
-  // the closest name's own address, so a copied link previews; the hash keeps the color
-  const toOwnURL = (it, hex = it.hex) => {
-    if (!import.meta.env.PROD) return;
-    slugs ??= getList("default").then((d) => slugsOf(d.items));
-    slugs.then((s) => {
-      const slug = s.get(it.name);
-      if (slug && location.hash === `#${hex.slice(1)}`)
-        history.replaceState(history.state, "", withPixel(`${new URL(`${slug}/`, colorPageURL).href}#${hex.slice(1)}`));
-    });
-  };
-
-  // the view a color page's close leads back to: model, list, A–Z or cells, all in the address
-  function rememberView() {
-    try {
-      sessionStorage.setItem("wall-view", JSON.stringify({ href: location.href, at: Date.now() }));
-    } catch {}
-  }
-
   // in pixel art a card's name folds away before it opens, so the drawing goes on its own
   let folding = false;
   function open(i, folded = false) {
@@ -1098,13 +1069,10 @@ export async function initWall(root) {
     const before = saveable();
     const task = (pending = { i, before, c: null, cancelled: false });
     spot = null;
-    rememberView();
-    // push now, so Back at any point on the way in returns to the wall
-    history.pushState({ colorDepth: 1 }, "", withPixel(colorURL(it.hex)));
-    toOwnURL(it);
+    page.enter(it);
 
     root.classList.add("is-opening");
-    pageAway(true);
+    page.away(true);
     opening = { i, pos: posOf(i), t0: performance.now(), handed: false };
     zoomInto(i, pageCardWidth(), IN.fly);
 
@@ -1133,7 +1101,7 @@ export async function initWall(root) {
         sessionStorage.setItem("wall-camera", JSON.stringify(before));
       } catch {}
       try {
-        await showColorPage(it.hex, before, c.copy, task);
+        await page.show(it.hex, before, c.copy, task);
       } catch (e) {
         // the address is already the color page's, so load it on its own
         console.error(e);
@@ -1142,121 +1110,39 @@ export async function initWall(root) {
     });
   }
 
-  // while a card opens into its page, and until it's back, the wall's own controls are out of
-  // reach: unseen, they'd still take focus and clicks. The logo stays, it closes the page
-  let focusBefore = null;
-  function pageAway(away) {
-    for (const el of root.children) if (!el.matches(".brand, .wall__page, .wall__handoff")) el.inert = away;
-    if (away) focusBefore = document.activeElement;
-    else if (focusBefore?.isConnected && !focusBefore.closest("[inert]")) focusBefore.focus({ preventScroll: true });
-  }
-
   const later = (ms, fn) => setTimeout(fn, reduceMotion ? 0 : ms);
   // how long a card back from its page takes to shed its color, in pixel art
   const SHED_MS = 280;
 
-  let colorPage = null;
-  let colorMarkup = null;
-  // resolve now: once a card is opening, the address is the color page's
-  const colorPageURL = siteURL("color/");
-  const loadColorPage = () =>
-    (colorMarkup ??= fetch(colorPageURL)
-      .then((r) => r.text())
-      .then((html) => new DOMParser().parseFromString(html, "text/html").querySelector("main")));
-  const loadDetail = () => import("./detail.js");
-  setTimeout(() => {
-    loadColorPage().catch(() => (colorMarkup = null));
-    loadDetail().catch(() => {});
-  }, 1500);
-
-  const wallTitle = document.title;
-  const wallIcon = document.querySelector('link[rel="icon"]').href;
-
-  async function showColorPage(hex, returnTo, copy, task) {
-    const [main, detail] = await Promise.all([loadColorPage(), loadDetail()]);
-    if (task.cancelled) return;
-    pending = null;
-    const layer = document.createElement("div");
-    layer.className = "wall__page";
-    layer.append(document.importNode(main, true));
-    // links on the color page are relative to color/, the address may be color/<name>/
-    for (const a of layer.querySelectorAll("a[href]")) a.href = new URL(a.getAttribute("href"), colorPageURL).href;
-    for (const img of layer.querySelectorAll("img[src]")) img.src = new URL(img.getAttribute("src"), colorPageURL).href;
-    document.documentElement.dataset.root = new URL("../", colorPageURL).href;
-    root.append(layer);
-    // focus in the page, where reading it starts
-    layer.tabIndex = -1;
-    layer.focus({ preventScroll: true });
-    const controller = new AbortController();
-    colorPage = { layer, controller, returnTo, hex, depth: 1 };
-    detail.initDetailPage(layer, {
-      embedded: true,
-      signal: controller.signal,
-      // back past every color visited since
-      onClose: () => history.go(-colorPage.depth),
-    });
-    // the copy stays over the page until the page's own card shows, its drawing decoded
-    copy.classList.add("is-arriving");
-    const own = layer.querySelector(".swatchcard__pixel--now");
-    await drawable(own);
-    await own?.decode?.().catch(() => {});
-    const card = layer.querySelector(".color-hero__card .swatchcard");
-    const until = performance.now() + 600;
-    while (card && !card.classList.contains("swatchcard--visible") && performance.now() < until)
-      await new Promise((done) => requestAnimationFrame(done));
-    requestAnimationFrame(() => requestAnimationFrame(() => copy.remove()));
-  }
-
-  // each neighbor visited is one more history entry
-  addEventListener("hashchange", () => {
-    if (!colorPage) return;
-    colorPage.hex = normalizeHex(location.hash.slice(1)) || colorPage.hex;
-    if (history.state?.colorDepth == null) {
-      history.replaceState({ colorDepth: colorPage.depth + 1 }, "");
-    }
-    colorPage.depth = history.state.colorDepth;
-    // a color picked on the page: its name in the address too
-    toOwnURL(items[nearest(colorPage.hex)], colorPage.hex);
+  const page = createPage(root, {
+    nameOf: (hex) => items[nearest(hex)],
+    drawable: (img) => drawable(img),
+    shown: () => (pending = null),
+    onClose: () => history.go(-page.depth()),
   });
 
+  // the page taken down, its card flown back to its place in the space, the color it showed last
   function closeColorPage() {
-    const page = colorPage;
-    colorPage = null;
-    document.querySelector('link[rel="icon"]').href = wallIcon;
-    const slot = page.layer.querySelector(".color-hero__card");
-    const b = slot.getBoundingClientRect();
-    const from = { x: b.left + b.width / 2, y: b.top + b.height / 2, w: slot.firstElementChild.offsetWidth };
-    const tilt = parseFloat(slot.style.getPropertyValue("--r")) || 0;
-    let i = items.findIndex((it) => it.hex === page.hex);
-    if (i < 0) i = nearest(page.hex);
-    const name = slot.querySelector("[data-card-name]")?.textContent || items[i].name;
+    const { hex, returnTo, card } = page.leave(reduceMotion ? 0 : OUT.leave);
+    let i = items.findIndex((it) => it.hex === hex);
+    if (i < 0) i = nearest(hex);
 
     // in pixel art it leaves as a whole card, sheds its color, then flies back as the drawing
     const pixel = pixelOf(i);
-    const c = makeCopy(page.hex, name, from.w, pixel, true);
+    const c = makeCopy(hex, card.name || items[i].name, card.w, pixel, true);
     c.copy.classList.add("is-returning");
-    placeCopy(c, from, tilt);
+    placeCopy(c, card, card.tilt);
     root.append(c.copy);
-    // hide the page's own card so no second one lingers on the fading page
-    slot.style.visibility = "hidden";
-
-    page.controller.abort();
-    delete document.documentElement.dataset.root;
-    document.documentElement.classList.remove("is-arriving");
-    document.title = wallTitle;
 
     anim = null;
     Object.assign(cam, {
       target: posOf(i),
       dist: distFor(pageCardWidth()),
-      yaw: page.returnTo.yaw,
-      pitch: page.returnTo.pitch,
+      yaw: returnTo.yaw,
+      pitch: returnTo.pitch,
     });
     update();
-
-    page.layer.classList.add("is-leaving");
-    later(OUT.leave, () => page.layer.remove());
-    returnCard(c, i, page.returnTo, { repel: 1, fade: 1, clear: 1 });
+    returnCard(c, i, returnTo, { repel: 1, fade: 1, clear: 1 });
   }
 
   async function returnCard(c, i, returnTo, from) {
@@ -1311,7 +1197,7 @@ export async function initWall(root) {
     busy = false;
     opening = null;
     root.classList.remove("is-opening");
-    pageAway(false);
+    page.away(false);
     draw.focus(-1, null, 0, 0);
     labels.hidden = false;
     root.querySelectorAll(".wall__handoff").forEach((el) => el.remove());
@@ -1321,14 +1207,14 @@ export async function initWall(root) {
   addEventListener("popstate", () => {
     const onColor = /\/color\/([^/]+\/)?$/.test(location.pathname);
     if (pending && !onColor) cancelOpening();
-    else if (colorPage && !onColor) closeColorPage();
+    else if (page.isOpen() && !onColor) closeColorPage();
     // forward into a color page that's no longer open: load it
-    else if (!colorPage && !pending && onColor) location.reload();
+    else if (!page.isOpen() && !pending && onColor) location.reload();
   });
 
   // back from bfcache
   addEventListener("pageshow", (e) => {
-    if (e.persisted && !colorPage) resetOpening();
+    if (e.persisted && !page.isOpen()) resetOpening();
   });
 
   const pointers = new Map();
@@ -1520,7 +1406,7 @@ export async function initWall(root) {
 
   q(".brand").addEventListener("click", (e) => {
     e.preventDefault();
-    if (colorPage) history.go(-colorPage.depth);
+    if (page.isOpen()) history.go(-page.depth());
     // from the list, back to the space as it was last shown
     else if (azList.on()) leaveList();
     else goHome();
@@ -1988,7 +1874,7 @@ export async function initWall(root) {
         idle,
         busy,
         marked,
-        open: !!colorPage,
+        open: page.isOpen(),
         list: listKey,
         n,
         model,
@@ -2012,7 +1898,7 @@ export async function initWall(root) {
 
   const saveable = () => ({ target: cam.target, yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist, home: !away });
   addEventListener("pagehide", () => {
-    if (!colorPage && !pending) rememberView();
+    if (!page.isOpen() && !pending) page.rememberView();
     if (busy) return; // opening a card already saved the view from before the click
     try {
       sessionStorage.setItem("wall-camera", JSON.stringify(saveable()));
