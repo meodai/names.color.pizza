@@ -19,7 +19,7 @@ import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
 import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
-import { pixelCards } from "./pixel-mode.js";
+import { pixelCards, withPixel } from "./pixel-mode.js";
 
 function adoptLink(hex, name, approx) {
   // an unnamed hex can't be adopted: its closest name can, so the link says which
@@ -508,7 +508,7 @@ async function render(hex) {
   // link previews and search engines only see a named color's own page
   if (exact && import.meta.env.PROD && !page.embedded && builtPage?.hex !== hex) {
     if (handedOver) sessionStorage.setItem("card-handoff", JSON.stringify(handoff));
-    location.replace(siteURL(`color/${slugFor(data, exact.name)}/`));
+    location.replace(withPixel(siteURL(`color/${slugFor(data, exact.name)}/`)));
     return;
   }
   // a page built for this very color knows its name, even before the API's list has it, and
@@ -516,9 +516,10 @@ async function render(hex) {
   const ownPage = builtPage?.hex === hex ? { name: builtPage.name, hex } : null;
   const near = ownPage || exact || closestAny(data, hex).item;
   if (!exact && !ownPage && import.meta.env.PROD && !page.embedded && builtPage?.name !== near.name) {
-    location.replace(`${siteURL(`color/${slugFor(data, near.name)}/`)}#${hex.slice(1)}`);
+    location.replace(withPixel(`${siteURL(`color/${slugFor(data, near.name)}/`)}#${hex.slice(1)}`));
     return;
   }
+  if (!page.embedded) history.replaceState(history.state, "", withPixel(location.href));
   current.name = near.name;
 
   page.cardName.textContent = exact || ownPage ? near.name : `≈ ${near.name}`;

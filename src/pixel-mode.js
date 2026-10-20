@@ -43,6 +43,14 @@ export function setPixelMode(next) {
   window.dispatchEvent(new CustomEvent("pixelmode", { detail: on }));
 }
 
+// a color's address says so while pixel art is on, so a link passed along opens it the same way
+export function withPixel(href) {
+  if (!on) return href;
+  const url = new URL(href, location.href);
+  url.searchParams.set("view", "pixel");
+  return url.href;
+}
+
 // each card that knows its color's slug gets its drawing on top, once pixel art is on
 export async function pixelCards(root) {
   if (!on) return;

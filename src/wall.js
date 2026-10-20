@@ -18,7 +18,7 @@ import { createLabelRenderer } from "./labels-gl.js";
 import { counts, loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
 import { createAz } from "./az.js";
-import { pixelMode, setPixelMode } from "./pixel-mode.js";
+import { pixelMode, setPixelMode, withPixel } from "./pixel-mode.js";
 import { createPixelSpace, DETAIL_IN_MS } from "./pixel-space.js";
 
 const CARD_W = 1;
@@ -1550,7 +1550,7 @@ export async function initWall(root) {
     slugs.then((s) => {
       const slug = s.get(it.name);
       if (slug && location.hash === `#${hex.slice(1)}`)
-        history.replaceState(history.state, "", `${new URL(`${slug}/`, colorPageURL).href}#${hex.slice(1)}`);
+        history.replaceState(history.state, "", withPixel(`${new URL(`${slug}/`, colorPageURL).href}#${hex.slice(1)}`));
     });
   };
 
@@ -1588,7 +1588,7 @@ export async function initWall(root) {
     spot = null;
     rememberView();
     // push now, so Back at any point on the way in returns to the wall
-    history.pushState({ colorDepth: 1 }, "", colorURL(it.hex));
+    history.pushState({ colorDepth: 1 }, "", withPixel(colorURL(it.hex)));
     toOwnURL(it);
 
     root.classList.add("is-opening");
