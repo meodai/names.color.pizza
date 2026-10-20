@@ -12,7 +12,12 @@ export const test = base.extend({
 export { expect };
 
 // the wall, loaded and done flying in (its dev hook, window.__wall, says when)
-export async function openWall(page, path = "/") {
+// the first visit's intro is seen already, unless a test is about it (intro: true)
+export async function openWall(page, path = "/", { intro = false } = {}) {
+  if (!intro && !page.introSeen) {
+    await page.addInitScript(() => localStorage.setItem("wall-intro-seen", "1"));
+    page.introSeen = true;
+  }
   await page.goto(path);
   await page.waitForFunction(() => window.__wall?.state().n > 0, null, { timeout: 45_000 });
   await page.waitForFunction(() => !window.__wall.state().busy && !window.__wall.state().anim, null, {

@@ -74,6 +74,32 @@ test.describe("a color's page over the wall", () => {
   });
 });
 
+test.describe("from the list to a color and back", () => {
+  for (const how of ["close", "Back"])
+    test(`by ${how}: the list as it was left, its search and place, no color chosen`, async ({ page }) => {
+      await openWall(page, "/?view=az");
+      await page.locator(".wall__search").click();
+      await page.keyboard.type("bl");
+      const list = page.locator(".az__list");
+      await list.evaluate((l) => (l.scrollTop = 640));
+      await expect.poll(() => list.evaluate((l) => l.scrollTop)).toBe(640);
+      const said = await page.locator("[data-az-count]").textContent();
+      // a row in view: one off it would be scrolled to first
+      await page.locator('.az__row[data-i="13"]').click();
+      await page.waitForURL(/\/color\//);
+      if (how === "close") await page.locator("[data-close]").click();
+      else await page.goBack();
+      await page.waitForURL((u) => u.pathname === "/");
+      await page.waitForFunction(() => window.__wall?.state().n > 0);
+      await expect(page.locator(".az")).toBeVisible();
+      await expect(page.locator(".wall__search")).toHaveValue("bl");
+      await expect(page.locator("[data-az-count]")).toHaveText(said);
+      expect(new URL(page.url()).searchParams.get("c")).toBeNull();
+      expect((await state(page)).chosen).toBeNull();
+      await expect.poll(() => list.evaluate((l) => l.scrollTop)).toBe(640);
+    });
+});
+
 test.describe("the color page on its own", () => {
   test("a part's # scrolls there and keeps the hex", async ({ page }) => {
     await page.goto("/color/#e56e24");
