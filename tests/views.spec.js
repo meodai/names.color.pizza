@@ -81,6 +81,34 @@ test.describe("the address and the views", () => {
     expect((await state(page)).model).toBe("oklab");
   });
 
+  test("pixel art under the list: back from it, still pixel art, and the address says so", async ({ page }) => {
+    await openWall(page, "/?view=pixel");
+    await openList(page);
+    expect(param(page, "view")).toBe("az");
+    await page.locator(".brand").click();
+    await expect(page.locator(".az")).toBeHidden();
+    expect((await state(page)).view).toBe("pixel");
+    expect(param(page, "view")).toBe("pixel");
+  });
+
+  test("cells under the list: back from it, still cells, and the address says so", async ({ page }) => {
+    await openWall(page, "/?view=cells");
+    await page.waitForFunction(() => window.__wall.state().cellsMix === 1, null, { timeout: 60_000 });
+    await openList(page);
+    await page.locator(".brand").click();
+    await expect(page.locator(".az")).toBeHidden();
+    expect((await state(page)).view).toBe("cells");
+    expect(param(page, "view")).toBe("cells");
+  });
+
+  test("the list keeps the model, list and color in the address", async ({ page }) => {
+    await openWall(page, "/?model=hsl&list=bestOf&c=8f7d6b");
+    await openList(page);
+    expect(param(page, "model")).toBe("hsl");
+    expect(param(page, "list")).toBe("bestOf");
+    expect(param(page, "view")).toBe("az");
+  });
+
   test("a model chosen from the list leaves the list for it", async ({ page }) => {
     await openWall(page);
     await openList(page);

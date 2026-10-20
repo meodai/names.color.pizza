@@ -19,6 +19,7 @@ import { counts, loadAdoptions } from "./shines.js";
 import { createSparkleRenderer } from "./sparkles-gl.js";
 import { createAz } from "./az.js";
 import { pixelMode, setPixelMode, withPixel } from "./pixel-mode.js";
+import { readAddress, writeAddress } from "./address.js";
 import { createPixelSpace, DETAIL_IN_MS } from "./pixel-space.js";
 
 const CARD_W = 1;
@@ -642,7 +643,9 @@ export async function initWall(root) {
   // close does: as the space flies in, at once when it's restored or can't load
   const enter = () => root.classList.remove("is-opening");
 
-  let listKey = new URLSearchParams(location.search).get("list");
+  // what the address asked for, read before any control writes it to its own
+  const asked = readAddress();
+  let listKey = asked.list;
   if (!LISTS[listKey]) listKey = "default";
   let list;
   try {
@@ -681,9 +684,8 @@ export async function initWall(root) {
   const middleOf = (key) => (middles[key] ??= home(key).target);
 
   const picker = q("[data-models]");
-  let model = new URLSearchParams(location.search).get("model");
-  // the view the address asked for, read before the controls rewrite the address to theirs
-  const startView = new URLSearchParams(location.search).get("view");
+  let model = asked.model;
+  const startView = asked.view;
   if (!MODELS[model]) model = DEFAULT_MODEL;
   let positions = placeAll(model).slice();
   const posOf = (i) => [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]];
@@ -1464,12 +1466,7 @@ export async function initWall(root) {
     if (text !== undefined) search.value = text;
     chosenText = search.value;
     showClear();
-    try {
-      const url = new URL(location.href);
-      if (hex) url.searchParams.set("c", hex.slice(1));
-      else url.searchParams.delete("c");
-      history.replaceState(history.state, "", url);
-    } catch {}
+    writeAddress({ c: hex ? hex.slice(1) : null });
   }
   const showClear = () => (clearButton.hidden = !search.value && !chosen);
 
@@ -2082,6 +2079,9 @@ export async function initWall(root) {
   const building = {};
   let cellsDraw = null;
   let cellsOn = false;
+  // the A–Z list, over the space when it's up
+  let azOn = false;
+  let az = null;
   let cellsMix = 0;
   let cellsFade = null;
   let cellsModel = model;
@@ -2203,12 +2203,6 @@ export async function initWall(root) {
     if (busy || on === cellsOn) return;
     cellsOn = on;
     showMode();
-    try {
-      const url = new URL(location.href);
-      if (on) url.searchParams.set("view", "cells");
-      else url.searchParams.delete("view");
-      history.replaceState(history.state, "", url);
-    } catch {}
     if (on) {
       const ok = await cellsForModel();
       if (ok === null) return;
@@ -2228,6 +2222,10 @@ export async function initWall(root) {
   const modes = q("[data-modes]");
   const modeList = q("[data-mode-list]");
   const modeNow = () => (pixelMode() ? "pixel" : cellsOn ? "cells" : "colors");
+  // what's shown, as one value: the space's own view, or the list over it. The address says it,
+  // but for the colors, the space's default
+  const viewNow = () => (azOn ? "az" : modeNow());
+  const showView = () => writeAddress({ view: viewNow() === "colors" ? null : viewNow() });
   // a black marker under the view shown while the tabs are open: picked, it slides to the new
   // one, that one turns active, the tabs close round it, and only then the marker fades
   const modeThumb = modeList.querySelector(".wall__mode-thumb");
@@ -2235,17 +2233,7 @@ export async function initWall(root) {
   const modeActive = () => modeList.querySelector('[aria-checked="true"]');
   function showMode() {
     const now = modeNow();
-    // the view in the address too, as A–Z keeps its own
-    if (!root.classList.contains("is-az") && new URLSearchParams(location.search).get("view") !== "az") {
-      try {
-        const url = new URL(location.href);
-        const was = url.searchParams.get("view");
-        // the colors are the space's default: the address only says otherwise
-        if (now === "colors") url.searchParams.delete("view");
-        else url.searchParams.set("view", now);
-        if (url.searchParams.get("view") !== was) history.replaceState(history.state, "", url);
-      } catch {}
-    }
+    showView();
     for (const b of modeList.querySelectorAll("[data-mode]")) {
       b.setAttribute("aria-checked", String(b.dataset.mode === now));
       if (!modes.classList.contains("is-marked")) b.classList.toggle("is-last", b.dataset.mode === now);
@@ -2408,12 +2396,7 @@ export async function initWall(root) {
     const before = listKey;
     listKey = key;
     showListChoice();
-    try {
-      const url = new URL(location.href);
-      if (key === "default") url.searchParams.delete("list");
-      else url.searchParams.set("list", key);
-      history.replaceState(history.state, "", url);
-    } catch {}
+    writeAddress({ list: key === "default" ? null : key });
     // that color may not be on this list
     choose(null, "");
 
@@ -2535,8 +2518,6 @@ export async function initWall(root) {
   }
 
   // A–Z: the list as one long column instead of the space; the model stays as it was
-  let azOn = false;
-  let az = null;
   // the list starts as far below the top bar's controls as they are below the top
   // where a bar rests, from its layout: the bars slide in on every arrival, and a rect would
   // catch them on the way
@@ -2585,12 +2566,7 @@ export async function initWall(root) {
     root.classList.toggle("is-az", on);
     root.scrollLeft = 0;
     showModel();
-    try {
-      const url = new URL(location.href);
-      if (on) url.searchParams.set("view", "az");
-      else if (url.searchParams.get("view") === "az") url.searchParams.delete("view");
-      history.replaceState(history.state, "", url);
-    } catch {}
+    showView();
     // the space fades out under the list as the camera pulls all the way out, and back after to
     // where it was; a page that opens on the list (restore) has it there at once
     const t0 = performance.now();
@@ -2664,11 +2640,7 @@ export async function initWall(root) {
     }
     if (!busy) flyTo(home(), MORPH_MS);
     showModel();
-    try {
-      const url = new URL(location.href);
-      url.searchParams.set("model", key);
-      history.replaceState(history.state, "", url);
-    } catch {}
+    writeAddress({ model: key });
     request();
   }
 
@@ -2894,7 +2866,7 @@ export async function initWall(root) {
         list: listKey,
         n,
         model,
-        view: azOn ? "az" : modeNow(),
+        view: viewNow(),
         chosen,
         spot: !!spot?.on,
         azMix,
@@ -2921,7 +2893,7 @@ export async function initWall(root) {
     } catch {}
   });
 
-  const start = normalizeHex(new URLSearchParams(location.search).get("c") || "");
+  const start = normalizeHex(asked.c || "");
   if (start) choose(start, start);
   // the camera is restored only when coming back from a color page
   const nav = performance.getEntriesByType("navigation")[0]?.type;
