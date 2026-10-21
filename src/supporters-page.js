@@ -1,5 +1,5 @@
 import { getList, siteURL, slugsOf } from "./names.js";
-import { RUNNING_A_YEAR, counts, loadAdoptions } from "./shines.js";
+import { counts, fillCostsBar, loadAdoptions } from "./shines.js";
 import { PROFILES, handle as handleOf } from "./adopter.js";
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -23,24 +23,9 @@ export async function initSupportersPage() {
   const rows = [...people.values()].sort((x, y) => y.total - x.total);
   const n = counts(adopted);
   const raised = rows.reduce((sum, p) => sum + p.total, 0);
-  // what the patrons gave so far against a year of running it: each year covered fills one of
-  // the ten lines above, and the bar starts over on the next
   const bar = document.querySelector("[data-costs-bar]");
   if (bar && raised) {
-    const years = Math.min(10, Math.floor(raised / RUNNING_A_YEAR));
-    const k = years === 10 ? 1 : (raised % RUNNING_A_YEAR) / RUNNING_A_YEAR;
-    bar.style.setProperty("--k", k.toFixed(3));
-    // the past ten years, the latest on the right, each one covered filling its line from
-    // last year back; hovered, a line grows and says its year
-    const now = new Date().getFullYear();
-    bar.querySelectorAll("[data-costs-years] li").forEach((l, i) => {
-      l.classList.toggle("is-full", 9 - i < years);
-      l.dataset.year = now - 10 + i;
-    });
-    const dollars = (v) => `$${v.toLocaleString("en-US")}`;
-    bar.querySelector("[data-costs-note]").textContent = years
-      ? `${dollars(raised)} from patrons so far: ${years === 1 ? "a year" : `${years} years`} of running it covered`
-      : `${dollars(raised)} of a year’s ${dollars(RUNNING_A_YEAR)} covered by patrons so far`;
+    fillCostsBar(bar, raised);
     bar.hidden = false;
   }
   const stats = document.querySelector("[data-counts]");

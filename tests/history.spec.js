@@ -414,6 +414,22 @@ test.describe("the adopt page", () => {
     await page.goto("/adopt/");
     await expect(page.locator("[data-pick]")).toBeVisible();
   });
+
+  test("the costs bar is the supporters' one: a line for each year covered, the bar starting over", async ({
+    page,
+  }) => {
+    await page.route(/adoptions-test/, (r) =>
+      r.fulfill({ json: { "color-0": { amount: 2450, by: "patron", on: "name", at: "2026-01-01" } } }),
+    );
+    await page.goto("/adopt/#e56e24");
+    const bar = page.locator("[data-costs-bar]");
+    await expect(bar).toBeVisible();
+    await expect(bar.locator("[data-costs-years] li")).toHaveCount(10);
+    await expect(bar.locator("[data-costs-years] li.is-full")).toHaveCount(2);
+    expect(await bar.evaluate((b) => b.style.getPropertyValue("--k"))).toBe("0.500");
+    await expect(bar.locator("[data-costs-note]")).toContainText("2 years of running it covered");
+    await expect(bar.getByRole("link", { name: "What it costs" })).toBeVisible();
+  });
 });
 
 test.describe("the supporters page", () => {

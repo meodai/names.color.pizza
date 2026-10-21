@@ -932,23 +932,25 @@ a:hover {
   list-style: none;
 }
 
+/* the line, with a strip of room above and below to reach it by */
 .costs__years li {
   position: relative;
   flex: 1;
-  block-size: 0.2rem;
+  block-size: 1.1rem;
+  margin-block: -0.6rem -0.3rem;
 }
 
-/* the line; hovered, it grows upwards, round its year */
+/* hovered, the line grows upwards, round its year */
 .costs__years li::before {
   content: attr(data-year);
   position: absolute;
-  inset: auto 0 0;
+  inset: auto 0 0.3rem;
   display: grid;
   place-items: center;
-  block-size: 100%;
+  block-size: 0.2rem;
   overflow: hidden;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 15%, transparent);
+  background: color-mix(in srgb, var(--fg) 15%, transparent);
   color: transparent;
   font-size: var(--text-xs);
   line-height: 1;
@@ -961,20 +963,41 @@ a:hover {
   background: #f2c230;
 }
 
-/* a strip of room above to reach it by */
-.costs__years li::after {
-  content: "";
-  position: absolute;
-  inset: -0.6rem 0 -0.3rem;
-}
-
 .costs__years li:hover::before {
   block-size: 1.4rem;
+  color: var(--fg);
+}
+
+/* dark on the gold, on the dark slide too */
+.costs__years li.is-full:hover::before {
   color: var(--ink);
 }
 
+/* and over a covered one, that it was; the later ones held to the right, not past the bar */
+.costs__years li.is-full::after {
+  content: attr(data-year) " fully funded";
+  position: absolute;
+  inset-block-end: 2.1rem;
+  inset-inline-start: 0;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.costs__years li.is-full:nth-child(n + 6)::after {
+  inset-inline: auto 0;
+}
+
+.costs__years li.is-full:hover::after {
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .costs__years li::before {
+  .costs__years li::before,
+  .costs__years li::after {
     transition: none;
   }
 }

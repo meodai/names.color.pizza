@@ -2,7 +2,7 @@ import { converter, formatHex, wcagLuminance } from "culori";
 import { getList, hexToRgb, normalizeHex, rgbToOklab, siteURL, slugsOf, cardPlace } from "./names.js";
 import { tiltCard } from "./tilt.js";
 import { certificateHTML } from "./certificate.js";
-import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, RUNNING_A_YEAR, counts, loadAdoptions } from "./shines.js";
+import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, fillCostsBar, loadAdoptions } from "./shines.js";
 import { HEART, UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate, swellHearts } from "./adopter.js";
 import { drawShareCard } from "./share-card.js";
 import { PROJECTS } from "./projects.js";
@@ -405,9 +405,7 @@ export async function initAdoptPage() {
     const raised = Object.values(adopted).reduce((sum, a) => sum + (a.amount || 0), 0);
     const bar = q("[data-costs-bar]");
     bar.hidden = state !== "free" || !raised;
-    bar.style.setProperty("--k", Math.min(1, raised / RUNNING_A_YEAR).toFixed(3));
-    q("[data-costs-note]").textContent =
-      `$${raised.toLocaleString("en-US")} of the $${RUNNING_A_YEAR.toLocaleString("en-US")} a year it takes to run, covered by patrons so far.`;
+    if (raised) fillCostsBar(bar, raised);
     others(state === "taken" ? it : null);
     if (state === "taken" || state === "bought") {
       who?.clear();
