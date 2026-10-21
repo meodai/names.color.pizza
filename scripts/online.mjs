@@ -1,5 +1,5 @@
-// After a deploy: a comment on each names-repo commit that put names on the list since the
-// last deploy, with a link to each one's page, now that the pages are there.
+// After a deploy: a comment on each names-repo pull request (or commit, without one) that put
+// names on the list since the last deploy, with a link to each one's page, now that they're there.
 //
 //   node scripts/online.mjs <list sha of the last deploy> <list sha now>   (in color-names/)
 //
@@ -11,6 +11,13 @@ import { readList, slugsOf, pageOf } from "../color-names/scripts/site.js";
 const [before, now] = process.argv.slice(2);
 const git = (...args) => execFileSync("git", ["-C", "color-names", ...args], { encoding: "utf8" });
 const listAt = (sha) => readList(git("show", `${sha}:src/colornames.csv`));
+const gh = (...args) => {
+  try {
+    return execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return null;
+  }
+};
 
 if (!before || !now || before === now) process.exit(0);
 try {
@@ -44,8 +51,12 @@ for (const sha of commits) {
     console.log(`--- ${sha}\n${body}`);
     continue;
   }
-  execFileSync("gh", ["api", `repos/meodai/color-names/commits/${sha}/comments`, "-f", `body=${body}`], {
-    stdio: "ignore",
-  });
+  // on the pull request that brought them, where its author sees it; else on the commit
+  const pr = gh("api", `repos/meodai/color-names/commits/${sha}/pulls`, "--jq", "map(select(.merged_at))[0].number");
+  if (pr && gh("api", `repos/meodai/color-names/issues/${pr}/comments`, "-f", `body=${body}\n\nThank you!`) !== null) {
+    console.log(`online: ${added.length} on #${pr}`);
+    continue;
+  }
+  gh("api", `repos/meodai/color-names/commits/${sha}/comments`, "-f", `body=${body}`);
   console.log(`online: ${added.length} on ${sha.slice(0, 8)}`);
 }
