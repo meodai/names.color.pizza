@@ -6,6 +6,7 @@ import { createSparkleRenderer } from "./sparkles-gl.js";
 import { pixelMode, setPixelMode } from "./pixel-mode.js";
 import { readAddress, writeAddress } from "./address.js";
 import { createPixelSpace } from "./pixel-space.js";
+import { NOT_DRAWN, blankURL } from "./pixel-blank.js";
 import { reduceMotion, ease, easeInOut, clamp, wrap, sub, add, scale, dot, cross, norm, lerp3 } from "./wall/math.js";
 import { CARD_W, CARD_H, cardScale, MODELS, DEFAULT_MODEL, GEO, CELL_REACH } from "./wall/models.js";
 import { createRenderer, NEAR, FAR, NEAR_SLOTS } from "./wall/renderer.js";
@@ -1034,9 +1035,13 @@ export async function initWall(root) {
       new Promise((done) => setTimeout(done, 1500)),
     ]);
   const pixelOf = (i) =>
-    pixelArt.on && pixelArt.slots?.[i] >= 0
-      ? { src: pixelArt.index.tileURL(pixelArt.slots[i]), slug: pixelArt.index.slugs[pixelArt.slots[i]] }
-      : null;
+    !pixelArt.on || !pixelArt.slots
+      ? null
+      : pixelArt.slots[i] >= 0
+        ? { src: pixelArt.index.tileURL(pixelArt.slots[i]), slug: pixelArt.index.slugs[pixelArt.slots[i]] }
+        : pixelArt.slots[i] === NOT_DRAWN
+          ? { src: blankURL(items[i].hex), slug: pixelArt.names?.get(items[i].name) }
+          : null;
 
   function placeCopy({ copy, card }, box, r = 0) {
     copy.style.transform = `translate(${box.x - box.w / 2}px, ${box.y - (box.w * H) / W / 2}px) rotate(${r}deg)`;

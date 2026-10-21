@@ -1,5 +1,7 @@
 // The site in pixel art, switched by the wall's pixel button, for the rest of the visit: the
 // wall shows its drawings instead of the colors; on a color's page every card wears its own.
+import { blankURL } from "./pixel-blank.js";
+
 const KEY = "cn-pixel";
 // the bucket; a local preview reads it through its own server (vite.config.js), as only the
 // site may read it into WebGL (CORS)
@@ -61,11 +63,12 @@ export async function pixelCards(root) {
     const upper = card.querySelector(".swatchcard__upper");
     const had = upper?.querySelector(".swatchcard__pixel");
     const i = a.slot.get(card.dataset.slug);
-    if (!upper || i === undefined || had?.dataset.slug === card.dataset.slug) continue;
+    const hex = card.style.getPropertyValue("--c-color");
+    if (!upper || (i === undefined && !hex) || had?.dataset.slug === card.dataset.slug) continue;
     had?.remove();
     const img = Object.assign(document.createElement("img"), {
       className: "swatchcard__pixel",
-      src: a.tileURL(i),
+      src: i === undefined ? blankURL(hex) : a.tileURL(i),
       alt: "",
       decoding: "async",
     });

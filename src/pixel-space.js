@@ -4,6 +4,7 @@
 // The renderer does the drawing (wall.js); this keeps what it has and fetches what it lacks.
 import { getList, slugsOf } from "./names.js";
 import { pixelAtlas } from "./pixel-mode.js";
+import { NOT_DRAWN, blankCovers } from "./pixel-blank.js";
 
 // full-size drawings kept on the GPU for the cards close by
 export const DETAIL_SLOTS = 1024;
@@ -19,7 +20,7 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
     pixelArt.names ??= slugsOf((await getList("default")).items);
     const items = getItems();
     const slots = new Float32Array(items.length);
-    items.forEach((it, i) => (slots[i] = pixelArt.index.slot.get(pixelArt.names.get(it.name)) ?? -1));
+    items.forEach((it, i) => (slots[i] = pixelArt.index.slot.get(pixelArt.names.get(it.name)) ?? NOT_DRAWN));
     return slots;
   }
   // where each small drawing has paint, a pixel wider all round: what the mouse may land on,
@@ -37,6 +38,7 @@ export function createPixelSpace({ getDraw, getItems, onScreen, request, reduceM
   function covers(i, u, v) {
     const slot = pixelArt.slots?.[i];
     const index = pixelArt.index;
+    if (slot === NOT_DRAWN) return blankCovers(u, v);
     if (slot === undefined || slot < 0 || !index) return true;
     const rows = shapes[Math.floor(slot / index.per)];
     if (!rows) return true;

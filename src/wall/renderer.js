@@ -1,4 +1,5 @@
 import { DETAIL_IN_MS } from "../pixel-space.js";
+import { blankTexture } from "../pixel-blank.js";
 import { sub } from "./math.js";
 
 // the cards, every one in a single instanced draw
@@ -30,7 +31,7 @@ uniform vec3 u_bangCenter;
 in float a_grow;
 in float a_strip;  // how far its name strip is out, 0 for a plain swatch
 in float a_star;   // how bright an adopted color flashes now, like glitter catching the light
-in float a_slot;   // where its pixel art is in the atlas, -1 for none
+in float a_slot;   // where its pixel art is in the atlas, -1 unknown, -2 none yet (pixel-blank.js)
 in float a_detail; // where its full-size pixel art is, once it came close, -1 till then
 in float a_detailAt; // when it came, so it can dither in over the small one
 uniform float u_now;
@@ -149,6 +150,7 @@ uniform highp sampler2DArray u_atlas; // pixel art, 64 × 64 tiles to a layer
 uniform float u_pixel;                // 0 the colors, 1 their pixel art
 uniform highp sampler2D u_detail;     // full-size pixel art of the cards close by, 32 × 32 tiles
 uniform int u_sheets;                 // which of the atlas's sheets have come, a bit each
+uniform highp sampler2D u_blank;      // the blank chip of those not drawn yet, its patch beside it
 out vec4 o;
 void main() {
   // dithered, so it fades without sorting the cards
@@ -172,12 +174,18 @@ void main() {
   // its pixel art over the color, where there is any and its sheet has come
   // its pixel art instead of the color, once its sheet has come: the color goes, and only
   // the drawing is left, floating
-  if (u_pixel > 0.0 && v_slot >= 0.0 && v_local.y < u_size.x) {
+  bool blank = v_slot < -1.5;
+  if (u_pixel > 0.0 && (v_slot >= 0.0 || blank) && v_local.y < u_size.x) {
     vec2 inTile = clamp(v_local / u_size.x, 0.0, 0.999);
     float layer = floor(v_slot / 4096.0);
-    bool sheet = ((u_sheets >> int(layer)) & 1) == 1;
-    bool there = v_detail >= 0.0 || sheet;
-    if (there) {
+    bool sheet = !blank && ((u_sheets >> int(layer)) & 1) == 1;
+    bool there = blank || v_detail >= 0.0 || sheet;
+    if (blank) {
+      vec4 t = texture(u_blank, inTile * vec2(0.5, 1.0));
+      t.rgb = mix(t.rgb, v_color, texture(u_blank, (inTile + vec2(1.0, 0.0)) * vec2(0.5, 1.0)).r);
+      if (t.a < 0.4 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < u_pixel) discard;
+      c = mix(c, t.rgb, t.a * u_pixel);
+    } else if (there) {
       vec4 t;
       // the full-size drawing replaces the small one in the same ordered dither, in the small
       // one's coarse pixels, 16 across
@@ -279,6 +287,12 @@ export function createRenderer(canvas, positions, colors, grow = new Uint8Array(
     });
   let atlas = placeholder(gl.TEXTURE_2D_ARRAY, gl.TEXTURE1);
   let detail = placeholder(gl.TEXTURE_2D, gl.TEXTURE2);
+  const blank = texture(gl.TEXTURE_2D, gl.TEXTURE3, () => {
+    const { px, width, height } = blankTexture();
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  });
 
   const u = {};
   for (const k of [
@@ -312,6 +326,7 @@ export function createRenderer(canvas, positions, colors, grow = new Uint8Array(
     "pixel",
     "detail",
     "sheets",
+    "blank",
     "now",
   ]) {
     u[k] = gl.getUniformLocation(prog, `u_${k}`);
@@ -326,6 +341,7 @@ export function createRenderer(canvas, positions, colors, grow = new Uint8Array(
   gl.uniform1f(u.grow, 1);
   gl.uniform1i(u.atlas, 1);
   gl.uniform1i(u.detail, 2);
+  gl.uniform1i(u.blank, 3);
   gl.uniform1i(u.sheets, 0);
   gl.uniform1f(u.pixel, 0);
   gl.enable(gl.DEPTH_TEST);
@@ -353,6 +369,8 @@ export function createRenderer(canvas, positions, colors, grow = new Uint8Array(
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, atlas);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, detail);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, blank);
     gl.activeTexture(gl.TEXTURE0);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
   };
