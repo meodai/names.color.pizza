@@ -215944,10 +215944,10 @@
     "name": "Shredder Lavender",
     "hex": "#7737aa",
     "ai": true,
-    "kind": "thing",
-    "reference": "lavender flowers",
-    "description": "Deep purple, like lavender that's been through a paper shredder.",
-    "model": "describer"
+    "kind": "reference",
+    "reference": "Shredder, Teenage Mutant Ninja Turtles",
+    "description": "Shredder's purple, the cape under the bladed armour of the Foot Clan's master.",
+    "model": "claude"
   },
   {
     "name": "Shrimp",
