@@ -86,6 +86,23 @@ jobs:
           echo "before=${before:-$(curl -sf https://names.color.pizza/list.txt || true)}" >> "$GITHUB_OUTPUT"
           git -C color-names rev-parse HEAD | tee dist/list.txt
           echo "now=$(cat dist/list.txt)" >> "$GITHUB_OUTPUT"
+      # each deploy replaces the whole site: the last one's hashed assets ride along, so a page
+      # still open or cached from before doesn't 404 on its scripts. Only this build's own are
+      # listed, so the ones carried go with the next deploy
+      - name: Keep the last deploy's assets
+        run: |
+          (cd dist/assets && ls) > dist/assets.txt
+          live=https://names.color.pizza
+          last=$(curl -sf $live/assets.txt || true)
+          # no list online yet: what the pages and their scripts name
+          if [ -z "$last" ]; then
+            for p in / /adopt/ /supporters/ /legal/ /color/ /not-found/; do curl -sf "$live$p" || true; done > pages.txt
+            for f in $(grep -oE 'assets/[A-Za-z0-9._-]+' pages.txt | sort -u); do curl -sf "$live/$f" || true; done >> pages.txt
+            last=$(grep -oE '[A-Za-z0-9_-]+-[A-Za-z0-9_-]{8}\.(js|css|svg)' pages.txt | sort -u)
+          fi
+          for f in $last; do
+            [ -e "dist/assets/$f" ] || curl -sf -o "dist/assets/$f" "https://names.color.pizza/assets/$f" || true
+          done
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
