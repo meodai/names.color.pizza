@@ -1,9 +1,9 @@
-# Every night: keeps the site's copy of what Wikipedia and Wiktionary say
-# about each color name (the data branch) up to date. Names new on the list
-# are fetched, and the oldest copies renewed, 1/180 of the list a night, so
-# each copy is renewed about every six months; each with the Commons
-# pictures that have its color in them. The rest of the night picks pictures
-# for copies that have none yet. Then the site is rebuilt with it.
+# Keeps the site's copy of what Wikipedia and Wiktionary say about each color
+# name (the data branch) up to date, each with the Commons pictures that have
+# its color in them. Every night: just the names new on the list. On the 1st
+# of the month (or run by hand with "month"): the oldest sixth of the copies
+# renewed, so each is renewed about every six months, and pictures looked for
+# the copies that have none yet. Then the site is rebuilt with it.
 
 name: Data
 
@@ -11,6 +11,11 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      month:
+        description: "The month's run: renew the oldest copies and look for missing pictures"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -53,12 +58,25 @@ jobs:
       # each pass a step of its own, and what they collected saved even when one fails;
       # a pass that overruns is stopped as a failure, not the job cancelled with it
       - if: steps.install.outcome == 'success'
+        name: Which run
+        id: run
+        run: |
+          if [ "$(date -u +%d)" = "01" ] || [ "${{ inputs.month }}" = "true" ]; then
+            echo "month=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.install.outcome == 'success' && steps.run.outputs.month != 'true'
+        name: Collect the new names
+        timeout-minutes: 70
+        env:
+          WIKIMEDIA_TOKEN: ${{ secrets.WIKIMEDIA_TOKEN }}
+        run: node scripts/collect.mjs --with-pictures --new --minutes 60
+      - if: steps.install.outcome == 'success' && steps.run.outputs.month == 'true'
         name: Collect
         timeout-minutes: 190
         env:
           WIKIMEDIA_TOKEN: ${{ secrets.WIKIMEDIA_TOKEN }}
-        run: node scripts/collect.mjs --with-pictures --minutes 180
-      - if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: node scripts/collect.mjs --with-pictures --every 30 --minutes 180
+      - if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.run.outputs.month == 'true' }}
         name: Collect pictures
         timeout-minutes: 120
         env:

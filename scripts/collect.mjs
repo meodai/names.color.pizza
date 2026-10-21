@@ -1,5 +1,7 @@
 // node scripts/collect.mjs [--data .data] [--list color-names/src/colornames.csv]
 //   [--minutes 330] [--rate N] [--parallel N] [--all] [--limit N] [--with-pictures | --pictures]
+//   [--new]  (just the names new on the list, none renewed)
+//   [--every N]  (run every N days: renews N/180 of the list, so each copy about every six months)
 //   [--names "Name,Name" | --names @file]  (just these, fetched again: after a correction in src/references.json)
 
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -44,6 +46,8 @@ const NAMES =
       .map((n) => n.trim())
       .filter(Boolean),
   );
+const NEW_ONLY = process.argv.includes("--new");
+const EVERY = +arg("every", 1);
 const CYCLE_DAYS = 180;
 const AGENT = `ColorNamesBot/1.0 (https://github.com/meodai/color-names) node/${process.versions.node}`;
 
@@ -265,7 +269,7 @@ for (const slug of [...fetched.keys(), ...unreadable]) {
 if (unreadable.size) console.log(`collect: ${unreadable.size} copies couldn't be read; fetched again`);
 
 const missing = items.filter((it) => !fetched.has(slugs.get(it.name)));
-const renew = Math.ceil(items.length / CYCLE_DAYS);
+const renew = Math.ceil((items.length * EVERY) / CYCLE_DAYS);
 // skips copies fetched earlier the same day, between passes of a first fill
 const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
 const oldest = items
@@ -278,7 +282,7 @@ const todo = (
     : PICTURES_ONLY
       ? // copies without their pictures yet
         items.filter((it) => fetched.has(slugs.get(it.name)) && !pictured.has(slugs.get(it.name)))
-      : [...(ALL ? missing : missing.slice(0, Math.max(renew, 500))), ...oldest]
+      : [...(ALL ? missing : missing.slice(0, Math.max(renew, 500))), ...(NEW_ONLY ? [] : oldest)]
 ).slice(0, LIMIT);
 
 if (TOKEN) {
