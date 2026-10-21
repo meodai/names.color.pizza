@@ -270291,5 +270291,41 @@
     "reference": "Australian TV series Always Greener",
     "description": "Vivid green lawns on both sides of the fence, city and country.",
     "model": "describer"
+  },
+  {
+    "name": "Meatball Blue",
+    "hex": "#0032a0",
+    "ai": true,
+    "kind": "reference",
+    "reference": "NASA insignia, nicknamed the meatball",
+    "description": "Deep space blue of NASA's meatball, the disc behind the stars, the orbit and the red wing.",
+    "model": "claude"
+  },
+  {
+    "name": "Meatball Red",
+    "hex": "#e4002b",
+    "ai": true,
+    "kind": "reference",
+    "reference": "NASA insignia, nicknamed the meatball",
+    "description": "The red chevron slicing across NASA's meatball, a wing built for leaving the planet.",
+    "model": "claude"
+  },
+  {
+    "name": "Shenron Green",
+    "hex": "#8ccd4c",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Dragon Ball, Shenron the eternal dragon",
+    "description": "Bright scaly green of the eternal dragon, coiling into the sky once all seven Dragon Balls are found.",
+    "model": "claude"
+  },
+  {
+    "name": "Super Vehicle-001",
+    "hex": "#979a82",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Metal Slug, the SV-001 tank",
+    "description": "Dusty olive armour of Metal Slug's little tank, dented, smoking and still rolling forward.",
+    "model": "claude"
   }
 ]
