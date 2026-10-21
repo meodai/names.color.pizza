@@ -4480,24 +4480,6 @@
     "model": "describer"
   },
   {
-    "name": "Always Greener",
-    "hex": "#479532",
-    "ai": true,
-    "kind": "reference",
-    "reference": "Australian TV series",
-    "description": "The lawn that seems more vibrant when you're standing on the other side.",
-    "model": "describer"
-  },
-  {
-    "name": "Always Greener Grass",
-    "hex": "#11aa00",
-    "ai": true,
-    "kind": "reference",
-    "reference": "the phrase 'the grass is always greener'",
-    "description": "Lawn green, the perfect neighbour's, always one fence away.",
-    "model": "describer"
-  },
-  {
     "name": "Always Indigo",
     "hex": "#66778c",
     "ai": true,
@@ -167818,14 +167800,6 @@
     "model": "describer"
   },
   {
-    "name": "Orange Pospsicle",
-    "hex": "#f2a60f",
-    "ai": true,
-    "kind": "thing",
-    "description": "Summer stick, icy and bright, flavored like the segments of a peeled orange.",
-    "model": "describer"
-  },
-  {
     "name": "Orange Quench",
     "hex": "#febc61",
     "ai": true,
@@ -270284,5 +270258,38 @@
     "reference": "estrogen",
     "description": "Hormone-hued green, all glow, bloom and big feelings.",
     "model": "claude"
+  },
+  {
+    "name": "Au Blau",
+    "hex": "#091953",
+    "ai": true,
+    "kind": "plain",
+    "description": "Dark Prussian blue, like the inside of a classic coat.",
+    "model": "describer"
+  },
+  {
+    "name": "Mango Popsicle",
+    "hex": "#f2a60f",
+    "ai": true,
+    "kind": "thing",
+    "description": "Sticky orange, straight from the ice pop stick on a summer sidewalk.",
+    "model": "describer"
+  },
+  {
+    "name": "Freshly Pruned",
+    "hex": "#479532",
+    "ai": true,
+    "kind": "thing",
+    "description": "Garden shears' first snip, when new growth bursts out in a rush.",
+    "model": "describer"
+  },
+  {
+    "name": "Always Greener",
+    "hex": "#11aa00",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Australian TV series Always Greener",
+    "description": "Vivid green lawns on both sides of the fence, city and country.",
+    "model": "describer"
   }
 ]
