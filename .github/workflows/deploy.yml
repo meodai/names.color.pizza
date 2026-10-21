@@ -63,12 +63,12 @@ jobs:
           curl -sSL https://github.com/oxipng/oxipng/releases/download/v10.2.1/oxipng-10.2.1-x86_64-unknown-linux-musl.tar.gz \
             | sudo tar -xz --strip-components=1 -C /usr/local/bin oxipng-10.2.1-x86_64-unknown-linux-musl/oxipng \
             || echo "no oxipng; previews stay unoptimized"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: .cache/previews
           key: previews-${{ github.run_id }}
           restore-keys: previews-
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: .cache/lists
           key: lists-${{ github.run_id }}
@@ -103,9 +103,10 @@ jobs:
           for f in $last; do
             [ -e "dist/assets/$f" ] || curl -sf -o "dist/assets/$f" "https://names.color.pizza/assets/$f" || true
           done
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+          include-hidden-files: true
 
   deploy:
     needs: build
@@ -115,7 +116,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # the names now online get a comment on the commit that added them, in the names repo
   online:
