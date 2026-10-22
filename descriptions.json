@@ -270523,5 +270523,14 @@
     "reference": "character: Mr. Freeze, the Batman villain in a cryogenic suit",
     "description": "Frost on the glass dome of Mr. Freeze's cryo suit, the pale ice blue of Gotham's coldest villain.",
     "model": "claude"
+  },
+  {
+    "name": "Emperor’s Heartbeat",
+    "hex": "#cf2560",
+    "ai": true,
+    "kind": "mood",
+    "reference": "the pulse of royal blood under the crown",
+    "description": "Raspberry crimson thudding beneath imperial robes, the pulse that keeps an empire alive.",
+    "model": "claude"
   }
 ]
