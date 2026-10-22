@@ -270352,5 +270352,158 @@
     "kind": "plain",
     "description": "Deep navy, a compass point due south, without a hint of magnetic variation.",
     "model": "describer"
+  },
+  {
+    "name": "Bad Egg",
+    "hex": "#cec26c",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: a bad egg, a rotten sort",
+    "description": "Sulphur yellow with a whiff of trouble, the one in the carton nobody wants to crack.",
+    "model": "claude"
+  },
+  {
+    "name": "Big Cheese",
+    "hex": "#e9d035",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: the big cheese, the person in charge",
+    "description": "Golden cheese-wheel yellow, sitting at the head of the table and knowing it.",
+    "model": "claude"
+  },
+  {
+    "name": "Blue in the Face",
+    "hex": "#7b8fdf",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: until you're blue in the face, arguing in vain",
+    "description": "Breathless periwinkle, the shade you turn after making the same point for an hour.",
+    "model": "claude"
+  },
+  {
+    "name": "Cold Feet",
+    "hex": "#bed4fd",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: getting cold feet, last-minute doubts",
+    "description": "Pale ice blue of second thoughts, chilly toes inching toward the exit.",
+    "model": "claude"
+  },
+  {
+    "name": "Cut the Cheese",
+    "hex": "#deea00",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: cutting the cheese, breaking wind",
+    "description": "Acid yellow-green of a smell nobody in the room will own up to.",
+    "model": "claude"
+  },
+  {
+    "name": "Full of Beans",
+    "hex": "#884d04",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: full of beans, bursting with energy",
+    "description": "Roasted bean brown, buzzing with more energy than anyone else in the room.",
+    "model": "claude"
+  },
+  {
+    "name": "Gravy Train",
+    "hex": "#925e03",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: the gravy train, easy money",
+    "description": "Rich gravy brown, easy money ladled out and never running dry.",
+    "model": "claude"
+  },
+  {
+    "name": "Hogwash",
+    "hex": "#969c68",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: hogwash, nonsense",
+    "description": "Muddy olive of the pigsty trough, and of every story too silly to believe.",
+    "model": "claude"
+  },
+  {
+    "name": "Holy Guacamole",
+    "hex": "#7bb212",
+    "ai": true,
+    "kind": "reference",
+    "reference": "exclamation: holy guacamole, sheer surprise",
+    "description": "Fresh avocado green, mashed with lime and shouted in surprise.",
+    "model": "claude"
+  },
+  {
+    "name": "Hot Potato",
+    "hex": "#e39e66",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: a hot potato, a problem nobody wants to hold",
+    "description": "Roasted-skin orange, passed from hand to hand before anyone gets burned.",
+    "model": "claude"
+  },
+  {
+    "name": "Monkey Business",
+    "hex": "#876f1b",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: monkey business, mischief",
+    "description": "Banana-peel brown and mischief, the trouble brewing while nobody's looking.",
+    "model": "claude"
+  },
+  {
+    "name": "Paint the Town Red",
+    "hex": "#e63045",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: paint the town red, a wild night out",
+    "description": "Neon-sign red of a night out with no plans to go home early.",
+    "model": "claude"
+  },
+  {
+    "name": "Pie in the Sky",
+    "hex": "#b0c4f9",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: pie in the sky, a hope that won't come true",
+    "description": "Dreamy sky blue of plans too lovely to ever come true.",
+    "model": "claude"
+  },
+  {
+    "name": "Poppycock",
+    "hex": "#f25f48",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: poppycock, nonsense",
+    "description": "Loud coral nonsense, bright, brash and not to be believed.",
+    "model": "claude"
+  },
+  {
+    "name": "Seeing Red",
+    "hex": "#d42a3e",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: seeing red, sudden anger",
+    "description": "Hot crimson rage, the red that floods your eyes just before the temper goes.",
+    "model": "claude"
+  },
+  {
+    "name": "Sour Grapes",
+    "hex": "#785ca0",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: sour grapes, Aesop's fox and the grapes it couldn't reach",
+    "description": "Dusky grape purple, still a little bitter about the vine it couldn't reach.",
+    "model": "claude"
+  },
+  {
+    "name": "Under the Weather",
+    "hex": "#aea1aa",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: under the weather, feeling ill",
+    "description": "Washed-out mauve grey, pale and peaky, a day spent on the sofa.",
+    "model": "claude"
   }
 ]
