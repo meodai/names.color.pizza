@@ -1,4 +1,14 @@
-import { getList, LISTS, normalizeHex, slugsOf, hexToRgb, rgbToOklab, cardPlace, showVersion } from "./names.js";
+import {
+  getList,
+  LISTS,
+  normalizeHex,
+  slugsOf,
+  hexToRgb,
+  rgbToOklab,
+  cardPlace,
+  showVersion,
+  siteURL,
+} from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 import { createLabelRenderer } from "./labels-gl.js";
 import { counts, loadAdoptions } from "./shines.js";
@@ -1007,14 +1017,16 @@ export async function initWall(root) {
   // through the bulk of the colors, the turning bending the way in into an arc. Once a roll
   // waits on the Best of names, and its flight is marked as the dice's
   let rolling = false;
-  async function roll() {
-    if (busy || rolling || anim?.roll || page.isOpen()) return;
-    rolling = true;
-    // without them, any name in the list
-    const best = await getList("bestOf").then(
+  // the Best of list comes out of the full one, so it's there at once (names.js)
+  const bestOfNames = () =>
+    getList("bestOf").then(
       (list) => new Set(list.items.map((it) => it.name)),
       () => new Set(),
     );
+  async function roll() {
+    if (busy || rolling || anim?.roll || page.isOpen()) return;
+    rolling = true;
+    const best = await bestOfNames();
     rolling = false;
     const pool = items.flatMap((it, i) => (best.has(it.name) ? [i] : []));
     const i = pool.length ? pool[Math.floor(Math.random() * pool.length)] : Math.floor(Math.random() * items.length);
@@ -1973,7 +1985,7 @@ export async function initWall(root) {
     goHome,
     busy: () => busy,
     roll,
-    warm: () => getList("bestOf").catch(() => {}),
+    warm: bestOfNames,
     listUp: () => azList.on(),
     list: () => azList.az(),
   });

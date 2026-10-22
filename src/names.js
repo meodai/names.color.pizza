@@ -83,6 +83,25 @@ async function adoptedColors() {
   return all.filter((c) => kept.has(slugs.get(c.name)));
 }
 
+// Best of and Short out of the full list: the names it marks as good, written by the build
+// (scripts/best-of.mjs), Short those of them with 12 letters at most, as the list's own build
+// cuts it. Without that file, the list from the API
+const SHORT_MAX = 12;
+let goodNames = null;
+async function goodColors(key) {
+  goodNames ??= fetch(siteURL("best-of.json")).then((res) => {
+    if (!res.ok) throw new Error(`best-of.json: ${res.status}`);
+    return res.json();
+  });
+  try {
+    const [names, all] = await Promise.all([goodNames.then((n) => new Set(n)), loadList("default")]);
+    return all.filter((c) => names.has(c.name) && (key !== "short" || c.name.length <= SHORT_MAX));
+  } catch {
+    goodNames = null;
+    return loadList(key);
+  }
+}
+
 // about one just-noticeable difference in OKLab
 export const UNNAMED = 0.02;
 
@@ -142,7 +161,9 @@ export const getList = (key) => {
   if (!prepared.has(key))
     prepared.set(
       key,
-      (key === "adopted" ? adoptedColors() : loadList(key)).then(prepare).then((d) => (ready.set(key, d), d)),
+      (key === "adopted" ? adoptedColors() : key === "bestOf" || key === "short" ? goodColors(key) : loadList(key))
+        .then(prepare)
+        .then((d) => (ready.set(key, d), d)),
     );
   return prepared.get(key);
 };

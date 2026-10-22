@@ -7,9 +7,9 @@
   "license": "MIT",
   "scripts": {
     "added": "node scripts/added.mjs",
-    "predev": "node scripts/added.mjs",
+    "predev": "node scripts/added.mjs && node scripts/best-of.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/added.mjs",
+    "prebuild": "node scripts/added.mjs && node scripts/best-of.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "postbuild": "node scripts/pages.mjs && node scripts/previews.mjs && node scripts/share.mjs",
