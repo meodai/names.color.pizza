@@ -20,10 +20,14 @@ document.documentElement.classList.toggle("is-pixel", on);
 export const pixelMode = () => on;
 
 // the atlas's index, once: which slug sits in which slot, each drawing's version, the
-// sheets of small drawings by name (art-colors-runner/pixel/publish.py)
+// sheets of small drawings by name (art-colors-runner/pixel/publish.py). The edge keeps a copy
+// for hours, so a drawing just published would still wear the blank chip while the page's own
+// data has it: a fresh address every five minutes
+const ATLAS_FRESH_MS = 5 * 60 * 1000;
 let atlas = null;
 export function pixelAtlas() {
-  atlas ??= fetch(`${MEDIA}data/pixel-atlas.json`, { cache: "no-cache" })
+  const fresh = Math.floor(Date.now() / ATLAS_FRESH_MS);
+  atlas ??= fetch(`${MEDIA}data/pixel-atlas.json?t=${fresh}`, { cache: "no-cache" })
     .then((r) => r.json())
     .then((a) => ({
       ...a,
