@@ -20,7 +20,7 @@ test.describe("the search in the space", () => {
     const s = await state(page);
     expect(s.chosen).toBe("#8f7d6b");
     expect(s.spot).toBe(true);
-    await expect(clearButton(page)).toBeVisible();
+    await expect(clearButton(page)).toHaveClass(/is-clear/);
   });
 
   test("a name typed shows results; Enter picks one, by name, and finds it", async ({ page }) => {
@@ -40,7 +40,7 @@ test.describe("the search in the space", () => {
     await retype(page, "");
     expect(param(page, "c")).toBeNull();
     expect(await swatch(page)).toBe("");
-    await expect(clearButton(page)).toBeHidden();
+    await expect(clearButton(page)).not.toHaveClass(/is-clear/);
     const s = await state(page);
     expect(s.chosen).toBeNull();
     expect(s.spot).toBe(false);
@@ -88,6 +88,26 @@ test.describe("the search in the space", () => {
     expect((await state(page)).spot).toBe(false);
   });
 
+  test("the dice, with nothing to clear, flies to a Best of name and turns into the ×", async ({ page }) => {
+    await openWall(page);
+    await expect(clearButton(page)).toHaveAttribute("aria-label", "A random color");
+    await clearButton(page).click();
+    await expect(clearButton(page)).toHaveClass(/is-clear/);
+    await expect(clearButton(page)).toHaveAttribute("aria-label", "Clear the search");
+    await page.waitForFunction(() => window.__wall.state().spot);
+    await settled(page);
+    const name = await search(page).inputValue();
+    const best = await page.evaluate(async () => {
+      const { getList } = await import("/src/names.js");
+      return (await getList("bestOf")).items.map((it) => [it.name, it.hex]);
+    });
+    const hex = new Map(best).get(name);
+    expect(hex).toBeTruthy();
+    expect(param(page, "c")).toBe(hex.slice(1));
+    await clearButton(page).click();
+    await expect(clearButton(page)).not.toHaveClass(/is-clear/);
+  });
+
   test("the logo lets a found card go", async ({ page }) => {
     await openWall(page, "/?c=8f7d6b");
     expect((await state(page)).spot).toBe(true);
@@ -115,7 +135,7 @@ test.describe("the search in the list", () => {
     await retype(page, "");
     expect(await swatch(page)).toBe("");
     expect(param(page, "c")).toBeNull();
-    await expect(clearButton(page)).toBeHidden();
+    await expect(clearButton(page)).not.toHaveClass(/is-clear/);
     await expect(said(page)).toHaveText(/names, A to Z$/);
   });
 
@@ -129,6 +149,17 @@ test.describe("the search in the list", () => {
     await expect(said(page)).toHaveText(/^2 of [\d,]+ with “dini”$/);
     expect(param(page, "c")).toBeNull();
     expect(await swatch(page)).toBe("");
+  });
+
+  test("the dice scrolls the whole list to a name and marks it", async ({ page }) => {
+    await openWall(page, "/?view=az");
+    await retype(page, "dini");
+    await clearButton(page).click();
+    await clearButton(page).click();
+    await expect(said(page)).toHaveText(/names, A to Z$/);
+    const picked = page.locator(".az__row.is-picked");
+    await expect(picked).toBeInViewport();
+    expect(param(page, "c")).toBe((await picked.locator("span").textContent()).slice(1).toLowerCase());
   });
 
   test("the color wheel chooses a color and shows its closest names", async ({ page }) => {

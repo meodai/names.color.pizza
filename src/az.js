@@ -1,4 +1,5 @@
 import { fold, normalizeHex, rgbToOklab, hexToRgb } from "./names.js";
+import { reduceMotion, easeInOut } from "./wall/math.js";
 
 // A–Z: the list as the first site had it, one bar per name in its own color, A to Z.
 // The wall's own search filters it by name or hex; its color picker shows the names
@@ -7,6 +8,7 @@ const ROW = 64; // px, as .az__row in the CSS
 const CLOSEST = 60;
 // rows coming in: each one 30ms after the one above it, each taking this long
 const ROW_IN_MS = 420;
+const REVEAL_MS = 700;
 
 const escapeHTML = (s) => s.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 // light text on dark colors, as the first site decided it
@@ -40,10 +42,13 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
   let frame = 0;
   let first = 0;
   let entering = 0;
+  // the row the dice landed on, and the scroll there
+  let picked = -1;
+  let glide = 0;
 
   const rowHTML = (it, i) => {
     const icon = iconOf?.(it);
-    return `<a class="az__row${isDark(it.rgb) ? " is-dark" : ""}" href="${escapeHTML(hrefOf(it))}" data-i="${i}" style="--c:${it.hex};--i:${Math.max(0, i - first)}">${icon ? `<img class="az__icon" src="${escapeHTML(icon)}" alt="" decoding="async">` : icon === "" ? `<i class="az__icon"></i>` : ""}<strong>${escapeHTML(it.name)}</strong><span>${it.hex}</span></a>`;
+    return `<a class="az__row${isDark(it.rgb) ? " is-dark" : ""}${i === picked ? " is-picked" : ""}" href="${escapeHTML(hrefOf(it))}" data-i="${i}" style="--c:${it.hex};--i:${Math.max(0, i - first)}">${icon ? `<img class="az__icon" src="${escapeHTML(icon)}" alt="" decoding="async">` : icon === "" ? `<i class="az__icon"></i>` : ""}<strong>${escapeHTML(it.name)}</strong><span>${it.hex}</span></a>`;
   };
 
   function render() {
@@ -61,6 +66,7 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
   // scroll: where to be in the list (a number), or keep where it is (true)
   function show(list, label, scroll = 0) {
     shown = list;
+    picked = -1;
     sizerEl.style.height = `${list.length * ROW}px`;
     countEl.textContent = label;
     noneEl.hidden = list.length > 0;
@@ -110,6 +116,7 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
   // the rows' entrance is over once someone takes the list in hand: rows drawn again after
   // that would only start it over
   const settle = () => {
+    cancelAnimationFrame(glide);
     clearTimeout(entering);
     el.classList.remove("is-entering");
   };
@@ -143,6 +150,26 @@ export function createAz(before, { hrefOf, iconOf, onLeave }) {
     closest: (hex, keepScroll) => {
       settle();
       closest(hex, keepScroll);
+    },
+    // a name, from the whole list, scrolled to the middle quickly and marked
+    reveal(name) {
+      settle();
+      filter("", true);
+      const at = shown.findIndex((it) => it.name === name);
+      if (at < 0) return;
+      picked = at;
+      const from = scrollEl.scrollTop;
+      const to = Math.max(
+        0,
+        Math.min(at * ROW - (scrollEl.clientHeight - ROW) / 2, shown.length * ROW - scrollEl.clientHeight),
+      );
+      const t0 = performance.now();
+      const step = (now) => {
+        const t = reduceMotion ? 1 : Math.min(1, (now - t0) / REVEAL_MS);
+        scrollEl.scrollTop = from + (to - from) * easeInOut(t);
+        if (t < 1) glide = requestAnimationFrame(step);
+      };
+      glide = requestAnimationFrame(step);
     },
     // drawn again as they are, say once their drawings are known
     refresh: () => !el.hidden && render(),

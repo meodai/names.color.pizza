@@ -7,7 +7,21 @@ import { pixelMode, setPixelMode } from "./pixel-mode.js";
 import { readAddress, writeAddress } from "./address.js";
 import { createPixelSpace } from "./pixel-space.js";
 import { NOT_DRAWN, blankURL } from "./pixel-blank.js";
-import { reduceMotion, ease, easeInOut, clamp, wrap, sub, add, scale, dot, cross, norm, lerp3 } from "./wall/math.js";
+import {
+  reduceMotion,
+  ease,
+  easeIn,
+  easeInOut,
+  clamp,
+  wrap,
+  sub,
+  add,
+  scale,
+  dot,
+  cross,
+  norm,
+  lerp3,
+} from "./wall/math.js";
 import { CARD_W, CARD_H, cardScale, MODELS, DEFAULT_MODEL, GEO, CELL_REACH } from "./wall/models.js";
 import { createRenderer, NEAR, FAR, NEAR_SLOTS } from "./wall/renderer.js";
 import { createViewSwitch } from "./wall/views.js";
@@ -55,6 +69,11 @@ const CALM_MS = 160;
 const HOVER_WAIT = 140;
 const HOVER_MS = 220;
 const FOCUS_PX = 230;
+// the dice's flight: out, turning round one and a half times and once over, speeding up; then in
+// on the card for the rest of the three turns, slowing down (twice as long, so the turning
+// keeps its speed where the two meet)
+const ROLL_OUT = { turns: 1.5, flips: 1, ms: 750 };
+const ROLL_IN = { turns: 1.5, ms: 1500 };
 
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
   <div class="swatchcard__upper"><i class="swatchcard__swatch" aria-hidden="true">
@@ -91,7 +110,7 @@ export async function initWall(root) {
         // the invitation's own line until there's a count to tell
         if (n.colors)
           q("[data-adopted-count]").textContent =
-            `${n.colors.toLocaleString("en-US")} ${n.colors === 1 ? "color" : "colors"} adopted by ${n.patrons.toLocaleString("en-US")} ${n.patrons === 1 ? "patron" : "patrons"} so far`;
+            `${n.colors.toLocaleString("en-US")} ${n.colors === 1 ? "color" : "colors"} adopted by ${n.patrons.toLocaleString("en-US")} ${n.patrons === 1 ? "patron" : "patrons"}`;
       })
       .catch(() => {});
   }
@@ -890,11 +909,15 @@ export async function initWall(root) {
     setAway(!to.home);
     stopMoving();
     stopIdle();
-    const { home: _home, ...dest } = to;
+    const { home: _home, turns = 0, flips = 0, ...dest } = to;
     const target = { target: cam.target, dist: cam.dist, yaw: cam.yaw, pitch: cam.pitch, ...dest };
-    // turn the short way round
-    target.yaw = cam.yaw + ((((target.yaw - cam.yaw) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
-    target.pitch = cam.pitch + wrap(target.pitch - cam.pitch);
+    // turn the short way round, and as many whole turns more as asked, round and over
+    target.yaw =
+      cam.yaw +
+      ((((target.yaw - cam.yaw) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) -
+      Math.PI +
+      turns * 2 * Math.PI;
+    target.pitch = cam.pitch + wrap(target.pitch - cam.pitch) + flips * 2 * Math.PI;
     if (reduceMotion || !duration) {
       Object.assign(cam, target);
       request();
@@ -975,11 +998,39 @@ export async function initWall(root) {
 
   const distFor = (px) => (W * cam.fpx) / px;
 
-  function focusCard(i) {
+  function focusCard(i, { turns = 0, duration, easing } = {}) {
     // under the size where cards dissolve, so a narrow screen keeps it once the camera moves
-    flyTo({ target: posOf(i), dist: distFor(Math.min(FOCUS_PX, Math.min(view.w, view.h) * NEAR_AT * 0.8)) });
+    const dist = distFor(Math.min(FOCUS_PX, Math.min(view.w, view.h) * NEAR_AT * 0.8));
+    flyTo({ target: posOf(i), dist, turns }, duration, undefined, easing);
     marked = i;
     spot = { i, on: true, t: performance.now() };
+  }
+
+  // the dice: one of the Best of names in the list shown, at random; in the space, out to the
+  // whole of it turning round and over quickly, and in on that one while still turning; in the
+  // A–Z list, scrolled to. Once a roll waits on the Best of names, and its flight is marked as
+  // the dice's
+  let rolling = false;
+  async function roll() {
+    if (busy || rolling || anim?.roll || page.isOpen()) return;
+    rolling = true;
+    const best = new Set((await getList("bestOf")).items.map((it) => it.name));
+    rolling = false;
+    const pool = items.flatMap((it, i) => (best.has(it.name) ? [i] : []));
+    const i = pool.length ? pool[Math.floor(Math.random() * pool.length)] : Math.floor(Math.random() * items.length);
+    const it = items[i];
+    searchBox.clearResults();
+    if (azList.on()) {
+      choose(it.hex, "");
+      return azList.az()?.reveal(it.name);
+    }
+    choose(it.hex, it.name);
+    const inOn = () => {
+      focusCard(i, { turns: ROLL_IN.turns, duration: ROLL_IN.ms });
+      if (anim) anim.roll = true;
+    };
+    flyTo({ ...home(), turns: ROLL_OUT.turns, flips: ROLL_OUT.flips }, ROLL_OUT.ms, inOn, easeIn);
+    if (anim) anim.roll = true;
   }
 
   // measured on a hidden copy, so it follows the color page's own CSS
@@ -1893,6 +1944,7 @@ export async function initWall(root) {
     dropSpot,
     goHome,
     busy: () => busy,
+    roll,
     listUp: () => azList.on(),
     list: () => azList.az(),
   });

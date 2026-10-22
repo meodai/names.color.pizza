@@ -1,10 +1,12 @@
 import { normalizeHex, fold } from "../names.js";
 import { writeAddress } from "../address.js";
 
-// The search: a name or a hex typed, its results, the color wheel beside it and its ×. The
-// color asked for is its own: the dot, the × and the address all follow it.
+// The search: a name or a hex typed, its results, the color wheel beside it and its × (a dice
+// while there's nothing to clear). The color asked for is its own: the dot, the × and the
+// address all follow it.
 // wall: items() the names shown, nearest(hex) the closest one's index, focusCard(i),
-// dropSpot(), goHome(), busy(), listUp() whether the A–Z list is up, list() the list itself
+// dropSpot(), goHome(), busy(), roll() the dice, listUp() whether the A–Z list is up, list() the
+// list itself
 export function createSearch(root, wall) {
   const q = (s) => root.querySelector(s);
   const search = q("[data-search]");
@@ -23,7 +25,13 @@ export function createSearch(root, wall) {
     showClear();
     writeAddress({ c: hex ? hex.slice(1) : null });
   }
-  const showClear = () => (clearButton.hidden = !search.value && !chosen);
+  // a dice while there's nothing to clear
+  function showClear() {
+    const clear = !!(search.value || chosen);
+    clearButton.classList.toggle("is-clear", clear);
+    clearButton.title = clear ? "Clear the search" : "A random color";
+    clearButton.setAttribute("aria-label", clearButton.title);
+  }
 
   let found = [];
   let active = 0;
@@ -81,6 +89,12 @@ export function createSearch(root, wall) {
   }
 
   clearButton.addEventListener("click", () => {
+    if (!clearButton.classList.contains("is-clear")) {
+      clearButton.classList.remove("is-rolling");
+      void clearButton.offsetWidth;
+      clearButton.classList.add("is-rolling");
+      return wall.roll();
+    }
     if (wall.listUp()) {
       choose(null, "");
       wall.list()?.filter("");
@@ -92,6 +106,8 @@ export function createSearch(root, wall) {
     wall.goHome();
     search.focus();
   });
+
+  clearButton.addEventListener("animationend", () => clearButton.classList.remove("is-rolling"));
 
   // the hint shimmers until the search is first used, here or on an earlier visit
   const SEARCHED = "cn-searched";

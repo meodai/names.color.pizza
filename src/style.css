@@ -3872,6 +3872,8 @@ html.is-arriving:not(.is-passed-on) {
   appearance: none;
 }
 
+/* a dice while there's nothing to clear, an × once there is: the face undraws, the arms grow
+   out of the middle pip, and each corner pip is gone as an arm reaches it; back, the other way */
 .wall__clear {
   position: absolute;
   inset: 50% 0.55rem auto auto;
@@ -3892,13 +3894,91 @@ html.is-arriving:not(.is-passed-on) {
     background 0.2s ease;
 }
 
-.wall__clear[hidden] {
-  display: none;
+.wall__clear svg {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  overflow: visible;
 }
 
-.wall__clear svg {
-  inline-size: 0.95rem;
-  block-size: 0.95rem;
+.wall__face,
+.wall__arm {
+  fill: none;
+  stroke: currentColor;
+  stroke-dasharray: 1 2;
+}
+
+.wall__face {
+  stroke-width: 1.8;
+  transition: stroke-dashoffset 0.35s 0.1s ease;
+}
+
+.wall__arm {
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.25s ease-in,
+    opacity 0s 0.25s;
+}
+
+.wall__pip {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: scale 0.2s 0.2s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.wall__pip--middle {
+  transition-delay: 0.3s;
+}
+
+/* and gone once undrawn, its last speck too */
+.wall__clear.is-clear .wall__face {
+  stroke-dashoffset: -1;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.35s ease,
+    opacity 0s 0.35s;
+}
+
+.wall__clear.is-clear .wall__arm {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transition:
+    stroke-dashoffset 0.3s 0.08s cubic-bezier(0.3, 0.7, 0, 1),
+    opacity 0s 0.08s;
+}
+
+.wall__clear.is-clear .wall__pip {
+  scale: 0;
+  transition: scale 0.12s 0.18s ease-in;
+}
+
+.wall__clear.is-clear .wall__pip--middle {
+  transition-delay: 0s;
+}
+
+/* rolled: it tumbles as it turns into the × */
+.wall__clear.is-rolling svg {
+  animation: dice-roll 0.6s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+@keyframes dice-roll {
+  from {
+    rotate: -360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall__clear *,
+  .wall__clear.is-clear * {
+    transition: none;
+  }
+
+  .wall__clear.is-rolling svg {
+    animation: none;
+  }
 }
 
 .wall__clear:hover,
@@ -5174,6 +5254,15 @@ html.is-arriving:not(.is-passed-on) {
 
 /* only a real pointer hovers: a touch screen leaves the row under the finger "hovered"
    once a scroll stops */
+/* the one the dice landed on, as if hovered */
+.az__row.is-picked {
+  color: var(--c);
+}
+
+.az__row.is-picked::before {
+  transform: scaleY(1);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .az__row:hover {
     color: var(--c);
