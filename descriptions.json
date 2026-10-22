@@ -270327,5 +270327,30 @@
     "reference": "Metal Slug, the SV-001 tank",
     "description": "Dusty olive armour of Metal Slug's little tank, dented, smoking and still rolling forward.",
     "model": "claude"
+  },
+  {
+    "name": "Arctic Brown",
+    "hex": "#4c381b",
+    "ai": true,
+    "kind": "plain",
+    "description": "Dark, frozen earth.",
+    "model": "describer"
+  },
+  {
+    "name": "Free Speech Purple",
+    "hex": "#635688",
+    "ai": true,
+    "kind": "reference",
+    "reference": "freedom of speech",
+    "description": "Muted purple for the voice that refuses to be silenced.",
+    "model": "describer"
+  },
+  {
+    "name": "True South Blue",
+    "hex": "#1b2f4c",
+    "ai": true,
+    "kind": "plain",
+    "description": "Deep navy, a compass point due south, without a hint of magnetic variation.",
+    "model": "describer"
   }
 ]
