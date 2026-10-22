@@ -270514,5 +270514,14 @@
     "reference": "pun: a controlled substance, a drug the law restricts; the hex spells DEA DEA",
     "description": "Lavender haze from the evidence locker, the kind of purple only the DEA would bother to seize.",
     "model": "claude"
+  },
+  {
+    "name": "Mr Freeze",
+    "hex": "#abd4ec",
+    "ai": true,
+    "kind": "reference",
+    "reference": "character: Mr. Freeze, the Batman villain in a cryogenic suit",
+    "description": "Frost on the glass dome of Mr. Freeze's cryo suit, the pale ice blue of Gotham's coldest villain.",
+    "model": "claude"
   }
 ]
