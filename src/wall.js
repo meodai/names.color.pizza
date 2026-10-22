@@ -55,8 +55,17 @@ const CALM_MS = 160;
 const HOVER_WAIT = 140;
 const HOVER_MS = 220;
 const FOCUS_PX = 230;
-// the dice's flight: turns round and over, the share of it spent going out, and how long
-const ROLL = { turns: 3, flips: 1, out: 0.25, ms: 3200 };
+// the dice's flight: turns round and over, the share of it spent going out, and how long; the
+// way in speeds up for the first share of it, cruises, and slows down over the last
+const ROLL = { turns: 3, flips: 1, out: 0.2, ms: 4200, speedUp: 0.15, slowDown: 0.35 };
+// 0 to 1 at a steady speed between speeding up and slowing down, so the way through the bulk of
+// the colors goes by evenly
+function cruise(t, up, down) {
+  const top = 1 / (1 - up / 2 - down / 2);
+  if (t < up) return (top * t * t) / (2 * up);
+  if (t > 1 - down) return 1 - (top * (1 - t) ** 2) / (2 * down);
+  return top * (t - up / 2);
+}
 
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
   <div class="swatchcard__upper"><i class="swatchcard__swatch" aria-hidden="true">
@@ -994,14 +1003,18 @@ export async function initWall(root) {
 
   // the dice: one of the Best of names in the list shown, at random; in the A–Z list, scrolled
   // to. In the space, thrown: three turns round and one over, fast at first and slowing till it
-  // rests on the card; meanwhile out to the whole of it quickly, then a long way in, the turning
-  // bending the way in into an arc. Once a roll waits on the Best of names, and its flight is
-  // marked as the dice's
+  // rests on the card; meanwhile out to the whole of it quickly, then a long way in, slowly
+  // through the bulk of the colors, the turning bending the way in into an arc. Once a roll
+  // waits on the Best of names, and its flight is marked as the dice's
   let rolling = false;
   async function roll() {
     if (busy || rolling || anim?.roll || page.isOpen()) return;
     rolling = true;
-    const best = new Set((await getList("bestOf")).items.map((it) => it.name));
+    // without them, any name in the list
+    const best = await getList("bestOf").then(
+      (list) => new Set(list.items.map((it) => it.name)),
+      () => new Set(),
+    );
     rolling = false;
     const pool = items.flatMap((it, i) => (best.has(it.name) ? [i] : []));
     const i = pool.length ? pool[Math.floor(Math.random() * pool.length)] : Math.floor(Math.random() * items.length);
@@ -1035,7 +1048,7 @@ export async function initWall(root) {
           const u = ease(t / ROLL.out);
           return { ...turned, target: lerp3(from.target, top.target, u), dist: far(from.dist, top.dist, u) };
         }
-        const u = easeInOut((t - ROLL.out) / (1 - ROLL.out));
+        const u = cruise((t - ROLL.out) / (1 - ROLL.out), ROLL.speedUp, ROLL.slowDown);
         return { ...turned, target: lerp3(top.target, card, u), dist: far(top.dist, near, u) };
       },
       // found once it has come to rest on it, not on the way
@@ -1960,6 +1973,7 @@ export async function initWall(root) {
     goHome,
     busy: () => busy,
     roll,
+    warm: () => getList("bestOf").catch(() => {}),
     listUp: () => azList.on(),
     list: () => azList.az(),
   });

@@ -5,8 +5,8 @@ import { writeAddress } from "../address.js";
 // while there's nothing to clear). The color asked for is its own: the dot, the × and the
 // address all follow it.
 // wall: items() the names shown, nearest(hex) the closest one's index, focusCard(i),
-// dropSpot(), goHome(), busy(), roll() the dice, listUp() whether the A–Z list is up, list() the
-// list itself
+// dropSpot(), goHome(), busy(), roll() the dice, warm() its names fetched ahead, listUp() whether
+// the A–Z list is up, list() the list itself
 export function createSearch(root, wall) {
   const q = (s) => root.querySelector(s);
   const search = q("[data-search]");
@@ -108,6 +108,16 @@ export function createSearch(root, wall) {
   });
 
   clearButton.addEventListener("animationend", () => clearButton.classList.remove("is-rolling"));
+  // the dice's names are a large download: on the way, once the search is near the pointer or the
+  // keys, so the first roll needn't wait
+  const bar = q("[data-find]");
+  const warm = () => {
+    bar.removeEventListener("pointerenter", warm);
+    bar.removeEventListener("focusin", warm);
+    wall.warm();
+  };
+  bar.addEventListener("pointerenter", warm);
+  bar.addEventListener("focusin", warm);
 
   // the hint shimmers until the search is first used, here or on an earlier visit
   const SEARCHED = "cn-searched";
