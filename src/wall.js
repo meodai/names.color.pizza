@@ -7,21 +7,7 @@ import { pixelMode, setPixelMode } from "./pixel-mode.js";
 import { readAddress, writeAddress } from "./address.js";
 import { createPixelSpace } from "./pixel-space.js";
 import { NOT_DRAWN, blankURL } from "./pixel-blank.js";
-import {
-  reduceMotion,
-  ease,
-  easeIn,
-  easeInOut,
-  clamp,
-  wrap,
-  sub,
-  add,
-  scale,
-  dot,
-  cross,
-  norm,
-  lerp3,
-} from "./wall/math.js";
+import { reduceMotion, ease, easeInOut, clamp, wrap, sub, add, scale, dot, cross, norm, lerp3 } from "./wall/math.js";
 import { CARD_W, CARD_H, cardScale, MODELS, DEFAULT_MODEL, GEO, CELL_REACH } from "./wall/models.js";
 import { createRenderer, NEAR, FAR, NEAR_SLOTS } from "./wall/renderer.js";
 import { createViewSwitch } from "./wall/views.js";
@@ -69,11 +55,8 @@ const CALM_MS = 160;
 const HOVER_WAIT = 140;
 const HOVER_MS = 220;
 const FOCUS_PX = 230;
-// the dice's flight: out, turning round one and a half times and once over, speeding up; then in
-// on the card for the rest of the three turns, slowing down (twice as long, so the turning
-// keeps its speed where the two meet)
-const ROLL_OUT = { turns: 1.5, flips: 1, ms: 750 };
-const ROLL_IN = { turns: 1.5, ms: 1500 };
+// the dice's flight: turns round and over, the share of it spent going out, and how long
+const ROLL = { turns: 3, flips: 1, out: 0.25, ms: 3200 };
 
 const CARD_HTML = `<article class="swatchcard swatchcard--visible swatchcard--reset">
   <div class="swatchcard__upper"><i class="swatchcard__swatch" aria-hidden="true">
@@ -664,11 +647,15 @@ export async function initWall(root) {
       }
     } else if (anim) {
       const t = Math.min(1, (time - anim.start) / anim.duration);
-      const k = anim.ease(t);
-      cam.target = lerp3(anim.from.target, anim.to.target, k);
-      cam.dist = Math.exp(Math.log(anim.from.dist) + (Math.log(anim.to.dist) - Math.log(anim.from.dist)) * k);
-      cam.yaw = anim.from.yaw + (anim.to.yaw - anim.from.yaw) * k;
-      cam.pitch = anim.from.pitch + (anim.to.pitch - anim.from.pitch) * k;
+      // a flight drawing its own path, else straight from one view to the other
+      if (anim.at) Object.assign(cam, anim.at(t));
+      else {
+        const k = anim.ease(t);
+        cam.target = lerp3(anim.from.target, anim.to.target, k);
+        cam.dist = Math.exp(Math.log(anim.from.dist) + (Math.log(anim.to.dist) - Math.log(anim.from.dist)) * k);
+        cam.yaw = anim.from.yaw + (anim.to.yaw - anim.from.yaw) * k;
+        cam.pitch = anim.from.pitch + (anim.to.pitch - anim.from.pitch) * k;
+      }
       if (t >= 1) {
         const done = anim.done;
         anim = null;
@@ -757,14 +744,17 @@ export async function initWall(root) {
     trackSpeed(time, dt);
     const fadingNear = trackNear(time);
     const clearingWay = trackHoverClear(time, dt);
-    // while a card opens or comes back, only it keeps its name; the rest fold theirs away
+    // while a card opens or comes back, only it keeps its name; the rest fold theirs away, as
+    // they do round a found card (its name is its own, over the space) and all the dice's flight
     const stripping = folding
       ? trackStrips(time, new Set())
       : opening
         ? trackStrips(time, pixelArt.on ? new Set() : new Set([opening.i]))
-        : textInGL()
-          ? trackStrips(time, pixelNames(texts.ready))
-          : false;
+        : spot || anim?.roll
+          ? trackStrips(time, new Set())
+          : textInGL()
+            ? trackStrips(time, pixelNames(texts.ready))
+            : false;
     const glittering = trackGlitter(time);
     render(time);
     placeLabels();
@@ -909,15 +899,11 @@ export async function initWall(root) {
     setAway(!to.home);
     stopMoving();
     stopIdle();
-    const { home: _home, turns = 0, flips = 0, ...dest } = to;
+    const { home: _home, ...dest } = to;
     const target = { target: cam.target, dist: cam.dist, yaw: cam.yaw, pitch: cam.pitch, ...dest };
-    // turn the short way round, and as many whole turns more as asked, round and over
-    target.yaw =
-      cam.yaw +
-      ((((target.yaw - cam.yaw) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) -
-      Math.PI +
-      turns * 2 * Math.PI;
-    target.pitch = cam.pitch + wrap(target.pitch - cam.pitch) + flips * 2 * Math.PI;
+    // turn the short way round
+    target.yaw = cam.yaw + ((((target.yaw - cam.yaw) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+    target.pitch = cam.pitch + wrap(target.pitch - cam.pitch);
     if (reduceMotion || !duration) {
       Object.assign(cam, target);
       request();
@@ -998,18 +984,19 @@ export async function initWall(root) {
 
   const distFor = (px) => (W * cam.fpx) / px;
 
-  function focusCard(i, { turns = 0, duration, easing } = {}) {
-    // under the size where cards dissolve, so a narrow screen keeps it once the camera moves
-    const dist = distFor(Math.min(FOCUS_PX, Math.min(view.w, view.h) * NEAR_AT * 0.8));
-    flyTo({ target: posOf(i), dist, turns }, duration, undefined, easing);
+  // under the size where cards dissolve, so a narrow screen keeps it once the camera moves
+  const focusDist = () => distFor(Math.min(FOCUS_PX, Math.min(view.w, view.h) * NEAR_AT * 0.8));
+  function focusCard(i) {
+    flyTo({ target: posOf(i), dist: focusDist() });
     marked = i;
     spot = { i, on: true, t: performance.now() };
   }
 
-  // the dice: one of the Best of names in the list shown, at random; in the space, out to the
-  // whole of it turning round and over quickly, and in on that one while still turning; in the
-  // A–Z list, scrolled to. Once a roll waits on the Best of names, and its flight is marked as
-  // the dice's
+  // the dice: one of the Best of names in the list shown, at random; in the A–Z list, scrolled
+  // to. In the space, thrown: three turns round and one over, fast at first and slowing till it
+  // rests on the card; meanwhile out to the whole of it quickly, then a long way in, the turning
+  // bending the way in into an arc. Once a roll waits on the Best of names, and its flight is
+  // marked as the dice's
   let rolling = false;
   async function roll() {
     if (busy || rolling || anim?.roll || page.isOpen()) return;
@@ -1025,12 +1012,40 @@ export async function initWall(root) {
       return azList.az()?.reveal(it.name);
     }
     choose(it.hex, it.name);
-    const inOn = () => {
-      focusCard(i, { turns: ROLL_IN.turns, duration: ROLL_IN.ms });
-      if (anim) anim.roll = true;
+    if (reduceMotion) return focusCard(i);
+    dropSpot();
+    setAway(true);
+    stopMoving();
+    stopIdle();
+    const from = { target: cam.target, dist: cam.dist, yaw: cam.yaw, pitch: cam.pitch };
+    const top = home();
+    const card = posOf(i);
+    const near = focusDist();
+    const yaws = ROLL.turns * 2 * Math.PI;
+    const pitches = ROLL.flips * 2 * Math.PI + wrap(top.pitch - from.pitch);
+    const far = (a, b, k) => Math.exp(Math.log(a) + (Math.log(b) - Math.log(a)) * k);
+    anim = {
+      roll: true,
+      start: performance.now(),
+      duration: ROLL.ms,
+      at(t) {
+        const k = 1 - Math.pow(1 - t, 3);
+        const turned = { yaw: from.yaw + yaws * k, pitch: from.pitch + pitches * k };
+        if (t < ROLL.out) {
+          const u = ease(t / ROLL.out);
+          return { ...turned, target: lerp3(from.target, top.target, u), dist: far(from.dist, top.dist, u) };
+        }
+        const u = easeInOut((t - ROLL.out) / (1 - ROLL.out));
+        return { ...turned, target: lerp3(top.target, card, u), dist: far(top.dist, near, u) };
+      },
+      // found once it has come to rest on it, not on the way
+      done: () => {
+        marked = i;
+        spot = { i, on: true, t: performance.now() };
+        request();
+      },
     };
-    flyTo({ ...home(), turns: ROLL_OUT.turns, flips: ROLL_OUT.flips }, ROLL_OUT.ms, inOn, easeIn);
-    if (anim) anim.roll = true;
+    request();
   }
 
   // measured on a hidden copy, so it follows the color page's own CSS

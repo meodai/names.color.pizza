@@ -1,7 +1,6 @@
 // small numbers for the wall: easing, and three-vectors as plain arrays
 export const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 export const ease = (t) => 1 - Math.pow(1 - t, 4);
-export const easeIn = (t) => t * t;
 export const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 // an angle into -π…π
