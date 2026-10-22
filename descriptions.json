@@ -270505,5 +270505,14 @@
     "reference": "saying: under the weather, feeling ill",
     "description": "Washed-out mauve grey, pale and peaky, a day spent on the sofa.",
     "model": "claude"
+  },
+  {
+    "name": "Controlled Substance",
+    "hex": "#deadea",
+    "ai": true,
+    "kind": "reference",
+    "reference": "pun: a controlled substance, a drug the law restricts; the hex spells DEA DEA",
+    "description": "Lavender haze from the evidence locker, the kind of purple only the DEA would bother to seize.",
+    "model": "claude"
   }
 ]
