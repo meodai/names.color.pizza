@@ -270532,5 +270532,302 @@
     "reference": "the pulse of royal blood under the crown",
     "description": "Raspberry crimson thudding beneath imperial robes, the pulse that keeps an empire alive.",
     "model": "claude"
+  },
+  {
+    "name": "Anaconda Gold",
+    "hex": "#dfa541",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Warm mustard gold with a metallic glint, the kind of paint that made a big 70s coupe look like it was coiled and ready to strike.",
+    "model": "claude"
+  },
+  {
+    "name": "Andes Copper",
+    "hex": "#d46534",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Burnt orange copper, a seventies car paint named for the mountain mines where the metal comes from.",
+    "model": "claude"
+  },
+  {
+    "name": "Anti-Establishment Mint",
+    "hex": "#3f6c45",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s Mopar color",
+    "description": "Deep counter-culture green, a muscle-car paint that rolled off the line with a protest sign in its name.",
+    "model": "claude"
+  },
+  {
+    "name": "Bay Roc Blue",
+    "hex": "#78bed9",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Bright sky blue with a coastal feel, the shade of a seventies cruiser parked by the bay with the top down.",
+    "model": "claude"
+  },
+  {
+    "name": "Big Bad Blue",
+    "hex": "#3c5aa2",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: AMC's 1969–70 Big Bad colors",
+    "description": "Loud royal blue from AMC's Big Bad trio, made to make a Javelin or AMX impossible to miss.",
+    "model": "claude"
+  },
+  {
+    "name": "Big Bad Green",
+    "hex": "#3ca335",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: AMC's 1969–70 Big Bad colors",
+    "description": "Shouting grass green from AMC's Big Bad trio, a muscle-car paint with no interest in blending in.",
+    "model": "claude"
+  },
+  {
+    "name": "Big Bad Orange",
+    "hex": "#db5c00",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: AMC's 1969–70 Big Bad colors",
+    "description": "Blazing orange from AMC's Big Bad trio, the boldest of the three and the hardest to park quietly.",
+    "model": "claude"
+  },
+  {
+    "name": "Black Sunfire",
+    "hex": "#271a2d",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Near-black with a smoulder of plum underneath, like a dark car whose paint catches fire only in direct sun.",
+    "model": "claude"
+  },
+  {
+    "name": "Blue Moondust",
+    "hex": "#376a93",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Steel blue with a metallic dusting, seventies car paint that looks like it collected a little lunar powder.",
+    "model": "claude"
+  },
+  {
+    "name": "Burnished Cinnamon",
+    "hex": "#a2500f",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Rich cinnamon brown polished to a glow, the warm metallic of a seventies sedan in late-afternoon light.",
+    "model": "claude"
+  },
+  {
+    "name": "Burnt Straw",
+    "hex": "#c8b76e",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Faded khaki gold, the colour of a summer field after harvest, worn proudly by many a seventies wagon.",
+    "model": "claude"
+  },
+  {
+    "name": "Cameo Rosewood",
+    "hex": "#ebaf84",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Soft peach blush with a vintage cameo glow, a gentle seventies paint for a gentle drive.",
+    "model": "claude"
+  },
+  {
+    "name": "Citron Yella",
+    "hex": "#c4e461",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s Mopar color",
+    "description": "Zesty yellow-green spelled with attitude, a seventies muscle-car paint as sharp as a squeezed lime.",
+    "model": "claude"
+  },
+  {
+    "name": "Copper Moondust",
+    "hex": "#d48020",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Glowing copper orange with a metallic shimmer, seventies paint that looks dusted with moonlit metal.",
+    "model": "claude"
+  },
+  {
+    "name": "Corsa Rossa",
+    "hex": "#f5222b",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: Italian racing red",
+    "description": "Pure racing red, the Italian corsa colour that belongs on a sports car flat out on the straight.",
+    "model": "claude"
+  },
+  {
+    "name": "Emberust",
+    "hex": "#b66930",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Glowing rust between embers and old iron, a warm seventies paint that looks freshly out of the fire.",
+    "model": "claude"
+  },
+  {
+    "name": "English Racing Green",
+    "hex": "#2e5e45",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: British racing green",
+    "description": "Deep forest green of British motorsport, the classic colour of a vintage roadster on a country lane.",
+    "model": "claude"
+  },
+  {
+    "name": "Firethorn",
+    "hex": "#b74027",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Brick red with a sharp edge, named for the berried shrub and worn by seventies cars with a little bite.",
+    "model": "claude"
+  },
+  {
+    "name": "Free Born Red",
+    "hex": "#c83b1a",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Bold tomato red with a free-spirited name, a seventies paint made for open roads and loud engines.",
+    "model": "claude"
+  },
+  {
+    "name": "Giallo Fly",
+    "hex": "#fde349",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: an Italian supercar yellow",
+    "description": "Bright Italian supercar yellow, a giallo made to fly past everything else on the road.",
+    "model": "claude"
+  },
+  {
+    "name": "Guards Red",
+    "hex": "#c0361b",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: Porsche's Guards Red",
+    "description": "Porsche's signature red, as crisp and upright as a guardsman's tunic on a 911.",
+    "model": "claude"
+  },
+  {
+    "name": "Hugger Orange",
+    "hex": "#f33844",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: Chevrolet Camaro's Hugger Orange, 1969–70",
+    "description": "Hot orange-red from the Camaro's muscle-car years, a paint that hugs the curves of the road.",
+    "model": "claude"
+  },
+  {
+    "name": "Knickerbocker Tan",
+    "hex": "#af9371",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Easy-going khaki tan with old New York charm, a sensible seventies paint with a dapper name.",
+    "model": "claude"
+  },
+  {
+    "name": "Kurama Orange",
+    "hex": "#d24d07",
+    "ai": true,
+    "kind": "reference",
+    "reference": "character: Kurama, the Nine-Tailed Fox in Naruto",
+    "description": "Blazing fox-fire orange of Kurama, the Nine-Tailed beast sealed inside Naruto.",
+    "model": "claude"
+  },
+  {
+    "name": "Midnight Cordovan",
+    "hex": "#511b18",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Deep oxblood like polished cordovan leather, the after-dark red of a seventies luxury car.",
+    "model": "claude"
+  },
+  {
+    "name": "Moondust",
+    "hex": "#b39786",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Soft greige with a pale metallic glow, seventies car paint the colour of a dusty lunar surface.",
+    "model": "claude"
+  },
+  {
+    "name": "Moulin Rouge",
+    "hex": "#a14b61",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s Mopar color",
+    "description": "Dusty berry pink named for the Paris cabaret, a showgirl of a seventies paint.",
+    "model": "claude"
+  },
+  {
+    "name": "Old English White",
+    "hex": "#f4f8dd",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Creamy antique white with a hint of yellow, the stately off-white of a seventies coupe with whitewall tyres.",
+    "model": "claude"
+  },
+  {
+    "name": "Plata O Plomo",
+    "hex": "#8a8d91",
+    "ai": true,
+    "kind": "reference",
+    "reference": "saying: \"plata o plomo\", silver or lead, Pablo Escobar's ultimatum",
+    "description": "Cold gunmetal grey, caught between the silver of the bribe and the lead of the bullet.",
+    "model": "claude"
+  },
+  {
+    "name": "Playmate Pink",
+    "hex": "#e9c7d0",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Soft bubblegum pink, a playful seventies paint that turned any car into a pin-up.",
+    "model": "claude"
+  },
+  {
+    "name": "Pumpkin Sheen",
+    "hex": "#f6a379",
+    "ai": true,
+    "kind": "thing",
+    "reference": "pumpkin",
+    "description": "Soft pumpkin orange with a glossy sheen, like a freshly polished autumn gourd on the doorstep.",
+    "model": "claude"
+  },
+  {
+    "name": "Saluki Bronze",
+    "hex": "#65492a",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Deep coffee bronze named for the sleek desert hound, a seventies paint with a lean and elegant look.",
+    "model": "claude"
+  },
+  {
+    "name": "Tahitian Walnut",
+    "hex": "#8f885c",
+    "ai": true,
+    "kind": "reference",
+    "reference": "car paint: a 1970s factory color",
+    "description": "Olive-tinged walnut brown, a seventies paint that mixes island holiday with wood-panelled dashboard.",
+    "model": "claude"
   }
 ]
