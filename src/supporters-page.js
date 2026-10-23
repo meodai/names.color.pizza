@@ -88,5 +88,9 @@ export async function initSupportersPage() {
   if (row) {
     row.classList.add("is-asked");
     row.scrollIntoView({ block: "center" });
+  } else if (location.hash.length > 1) {
+    // a section further down (the adopt page's "What it costs"): the browser went there before
+    // the list above it was drawn, which pushed it away
+    document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView({ block: "start" });
   }
 }
