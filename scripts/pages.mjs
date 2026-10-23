@@ -301,10 +301,11 @@ const statsHTML = (hex, adopted, slug) =>
       ? `Adopted ${escapeHTML(longDate(adopted.at))} by <span class="hero__adopter">${escapeHTML(handle(adopted.by, adopted.on))}</span>, <a class="hero__patron" href="../../supporters/#color-${slug}">${adopted.founding ? "founding patron" : "patron"}</a>`
       : `<a class="adopt-cta" href="../../adopt/#${hex.slice(1)}">Adopt this color ${HEART}</a>`
   }</span>`;
-const pixelOf = (slug) =>
+// drawn from a hand-written hint: its subject isn't published, the name stands in
+const pixelOf = (slug, name) =>
   pixels[slug] && {
     src: `https://media.color.pizza/pixel/${slug}.webp?v=${pixels[slug].v}`,
-    subject: pixels[slug].subject,
+    subject: pixels[slug].subject || `Pixel art of ${name}`,
   };
 
 // a color's link preview comes through the worker, which picks it when asked: the color's
@@ -506,7 +507,7 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(
       "</body>",
       () =>
-        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art === true || art?.length ? listURL(slug) : null, adopted: adopted[slug], pixel: pixelOf(slug) })}</script>\n  </body>`,
+        `<script type="application/json" id="color-data">${scriptJSON({ name, hex, slug, description: said || null, fetched: copy?.fetched || null, looked, list: art === true || art?.length ? listURL(slug) : null, adopted: adopted[slug], pixel: pixelOf(slug, name) })}</script>\n  </body>`,
     );
   // the sections the page will fill are there from the start; the ones known to stay empty aren't
   const meaning = meaningHTML(looked);
@@ -571,7 +572,7 @@ ${preview.join("\n")}
     }
   }
   sitemap.push(`<url><loc>${url}</loc>${copy?.fetched ? `<lastmod>${copy.fetched}</lastmod>` : ""}</url>`);
-  dataset.push(datasetLine({ name, hex, url, said, looked: copy?.looked, pixel: pixelOf(slug) }));
+  dataset.push(datasetLine({ name, hex, url, said, looked: copy?.looked, pixel: pixelOf(slug, name) }));
   written++;
 }
 
