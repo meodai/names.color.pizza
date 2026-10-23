@@ -30,6 +30,8 @@ test.describe("lists", () => {
   });
 
   test("a list that doesn't load leaves the one shown, in the address too", async ({ page }) => {
+    // Short is the full list's good names (best-of.json), the API's own only if they won't come
+    await page.route(/best-of\.json/, (r) => r.abort());
     await page.route(/api\.color\.pizza\/.*list=short/, (r) => r.abort());
     await openWall(page);
     await page.locator("[data-lists]").click();

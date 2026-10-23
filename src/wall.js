@@ -605,6 +605,10 @@ export async function initWall(root) {
     list: azList,
     space: {
       flying: () => {
+        walking = true;
+        // the mouse looks round, no button held, the pointer hidden till Esc, a click or the wheel
+        if (!looking()) canvas.requestPointerLock?.()?.catch(() => {});
+        tip.hidden = true;
         anim = null;
         stopIdle();
         dropSpot();
@@ -617,13 +621,38 @@ export async function initWall(root) {
     },
   });
   const held = keys.held;
+  // From the first fly key on, the view is flown as in a game: it turns about the camera, not
+  // the point it looks at, and goes where it looks at one speed for the whole shape; the
+  // wheel (or going home) hands it back to the orbit
+  let walking = false;
+  const looking = () => document.pointerLockElement === canvas;
+  // the first move once locked can carry the pointer's own jump to the middle: from where it was
+  let lookFrom = false;
+  document.addEventListener("pointerlockchange", () => {
+    lookFrom = looking();
+    if (!lookFrom) stopWalking();
+  });
+  // the orbit again, round the point straight ahead as deep as the shape's middle, so the
+  // view itself doesn't move
+  function stopWalking() {
+    if (looking()) document.exitPointerLock();
+    if (!walking) return;
+    walking = false;
+    const { lo, hi } = boundsOf(model);
+    const deep = clamp(dot(sub(scale(add(lo, hi), 0.5), cam.eye), cam.fwd), MIN_DIST * 4, MAX_DIST);
+    cam.target = add(cam.eye, scale(cam.fwd, deep));
+    cam.dist = deep;
+  }
   // per 16 ms a key is held, fed into the same eased motion as the mouse
   function fly(dt) {
     const k = dt / 16;
-    if (held.has("forward")) delta.zoom -= 0.025 * k;
-    if (held.has("back")) delta.zoom += 0.025 * k;
-    if (held.has("left")) pan(14 * k, 0);
-    if (held.has("right")) pan(-14 * k, 0);
+    const { lo, hi } = boundsOf(model);
+    const v = Math.hypot(...sub(hi, lo)) * 0.0025 * k;
+    const go = (dir, by) => (delta.pan = add(delta.pan, scale(dir, by)));
+    if (held.has("forward")) go(cam.fwd, v);
+    if (held.has("back")) go(cam.fwd, -v);
+    if (held.has("left")) go(cam.right, -v);
+    if (held.has("right")) go(cam.right, v);
     if (held.has("turnLeft")) rotate(-7 * k, 0);
     if (held.has("turnRight")) rotate(7 * k, 0);
     if (held.has("turnUp")) rotate(0, -7 * k);
@@ -684,10 +713,25 @@ export async function initWall(root) {
       setAway(true);
       // damped like three.js OrbitControls
       const f = reduceMotion ? 1 : 1 - Math.pow(1 - DAMPING, dt / 16.7);
+      const was = cam.target;
+      const eye = walking && cam.eye;
       cam.yaw += delta.yaw * f;
       cam.pitch += delta.pitch * f;
+      if (eye) {
+        update();
+        cam.target = add(eye, scale(cam.fwd, cam.dist));
+      }
       cam.target = add(cam.target, scale(delta.pan, f));
-      zoomBy(Math.exp(delta.zoom * f));
+      if (!walking) zoomBy(Math.exp(delta.zoom * f), was);
+      else {
+        // the camera kept within half the shape past its sides, nor further than it already was
+        const { lo, hi } = boundsOf(model);
+        const pad = Math.hypot(...sub(hi, lo)) / 2;
+        const at = sub(cam.target, scale(cam.fwd, cam.dist)).map((v, j) =>
+          clamp(v, Math.min(lo[j] - pad, eye[j]), Math.max(hi[j] + pad, eye[j])),
+        );
+        cam.target = add(at, scale(cam.fwd, cam.dist));
+      }
       delta.yaw *= 1 - f;
       delta.pitch *= 1 - f;
       delta.pan = scale(delta.pan, 1 - f);
@@ -1363,14 +1407,14 @@ export async function initWall(root) {
     delta.zoom += logFactor;
   };
   // toward the middle of the view; at the closest the camera orbits from, it flies on
-  // through instead of stopping
-  function zoomBy(k) {
+  // through instead of stopping. was: the point it orbits before this frame's moves
+  function zoomBy(k, was) {
     const kk = clamp(k, MIN_DIST / cam.dist, MAX_DIST / cam.dist);
     cam.dist *= kk;
     if (k < kk) cam.target = add(cam.target, scale(cam.fwd, -Math.log(k / kk) * THROUGH));
-    // never further out than a little past the shape
+    // never further out than a little past the shape, nor than it already was
     const { lo, hi } = boundsOf(model);
-    cam.target = cam.target.map((v, j) => clamp(v, lo[j] - 20, hi[j] + 20));
+    cam.target = cam.target.map((v, j) => clamp(v, Math.min(lo[j] - 20, was[j]), Math.max(hi[j] + 20, was[j])));
   }
 
   function home(key = model) {
@@ -1389,6 +1433,7 @@ export async function initWall(root) {
 
   canvas.addEventListener("pointerdown", (e) => {
     if (busy) return;
+    if (looking()) return stopWalking();
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     anim = null;
@@ -1413,6 +1458,12 @@ export async function initWall(root) {
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
   canvas.addEventListener("pointermove", (e) => {
+    if (looking()) {
+      const jump = lookFrom || Math.hypot(e.movementX, e.movementY) > 250;
+      lookFrom = false;
+      if (!jump) rotate(e.movementX * 0.5, e.movementY * 0.5);
+      return request();
+    }
     const p = pointers.get(e.pointerId);
     if (!p) return hover(e);
     const dx = e.clientX - p.x;
@@ -1508,6 +1559,7 @@ export async function initWall(root) {
       stopIdle();
       dropSpot();
       tip.hidden = true;
+      stopWalking();
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? view.h : 1;
       zoom(e.deltaY * unit * (e.ctrlKey ? 0.01 : 0.0015));
       request();
@@ -1523,12 +1575,14 @@ export async function initWall(root) {
     flyTo({ dist: clamp(cam.dist * factor, MIN_DIST, MAX_DIST) }, 420);
   };
   // home, by any way there, and turning again once it arrives, as when the page opens
-  const goHome = () =>
-    !busy &&
+  const goHome = () => {
+    if (busy) return;
+    stopWalking();
     flyTo(home(), 1000, () => {
       idle = !reduceMotion;
       request();
     });
+  };
 
   q(".brand").addEventListener("click", (e) => {
     e.preventDefault();

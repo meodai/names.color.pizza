@@ -30,7 +30,44 @@ test.describe("the keys", () => {
     const a = await cam(page);
     await page.waitForTimeout(400);
     const b = await cam(page);
-    expect(Math.abs(b.dist - a.dist)).toBeLessThan(0.5);
+    expect(Math.hypot(...b.eye.map((v, i) => v - a.eye[i]))).toBeLessThan(0.5);
+  });
+
+  test("the fly keys fly as in a game: W goes where it looks, an arrow turns on the spot, the wheel orbits again without a jump", async ({
+    page,
+  }) => {
+    await openWall(page);
+    await page.bringToFront();
+    await page.evaluate(() => window.focus());
+    const gap = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
+    const hold = async (key, until) => {
+      await page.keyboard.down(key);
+      await expect.poll(until, { timeout: 20_000 }).toBe(true);
+      await page.keyboard.up(key);
+      await settled(page);
+    };
+    const start = await cam(page);
+    // forward along the view, the orbit's distance as it was
+    await hold("w", async () => gap((await cam(page)).eye, start.eye) > 5);
+    const went = await cam(page);
+    const dir = went.eye.map((v, i) => (v - start.eye[i]) / gap(went.eye, start.eye));
+    expect(dir.reduce((sum, v, i) => sum + v * start.fwd[i], 0)).toBeGreaterThan(0.99);
+    expect(went.dist).toBeCloseTo(start.dist, 3);
+    // turned about the camera, not the point it looked at
+    await hold("ArrowLeft", async () => Math.abs((await cam(page)).yaw - went.yaw) > 0.05);
+    const turned = await cam(page);
+    expect(gap(turned.eye, went.eye)).toBeLessThan(0.5);
+    // the wheel: the same view, then an orbit
+    const box = await page.locator("canvas").first().boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.wheel(0, 1);
+    await page.waitForTimeout(50);
+    expect(gap((await cam(page)).eye, turned.eye)).toBeLessThan(2);
+    await settled(page);
+    // the wheel zooms the orbit in again
+    const orbiting = await cam(page);
+    await page.mouse.wheel(0, -300);
+    await expect.poll(async () => (await cam(page)).dist, { timeout: 20_000 }).toBeLessThan(orbiting.dist * 0.9);
   });
 
   test("/ goes to the search", async ({ page }) => {
