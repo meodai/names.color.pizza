@@ -1036,7 +1036,9 @@ function openPicture(tile, it) {
     return [{ transform: `translate(${dx}px, ${dy}px) scale(${scale})` }, { transform: "none" }];
   };
   const go = () => {
-    // see-through, not hidden: focus goes back to it on closing, before it shows again
+    // see-through, not hidden: focus goes back to it on closing, before it shows again; at
+    // once, not by the tiles' own fade in, both ways
+    tile.style.transition = "none";
     tile.style.opacity = "0";
     page.art.classList.add("is-behind");
     if (still()) return;
@@ -1090,6 +1092,8 @@ function closePicture(now = false) {
   page.art.classList.remove("is-behind");
   const done = () => {
     tile.style.opacity = "";
+    tile.offsetWidth;
+    tile.style.transition = "";
     box.remove();
   };
   if (box.contains(document.activeElement))
