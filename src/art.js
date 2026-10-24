@@ -169,6 +169,7 @@ export const MUSEUMS = {
   albums: { name: "Cover Art Archive", url: "https://coverartarchive.org" },
   games: { name: "libretro thumbnails", url: "https://github.com/libretro-thumbnails" },
   "games-sfc": { name: "libretro thumbnails", url: "https://github.com/libretro-thumbnails" },
+  "games-boxes": { name: "libretro thumbnails", url: "https://github.com/libretro-thumbnails" },
   movies: { name: "TMDB", url: "https://www.themoviedb.org" },
   "movies-japan": { name: "TMDB", url: "https://www.themoviedb.org" },
   "movies-b": { name: "TMDB", url: "https://www.themoviedb.org" },
