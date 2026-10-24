@@ -27,6 +27,17 @@ export default defineConfig({
   preview: { proxy: { "/media": MEDIA } },
   plugins: [
     {
+      // on a local server: no Cloudflare analytics (it counts visits that aren't, and its
+      // report is refused), and no referrer, which the bucket turns away from anywhere but
+      // the site; without one it hands out the pictures
+      name: "local-pages",
+      apply: "serve",
+      transformIndexHtml: (html) =>
+        html
+          .replace(/\s*<script[^>]*cloudflareinsights[\s\S]*?<\/script>/, "")
+          .replace(/<head>/, '<head>\n    <meta name="referrer" content="no-referrer" />'),
+    },
+    {
       // {{colorCount}} in a page's head, as many as the list has right now; a build
       // without the list stops, where dev just words it loosely
       name: "color-count",

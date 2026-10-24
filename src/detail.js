@@ -131,8 +131,16 @@ const builtPage = (() => {
 async function savedLookup(name, slug) {
   if (builtPage?.name === name) return builtPage;
   if (!slug) return null;
+  const copy = await copyAt(siteURL(`color/${slug}/`), name);
+  // dev builds no pages: the live site's, its art lists through the local /media (vite.config.js)
+  if (copy || !import.meta.env.DEV) return copy;
+  const live = await copyAt(`https://names.color.pizza/color/${slug}/`, name);
+  return live?.list ? { ...live, list: live.list.replace(MEDIA, "/media") } : live;
+}
+
+async function copyAt(url, name) {
   try {
-    const res = await fetch(siteURL(`color/${slug}/`));
+    const res = await fetch(url);
     if (!res.ok) return null;
     const json = (await res.text()).match(COPY)?.[1];
     const copy = json && JSON.parse(json);
@@ -956,10 +964,13 @@ function moveStrip(dx) {
     });
 }
 
+// palettes come in color order
+const largest = (palette = []) => palette.reduce((a, b) => (b[1] > a[1] ? b : a), palette[0]);
+
 const tileHTML = (
   it,
   i,
-) => `<button type="button" class="tile__open" data-i="${i}" aria-label="${escapeHTML(it.title || "Picture")}" style="--wash:${it.palette?.[0]?.[0] || it.color || "transparent"}">
+) => `<button type="button" class="tile__open" data-i="${i}" aria-label="${escapeHTML(it.title || "Picture")}" style="--wash:${largest(it.palette)?.[0] || it.color || "transparent"}">
     <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />
     ${it.title ? `<span class="tile__name">${escapeHTML(it.title)}</span>` : ""}
     ${it.share ? `<span class="tile__share">${Math.round(it.share * 100)}%</span>` : ""}
