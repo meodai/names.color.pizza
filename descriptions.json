@@ -34256,14 +34256,6 @@
     "model": "describer"
   },
   {
-    "name": "Browned Off",
-    "hex": "#bb4433",
-    "ai": true,
-    "kind": "mood",
-    "description": "Angry ember, glowing from fed up to furious.",
-    "model": "describer"
-  },
-  {
     "name": "Brownie",
     "hex": "#964b00",
     "ai": true,
@@ -56088,14 +56080,6 @@
     "model": "describer"
   },
   {
-    "name": "Coral Dust",
-    "hex": "#edaa86",
-    "ai": true,
-    "kind": "thing",
-    "description": "Desert sand, not coral reef, though both get dusty sometimes.",
-    "model": "describer"
-  },
-  {
     "name": "Coral Expression",
     "hex": "#d76a69",
     "ai": true,
@@ -62038,15 +62022,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Electric blue, vibrant as a cyan spark.",
-    "model": "describer"
-  },
-  {
-    "name": "Cyan Cobalt Blue",
-    "hex": "#28589c",
-    "ai": true,
-    "kind": "plain",
-    "reference": "cobalt pigment",
-    "description": "Deep blue, like cobalt from a paintbox, rich as the metal it's made from.",
     "model": "describer"
   },
   {
@@ -72705,14 +72680,6 @@
     "kind": "thing",
     "reference": "tropical dry season",
     "description": "Dusty, faded grey, like the earth after months without rain.",
-    "model": "describer"
-  },
-  {
-    "name": "Dry Seedlings",
-    "hex": "#c7dc68",
-    "ai": true,
-    "kind": "thing",
-    "description": "New shoots pushing through dry earth, first leaves unfurling like tiny wings.",
     "model": "describer"
   },
   {
@@ -104153,14 +104120,6 @@
     "kind": "thing",
     "reference": "peridot gemstone",
     "description": "Olive green, like the gem that's actually a magnesium-rich mineral.",
-    "model": "describer"
-  },
-  {
-    "name": "Green Pigment",
-    "hex": "#00a550",
-    "ai": true,
-    "kind": "plain",
-    "description": "Vibrant green, straight from the tube, no mixing required.",
     "model": "describer"
   },
   {
@@ -146094,14 +146053,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Earth, as if terracotta had lost its fire.",
-    "model": "describer"
-  },
-  {
-    "name": "Medium Vermilion",
-    "hex": "#d9603b",
-    "ai": true,
-    "kind": "plain",
-    "description": "Cinnabar red, a medium cut of a poisonous pigment.",
     "model": "describer"
   },
   {
@@ -189449,15 +189400,6 @@
     "model": "describer"
   },
   {
-    "name": "Pumpkin Hue",
-    "hex": "#f6a379",
-    "ai": true,
-    "kind": "thing",
-    "reference": "pumpkin",
-    "description": "Pumpkin rind, glowing like embers from a fire pit on a fall evening.",
-    "model": "describer"
-  },
-  {
     "name": "Pumpkin Mousse",
     "hex": "#f2c3a7",
     "ai": true,
@@ -229920,14 +229862,6 @@
     "model": "describer"
   },
   {
-    "name": "Stone Brown",
-    "hex": "#b79983",
-    "ai": true,
-    "kind": "plain",
-    "description": "Dusty, weathered stone, the kind that crumbles.",
-    "model": "describer"
-  },
-  {
     "name": "Stone Cairn",
     "hex": "#888c90",
     "ai": true,
@@ -233724,14 +233658,6 @@
     "kind": "reference",
     "reference": "Sun Wukong, the Monkey King",
     "description": "Golden Monkey King crown, fit for a rebellious deity with a sunny disposition.",
-    "model": "describer"
-  },
-  {
-    "name": "Sun Yellow",
-    "hex": "#ffdf22",
-    "ai": true,
-    "kind": "plain",
-    "description": "Bright as sunlight in a field of sunflowers.",
     "model": "describer"
   },
   {
@@ -242091,14 +242017,6 @@
     "ai": true,
     "kind": "plain",
     "description": "Sparkling citrus green, the color of a freshly cut lime wedge.",
-    "model": "describer"
-  },
-  {
-    "name": "Throat",
-    "hex": "#281f3f",
-    "ai": true,
-    "kind": "thing",
-    "description": "Dark, shadowy spot at the front of the neck, where the voice is.",
     "model": "describer"
   },
   {
