@@ -3,7 +3,7 @@
 //
 //   node scripts/pages.mjs [--data .data] [--descriptions .descriptions] [--site https://names.color.pizza/]
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { availableParallelism } from "node:os";
@@ -323,6 +323,11 @@ const listed = existsSync(join(LISTS, "uploaded.json"))
   ? JSON.parse(readFileSync(join(LISTS, "uploaded.json"), "utf8"))
   : {};
 const toUpload = [];
+// the lists picked this time wait on disk, not in memory: 30,000 of them are gigabytes
+const SPOOL = resolve(here, "../.cache/art-spool");
+const spooled = (hex) => join(SPOOL, `${hex.slice(1)}.json`);
+rmSync(SPOOL, { recursive: true, force: true });
+mkdirSync(SPOOL, { recursive: true });
 // what each color's art list came to (its fingerprint, "" for none), as long as the
 // art and the code that picks it stay the same: a color known here needn't be picked again
 const PICKS = join(LISTS, "picks.json");
@@ -391,7 +396,7 @@ const readyFor = (slug, hex) => {
   return KEEP_ART || (known !== undefined && (!known || (LOCAL ? isUp(slug) : listed[slug] === known)));
 };
 
-// the colors to pick again, on every core at once: each list as its text, "" for none
+// the colors to pick again, on every core at once: whether each has a list (spooled), or none
 async function pickAll(hexes) {
   const lists = new Map();
   if (!near || !hexes.length) return lists;
@@ -401,7 +406,7 @@ async function pickAll(hexes) {
   await Promise.all(
     Array.from({ length: cores }, (_, n) => {
       const worker = new Worker(new URL("./pick-art.mjs", import.meta.url), {
-        workerData: { texts: artTexts, hexes: hexes.filter((_, i) => i % cores === n) },
+        workerData: { texts: artTexts, hexes: hexes.filter((_, i) => i % cores === n), spool: SPOOL },
       });
       worker.on("message", (batch) => {
         for (const [hex, body] of batch) lists.set(hex, body);
@@ -443,7 +448,13 @@ for (const [i, { name, hex }] of items.entries()) {
   if (copy) withCopy++;
   const looked = hosted(copy?.looked || null);
   const ready = readyFor(slug, hex);
-  const art = ready ? (picks[hex] && (!KEEP_ART || isUp(slug)) ? true : null) : (lists.get(hex) ?? artText(hex));
+  const art = ready
+    ? picks[hex] && (!KEEP_ART || isUp(slug))
+      ? true
+      : null
+    : lists.has(hex)
+      ? lists.get(hex) && readFileSync(spooled(hex), "utf8")
+      : artText(hex);
   lists.delete(hex);
   if (!ready) picked++;
   const url = `${SITE}color/${slug}/`;
@@ -568,7 +579,8 @@ ${preview.join("\n")}
       writeFileSync(join(DIST, "lists", `${slug}.json`), body);
     } else {
       const sum = picks[hex];
-      if (listed[slug] !== sum) toUpload.push({ slug, body, sum });
+      if (!existsSync(spooled(hex))) writeFileSync(spooled(hex), body);
+      if (listed[slug] !== sum) toUpload.push({ slug, hex, sum });
     }
   }
   sitemap.push(`<url><loc>${url}</loc>${copy?.fetched ? `<lastmod>${copy.fetched}</lastmod>` : ""}</url>`);
@@ -653,7 +665,8 @@ if (UPLOAD_URL && UPLOAD_KEY && toUpload.length) {
   await Promise.all(
     Array.from({ length: 48 }, async () => {
       while (toUpload.length) {
-        const { slug, body, sum } = toUpload.pop();
+        const { slug, hex, sum } = toUpload.pop();
+        const body = readFileSync(spooled(hex));
         if (total - toUpload.length >= next) {
           const done = total - toUpload.length;
           const spent = Date.now() - sending;
@@ -685,6 +698,7 @@ if (!ONLY && works.length && !KEEP_ART) {
   mkdirSync(LISTS, { recursive: true });
   writeFileSync(PICKS, JSON.stringify({ print: ART_PRINT, byHex: picks }));
 }
+rmSync(SPOOL, { recursive: true, force: true });
 // the adoptions with each color's name and hex, for the adopt and supporters pages
 const bySlug = new Map(items.map(({ name, hex }) => [slugs.get(name), { name, hex }]));
 writeFileSync(
