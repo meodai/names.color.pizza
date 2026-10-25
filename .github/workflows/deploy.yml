@@ -18,6 +18,10 @@ on:
         description: "The list's commit to announce names since, when the site doesn't say (list.txt)"
         required: false
         default: ""
+      art:
+        description: "Pick every color's art again: new art in the collections, or a change to src/art.js (otherwise only new colors are picked)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -77,6 +81,7 @@ jobs:
         env:
           UPLOAD_URL: ${{ vars.UPLOAD_URL }}
           UPLOAD_KEY: ${{ secrets.UPLOAD_KEY }}
+          ART_REPICK: ${{ inputs.art && '1' || '' }}
         run: npm run build
       # which commit of the list this build shows, beside the one the site showed till now
       - name: The list's commit

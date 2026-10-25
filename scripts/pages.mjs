@@ -322,11 +322,14 @@ const SPOOL = resolve(here, "../.cache/art-spool");
 const spooled = (hex) => join(SPOOL, `${hex.slice(1)}.json`);
 rmSync(SPOOL, { recursive: true, force: true });
 mkdirSync(SPOOL, { recursive: true });
-// what each color's art list came to (its fingerprint, "" for none), as long as the
-// art and the code that picks it stay the same: a color known here needn't be picked again
+// what each color's art list came to (its fingerprint, "" for none): a color known here
+// keeps its list whatever art has come since, and only a new one is picked, from all of
+// it; ART_REPICK=1 picks every color again (by hand: new art, or a change to art.js)
 const PICKS = join(LISTS, "picks.json");
 const cached = existsSync(PICKS) ? JSON.parse(readFileSync(PICKS, "utf8")) : null;
-const picks = cached?.print === ART_PRINT || (KEEP_ART && cached) ? cached.byHex : {};
+const REPICK = !!process.env.ART_REPICK;
+if (REPICK && !KEEP_ART) console.log("pages.mjs: ART_REPICK, every color's art picked again");
+const picks = cached && (!REPICK || KEEP_ART) ? cached.byHex : {};
 let picked = 0;
 const sitemap = [`<url><loc>${SITE}</loc></url>`];
 // the whole list as linked data, a color a line: what its page says, with Wikipedia and
