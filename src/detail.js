@@ -784,6 +784,22 @@ function revealPixels(img, canvas, card) {
 let gallery = [];
 const galleryRows = () => 6;
 
+// how the pictures show, chosen in the art section's menu and kept for every page
+const ART_SETTINGS = "art-settings";
+const artSettings = { plain: false, palettes: false, animate: false, art: true, pop: true, wiki: true };
+try {
+  Object.assign(artSettings, JSON.parse(localStorage.getItem(ART_SETTINGS) || "{}"));
+} catch {}
+const saveArtSettings = () => {
+  try {
+    localStorage.setItem(ART_SETTINGS, JSON.stringify(artSettings));
+  } catch {}
+};
+const categoryOf = (it) => (it.kind !== "art" ? "wiki" : /^(games|albums|movies)/.test(it.work.museum) ? "pop" : "art");
+// as palettes, only what has one
+const shownGallery = () =>
+  gallery.filter((it) => artSettings[categoryOf(it)] && (!artSettings.palettes || it.palette?.length));
+
 function addToGallery(hex, items) {
   // only pictures we keep a copy of
   items = items.filter((it) => it.image?.startsWith(`${MEDIA}/`));
@@ -802,14 +818,15 @@ function addToGallery(hex, items) {
 const strip = { offset: 0, source: [], rows: [], track: null, title: null, tiles: new Map(), frame: 0 };
 
 function layoutGallery() {
+  const list = shownGallery();
   const n = galleryRows();
   const rows = Array.from({ length: n }, () => ({ width: 0, items: [] }));
   // the strongest works in the rows that show in full, the rest in the cut-off rows at
   // the top and bottom; with too few for both, those repeat the inner rows, out of step
   const inner = rows.slice(1, -1);
   const outer = [rows[0], rows.at(-1)];
-  const own = gallery.length >= n * 8;
-  const split = own ? Math.round((gallery.length * inner.length) / n) : gallery.length;
+  const own = list.length >= n * 8;
+  const split = own ? Math.round((list.length * inner.length) / n) : list.length;
   const place = (items, into) => {
     for (const it of items) {
       const row = into.reduce((a, b) => (b.width < a.width ? b : a));
@@ -817,10 +834,10 @@ function layoutGallery() {
       row.items.push(it);
     }
   };
-  place(gallery.slice(0, split), inner);
-  place(gallery.slice(split), outer);
+  place(list.slice(0, split), inner);
+  place(list.slice(split), outer);
   inner.forEach((r, k) => {
-    if (!r.items.length) r.items.push(gallery[k % gallery.length]);
+    if (!r.items.length && list.length) r.items.push(list[k % list.length]);
   });
   // the strongest at each row's start and end, so on both sides of the title
   for (const r of inner) {
@@ -851,6 +868,7 @@ function layoutGallery() {
       </div>
     </div>
     <h2 class="display gallery__name">${escapeHTML(current.name)},<br />in pictures.</h2>`;
+  title.hidden = artSettings.plain;
   strip.track.append(title);
   strip.title = title;
   pixelOnCard();
@@ -868,6 +886,7 @@ function layoutGallery() {
   strip.entered = false;
   page.art.classList.remove("is-in");
   drawStrip();
+  startDrift();
   // the pictures come in from the back once the strip is in view, outward from the title
   const seen = new IntersectionObserver(
     ([e]) => {
@@ -895,13 +914,18 @@ function measureStrip(rows = strip.source) {
   strip.middle = Math.floor((rows.length - 1) / 2);
   strip.title.style.height = `${row}px`;
   strip.title.style.gap = `${gap}px`;
-  // the swatch card is as tall as a row, like a picture
-  const swatch = strip.title.querySelector(".gallery__swatch");
-  swatch.style.width = "100px";
-  swatch.style.width = `${(row * 100) / swatch.firstElementChild.offsetHeight}px`;
-  strip.title.style.width = "max-content";
-  strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + gap + row * 2.8);
-  strip.title.style.width = `${strip.titleWidth}px`;
+  if (artSettings.plain) {
+    // no title: the middle row runs on through where it would be, a gap apart
+    strip.titleWidth = -gap;
+  } else {
+    // the swatch card is as tall as a row, like a picture
+    const swatch = strip.title.querySelector(".gallery__swatch");
+    swatch.style.width = "100px";
+    swatch.style.width = `${(row * 100) / swatch.firstElementChild.offsetHeight}px`;
+    strip.title.style.width = "max-content";
+    strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + gap + row * 2.8);
+    strip.title.style.width = `${strip.titleWidth}px`;
+  }
   strip.rows = rows.map((r) => {
     let x = 0;
     const tiles = r.items.map((it) => {
@@ -920,7 +944,7 @@ function measureStrip(rows = strip.source) {
 function* rowTiles(r, k, a, b) {
   const { period, tiles, phase } = r;
   if (!period) return;
-  if (k !== strip.middle) {
+  if (k !== strip.middle || artSettings.plain) {
     for (let c = Math.floor((a - phase) / period) - 1; c * period + phase < b; c++)
       for (const [i, t] of tiles.entries()) yield [`${k}:${c}:${i}`, t, c * period + phase + t.x];
     return;
@@ -951,9 +975,9 @@ function drawStrip() {
         el.style.transform = `translateX(${x}px)`;
         strip.track.append(el);
         const img = el.querySelector("img");
-        if (img.complete && img.naturalWidth) img.classList.add("is-loaded");
+        if (img?.complete && img.naturalWidth) img.classList.add("is-loaded");
         strip.tiles.set(key, el);
-      }
+      } else if (drift.frame) el.style.transform = `translateX(${x}px)`;
     }
   });
   for (const [key, el] of strip.tiles) {
@@ -962,6 +986,36 @@ function drawStrip() {
     strip.tiles.delete(key);
   }
   strip.track.style.transform = `translateX(${-strip.offset}px)`;
+}
+
+// the rows drifting, each the other way to the one above, the one under the pointer held;
+// the middle row stays with the title
+const DRIFT = 12;
+const drift = { frame: 0, last: 0, held: -1, seen: true };
+function startDrift() {
+  if (!artSettings.animate || still() || drift.frame) return;
+  drift.last = 0;
+  const step = (time) => {
+    if (!artSettings.animate || !page.art.isConnected) {
+      drift.frame = 0;
+      return;
+    }
+    const dt = drift.last ? Math.min(0.1, (time - drift.last) / 1000) : 0;
+    drift.last = time;
+    if (drift.seen && strip.rows.length && !opened) {
+      strip.rows.forEach((r, k) => {
+        if (k === drift.held || (k === strip.middle && !artSettings.plain)) return;
+        r.phase += (k % 2 ? DRIFT : -DRIFT) * dt;
+      });
+      drawStrip();
+    }
+    drift.frame = requestAnimationFrame(step);
+  };
+  drift.frame = requestAnimationFrame(step);
+}
+function stopDrift() {
+  cancelAnimationFrame(drift.frame);
+  drift.frame = 0;
 }
 
 function moveStrip(dx) {
@@ -980,7 +1034,11 @@ const tileHTML = (
   it,
   i,
 ) => `<button type="button" class="tile__open" data-i="${i}" aria-label="${escapeHTML(it.title || "Picture")}" style="--wash:${largest(it.palette)?.[0] || it.color || "transparent"}">
-    <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />
+    ${
+      artSettings.palettes && it.palette?.length
+        ? `<span class="tile__palette" style="--n:${it.palette.length}">${it.palette.map(([hex, share]) => `<i style="--share:${share};background:${hex}"></i>`).join("")}</span>`
+        : `<img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />`
+    }
     ${it.title ? `<span class="tile__name">${escapeHTML(it.title)}</span>` : ""}
     ${it.share ? `<span class="tile__share">${Math.round(it.share * 100)}%</span>` : ""}
   </button>`;
@@ -1232,6 +1290,8 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     meaningTitle: q("[data-meaning-title]"),
     art: q("[data-art]"),
     artSlide: q("[data-art-slide]"),
+    artSettingsOpen: q("[data-art-settings-open]"),
+    artSettingsMenu: q("[data-art-settings-menu]"),
     pageLink: q("[data-page-link]"),
     outro: q("[data-outro]"),
   });
@@ -1494,6 +1554,69 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       if (open) openPicture(open.parentElement, gallery[+open.dataset.i]);
     },
     { signal },
+  );
+  // the row under a mouse holds still while the rows drift
+  page.art.addEventListener(
+    "pointermove",
+    (e) => {
+      if (e.pointerType !== "mouse" || !strip.row) return;
+      drift.held = Math.floor((e.clientY - page.art.getBoundingClientRect().top) / (strip.row + strip.gap));
+    },
+    { signal },
+  );
+  page.art.addEventListener("pointerleave", () => (drift.held = -1), { signal });
+  const inView = new IntersectionObserver(([e]) => (drift.seen = e.isIntersecting));
+  inView.observe(page.art);
+  signal?.addEventListener("abort", () => {
+    inView.disconnect();
+    stopDrift();
+  });
+
+  // the art section's menu: how the pictures show, and which
+  const menu = page.artSettingsMenu;
+  const items = [...menu.querySelectorAll("[data-art-setting]")];
+  const sync = () => items.forEach((b) => b.setAttribute("aria-checked", artSettings[b.dataset.artSetting]));
+  const toggleMenu = (open = menu.hidden) => {
+    menu.hidden = !open;
+    page.artSettingsOpen.setAttribute("aria-expanded", open);
+  };
+  sync();
+  page.artSettingsOpen.addEventListener("click", () => toggleMenu(), { signal });
+  menu.addEventListener(
+    "click",
+    (e) => {
+      const b = e.target.closest("[data-art-setting]");
+      if (!b) return;
+      const key = b.dataset.artSetting;
+      // at least one kind of picture stays
+      if (
+        ["art", "pop", "wiki"].includes(key) &&
+        artSettings[key] &&
+        ["art", "pop", "wiki"].filter((k) => artSettings[k]).length < 2
+      )
+        return;
+      artSettings[key] = !artSettings[key];
+      saveArtSettings();
+      sync();
+      if (key === "animate") return artSettings.animate ? startDrift() : stopDrift();
+      if (gallery.length) layoutGallery();
+    },
+    { signal },
+  );
+  document.addEventListener(
+    "pointerdown",
+    (e) => !menu.hidden && !e.target.closest("[data-art-settings]") && toggleMenu(false),
+    { signal },
+  );
+  window.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "Escape" || menu.hidden) return;
+      e.stopImmediatePropagation();
+      toggleMenu(false);
+      page.artSettingsOpen.focus();
+    },
+    { capture: true, signal },
   );
   window.addEventListener(
     "keydown",

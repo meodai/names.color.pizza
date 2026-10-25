@@ -1606,6 +1606,10 @@ h2:hover > .anchor,
   pointer-events: none;
 }
 
+.gallery__title[hidden] {
+  display: none;
+}
+
 .gallery__name {
   margin: 0;
   font-size: var(--text-xl);
@@ -1772,6 +1776,136 @@ h2:hover > .anchor,
 
 .tile__open img.is-loaded {
   opacity: 1;
+}
+
+/* a work as its palette, the size of the picture: under the pointer its colors even
+   out into swatches */
+.tile__palette {
+  display: flex;
+  inline-size: 100%;
+  block-size: 100%;
+  gap: 0;
+  transition: gap 0.3s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.tile__palette i {
+  flex: var(--share) 1 0;
+  min-inline-size: min(1rem, 100% / var(--n));
+  transition: flex-grow 0.3s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+.tile__open:has(.tile__palette) {
+  background: none;
+}
+
+@media (hover: hover) {
+  .gallery:not(.is-dragging) .tile:hover .tile__palette {
+    gap: 0.25rem;
+  }
+
+  .gallery:not(.is-dragging) .tile:hover .tile__palette i {
+    flex-grow: 1;
+  }
+}
+
+/* the art section's menu, as the wall's list of lists: a round button at the bottom left,
+   its choices above it */
+.art-settings {
+  position: absolute;
+  inset: auto auto var(--space-s) var(--space-s);
+  z-index: 3;
+}
+
+.art-settings > button {
+  display: grid;
+  place-items: center;
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--bg);
+  background: var(--fg);
+  cursor: pointer;
+}
+
+.art-settings > button svg {
+  display: block;
+  inline-size: 1.1rem;
+}
+
+.art-settings__menu {
+  position: absolute;
+  inset: auto auto calc(100% + 0.6rem) 0;
+  display: grid;
+  gap: 0.2rem;
+  min-inline-size: 15rem;
+  padding: 0.3rem;
+  border-radius: 1rem;
+  color: var(--bg);
+  background: var(--fg);
+}
+
+.art-settings__menu[hidden] {
+  display: none;
+}
+
+.art-settings__menu hr {
+  margin: 0.2rem 0.75rem;
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.2;
+}
+
+.art-settings__menu button {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-s);
+  padding: 0.5rem 0.75rem 0.5rem 2rem;
+  border: 0;
+  border-radius: 0.7rem;
+  color: inherit;
+  background: none;
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.art-settings__menu button small {
+  font-size: inherit;
+  font-weight: var(--weight-body);
+  opacity: 0.7;
+}
+
+/* a tick for what's on */
+.art-settings__menu button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.8rem;
+  inline-size: 0.35rem;
+  block-size: 0.65rem;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  opacity: 0;
+  translate: 0 -65%;
+  rotate: 45deg;
+}
+
+.art-settings__menu button[aria-checked="true"]::before {
+  opacity: 1;
+}
+
+.art-settings__menu button:hover,
+.art-settings__menu button:focus-visible {
+  outline: none;
+  color: var(--fg);
+  background: var(--bg);
 }
 
 .lightbox {
