@@ -839,8 +839,8 @@ function layoutGallery({ again = false, recentre = false } = {}) {
   const list = shownGallery();
   const n = galleryRows();
   const rows = Array.from({ length: n }, () => ({ width: 0, items: [] }));
-  // the strongest works in the rows that show in full, the rest in the cut-off rows at
-  // the top and bottom; with too few for both, those repeat the inner rows, out of step
+  // every work in the rows that show in full; the cut-off rows at the top and bottom have the
+  // weakest of them again, or with too few, the inner rows again, out of step
   const inner = rows.slice(1, -1);
   const outer = [rows[0], rows.at(-1)];
   const own = list.length >= n * 8;
@@ -852,7 +852,7 @@ function layoutGallery({ again = false, recentre = false } = {}) {
       row.items.push(it);
     }
   };
-  place(list.slice(0, split), inner);
+  place(list, inner);
   place(list.slice(split), outer);
   inner.forEach((r, k) => {
     if (!r.items.length && list.length) r.items.push(list[k % list.length]);
