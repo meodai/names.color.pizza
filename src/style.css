@@ -1778,14 +1778,11 @@ h2:hover > .anchor,
   opacity: 1;
 }
 
-/* a work as its palette, the size of the picture: under the pointer its colors even
-   out into swatches */
+/* a work as its palette, the size of the picture: under the pointer its colors even out */
 .tile__palette {
   display: flex;
   inline-size: 100%;
   block-size: 100%;
-  gap: 0;
-  transition: gap 0.3s cubic-bezier(0.3, 0.7, 0, 1);
 }
 
 .tile__palette i {
@@ -1798,11 +1795,21 @@ h2:hover > .anchor,
   background: none;
 }
 
-@media (hover: hover) {
-  .gallery:not(.is-dragging) .tile:hover .tile__palette {
-    gap: 0.25rem;
-  }
+/* taller than wide: the colors in bands, top to bottom */
+.tile__palette--tall {
+  flex-direction: column;
+}
 
+.tile__palette--tall i {
+  min-inline-size: 0;
+  min-block-size: min(1rem, 100% / var(--n));
+}
+
+.gallery.is-even .tile__palette i {
+  flex-grow: 1;
+}
+
+@media (hover: hover) {
   .gallery:not(.is-dragging) .tile:hover .tile__palette i {
     flex-grow: 1;
   }
@@ -1899,6 +1906,21 @@ h2:hover > .anchor,
 
 .art-settings__menu button[aria-checked="true"]::before {
   opacity: 1;
+}
+
+/* a choice within the one above it */
+.art-settings__menu .art-settings__inset {
+  padding-inline-start: 3.25rem;
+}
+
+.art-settings__menu .art-settings__inset::before {
+  left: 2.05rem;
+}
+
+.art-settings__menu [aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
 }
 
 .art-settings__menu button:hover,

@@ -786,7 +786,7 @@ const galleryRows = () => 6;
 
 // how the pictures show, chosen in the art section's menu and kept for every page
 const ART_SETTINGS = "art-settings";
-const artSettings = { plain: false, palettes: false, animate: false, art: true, pop: true, wiki: true };
+const artSettings = { plain: false, palettes: false, even: false, animate: false, art: true, pop: true, wiki: true };
 try {
   Object.assign(artSettings, JSON.parse(localStorage.getItem(ART_SETTINGS) || "{}"));
 } catch {}
@@ -1036,7 +1036,7 @@ const tileHTML = (
 ) => `<button type="button" class="tile__open" data-i="${i}" aria-label="${escapeHTML(it.title || "Picture")}" style="--wash:${largest(it.palette)?.[0] || it.color || "transparent"}">
     ${
       artSettings.palettes && it.palette?.length
-        ? `<span class="tile__palette" style="--n:${it.palette.length}">${it.palette.map(([hex, share]) => `<i style="--share:${share};background:${hex}"></i>`).join("")}</span>`
+        ? `<span class="tile__palette${(it.ratio || 1) < 1 ? " tile__palette--tall" : ""}" style="--n:${it.palette.length}">${it.palette.map(([hex, share]) => `<i style="--share:${share};background:${hex}"></i>`).join("")}</span>`
         : `<img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />`
     }
     ${it.title ? `<span class="tile__name">${escapeHTML(it.title)}</span>` : ""}
@@ -1575,7 +1575,12 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   // the art section's menu: how the pictures show, and which
   const menu = page.artSettingsMenu;
   const items = [...menu.querySelectorAll("[data-art-setting]")];
-  const sync = () => items.forEach((b) => b.setAttribute("aria-checked", artSettings[b.dataset.artSetting]));
+  const sync = () => {
+    items.forEach((b) => b.setAttribute("aria-checked", artSettings[b.dataset.artSetting]));
+    // same width only means something as palettes
+    menu.querySelector('[data-art-setting="even"]').setAttribute("aria-disabled", !artSettings.palettes);
+    page.art.classList.toggle("is-even", artSettings.even);
+  };
   const toggleMenu = (open = menu.hidden) => {
     menu.hidden = !open;
     page.artSettingsOpen.setAttribute("aria-expanded", open);
@@ -1588,6 +1593,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       const b = e.target.closest("[data-art-setting]");
       if (!b) return;
       const key = b.dataset.artSetting;
+      if (b.getAttribute("aria-disabled") === "true") return;
       // at least one kind of picture stays
       if (
         ["art", "pop", "wiki"].includes(key) &&
@@ -1599,6 +1605,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       saveArtSettings();
       sync();
       if (key === "animate") return artSettings.animate ? startDrift() : stopDrift();
+      if (key === "even") return;
       if (gallery.length) layoutGallery();
     },
     { signal },
