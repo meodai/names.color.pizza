@@ -885,7 +885,7 @@ function layoutGallery({ again = false, recentre = false } = {}) {
         </div></div>
       </div>
     </div>
-    <h2 class="display gallery__name">${escapeHTML(current.name)},<br />in pictures.</h2>`;
+    <h2 class="display gallery__name">${escapeHTML(current.name)},<br />${artSettings.palettes ? "as palettes" : "in pictures"}.</h2>`;
   title.hidden = artSettings.plain;
   if (again) title.querySelector(".swatchcard").classList.add("swatchcard--visible");
   strip.track.append(title);
