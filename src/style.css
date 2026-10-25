@@ -1957,6 +1957,41 @@ h2:hover > .anchor,
   left: 2.05rem;
 }
 
+/* pop culture's kinds, folded away under it until asked for */
+.art-settings__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem;
+}
+
+.art-settings__kinds {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.art-settings__kinds[hidden] {
+  display: none;
+}
+
+.art-settings__menu .art-settings__fold {
+  align-items: center;
+  padding: 0 0.6rem;
+}
+
+.art-settings__menu .art-settings__fold::before {
+  content: none;
+}
+
+.art-settings__fold svg {
+  display: block;
+  inline-size: 1rem;
+  transition: rotate 0.2s ease;
+}
+
+.art-settings__fold[aria-expanded="true"] svg {
+  rotate: 180deg;
+}
+
 .art-settings__menu [aria-disabled="true"] {
   opacity: 0.4;
   cursor: default;

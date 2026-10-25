@@ -188,9 +188,78 @@
             <button type="button" role="menuitemcheckbox" data-art-setting="art" aria-checked="true">
               <span>Art</span><small>museums</small>
             </button>
-            <button type="button" role="menuitemcheckbox" data-art-setting="pop" aria-checked="true">
-              <span>Pop culture</span><small>games, albums, films</small>
-            </button>
+            <div class="art-settings__row">
+              <button type="button" role="menuitemcheckbox" data-art-setting="pop" aria-checked="true">
+                <span>Pop culture</span><small>covers and posters</small>
+              </button>
+              <button
+                type="button"
+                class="art-settings__fold"
+                aria-expanded="false"
+                aria-controls="art-pop-kinds"
+                aria-label="Kinds of pop culture"
+                data-art-fold
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+            </div>
+            <div class="art-settings__kinds" id="art-pop-kinds" hidden>
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                class="art-settings__inset"
+                data-art-setting="games"
+                aria-checked="true"
+              >
+                <span>Games</span>
+              </button>
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                class="art-settings__inset"
+                data-art-setting="albums"
+                aria-checked="true"
+              >
+                <span>Albums</span>
+              </button>
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                class="art-settings__inset"
+                data-art-setting="films"
+                aria-checked="true"
+              >
+                <span>Films</span>
+              </button>
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                class="art-settings__inset"
+                data-art-setting="vhs"
+                aria-checked="true"
+              >
+                <span>VHS</span>
+              </button>
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                class="art-settings__inset"
+                data-art-setting="animeVhs"
+                aria-checked="true"
+              >
+                <span>Anime VHS</span>
+              </button>
+            </div>
             <button type="button" role="menuitemcheckbox" data-art-setting="wiki" aria-checked="true">
               <span>Wiki</span><small>Wikipedia, Commons</small>
             </button>

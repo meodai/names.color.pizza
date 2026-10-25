@@ -189,6 +189,11 @@ export const MUSEUMS = {
   "movies-italian": { name: "TMDB", url: "https://www.themoviedb.org" },
   "movies-hongkong": { name: "TMDB", url: "https://www.themoviedb.org" },
   "movies-horror": { name: "TMDB", url: "https://www.themoviedb.org" },
+  vhs: {
+    name: "Retro-Daze VHS Tape Cover Collection",
+    url: "https://archive.org/details/retro-daze_vcs_tape_cover_collection",
+  },
+  "vhs-anime": { name: "Anime V.H.S. bot", url: "https://x.com/AnimeV_H_S" },
 };
 
 // what isn't a museum's: the credit for each kind of cover
@@ -197,8 +202,12 @@ const COVERS = {
   games: (m) => `Box art from <a href="${m.url}" target="_blank" rel="noopener">libretro thumbnails</a>.`,
   movies: (m) =>
     `Posters from <a href="${m.url}" target="_blank" rel="noopener">TMDB</a>; this site uses the TMDB API but is not endorsed or certified by TMDB.`,
+  vhs: (m) => `VHS covers from the <a href="${m.url}" target="_blank" rel="noopener">Retro-Daze collection</a>.`,
+  "vhs-anime": (m) =>
+    `Anime VHS covers from the <a href="${m.url}" target="_blank" rel="noopener">Anime V.H.S. bot</a>.`,
 };
-const coverKind = (folder) => folder.replace(/-.*/, "");
+// the two sets of VHS covers come from two places, each credited
+const coverKind = (folder) => (COVERS[folder] ? folder : folder.replace(/-.*/, ""));
 
 export function creditHTML(works) {
   const used = Object.entries(MUSEUMS).filter(([folder]) => works.some((w) => w.museum === folder));

@@ -802,6 +802,11 @@ const artSettings = {
   animate: !matchMedia("(prefers-reduced-motion: reduce)").matches,
   art: true,
   pop: true,
+  games: true,
+  albums: true,
+  films: true,
+  vhs: true,
+  animeVhs: true,
   wiki: true,
 };
 try {
@@ -812,10 +817,17 @@ const saveArtSettings = () => {
     localStorage.setItem(ART_SETTINGS, JSON.stringify(artSettings));
   } catch {}
 };
-const categoryOf = (it) => (it.kind !== "art" ? "wiki" : /^(games|albums|movies)/.test(it.work.museum) ? "pop" : "art");
+const CATEGORIES = ["art", "pop", "wiki"];
+// pop culture's kinds, by the collection's folder
+const POP = { games: "games", albums: "albums", movies: "films", vhs: "vhs", "vhs-anime": "animeVhs" };
+const popOf = (museum) => POP[museum] || POP[museum.replace(/-.*/, "")];
+const shows = (it) => {
+  if (it.kind !== "art") return artSettings.wiki;
+  const pop = popOf(it.work.museum);
+  return pop ? artSettings.pop && artSettings[pop] : artSettings.art;
+};
 // as palettes, only what has one
-const shownGallery = () =>
-  gallery.filter((it) => artSettings[categoryOf(it)] && (!artSettings.palettes || it.palette?.length));
+const shownGallery = () => gallery.filter((it) => shows(it) && (!artSettings.palettes || it.palette?.length));
 
 function addToGallery(hex, items) {
   // only pictures we keep a copy of
@@ -1627,6 +1639,9 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     items.forEach((b) => b.setAttribute("aria-checked", artSettings[b.dataset.artSetting]));
     // same width only means something as palettes
     menu.querySelector('[data-art-setting="even"]').setAttribute("aria-disabled", !artSettings.palettes);
+    // pop culture's kinds only while it shows
+    for (const pop of new Set(Object.values(POP)))
+      menu.querySelector(`[data-art-setting="${pop}"]`).setAttribute("aria-disabled", !artSettings.pop);
     page.art.classList.toggle("is-even", artSettings.even);
   };
   const toggleMenu = (open = menu.hidden) => {
@@ -1646,6 +1661,16 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   leaving.observe(page.art);
   signal?.addEventListener("abort", () => leaving.disconnect());
   page.artSettingsOpen.addEventListener("click", () => toggleMenu(), { signal });
+  const fold = menu.querySelector("[data-art-fold]");
+  fold.addEventListener(
+    "click",
+    () => {
+      const open = fold.getAttribute("aria-expanded") !== "true";
+      fold.setAttribute("aria-expanded", open);
+      menu.querySelector(`#${fold.getAttribute("aria-controls")}`).hidden = !open;
+    },
+    { signal },
+  );
   menu.addEventListener(
     "click",
     (e) => {
@@ -1654,12 +1679,8 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       const key = b.dataset.artSetting;
       if (b.getAttribute("aria-disabled") === "true") return;
       // at least one kind of picture stays
-      if (
-        ["art", "pop", "wiki"].includes(key) &&
-        artSettings[key] &&
-        ["art", "pop", "wiki"].filter((k) => artSettings[k]).length < 2
-      )
-        return;
+      const last = (keys) => keys.includes(key) && artSettings[key] && keys.filter((k) => artSettings[k]).length < 2;
+      if (last(CATEGORIES) || last([...new Set(Object.values(POP))])) return;
       artSettings[key] = !artSettings[key];
       saveArtSettings();
       sync();
