@@ -60,7 +60,14 @@ const TOP = 400;
 export function bucketed(works) {
   const key = (L, A, B) => `${Math.floor(L / CLOSE)},${Math.floor(A / CLOSE)},${Math.floor(B / CLOSE)}`;
   const cells = new Map();
+  // a museum catalogues each ribbon on a card as its own work, with the card's one photo,
+  // and a film can be in two lists: a copy is named for its image, so the first work with
+  // it is the one kept
+  const seen = new Set();
   for (const w of works) {
+    const image = w.image.replace(/^.*-/, "");
+    if (seen.has(image)) continue;
+    seen.add(image);
     for (const c of w.colors) {
       const k = key(c[0], c[1], c[2]);
       if (!cells.has(k)) cells.set(k, []);

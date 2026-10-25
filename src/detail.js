@@ -804,14 +804,21 @@ const strip = { offset: 0, source: [], rows: [], track: null, title: null, tiles
 function layoutGallery() {
   const n = galleryRows();
   const rows = Array.from({ length: n }, () => ({ width: 0, items: [] }));
-  // every work in the rows that show in full; the cut-off rows at the top and
-  // bottom repeat them, out of step
+  // the strongest works in the rows that show in full, the rest in the cut-off rows at
+  // the top and bottom; with too few for both, those repeat the inner rows, out of step
   const inner = rows.slice(1, -1);
-  for (const it of gallery) {
-    const row = inner.reduce((a, b) => (b.width < a.width ? b : a));
-    row.width += it.ratio || 1;
-    row.items.push(it);
-  }
+  const outer = [rows[0], rows.at(-1)];
+  const own = gallery.length >= n * 8;
+  const split = own ? Math.round((gallery.length * inner.length) / n) : gallery.length;
+  const place = (items, into) => {
+    for (const it of items) {
+      const row = into.reduce((a, b) => (b.width < a.width ? b : a));
+      row.width += it.ratio || 1;
+      row.items.push(it);
+    }
+  };
+  place(gallery.slice(0, split), inner);
+  place(gallery.slice(split), outer);
   inner.forEach((r, k) => {
     if (!r.items.length) r.items.push(gallery[k % gallery.length]);
   });
@@ -823,8 +830,10 @@ function layoutGallery() {
     r.items = [...head, ...tail.reverse()];
   }
   const rotate = (items, by) => [...items.slice(by % items.length), ...items.slice(0, by % items.length)];
-  rows[0].items = rotate(inner.at(-1).items, 2);
-  rows.at(-1).items = rotate(inner[0].items, 3);
+  if (!own) {
+    rows[0].items = rotate(inner.at(-1).items, 2);
+    rows.at(-1).items = rotate(inner[0].items, 3);
+  }
   page.art.replaceChildren();
   page.art.classList.remove("is-settled");
   strip.track = document.createElement("div");
