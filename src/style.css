@@ -1729,9 +1729,8 @@ h2:hover > .anchor,
   transition: opacity 0.2s ease;
 }
 
-/* hidden for now */
-.tile__name,
-.tile__share {
+/* as palettes, the picture under the pointer is enough: for now, no pills */
+.tile__open:has(.tile__palette) :is(.tile__name, .tile__share) {
   display: none;
 }
 
