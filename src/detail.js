@@ -19,7 +19,7 @@ import { paletteHTML, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
 import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
-import { pixelCards, withPixel } from "./pixel-mode.js";
+import { pixelCards, pixelMode, withPixel } from "./pixel-mode.js";
 
 function adoptLink(hex, name, approx) {
   // an unnamed hex can't be adopted: its closest name can, so the link says which
@@ -718,10 +718,18 @@ async function showArt(hex, saved) {
   pixelOnCard();
 }
 
-// the color's name drawn as pixel art, over the art section's card, whichever is there first
+// the color's name drawn as pixel art, over the art section's card, whichever is there first;
+// only while the site is in pixel art (pixel-mode.js)
 let cardPixel = null;
 function pixelOnCard() {
   const upper = page.art.querySelector(".gallery__swatch .swatchcard__upper");
+  if (!pixelMode()) {
+    const had = upper?.querySelector(".gallery__pixel");
+    if (!had) return;
+    had.remove();
+    upper.closest(".gallery__swatch").setAttribute("aria-hidden", "true");
+    return;
+  }
   if (!upper || !cardPixel || cardPixel.hex !== current?.hex || upper.querySelector(".gallery__pixel")) return;
   const { pixel } = cardPixel;
   // opens like the other pictures: the sentence it was drawn from, and who drew it
@@ -1565,6 +1573,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     { signal },
   );
   page.art.addEventListener("pointerleave", () => (drift.held = -1), { signal });
+  window.addEventListener("pixelmode", pixelOnCard, { signal });
   const inView = new IntersectionObserver(([e]) => (drift.seen = e.isIntersecting));
   inView.observe(page.art);
   signal?.addEventListener("abort", () => {
