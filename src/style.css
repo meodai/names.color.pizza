@@ -1729,6 +1729,12 @@ h2:hover > .anchor,
   transition: opacity 0.2s ease;
 }
 
+/* hidden for now */
+.tile__name,
+.tile__share {
+  display: none;
+}
+
 .tile__name {
   top: 0.5rem;
   right: 0.5rem;
