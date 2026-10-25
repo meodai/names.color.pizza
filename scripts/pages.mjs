@@ -11,7 +11,7 @@ import { Worker } from "node:worker_threads";
 import { fileURLToPath } from "node:url";
 import ColorDescription from "color-description";
 import { slugsOf, hexToRgb, rgbToOklab, tidySenses } from "../src/names.js";
-import { bucketed, pickArt, unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
+import { unpackWork, MUSEUMS, MEDIA } from "../src/art.js";
 import { cardKey, cardURL } from "./cards.mjs";
 import { FORMATS } from "../src/formats.js";
 import { ADOPT_FROM, HEART, handle, longDate } from "../src/adopter.js";
@@ -118,12 +118,11 @@ async function collection(name, picked = true) {
   }
   return list;
 }
-const works = [];
+// only counted here: the workers unpack and pick (pick-art.mjs), as the works and their
+// index twice over don't fit beside each other
+let works = 0;
 for (const museum of Object.keys(MUSEUMS)) {
-  for (const w of await collection(museum)) {
-    const work = unpackWork(w, museum);
-    if (work) works.push(work);
-  }
+  for (const w of await collection(museum)) if (unpackWork(w, museum)) works++;
 }
 const wikimedia = new Map(
   (await collection("wikimedia-art", false)).filter((w) => w.thumb).map((w) => [w.accession, w]),
@@ -131,13 +130,8 @@ const wikimedia = new Map(
 // with a museum missing, the art stays as it was last picked: nothing picked, sent or saved
 const KEEP_ART = unread.length > 0;
 if (KEEP_ART) console.log(`pages.mjs: keeping the art picked before, as ${unread.join(", ")} couldn't be read`);
-else if (!works.length) console.log("pages.mjs: no art data; no page has art");
-const near = works.length && !KEEP_ART ? bucketed(works) : null;
-// a color's art list as its text, "" for none
-const artText = (hex) => {
-  const art = near ? pickArt(near, hex) : null;
-  return art?.length ? JSON.stringify(art) : "";
-};
+else if (!works) console.log("pages.mjs: no art data; no page has art");
+const picking = works > 0 && !KEEP_ART;
 const ART_PRINT = artPrint.digest("hex");
 
 // the build fills in {{colorCount}} (vite.config.js); counted again here from the same list,
@@ -399,7 +393,7 @@ const readyFor = (slug, hex) => {
 // the colors to pick again, on every core at once: whether each has a list (spooled), or none
 async function pickAll(hexes) {
   const lists = new Map();
-  if (!near || !hexes.length) return lists;
+  if (!picking || !hexes.length) return lists;
   const cores = Math.max(1, Math.min(availableParallelism(), 8, Math.ceil(hexes.length / 500)));
   const step = Math.ceil(hexes.length / 10);
   let next = step;
@@ -433,6 +427,8 @@ const lists = await pickAll([
       .map(({ hex }) => hex),
   ),
 ]);
+// picked: the collections' texts are the workers' no longer
+artTexts.length = 0;
 
 const writing = Date.now();
 for (const [i, { name, hex }] of items.entries()) {
@@ -454,7 +450,7 @@ for (const [i, { name, hex }] of items.entries()) {
       : null
     : lists.has(hex)
       ? lists.get(hex) && readFileSync(spooled(hex), "utf8")
-      : artText(hex);
+      : "";
   lists.delete(hex);
   if (!ready) picked++;
   const url = `${SITE}color/${slug}/`;
@@ -694,7 +690,7 @@ if (UPLOAD_URL && UPLOAD_KEY && toUpload.length) {
   mkdirSync(LISTS, { recursive: true });
   writeFileSync(join(LISTS, "uploaded.json"), JSON.stringify(listed));
 }
-if (!ONLY && works.length && !KEEP_ART) {
+if (!ONLY && picking) {
   mkdirSync(LISTS, { recursive: true });
   writeFileSync(PICKS, JSON.stringify({ print: ART_PRINT, byHex: picks }));
 }
