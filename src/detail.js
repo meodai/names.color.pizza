@@ -794,7 +794,16 @@ const galleryRows = () => 6;
 
 // how the pictures show, chosen in the art section's menu and kept for every page
 const ART_SETTINGS = "art-settings";
-const artSettings = { plain: false, palettes: false, even: false, animate: false, art: true, pop: true, wiki: true };
+// drifting unless motion is asked to be kept down
+const artSettings = {
+  plain: false,
+  palettes: false,
+  even: false,
+  animate: !matchMedia("(prefers-reduced-motion: reduce)").matches,
+  art: true,
+  pop: true,
+  wiki: true,
+};
 try {
   Object.assign(artSettings, JSON.parse(localStorage.getItem(ART_SETTINGS) || "{}"));
 } catch {}
