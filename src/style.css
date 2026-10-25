@@ -1795,6 +1795,23 @@ h2:hover > .anchor,
   background: none;
 }
 
+/* as palettes, the picture itself under the pointer, its palette round it as a frame */
+.tile__open img.tile__peek {
+  position: absolute;
+  inset: 1rem;
+  inline-size: calc(100% - 2rem);
+  block-size: calc(100% - 2rem);
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+@media (hover: hover) {
+  .gallery:not(.is-dragging) .tile:hover .tile__peek.is-loaded {
+    opacity: 1;
+  }
+}
+
 /* taller than wide: the colors in bands, top to bottom */
 .tile__palette--tall {
   flex-direction: column;

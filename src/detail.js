@@ -1059,7 +1059,7 @@ const tileHTML = (
 ) => `<button type="button" class="tile__open" data-i="${i}" aria-label="${escapeHTML(it.title || "Picture")}" style="--wash:${largest(it.palette)?.[0] || it.color || "transparent"}">
     ${
       artSettings.palettes && it.palette?.length
-        ? `<span class="tile__palette${(it.ratio || 1) < 1 ? " tile__palette--tall" : ""}" style="--n:${it.palette.length}">${it.palette.map(([hex, share]) => `<i style="--share:${share};background:${hex}"></i>`).join("")}</span>`
+        ? `<span class="tile__palette${(it.ratio || 1) < 1 ? " tile__palette--tall" : ""}" style="--n:${it.palette.length}">${it.palette.map(([hex, share]) => `<i style="--share:${share};background:${hex}"></i>`).join("")}</span><img class="tile__peek" data-src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />`
         : `<img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />`
     }
     ${it.title ? `<span class="tile__name">${escapeHTML(it.title)}</span>` : ""}
@@ -1509,7 +1509,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   page.art.addEventListener(
     "error",
     (e) => {
-      if (e.target.tagName !== "IMG") return;
+      if (e.target.tagName !== "IMG" || e.target.classList.contains("tile__peek")) return;
       const before = gallery.length;
       gallery = gallery.filter((it) => it.image !== e.target.getAttribute("src"));
       if (gallery.length !== before)
@@ -1596,6 +1596,17 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     { signal },
   );
   page.art.addEventListener("pointerleave", () => (drift.held = -1), { signal });
+  // as palettes, a picture loads only once it's looked at, under the pointer
+  page.art.addEventListener(
+    "pointerover",
+    (e) => {
+      const peek = e.target.closest(".tile")?.querySelector(".tile__peek[data-src]");
+      if (!peek) return;
+      peek.src = peek.dataset.src;
+      peek.removeAttribute("data-src");
+    },
+    { signal },
+  );
   window.addEventListener("pixelmode", pixelOnCard, { signal });
   const inView = new IntersectionObserver(([e]) => (drift.seen = e.isIntersecting));
   inView.observe(page.art);
