@@ -796,7 +796,7 @@ const galleryRows = () => 6;
 const ART_SETTINGS = "art-settings";
 // drifting unless motion is asked to be kept down
 const artSettings = {
-  plain: false,
+  plain: true,
   palettes: false,
   even: false,
   animate: !matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -1091,8 +1091,8 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
       ${it.link ? link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ') : `<span class="lightbox__title">${escapeHTML(it.title || "Untitled")}</span>`}
       ${it.by ? `<span>${escapeHTML(it.by)}</span>` : ""}
       <span class="lightbox__source">${sourceHTML(it)}</span>
-      ${it.palette?.length ? `<button type="button" class="lightbox__copy">Copy colors</button>` : ""}
     </figcaption>
+    ${it.palette?.length ? `<button type="button" class="lightbox__copy">Copy colors</button>` : ""}
     ${it.palette?.length ? `<div class="lightbox__palette">${paletteHTML(it.palette, it.color)}</div>` : ""}
   </figure>`;
 
@@ -1124,6 +1124,7 @@ function openPicture(tile, it) {
   const img = frame.querySelector("img");
   const mat = box.querySelector(".lightbox__mat");
   const info = box.querySelector(".lightbox__info");
+  const copyColors = box.querySelector(".lightbox__copy");
   // around the picture's center, not the frame's
   const fly = () => {
     const from = tile.getBoundingClientRect();
@@ -1152,13 +1153,14 @@ function openPicture(tile, it) {
       ],
       { duration: 380, delay: 300, easing: EASE, fill: "backwards" },
     );
-    info.animate(
-      [
-        { opacity: 0, transform: "translateY(0.6rem)" },
-        { opacity: 1, transform: "none" },
-      ],
-      { duration: 400, delay: 360, easing: EASE, fill: "backwards" },
-    );
+    for (const el of [info, copyColors].filter(Boolean))
+      el.animate(
+        [
+          { opacity: 0, transform: "translateY(0.6rem)" },
+          { opacity: 1, transform: "none" },
+        ],
+        { duration: 400, delay: el === info ? 360 : 480, easing: EASE, fill: "backwards" },
+      );
     // the palette once the frame has settled, swatch by swatch
     box.querySelectorAll(".lightbox__palette .art__palette > a").forEach((swatch, i) =>
       swatch.animate(
@@ -1184,19 +1186,18 @@ function openPicture(tile, it) {
     }
   });
   box.querySelector(".lightbox__backdrop").addEventListener("click", () => closePicture());
-  const copyColors = box.querySelector(".lightbox__copy");
   // each color as the name nearest to it, and its hex
   copyColors?.addEventListener("click", async () => {
     const data = await getList("default");
     const named = it.palette.map(([hex]) => `${closestAny(data, hex).item.name} · ${hex}`);
     copy(named.join(", "), copyColors, "Copied");
   });
-  opened = { box, tile, frame, mat, info, fly, focusBefore };
+  opened = { box, tile, frame, mat, info, copyColors, fly, focusBefore };
 }
 
 function closePicture(now = false) {
   if (!opened) return;
-  const { box, tile, frame, mat, info, fly, focusBefore } = opened;
+  const { box, tile, frame, mat, info, copyColors, fly, focusBefore } = opened;
   opened = null;
   page.art.classList.remove("is-behind");
   const done = () => {
@@ -1216,12 +1217,16 @@ function closePicture(now = false) {
         { opacity: 1, scale: "1 1" },
         { opacity: 0, scale: box.classList.contains("lightbox--wide") ? "1 0" : "0 1" },
       ],
-      { duration: 140, delay: i * 12, easing: "ease-in", fill: "forwards" },
+      { duration: 110, delay: i * 8, easing: "ease-in", fill: "forwards" },
     ),
   );
-  mat.animate(fade, { duration: 160, easing: "ease-in", fill: "forwards" });
-  info.animate(fade, { duration: 160, easing: "ease-in", fill: "forwards" });
-  frame.animate([...fly()].reverse(), { duration: 460, delay: 50, easing: EASE, fill: "forwards" }).finished.then(done);
+  // the palette back in first, quickly, then the rest
+  const delay = swatches.length && 110 + (swatches.length - 1) * 8;
+  for (const el of [mat, info, copyColors].filter(Boolean))
+    el.animate(fade, { duration: 160, delay, easing: "ease-in", fill: "forwards" });
+  frame
+    .animate([...fly()].reverse(), { duration: 460, delay: delay + 50, easing: EASE, fill: "forwards" })
+    .finished.then(done);
 }
 
 const hexFromHash = () => normalizeHex(location.hash.slice(1));
