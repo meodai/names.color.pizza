@@ -11,6 +11,7 @@ const FEW = 12;
 // fewer than this repeat too much in the strip: topped up from further out
 const FILL = 120;
 const GAMES = 0.25;
+const VHS = 0.15;
 export const ART_COUNT = 120;
 // as many again when the two closest distances already have enough
 const CLOSE_COUNT = 200;
@@ -150,19 +151,30 @@ export function pickArt(near, hex, count = ART_COUNT) {
     strong[at] ||
     tiers.map((t) => t.filter((s) => s.share >= SHARE)).find((t) => t.length >= FEW) ||
     tiers.at(-1).filter((s) => s.share >= SHARE);
-  // box art matches bright colors closely: games at most GAMES of what's shown
-  const game = (s) => s.w.museum.startsWith("games");
-  const limit = Math.ceil(Math.min(count, Math.max(FILL, first.length)) * GAMES);
-  let games = 0;
-  const picked = first.filter((s) => !game(s) || games++ < limit);
+  // box art and VHS covers match bright colors closely: each at most its share of what's shown
+  const size = Math.min(count, Math.max(FILL, first.length));
+  const caps = [
+    ["games", GAMES],
+    ["vhs", VHS],
+  ].map(([start, part]) => ({ start, limit: Math.ceil(size * part), taken: 0 }));
+  const capOf = (s) => caps.find((c) => s.w.museum.startsWith(c.start));
+  const room = (s) => {
+    const cap = capOf(s);
+    return !cap || cap.taken < cap.limit;
+  };
+  const take = (s) => {
+    const cap = capOf(s);
+    if (cap) cap.taken++;
+  };
+  const picked = first.filter((s) => room(s) && (take(s), true));
   if (at >= 0 && picked.length < FILL) {
     // measured at the close distance, so they line up after the close ones
     const close = new Map(tiers[Math.floor(at / 2)].map((s) => [s.w, s.share]));
     const have = new Set(picked.map((s) => s.w));
     for (const s of strong.slice(at + 1).flat()) {
       if (picked.length >= FILL) break;
-      if (have.has(s.w) || (game(s) && games >= limit)) continue;
-      if (game(s)) games++;
+      if (have.has(s.w) || !room(s)) continue;
+      take(s);
       have.add(s.w);
       picked.push({ ...s, share: close.get(s.w) ?? 0 });
     }
