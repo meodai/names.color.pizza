@@ -825,7 +825,8 @@ function addToGallery(hex, items) {
 // the tiles and the title ride one track, so a drag moves a single layer
 const strip = { offset: 0, source: [], rows: [], track: null, title: null, tiles: new Map(), frame: 0 };
 
-function layoutGallery() {
+// again: the same strip with other tiles, as a setting changed, without coming in anew
+function layoutGallery({ again = false, recentre = false } = {}) {
   const list = shownGallery();
   const n = galleryRows();
   const rows = Array.from({ length: n }, () => ({ width: 0, items: [] }));
@@ -860,7 +861,7 @@ function layoutGallery() {
     rows.at(-1).items = rotate(inner[0].items, 3);
   }
   page.art.replaceChildren();
-  page.art.classList.remove("is-settled");
+  if (!again) page.art.classList.remove("is-settled");
   strip.track = document.createElement("div");
   strip.track.className = "gallery__track";
   page.art.append(strip.track);
@@ -877,6 +878,7 @@ function layoutGallery() {
     </div>
     <h2 class="display gallery__name">${escapeHTML(current.name)},<br />in pictures.</h2>`;
   title.hidden = artSettings.plain;
+  if (again) title.querySelector(".swatchcard").classList.add("swatchcard--visible");
   strip.track.append(title);
   strip.title = title;
   pixelOnCard();
@@ -890,7 +892,11 @@ function layoutGallery() {
   );
   shown.observe(title);
   measureStrip(rows);
-  strip.offset = strip.titleWidth / 2 - page.art.clientWidth / 2;
+  if (!again || recentre) strip.offset = strip.titleWidth / 2 - page.art.clientWidth / 2;
+  if (again) {
+    drawStrip();
+    return startDrift();
+  }
   strip.entered = false;
   page.art.classList.remove("is-in");
   drawStrip();
@@ -1623,7 +1629,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       sync();
       if (key === "animate") return artSettings.animate ? startDrift() : stopDrift();
       if (key === "even") return;
-      if (gallery.length) layoutGallery();
+      if (gallery.length) layoutGallery({ again: strip.entered, recentre: key === "plain" });
     },
     { signal },
   );
