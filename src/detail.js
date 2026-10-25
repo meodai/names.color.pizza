@@ -1076,7 +1076,7 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
       ${it.link ? link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ') : `<span class="lightbox__title">${escapeHTML(it.title || "Untitled")}</span>`}
       ${it.by ? `<span>${escapeHTML(it.by)}</span>` : ""}
       <span class="lightbox__source">${sourceHTML(it)}</span>
-      ${it.palette?.length ? `<button type="button" class="lightbox__copy" data-copy="${it.palette.map(([hex]) => hex).join(", ")}">Copy colors</button>` : ""}
+      ${it.palette?.length ? `<button type="button" class="lightbox__copy">Copy colors</button>` : ""}
     </figcaption>
     ${it.palette?.length ? `<div class="lightbox__palette">${paletteHTML(it.palette, it.color)}</div>` : ""}
   </figure>`;
@@ -1170,7 +1170,12 @@ function openPicture(tile, it) {
   });
   box.querySelector(".lightbox__backdrop").addEventListener("click", () => closePicture());
   const copyColors = box.querySelector(".lightbox__copy");
-  copyColors?.addEventListener("click", () => copy(copyColors.dataset.copy, copyColors, "Copied"));
+  // each color as the name nearest to it, and its hex
+  copyColors?.addEventListener("click", async () => {
+    const data = await getList("default");
+    const named = it.palette.map(([hex]) => `${closestAny(data, hex).item.name} · ${hex}`);
+    copy(named.join(", "), copyColors, "Copied");
+  });
   opened = { box, tile, frame, mat, info, fly, focusBefore };
 }
 
