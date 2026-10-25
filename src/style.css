@@ -2203,6 +2203,37 @@ h2:hover > .anchor,
   opacity: 0.7;
 }
 
+/* the palette's hexes to the clipboard, at the plaque's right */
+.lightbox__info:has(.lightbox__copy) {
+  padding-inline-end: 7.5rem;
+}
+
+.lightbox__copy {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.3em 0.85em;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: inherit;
+  background: none;
+  font: inherit;
+  font-weight: var(--weight-label);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.lightbox__copy:hover,
+.lightbox__copy:focus-visible {
+  outline: none;
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
 @media (max-width: 700px) {
   .lightbox--wide .lightbox__frame img {
     max-inline-size: calc(100vw - 2 * var(--gutter) - 2 * var(--space-xs));
