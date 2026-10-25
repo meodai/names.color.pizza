@@ -1568,12 +1568,15 @@ h2:hover > .anchor,
   max-width: 34ch;
 }
 
-.color-page .color-art {
+/* clipped, not a scroller, so the settings can stick to the window's foot; no dense
+   slide's padding, which would lift them */
+.color-page .slide.color-art {
   position: relative;
+  justify-content: flex-end;
   block-size: 100svh;
   min-height: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: clip;
 }
 
 /* six rows in a window of about four and a half: cut at every edge */
@@ -1845,10 +1848,19 @@ h2:hover > .anchor,
 
 /* the art section's menu, as the wall's list of lists: a round button at the bottom left,
    its choices above it */
+/* at the section's foot, or the window's while the section runs past it */
 .art-settings {
-  position: absolute;
-  inset: auto auto var(--space-s) var(--space-s);
+  position: sticky;
+  bottom: var(--space-s);
   z-index: 3;
+  align-self: flex-start;
+  margin: var(--space-s);
+  transition: opacity 0.2s ease;
+}
+
+.art-settings.is-away {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .art-settings > button {

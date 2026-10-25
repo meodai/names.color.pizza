@@ -1634,6 +1634,17 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     page.artSettingsOpen.setAttribute("aria-expanded", open);
   };
   sync();
+  // gone once the section is nearly scrolled away, before it meets the logo
+  const settings = page.artSettingsOpen.parentElement;
+  const leaving = new IntersectionObserver(
+    ([e]) => {
+      settings.classList.toggle("is-away", !e.isIntersecting);
+      if (!e.isIntersecting) toggleMenu(false);
+    },
+    { rootMargin: "-25% 0px 0px 0px" },
+  );
+  leaving.observe(page.art);
+  signal?.addEventListener("abort", () => leaving.disconnect());
   page.artSettingsOpen.addEventListener("click", () => toggleMenu(), { signal });
   menu.addEventListener(
     "click",
