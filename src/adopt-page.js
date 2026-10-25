@@ -509,11 +509,23 @@ export async function initAdoptPage() {
       show(it);
     };
     picker.addEventListener("input", () => pick(picker.value));
-    let start;
-    do start = data.items[Math.floor(Math.random() * data.items.length)];
-    while (adopted[slugs.get(start.name)]);
-    picker.value = start.hex;
-    pick(start.hex);
+    // any color nobody has adopted
+    const random = () => {
+      let it;
+      do it = data.items[Math.floor(Math.random() * data.items.length)];
+      while (adopted[slugs.get(it.name)]);
+      picker.value = it.hex;
+      pick(it.hex);
+    };
+    const dice = q("[data-pick-random]");
+    dice.addEventListener("click", () => {
+      dice.classList.remove("is-rolling");
+      dice.offsetWidth;
+      dice.classList.add("is-rolling");
+      random();
+    });
+    dice.addEventListener("animationend", () => dice.classList.remove("is-rolling"));
+    random();
     return;
   }
   show(first);

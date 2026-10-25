@@ -539,6 +539,46 @@ a:hover {
   outline: none;
 }
 
+/* beside the pill, the search's dice: another color nobody has adopted */
+.adopt__dice {
+  display: grid;
+  place-items: center;
+  inline-size: 3.1rem;
+  block-size: 3.1rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--paper);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.adopt__dice svg {
+  inline-size: 1.3rem;
+  block-size: 1.3rem;
+  overflow: visible;
+}
+
+.adopt__dice:hover,
+.adopt__dice:focus-visible {
+  outline: none;
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.adopt__dice.is-rolling svg {
+  animation: dice-roll 0.6s cubic-bezier(0.3, 0.7, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adopt__dice.is-rolling svg {
+    animation: none;
+  }
+}
+
 .adopt__pick[hidden] {
   display: none;
 }
