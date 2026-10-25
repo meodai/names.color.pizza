@@ -1813,6 +1813,11 @@ h2:hover > .anchor,
   .gallery:not(.is-dragging) .tile:hover .tile__palette i {
     flex-grow: 1;
   }
+
+  /* the same width each: under the pointer, each its share */
+  .gallery.is-even:not(.is-dragging) .tile:hover .tile__palette i {
+    flex-grow: var(--share);
+  }
 }
 
 /* the art section's menu, as the wall's list of lists: a round button at the bottom left,
