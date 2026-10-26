@@ -4013,6 +4013,22 @@ html.is-arriving:not(.is-passed-on) {
   translate: 0 -0.08rem;
 }
 
+/* in pixel art, the parrot drawn in pixels: 64 tall, at half size each drawn pixel is one of
+   a sharp screen's */
+.is-pixel .brand__logo {
+  display: none;
+}
+
+.is-pixel .brand::before {
+  content: "";
+  block-size: 28px;
+  aspect-ratio: 54 / 64;
+  background: url("/logo/cockatoo-pixel.png") center / contain no-repeat;
+  image-rendering: pixelated;
+  translate: 4px -1px;
+  margin-inline-end: 6px;
+}
+
 /* origins in the SVG's own units: head top for crest, mouth corner for beak */
 .brand__crest,
 .brand__beak {
