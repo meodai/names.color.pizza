@@ -8,13 +8,9 @@ const STRONG = 0.15;
 const FULL = 0.3;
 const ENOUGH = 30;
 const FEW = 12;
-// fewer than this repeat too much in the strip: topped up from further out
-const FILL = 120;
-const GAMES = 0.25;
-const VHS = 0.15;
-export const ART_COUNT = 120;
-// as many again when the two closest distances already have enough
-const CLOSE_COUNT = 200;
+// each kind's own list: art, and each kind of cover, so one shown alone has as many as all
+// together; fewer than this repeat too much in the strip: topped up from further out
+export const ART_COUNT = 200;
 
 // colors: [L, A, B, share, hex]
 export const MEDIA = "https://media.color.pizza";
@@ -99,18 +95,24 @@ export function bucketed(works) {
 
 // works with the most of the color, as close to it as there are enough of:
 // first works full of it, from the tightest match outward, then works with
-// only a little of it
+// only a little of it; for art and each kind of cover apart
+const RADII = [CLOSE * 0.4, CLOSE * 0.6, CLOSE, CLOSE * 1.6, CLOSE * 2.4];
 export function pickArt(near, hex, count = ART_COUNT) {
   const [L, A, B] = rgbToOklab(hexToRgb(hex));
-  const RADII = [CLOSE * 0.4, CLOSE * 0.6, CLOSE, CLOSE * 1.6, CLOSE * 2.4];
-  // one look at the widest reach, each distance measured once; every ring then takes
-  // its share in the same order a look of its own would have found them
+  // one look at the widest reach, each distance measured once
   const reach = RADII.at(-1);
-  const around = [];
+  const kinds = new Map();
   for (const [c, w] of near(L, A, B, Math.ceil(reach / CLOSE), reach)) {
     const d = Math.hypot(c[0] - L, c[1] - A, c[2] - B);
-    if (d < reach) around.push([c, w, d]);
+    if (d >= reach) continue;
+    const kind = artKind(w.museum);
+    if (!kinds.has(kind)) kinds.set(kind, []);
+    kinds.get(kind).push([c, w, d]);
   }
+  return [...kinds.values()].flatMap((around) => pickFrom(around, count));
+}
+
+function pickFrom(around, count) {
   // every work's share in each ring, gathered in one pass in the order found; on equal
   // scores a ring keeps the order its works first came up in
   const per = new Map();
@@ -146,35 +148,18 @@ export function pickArt(near, hex, count = ART_COUNT) {
   // at each distance, works mostly of the color if there are enough of them
   const strong = tiers.flatMap((t) => [FULL, STRONG].map((min) => t.filter((s) => s.share >= min)));
   const at = strong.findIndex((t) => t.length >= ENOUGH);
-  if (at >= 0 && at < 4) count = Math.max(count, CLOSE_COUNT);
-  const first =
-    strong[at] ||
-    tiers.map((t) => t.filter((s) => s.share >= SHARE)).find((t) => t.length >= FEW) ||
-    tiers.at(-1).filter((s) => s.share >= SHARE);
-  // box art and VHS covers match bright colors closely: each at most its share of what's shown
-  const size = Math.min(count, Math.max(FILL, first.length));
-  const caps = [
-    ["games", GAMES],
-    ["vhs", VHS],
-  ].map(([start, part]) => ({ start, limit: Math.ceil(size * part), taken: 0 }));
-  const capOf = (s) => caps.find((c) => s.w.museum.startsWith(c.start));
-  const room = (s) => {
-    const cap = capOf(s);
-    return !cap || cap.taken < cap.limit;
-  };
-  const take = (s) => {
-    const cap = capOf(s);
-    if (cap) cap.taken++;
-  };
-  const picked = first.filter((s) => room(s) && (take(s), true));
-  if (at >= 0 && picked.length < FILL) {
+  const picked = [
+    ...(strong[at] ||
+      tiers.map((t) => t.filter((s) => s.share >= SHARE)).find((t) => t.length >= FEW) ||
+      tiers.at(-1).filter((s) => s.share >= SHARE)),
+  ];
+  if (at >= 0 && picked.length < count) {
     // measured at the close distance, so they line up after the close ones
     const close = new Map(tiers[Math.floor(at / 2)].map((s) => [s.w, s.share]));
     const have = new Set(picked.map((s) => s.w));
     for (const s of strong.slice(at + 1).flat()) {
-      if (picked.length >= FILL) break;
-      if (have.has(s.w) || !room(s)) continue;
-      take(s);
+      if (picked.length >= count) break;
+      if (have.has(s.w)) continue;
       have.add(s.w);
       picked.push({ ...s, share: close.get(s.w) ?? 0 });
     }
@@ -220,6 +205,8 @@ const COVERS = {
 };
 // the two sets of VHS covers come from two places, each credited
 const coverKind = (folder) => (COVERS[folder] ? folder : folder.replace(/-.*/, ""));
+// art, or the kind of cover (each set of VHS covers its own)
+const artKind = (folder) => (COVERS[coverKind(folder)] ? coverKind(folder) : "art");
 
 export function creditHTML(works) {
   const used = Object.entries(MUSEUMS).filter(([folder]) => works.some((w) => w.museum === folder));
