@@ -23,13 +23,6 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="The Color Names logo over a cube of {{colorCount}} named colors" />
     <meta name="twitter:card" content="summary_large_image" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="/src/style.css" />
     <script
       defer
@@ -39,7 +32,7 @@
   </head>
   <body>
     <main class="color-page">
-      <section class="slide slide--invert hero color-hero" data-slide>
+      <section class="slide slide--invert hero color-hero" data-slide data-chapter="Intro">
         <a class="brand color-hero__home" href="../"
           ><svg class="brand__logo" viewBox="20 12 130 158" aria-hidden="true">
             <path d="M30 170h80v-60a39.8 39.8 0 0 0-5.25-19.81A80 80 0 0 0 30 170z" fill="#f69" />
@@ -142,13 +135,19 @@
         </script>
 
         <div class="hero__content">
-          <h1 class="hero__title" data-name></h1>
+          <h1 class="title hero__title" data-name></h1>
           <div class="color-hero__intro" data-intro></div>
-          <p class="hero__stats" data-stats></p>
+          <p class="label hero__stats" data-stats></p>
         </div>
       </section>
 
-      <section class="slide slide--dense color-art is-filling" id="art" data-slide data-art-slide>
+      <section
+        class="slide slide--dense color-art is-filling"
+        id="art"
+        data-slide
+        data-art-slide
+        data-chapter="Pictures"
+      >
         <div class="gallery" data-art></div>
         <div class="art-settings" data-art-settings>
           <button
@@ -165,7 +164,13 @@
               <circle cx="9" cy="14" r="2" fill="none" stroke="currentColor" stroke-width="1.8" />
             </svg>
           </button>
-          <div class="art-settings__menu" role="menu" aria-label="How the pictures show" data-art-settings-menu hidden>
+          <div
+            class="art-settings__menu small"
+            role="menu"
+            aria-label="How the pictures show"
+            data-art-settings-menu
+            hidden
+          >
             <button type="button" role="menuitemcheckbox" data-art-setting="plain" aria-checked="true">
               <span>Hide title</span><small>only the pictures</small>
             </button>
@@ -263,41 +268,62 @@
             <button type="button" role="menuitemcheckbox" data-art-setting="wiki" aria-checked="true">
               <span>Wiki</span><small>Wikipedia, Commons</small>
             </button>
+            <button type="button" role="menuitemcheckbox" data-art-setting="neighbors" aria-checked="true">
+              <span>Neighbors</span><small>the nearest colors' cards</small>
+            </button>
           </div>
         </div>
       </section>
 
-      <section class="slide slide--dense color-fill" id="formats" data-fill>
-        <h2 class="figure color-fill__hex" data-fill-hex></h2>
+      <section class="slide slide--dense color-fill" id="formats" data-fill data-chapter="Values">
+        <h2 class="title color-fill__hex" data-fill-hex></h2>
         <div class="color-fill__ink" data-ink></div>
-        <dl class="color-specs color-specs--formats" data-formats></dl>
-        <dl class="color-specs" data-mix></dl>
+        <dl class="color-specs color-specs--formats lead inset" data-formats></dl>
+        <dl class="color-specs color-specs--mix" data-mix></dl>
       </section>
 
-      <section class="slide slide--dense is-filling" id="words" data-slide data-words-slide>
-        <h2 class="display color-words__title" data-words-title></h2>
-        <div class="color-about" data-about></div>
+      <section
+        class="slide slide--dense is-filling color-words"
+        id="words"
+        data-slide
+        data-words-slide
+        data-chapter="Meaning"
+      >
+        <h2 class="title title--sub color-words__title" data-words-title></h2>
+        <div class="color-about inset" data-about></div>
         <dl class="color-specs color-specs--words" data-words></dl>
       </section>
 
-      <section class="slide slide--dense is-filling" id="meaning" data-slide data-meaning-slide>
-        <h2 class="display color-meaning__title" data-meaning-title></h2>
+      <section
+        class="slide slide--dense is-filling"
+        id="meaning"
+        data-slide
+        data-meaning-slide
+        data-chapter="Dictionary"
+      >
+        <h2 class="title title--sub color-meaning__title" data-meaning-title></h2>
         <div class="color-dictionary" data-dictionary></div>
         <div class="color-wiki" data-wiki aria-live="polite"></div>
       </section>
 
-      <section class="slide slide--dense is-filling" id="neighbors" data-slide data-neighbors-slide>
-        <h2 class="display">Its neighbors.</h2>
+      <section
+        class="slide slide--dense is-filling"
+        id="neighbors"
+        data-slide
+        data-neighbors-slide
+        data-chapter="Related"
+      >
+        <h2 class="title title--sub">Its neighbors.</h2>
         <div class="neighbors" data-neighbors></div>
-        <h2 class="display color-next" id="complements">Its complements.</h2>
+        <h2 class="title title--sub" id="complements" data-chapter="Complements" data-sub>Its complements.</h2>
         <div class="neighbors neighbors--ramp" data-complements></div>
-        <h2 class="display color-next" id="ramp">As a ramp.</h2>
+        <h2 class="title title--sub" id="ramp" data-chapter="Ramp" data-sub>As a ramp.</h2>
         <div class="neighbors neighbors--ramp" data-ramp></div>
       </section>
 
-      <footer class="slide footer" id="share" data-slide>
-        <h2 class="display" data-outro>Use it, share it.</h2>
-        <p class="lead footer__about">
+      <footer class="slide footer" id="share" data-slide data-chapter="Share">
+        <h2 class="title title--sub" data-outro>Use it, share it.</h2>
+        <p class="lead inset footer__about">
           Color Names is an open list of names for colors, each one given by a person. Free to use, under the MIT
           license.
         </p>
@@ -314,7 +340,7 @@
               ></path></svg
           ></a>
         </p>
-        <nav class="footer__nav" aria-label="Project links">
+        <nav class="label footer__nav" aria-label="Project links">
           <a href="../">Color Names</a>
           <a href="../supporters/">Supporters</a>
           <span class="footer__share">
@@ -334,16 +360,15 @@
           </span>
         </nav>
       </footer>
-
       <footer class="colophon" data-colophon>
-        <nav class="colophon__nav" aria-label="The list">
+        <nav class="label colophon__nav" aria-label="The list">
           <a href="https://github.com/meodai/color-names">GitHub<span data-version></span></a>
           <a href="https://www.npmjs.com/package/color-name-list">npm</a>
           <a href="https://meodai.github.io/color-name-api/">API</a>
           <a href="https://github.com/meodai/color-names/blob/main/LICENSE">License</a>
           <a href="../legal/">Legal</a>
         </nav>
-        <p class="colophon__color" data-colophon-color></p>
+        <p class="small colophon__color" data-colophon-color></p>
       </footer>
     </main>
 

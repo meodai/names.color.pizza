@@ -19,7 +19,8 @@ import { paletteHTML, ART_COUNT, MEDIA, MUSEUMS } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
 import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
-import { pixelCards, pixelMode, withPixel } from "./pixel-mode.js";
+import { pixelAtlas, pixelCards, pixelMode, withPixel } from "./pixel-mode.js";
+import { chapterRail } from "./chapters.js";
 
 function adoptLink(hex, name, approx) {
   // an unnamed hex can't be adopted: its closest name can, so the link says which
@@ -103,7 +104,7 @@ function addPronunciations(root, entries, sounds, title) {
 
 const dictionaryHTML = (entries) =>
   `<div class="dictionary dictionary--whole">` +
-  entries.map((e) => `<div class="dictionary__entry">${sensesHTML(e)}</div>`).join("") +
+  entries.map((e) => `<div class="dictionary__entry">${sensesHTML(e, "lead")}</div>`).join("") +
   `</div>`;
 
 const blocksHTML = (blocks) =>
@@ -266,23 +267,24 @@ function revealNeighbors() {
 
 const capital = (t) => t[0].toUpperCase() + t.slice(1);
 
-const sensesHTML = (word) =>
+// type: the senses' class, as they show; none, body text
+const sensesHTML = (word, type = "") =>
   word.parts
     .map(
       (p) => `<p class="label">${escapeHTML(p.part)}</p>
-        <ol class="dictionary__senses">${tidySenses(p.definitions)
+        <ol class="${type ? `${type} ` : ""}dictionary__senses">${tidySenses(p.definitions)
           .map((d) => `<li><span>${escapeHTML(d)}</span></li>`)
           .join("")}</ol>`,
     )
     .join("") +
-  `<a class="dictionary__source" href="${escapeHTML(word.link)}" target="_blank" rel="noopener">Wiktionary</a>`;
+  `<a class="label dictionary__source" href="${escapeHTML(word.link)}" target="_blank" rel="noopener">Wiktionary</a>`;
 
 function indexHTML(words, entries) {
   const wordFor = new Map(words.map((w) => [w.term.toLowerCase(), w]));
   const placed = new Set();
   const block = (title, term, word, image, article) => `<article class="wiki-index__row">
-      <h3${term ? ` data-term="${escapeHTML(term)}"` : ""}><span>${escapeHTML(title)}</span></h3>
-      ${word ? `<div class="wiki-index__words">${sensesHTML(word)}</div>` : ""}
+      <h3 class="title title--sub" data-chapter="${escapeHTML(title)}" data-sub${term ? ` data-term="${escapeHTML(term)}"` : ""}><span>${escapeHTML(title)}</span></h3>
+      ${word ? `<div class="wiki-index__words">${sensesHTML(word, "small")}</div>` : ""}
       ${
         article
           ? `<div class="wiki-index__body">
@@ -303,7 +305,9 @@ function indexHTML(words, entries) {
       mine,
       e.image,
       (opening ? blocksHTML([opening]) : "") +
-        (e.link ? `<a href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>` : ""),
+        (e.link
+          ? `<a class="label" href="${escapeHTML(e.link)}" target="_blank" rel="noopener">Read on Wikipedia</a>`
+          : ""),
     );
   });
   for (const word of words) {
@@ -360,6 +364,8 @@ function showMeaning(name, { definitions = [], entries = [], sounds = [] }) {
   if (!definitions.length && !entries.length) return false;
   page.meaningTitle.textContent = name;
   const whole = isWhole(definitions) && !entries.some((e) => baseTitle(e.title) === definitions[0].term.toLowerCase());
+  // the wiki's rows have titles of their own: the color's name isn't said again over them
+  page.meaningTitle.hidden = !whole;
   page.dictionary.innerHTML = whole ? dictionaryHTML(definitions) : "";
   page.wiki.innerHTML = indexHTML(whole ? [] : definitions, entries);
   addPronunciations(whole ? page.dictionary : page.wiki, definitions, sounds, whole ? page.meaningTitle : null);
@@ -430,6 +436,7 @@ async function render(hex) {
   if (handedOver || builtPage?.hex !== hex) {
     clearTimeout(arriving);
     document.documentElement.classList.add("is-arriving");
+    page.rail?.replay();
     arriving = setTimeout(arrive, 1000);
   }
   // the name as soon as it's known: handed over, this page's own, or from the list loaded before
@@ -535,7 +542,7 @@ async function render(hex) {
     `It can be described as ${lore.getDescriptiveList(false, 4)}.`,
   ].filter(Boolean);
   const leads = (texts) =>
-    texts.map((t) => Object.assign(document.createElement("p"), { className: "lead", textContent: t }));
+    texts.map((t) => Object.assign(document.createElement("p"), { className: "lead inset", textContent: t }));
   const describe = (said) => {
     page.intro.replaceChildren(...leads(said ? [said] : lines));
     if (arriving) arrive();
@@ -590,7 +597,11 @@ async function render(hex) {
     )
     .join("");
 
-  page.about.innerHTML = lore.description.map((t) => `<p>${escapeHTML(t)}</p>`).join("");
+  // a paragraph for each color it's near: the color it's about in bold, so two read as two
+  const about = new RegExp(`\\b(${lore.nouns.join("|")})\\b`, "i");
+  page.about.innerHTML = lore.description
+    .map((t) => `<p>${lore.nouns.length ? escapeHTML(t).replace(about, "<strong>$1</strong>") : escapeHTML(t)}</p>`)
+    .join("");
   page.wordsTitle.textContent = wordsTitle(lore);
   page.words.innerHTML = wordsHTML(lore);
   const ownSlugNow = slugFor(data, current.name);
@@ -606,12 +617,15 @@ async function render(hex) {
       else if (!page.intro.childElementCount) describe(null);
     });
   }
+  const nearest = neighbors(data, hex);
+  artNeighbors = nearest.map((it) => ({ kind: "neighbor", ratio: CARD_RATIO, html: neighborsHTML([it], data) }));
   showPictures(hex, [current.name, lore.nouns[0]], saved);
   showArt(hex, saved);
-  page.neighbors.innerHTML = neighborsHTML(neighbors(data, hex), data);
+  page.neighbors.innerHTML = neighborsHTML(nearest, data);
   page.complements.innerHTML = neighborsHTML(named(data, rampOf(complementHex(hex))), data);
   page.ramp.innerHTML = neighborsHTML(named(data, rampOf(hex)), data);
   card.dataset.slug = slugFor(data, current.name);
+  if (pixelMode() && !handedOver) revealOnCard(card);
   pixelCards(page.root);
   revealNeighbors();
   filled(page.wordsSlide, !!page.words.innerHTML.trim());
@@ -694,7 +708,6 @@ function artSourceDone(hex) {
 async function showArt(hex, saved) {
   const copy = await saved;
   const list = copy?.list;
-  cardPixel = copy?.pixel ? { hex, pixel: copy.pixel } : null;
   let art = [];
   try {
     if (list) art = await (await fetch(new URL(list, location.href))).json();
@@ -715,45 +728,38 @@ async function showArt(hex, saved) {
       work: w,
     })),
   );
-  pixelOnCard();
 }
 
-// the color's name drawn as pixel art, over the art section's card, whichever is there first;
-// only while the site is in pixel art (pixel-mode.js)
-let cardPixel = null;
-function pixelOnCard() {
-  const upper = page.art.querySelector(".gallery__swatch .swatchcard__upper");
-  if (!pixelMode()) {
-    const had = upper?.querySelector(".gallery__pixel");
-    if (!had) return;
-    had.remove();
-    upper.closest(".gallery__swatch").setAttribute("aria-hidden", "true");
-    return;
-  }
-  if (!upper || !cardPixel || cardPixel.hex !== current?.hex || upper.querySelector(".gallery__pixel")) return;
-  const { pixel } = cardPixel;
-  // opens like the other pictures: the sentence it was drawn from, and who drew it
-  const open = Object.assign(document.createElement("button"), {
-    type: "button",
-    className: "gallery__pixel",
-    title: `${pixel.subject} Pixel art by Retro Diffusion, gifted to Color Names`,
+// in pixel art the color's own card draws its picture pixel by pixel, unless it came along
+// from the wall or another color's page, its drawing already on it
+async function revealOnCard(card) {
+  const { slug } = card.dataset;
+  const upper = card.querySelector(".swatchcard__upper");
+  upper.querySelector(".swatchcard__pixel")?.remove();
+  // there before pixelCards() looks, so it leaves this card be
+  const canvas = Object.assign(document.createElement("canvas"), {
+    className: "swatchcard__pixel swatchcard__pixel--now",
   });
-  const canvas = Object.assign(document.createElement("canvas"), { width: 64, height: 64 });
-  canvas.setAttribute("role", "img");
-  canvas.setAttribute("aria-label", pixel.subject);
-  open.append(canvas);
-  open.addEventListener("click", () =>
-    openPicture(open, { kind: "pixel", image: pixel.src, title: pixel.subject, ratio: 1 }),
-  );
-  upper.append(open);
+  canvas.dataset.slug = slug;
+  upper.append(canvas);
+  const a = await pixelAtlas().catch(() => null);
+  const i = a?.slot.get(slug);
   const img = new Image();
-  img.src = pixel.src;
-  img.decode().then(
-    () => revealPixels(img, canvas, upper.closest(".swatchcard")),
-    () => {},
-  );
-  // a button now: no longer only decoration
-  upper.closest(".gallery__swatch").removeAttribute("aria-hidden");
+  if (i !== undefined) img.src = a.tileURL(i);
+  const drawn =
+    i !== undefined &&
+    (await img.decode().then(
+      () => true,
+      () => false,
+    ));
+  if (!canvas.isConnected) return;
+  if (!drawn) {
+    canvas.remove();
+    return pixelCards(card.parentElement);
+  }
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  revealPixels(img, canvas, card);
 }
 
 // once the card is in, the art comes up pixel by pixel from the bottom, each row a little
@@ -784,12 +790,21 @@ function revealPixels(img, canvas, card) {
   // after the card's own entrance, as the picture used to fade in
   const wait = () =>
     card?.classList.contains("swatchcard--visible")
-      ? setTimeout(() => requestAnimationFrame(step), 550)
+      ? setTimeout(() => requestAnimationFrame(step), 300)
       : requestAnimationFrame(wait);
   wait();
 }
 
 let gallery = [];
+// the neighbors' cards, sprinkled among the pictures; a card is its width tall, and its label
+let artNeighbors = [];
+const CARD_RATIO = 1 / (1 + 1.46 * 0.205);
+const sprinkled = (list) => {
+  const out = [...list];
+  if (out.length && artSettings.neighbors)
+    artNeighbors.forEach((n, i) => out.splice(Math.round(((i + 1) * out.length) / (artNeighbors.length + 1)), 0, n));
+  return out;
+};
 const galleryRows = () => 6;
 
 // how the pictures show, chosen in the art section's menu and kept for every page
@@ -808,6 +823,7 @@ const artSettings = {
   vhs: true,
   animeVhs: true,
   wiki: true,
+  neighbors: true,
 };
 try {
   Object.assign(artSettings, JSON.parse(localStorage.getItem(ART_SETTINGS) || "{}"));
@@ -869,7 +885,7 @@ const strip = { offset: 0, source: [], rows: [], track: null, title: null, tiles
 
 // again: the same strip with other tiles, as a setting changed, without coming in anew
 function layoutGallery({ again = false, recentre = false } = {}) {
-  const list = shownGallery();
+  const list = sprinkled(shownGallery());
   const n = galleryRows();
   const rows = Array.from({ length: n }, () => ({ width: 0, items: [] }));
   // every work in the rows that show in full; the cut-off rows at the top and bottom have the
@@ -910,29 +926,10 @@ function layoutGallery({ again = false, recentre = false } = {}) {
   strip.tiles = new Map();
   const title = document.createElement("div");
   title.className = "gallery__title";
-  title.innerHTML = `<div class="gallery__swatch" aria-hidden="true">
-      <div class="swatchcard" style="${cardStyle(current.hex)}">
-        <div class="swatchcard__upper"><i class="swatchcard__swatch"><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i><i class="swatchcard__shade"></i></i></div>
-        <div class="swatchcard__label"><div class="swatchcard__info">
-          <span class="swatchcard__row1">${current.hex}</span>
-        </div></div>
-      </div>
-    </div>
-    <h2 class="display gallery__name">${escapeHTML(current.name)},<br />${artSettings.palettes ? "as palettes" : "in pictures"}.</h2>`;
+  title.innerHTML = `<h2 class="title title--sub gallery__name">${escapeHTML(current.name)},<br />${artSettings.palettes ? "as palettes" : "in pictures"}.</h2>`;
   title.hidden = artSettings.plain;
-  if (again) title.querySelector(".swatchcard").classList.add("swatchcard--visible");
   strip.track.append(title);
   strip.title = title;
-  pixelOnCard();
-  const shown = new IntersectionObserver(
-    ([e]) => {
-      if (!e.isIntersecting) return;
-      shown.disconnect();
-      title.querySelector(".swatchcard").classList.add("swatchcard--visible");
-    },
-    { threshold: 0.3 },
-  );
-  shown.observe(title);
   measureStrip(rows);
   if (!again || recentre) strip.offset = strip.titleWidth / 2 - page.art.clientWidth / 2;
   if (again) {
@@ -974,12 +971,8 @@ function measureStrip(rows = strip.source) {
     // no title: the middle row runs on through where it would be, a gap apart
     strip.titleWidth = -gap;
   } else {
-    // the swatch card is as tall as a row, like a picture
-    const swatch = strip.title.querySelector(".gallery__swatch");
-    swatch.style.width = "100px";
-    swatch.style.width = `${(row * 100) / swatch.firstElementChild.offsetHeight}px`;
     strip.title.style.width = "max-content";
-    strip.titleWidth = Math.max(strip.title.offsetWidth, swatch.offsetWidth + gap + row * 2.8);
+    strip.titleWidth = Math.max(strip.title.offsetWidth, row * 2.8);
     strip.title.style.width = `${strip.titleWidth}px`;
   }
   strip.rows = rows.map((r) => {
@@ -1023,8 +1016,9 @@ function drawStrip() {
       let el = strip.tiles.get(key);
       if (!el) {
         el = document.createElement("figure");
-        el.className = "tile";
-        el.innerHTML = tileHTML(t.it, gallery.indexOf(t.it));
+        el.className = t.it.kind === "neighbor" ? "tile tile--neighbor" : "tile";
+        el.innerHTML = t.it.kind === "neighbor" ? t.it.html : tileHTML(t.it, gallery.indexOf(t.it));
+        el.querySelector(".swatchcard")?.classList.add("swatchcard--visible");
         const reach = Math.hypot(x - strip.offset - page.art.clientWidth / 2, (k - strip.middle) * strip.row);
         const delay = strip.entered ? 0 : 400 + Math.round(Math.min(1, reach / page.art.clientWidth) * 900);
         el.style.cssText = `top:${k * (strip.row + strip.gap)}px;width:${t.w}px;height:${strip.row}px;--d:${delay}ms`;
@@ -1095,8 +1089,8 @@ const tileHTML = (
         ? `<span class="tile__palette${(it.ratio || 1) < 1 ? " tile__palette--tall" : ""}" style="--n:${it.palette.length}">${it.palette.map(([hex, share]) => `<i style="--share:${share};background:${hex}"></i>`).join("")}</span><img class="tile__peek" data-src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />`
         : `<img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" decoding="async" />`
     }
-    ${it.title ? `<span class="tile__name">${escapeHTML(it.title)}</span>` : ""}
-    ${it.share ? `<span class="tile__share">${Math.round(it.share * 100)}%</span>` : ""}
+    ${it.title ? `<span class="small tile__name">${escapeHTML(it.title)}</span>` : ""}
+    ${it.share ? `<span class="small tile__share">${Math.round(it.share * 100)}%</span>` : ""}
   </button>`;
 
 const link = (href, text) =>
@@ -1120,12 +1114,12 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
     <div class="lightbox__frame">
       <img src="${escapeHTML(it.image)}" alt="${escapeHTML(it.title)}" />
     </div>
-    <figcaption class="lightbox__info">
-      ${it.link ? link(it.link, it.title || "Untitled").replace("<a ", '<a class="lightbox__title" ') : `<span class="lightbox__title">${escapeHTML(it.title || "Untitled")}</span>`}
+    <figcaption class="small lightbox__info">
+      ${it.link ? link(it.link, it.title || "Untitled").replace("<a ", '<a class="lead lightbox__title" ') : `<span class="lead lightbox__title">${escapeHTML(it.title || "Untitled")}</span>`}
       ${it.by ? `<span>${escapeHTML(it.by)}</span>` : ""}
       <span class="lightbox__source">${sourceHTML(it)}</span>
     </figcaption>
-    ${it.palette?.length ? `<button type="button" class="lightbox__copy">Copy colors</button>` : ""}
+    ${it.palette?.length ? `<button type="button" class="small lightbox__copy">Copy colors</button>` : ""}
     ${it.palette?.length ? `<div class="lightbox__palette">${paletteHTML(it.palette, it.color)}</div>` : ""}
   </figure>`;
 
@@ -1214,7 +1208,7 @@ function openPicture(tile, it) {
       a.setAttribute("aria-label", `${name}, ${a.getAttribute("aria-label")}`);
       a.insertAdjacentHTML(
         "beforeend",
-        `<span class="art__square"><span class="art__name"><span>${escapeHTML(name)}</span></span></span>`,
+        `<span class="art__square"><span class="small art__name"><span>${escapeHTML(name)}</span></span></span>`,
       );
     }
   });
@@ -1330,6 +1324,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   const q = (s) => root.querySelector(s);
   showVersion(root);
   anchors(root, signal);
+  page.rail = chapterRail(root, { scroller: embedded ? root : window, signal });
   Object.assign(page, {
     card: q("[data-card]"),
     place: q("[data-place]"),
@@ -1479,9 +1474,23 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
   // a tap shows a drawing in its real colors, as hovering does; another tap, back
   page.mix.addEventListener("click", (e) => e.target.closest(".color-specs__pair")?.classList.toggle("is-lit"));
 
-  page.formats.addEventListener("click", (e) => {
+  // copied: the value stays as it is, a tick by its label says so
+  const ticks = new WeakMap();
+  page.formats.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-copy]");
-    if (btn) copy(btn.dataset.copy, btn, "Copied");
+    if (!btn) return;
+    try {
+      await navigator.clipboard.writeText(btn.dataset.copy);
+    } catch {
+      return;
+    }
+    const label = btn.closest("div").querySelector("dt");
+    label.classList.add("is-copied");
+    clearTimeout(ticks.get(label));
+    ticks.set(
+      label,
+      setTimeout(() => label.classList.remove("is-copied"), 1500),
+    );
   });
 
   const close = q("[data-close]");
@@ -1645,7 +1654,6 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
     },
     { signal },
   );
-  window.addEventListener("pixelmode", pixelOnCard, { signal });
   const inView = new IntersectionObserver(([e]) => (drift.seen = e.isIntersecting));
   inView.observe(page.art);
   signal?.addEventListener("abort", () => {

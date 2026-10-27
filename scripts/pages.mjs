@@ -221,7 +221,7 @@ const clip = (text, length) => (text.length <= length ? text : `${text.slice(0, 
 function meaningHTML(looked) {
   const words = (looked?.definitions || [])
     .map(
-      (d) => `<article class="wiki-index__row"><h3><span>${escapeHTML(d.term)}</span></h3>
+      (d) => `<article class="wiki-index__row"><h3 class="title title--sub"><span>${escapeHTML(d.term)}</span></h3>
         ${d.parts
           .map(
             (p) =>
@@ -236,7 +236,7 @@ function meaningHTML(looked) {
   const articles = (looked?.entries || [])
     .map((e) => {
       const opening = e.blocks.find((b) => b.text)?.text || "";
-      return `<article class="wiki-index__row"><h3><span>${escapeHTML(e.title)}</span></h3>
+      return `<article class="wiki-index__row"><h3 class="title title--sub"><span>${escapeHTML(e.title)}</span></h3>
         <p>${escapeHTML(opening)}</p>
         ${e.link ? `<a href="${escapeHTML(e.link)}">Read on Wikipedia</a>` : ""}</article>`;
     })
@@ -505,13 +505,13 @@ for (const [i, { name, hex }] of items.entries()) {
     .replace(
       /(<div[^>]*data-intro[^>]*>)[\s\S]*?(<\/div>)/,
       (_, open, close) =>
-        `${open}${(said ? [said] : lines).map((t) => `<p class="lead">${escapeHTML(t)}</p>`).join("")}${close}`,
+        `${open}${(said ? [said] : lines).map((t) => `<p class="lead inset">${escapeHTML(t)}</p>`).join("")}${close}`,
     )
     .replace(
       /(<div[^>]*data-ink[^>]*>)[\s\S]*?(<\/div>)/,
       (_, open, close) =>
         `${open}${inkLines(hex, lines)
-          .map((t) => `<p class="lead">${escapeHTML(t)}</p>`)
+          .map((t) => `<p class="lead inset">${escapeHTML(t)}</p>`)
           .join("")}${close}`,
     )
     .replace(

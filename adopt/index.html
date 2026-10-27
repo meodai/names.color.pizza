@@ -27,10 +27,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap"
-      rel="stylesheet"
-    />
-    <link
       href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&text=D.%20Aerne&display=swap"
       rel="stylesheet"
     />
@@ -117,28 +113,28 @@
         </div>
 
         <div class="hero__content">
-          <h1 class="hero__title" data-name>Adopt a color.</h1>
+          <h1 class="title hero__title" data-name>Adopt a color.</h1>
           <div class="color-hero__intro">
-            <p class="lead" data-lead>
+            <p class="lead inset" data-lead>
               Be the one and only patron of a color: every color can be adopted just once. It keeps the list, its API
               and these pages running for everyone.
             </p>
           </div>
-          <p class="hero__stats">
+          <p class="label hero__stats">
             <span>{{stars}} stars on GitHub</span>
             <span>{{npmYear}} npm downloads a year</span>
             <span>Millions of API requests</span>
           </p>
-          <ul class="adopt__tiers" data-tiers>
+          <ul class="lead adopt__tiers" data-tiers>
             <li>
-              <b>$5+</b>
+              <b class="title title--sub">$5+</b>
               <span data-tier5
                 >your name and picture on the color, with the <a href="../supporters/">supporters</a> and in the
                 <a href="https://github.com/meodai/color-names#sponsors" target="_blank" rel="noopener">README</a></span
               >
             </li>
             <li>
-              <b>$10+</b>
+              <b class="title title--sub">$10+</b>
               <span>its card turns <i class="adopt__holo">holographic</i>, in one of eight foils drawn for you</span>
             </li>
           </ul>
@@ -161,14 +157,8 @@
             <div class="costs__track"><i class="costs__fill"></i></div>
             <p class="costs__note"><span data-costs-note></span> <a href="../supporters/#costs">What it costs</a></p>
           </div>
-          <div class="adopt__pick" data-pick hidden>
+          <div class="lead adopt__pick" data-pick hidden>
             <label class="label adopt__pick-label" for="adopt-picker">Pick a color</label>
-            <label class="adopt__pill" title="Pick a color">
-              <span class="wall__picker adopt__wheel">
-                <input type="color" id="adopt-picker" data-picker aria-label="Pick a color to adopt" />
-              </span>
-              <span class="adopt__pick-name" data-pick-name></span>
-            </label>
             <button type="button" class="adopt__dice" data-pick-random aria-label="Another color" title="Another color">
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <rect class="wall__face" x="2.5" y="2.5" width="15" height="15" rx="4" pathLength="1" />
@@ -179,6 +169,12 @@
                 <circle class="wall__pip" cx="13.2" cy="13.2" r="1.3" />
               </svg>
             </button>
+            <label class="adopt__pill" title="Pick a color">
+              <span class="wall__picker adopt__wheel">
+                <input type="color" id="adopt-picker" data-picker aria-label="Pick a color to adopt" />
+              </span>
+              <span class="adopt__pick-name" data-pick-name></span>
+            </label>
           </div>
           <form class="adopt__who" data-who>
             <label class="label" for="adopt-by">Show me as</label>
@@ -290,13 +286,13 @@
       <section class="slide adopt-cert" id="certificate" data-cert hidden></section>
 
       <footer class="slide adopt-more" data-more>
-        <h2 class="display">Also kept going.</h2>
-        <p class="lead adopt-more__about">
+        <h2 class="title title--sub">Also kept going.</h2>
+        <p class="lead inset adopt-more__about">
           Color Names is made by <a href="https://elastiq.ch/" target="_blank" rel="noopener">David Aerne</a> in Zürich.
           Adopting a color also keeps David’s other open projects going: tools, libraries and experiments around color.
         </p>
         <ul class="adopt-projects" data-projects></ul>
-        <nav class="footer__nav" aria-label="More">
+        <nav class="label footer__nav" aria-label="More">
           <a href="../">Color Names</a>
           <a href="../supporters/">Supporters</a>
           <a href="../legal/">Legal</a>

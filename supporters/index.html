@@ -20,13 +20,6 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="The Color Names logo over a cube of {{colorCount}} named colors" />
     <meta name="twitter:card" content="summary_large_image" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="/src/style.css" />
     <script
       defer
@@ -93,12 +86,14 @@
             <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
         </a>
-        <div class="supporters__content">
-          <h1 class="hero__title">Supporters.</h1>
+        <div class="hero__content supporters__content">
+          <h1 class="title hero__title">Supporters.</h1>
           <div class="color-hero__intro">
-            <p class="lead" data-lead>Everyone who adopted a color, keeping the list and its API free for everyone.</p>
+            <p class="lead inset" data-lead>
+              Everyone who adopted a color, keeping the list and its API free for everyone.
+            </p>
           </div>
-          <p class="hero__stats supporters__stats" data-counts hidden></p>
+          <p class="label hero__stats supporters__stats" data-counts hidden></p>
           <ol class="supporters__list" data-supporters></ol>
           <p class="adopt__act">
             <a class="adopt__cta" href="../adopt/" data-cta>Adopt a color</a>
@@ -106,8 +101,8 @@
         </div>
       </section>
       <section class="slide costs" id="costs" aria-labelledby="costs-title">
-        <h2 class="display" id="costs-title">What it costs.</h2>
-        <p class="lead costs__lead">
+        <h2 class="title title--sub" id="costs-title">What it costs.</h2>
+        <p class="lead inset costs__lead">
           What it takes to keep the list, its API and this site running. Color Names turns ten this year, paid out of
           pocket all along.
         </p>
