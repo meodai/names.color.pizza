@@ -270829,5 +270829,14 @@
     "reference": "Andreas Gysin (ertdfgcvb), an artist",
     "description": "Glowing phosphor mint from a little vector display montage by Andreas Gysin, known as ertdfgcvb.",
     "model": "claude"
+  },
+  {
+    "name": "Levin’s Finger",
+    "hex": "#da9791",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Golan Levin, an artist, and his avatar",
+    "description": "Warm fingertip pink, the color of the finger in the avatar Golan Levin uses everywhere.",
+    "model": "claude"
   }
 ]
