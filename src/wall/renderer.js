@@ -345,7 +345,8 @@ export function createRenderer(canvas, positions, colors, grow = new Uint8Array(
   gl.uniform1i(u.sheets, 0);
   gl.uniform1f(u.pixel, 0);
   gl.enable(gl.DEPTH_TEST);
-  gl.clearColor(0, 0, 0, 1);
+  // see-through where no card is: the page behind is as black, and the brand under it shows
+  gl.clearColor(0, 0, 0, 0);
 
   const count = positions.length / 3;
   const draw = (cam, dpr, { clear = true, only = -1, keepAll = 1 } = {}) => {

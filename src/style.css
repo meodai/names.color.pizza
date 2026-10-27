@@ -99,6 +99,16 @@
      on them fall on the same one */
   --brand-c: round(calc(var(--brand-x) + var(--brand-pad) + var(--brand-logo-w) + var(--brand-gap)), 1px);
   --bar-h: 3.2rem;
+  /* a pill (the tabs, the search): what's inside it this far from its edge, a tab's own room
+     around its text, so the pill is this tall */
+  --pill-inset: 0.25rem;
+  --tab-pad: 0.45rem;
+  --tab-pad-x: 0.9rem;
+  --pill-h: calc(2 * (var(--pill-inset) + var(--tab-pad)) + var(--text-xs) * 1.5);
+  /* between the pills and buttons that go together (the tabs, the list button, its menu) */
+  --dock-gap: 0.4rem;
+  /* where a pill in the top bar starts, centered in it */
+  --pill-top: calc(var(--space-xs) + (var(--bar-h) - var(--pill-h)) / 2);
   --measure: 38ch;
 
   color-scheme: light;
@@ -141,6 +151,11 @@ body {
   --weight-display: 500;
   --leading: 1.42;
   --tracking: -0.005em;
+}
+
+/* no rounded corners, the browser's own on its controls neither */
+:is(button, input, select, textarea) {
+  border-radius: 0;
 }
 
 ::selection {
@@ -730,6 +745,7 @@ a:hover {
   .adopt__who ::picker(select) {
     margin-block: var(--space-2xs);
     padding: 0.4rem;
+    border-radius: 0;
     border: 1px solid currentColor;
     color: var(--fg);
     background: var(--bg);
@@ -808,14 +824,7 @@ a:hover {
   }
 
   .adopt__who-row:has(.adopt__by:not([hidden])) select {
-    border-start-end-radius: 0;
-    border-end-end-radius: 0;
     border-inline-end: 0;
-  }
-
-  .adopt__who-row input {
-    border-start-start-radius: 0;
-    border-end-start-radius: 0;
   }
 }
 
@@ -1866,8 +1875,8 @@ h2:hover > .anchor,
 .art-settings > button {
   display: grid;
   place-items: center;
-  inline-size: 2.6rem;
-  block-size: 2.6rem;
+  inline-size: var(--pill-h);
+  block-size: var(--pill-h);
   padding: 0;
   border: 0;
   color: var(--bg);
@@ -2355,12 +2364,12 @@ h2:hover > .anchor,
 .color-hero__close {
   position: fixed;
   z-index: 8;
-  top: calc(var(--space-xs) + (var(--bar-h) - 2.5rem) / 2);
+  top: var(--pill-top);
   right: var(--space-s);
   display: grid;
   place-items: center;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
+  inline-size: var(--pill-h);
+  block-size: var(--pill-h);
   color: var(--paper);
   background: var(--ink);
   box-shadow: inset 0 0 0 2px var(--paper);
@@ -4225,6 +4234,76 @@ html.is-arriving:not(.is-passed-on) {
   -webkit-user-select: none;
 }
 
+/* the brand under the space, the cards going over it; over a color's page opened on it again */
+.brand.wall__brand {
+  z-index: -1;
+}
+
+.wall:has(.wall__page:not(.is-leaving)) .brand.wall__brand {
+  z-index: 8;
+}
+
+/* over the space, where the brand under it can't be pointed at: its clone, unseen, takes the
+   click and the pointer, the brand moving as it would (wall.js) */
+.brand.wall__brand-hit {
+  z-index: 4;
+  color: transparent;
+  background: transparent;
+  transition:
+    color 0.25s ease,
+    background 0.25s ease;
+}
+
+/* the parrot in front ringed in the page's color, so it stands clear of the cards behind */
+.wall__brand-hit .brand__logo,
+.is-pixel .wall__brand-hit::before {
+  --ring: var(--bg);
+  filter: drop-shadow(1.5px 0 0 var(--ring)) drop-shadow(-1.5px 0 0 var(--ring)) drop-shadow(0 1.5px 0 var(--ring))
+    drop-shadow(0 -1.5px 0 var(--ring));
+}
+
+/* the parrot always over the cards; pointed at, its pill and name fade in with it */
+.brand.wall__brand-hit:hover {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+/* the GitHub link the other way round: the link in the bar unseen till pointed at, a copy of it
+   under the space where it is (wall.js) */
+.wall.has-under .wall__bar .wall__nav > a {
+  opacity: 0;
+  transition:
+    opacity 0.25s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.wall.has-under .wall__bar .wall__nav > a:is(:hover, :focus-visible) {
+  opacity: 1;
+}
+
+.wall__nav--under {
+  position: absolute;
+  z-index: -1;
+  top: var(--space-xs);
+  right: var(--space-s);
+  display: flex;
+  align-items: center;
+  block-size: var(--bar-h);
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+/* only the GitHub link: the help button's place kept, so the link is where the bar has it */
+.wall__nav--under > :not(a) {
+  visibility: hidden;
+}
+
+/* in as the bar comes in */
+.wall.is-opening .wall__nav--under {
+  opacity: 0;
+}
+
 .wall__canvas {
   display: block;
   inline-size: 100%;
@@ -4307,7 +4386,7 @@ html.is-arriving:not(.is-passed-on) {
   align-items: center;
   gap: 0.4rem;
   margin: 1.1rem 0 0 0.9rem;
-  padding: 0.3rem 0.6rem;
+  padding: var(--tab-pad) var(--tab-pad-x);
   color: var(--ink);
   background: var(--paper);
   font-size: var(--text-xs);
@@ -4331,7 +4410,9 @@ html.is-arriving:not(.is-passed-on) {
   position: absolute;
   inset: 0 0 auto;
   display: grid;
-  grid-template-columns: 1fr minmax(0, 26rem) 1fr;
+  grid-template-columns: 1fr minmax(0, var(--dock-w, 26rem)) 1fr;
+  /* the bar's height, which the brand and the close button center on, whatever's in it */
+  grid-template-rows: var(--bar-h);
   align-items: center;
   gap: var(--space-s);
   padding: var(--space-xs) var(--space-s);
@@ -4345,7 +4426,7 @@ html.is-arriving:not(.is-passed-on) {
 .wall__nav a {
   display: inline-block;
   padding: 0 1.1rem;
-  line-height: 2.5rem;
+  line-height: var(--pill-h);
   color: var(--paper);
   background: var(--ink);
   font-size: var(--text-xs);
@@ -4366,14 +4447,12 @@ html.is-arriving:not(.is-passed-on) {
 /* GitHub and, past a faint line in the same chip, the ? that opens the intro under it */
 .wall__nav a {
   padding-inline-end: 0.75rem;
-  border-start-end-radius: 0;
-  border-end-end-radius: 0;
 }
 
 .wall__help {
   position: relative;
   inline-size: 2.4rem;
-  block-size: 2.5rem;
+  block-size: var(--pill-h);
   padding: 0 0.2rem 0 0;
   border: 0;
   color: var(--paper);
@@ -4421,10 +4500,10 @@ html.is-arriving:not(.is-passed-on) {
 }
 
 .brand {
-  --brand-h: 2.5rem;
+  --brand-h: var(--pill-h);
   position: fixed;
   z-index: 8;
-  top: calc(var(--space-xs) + (var(--bar-h) - var(--brand-h)) / 2);
+  top: var(--pill-top);
   left: var(--brand-x);
   display: inline-flex;
   align-items: center;
@@ -4499,33 +4578,27 @@ html.is-arriving:not(.is-passed-on) {
   transform-origin: 112px 128px;
 }
 
-.brand:hover .brand__crest--1,
-.brand:focus-visible .brand__crest--1 {
+:is(.brand:hover, .brand:focus-visible, .wall:has(.wall__brand-hit:hover) .wall__brand) .brand__crest--1 {
   transform: rotate(-22deg);
 }
 
-.brand:hover .brand__crest--2,
-.brand:focus-visible .brand__crest--2 {
+:is(.brand:hover, .brand:focus-visible, .wall:has(.wall__brand-hit:hover) .wall__brand) .brand__crest--2 {
   transform: rotate(-14deg);
 }
 
-.brand:hover .brand__crest--3,
-.brand:focus-visible .brand__crest--3 {
+:is(.brand:hover, .brand:focus-visible, .wall:has(.wall__brand-hit:hover) .wall__brand) .brand__crest--3 {
   transform: rotate(-6deg);
 }
 
-.brand:hover .brand__crest--4,
-.brand:focus-visible .brand__crest--4 {
+:is(.brand:hover, .brand:focus-visible, .wall:has(.wall__brand-hit:hover) .wall__brand) .brand__crest--4 {
   transform: rotate(9deg);
 }
 
-.brand:hover .brand__beak--top,
-.brand:focus-visible .brand__beak--top {
+:is(.brand:hover, .brand:focus-visible, .wall:has(.wall__brand-hit:hover) .wall__brand) .brand__beak--top {
   transform: rotate(-16deg);
 }
 
-.brand:hover .brand__beak--bottom,
-.brand:focus-visible .brand__beak--bottom {
+:is(.brand:hover, .brand:focus-visible, .wall:has(.wall__brand-hit:hover) .wall__brand) .brand__beak--bottom {
   transform: rotate(24deg);
 }
 
@@ -4561,10 +4634,10 @@ html.is-arriving:not(.is-passed-on) {
 
 .wall__picker {
   position: absolute;
-  inset: 50% auto auto calc((var(--bar-h) - 1.7rem) / 2);
+  inset: 50% auto auto var(--pill-inset);
   z-index: 1;
-  inline-size: 1.7rem;
-  block-size: 1.7rem;
+  inline-size: calc(var(--pill-h) - 2 * var(--pill-inset));
+  block-size: calc(var(--pill-h) - 2 * var(--pill-inset));
   overflow: hidden;
   translate: 0 -50%;
   cursor: pointer;
@@ -4572,6 +4645,7 @@ html.is-arriving:not(.is-passed-on) {
   --l: 70%;
   --c: 0.3;
   background: conic-gradient(
+    from var(--turn),
     oklch(var(--l) var(--c) 0) 0deg 30deg,
     oklch(var(--l) var(--c) 30) 30deg 60deg,
     oklch(var(--l) var(--c) 60) 60deg 90deg,
@@ -4592,9 +4666,16 @@ html.is-arriving:not(.is-passed-on) {
   animation: wheel 20s linear infinite;
 }
 
+/* the hues turn, not the picker */
+@property --turn {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 @keyframes wheel {
   to {
-    rotate: 1turn;
+    --turn: 1turn;
   }
 }
 
@@ -4620,16 +4701,18 @@ html.is-arriving:not(.is-passed-on) {
   outline-offset: 2px;
 }
 
+/* as tall as the tabs, its text as theirs */
 .wall__search {
-  block-size: var(--bar-h);
+  block-size: var(--pill-h);
   inline-size: 100%;
-  padding: 0.7rem 2.9rem 0.7rem 2.95rem;
+  padding-block: 0;
+  padding-inline: calc(var(--pill-h) - var(--pill-inset) + 0.5rem);
   border: 0;
   color: var(--ink);
   background: var(--paper);
   font: inherit;
   font-family: var(--font-mono, inherit);
-  font-size: var(--text-base);
+  font-size: var(--text-xs);
 }
 
 /* hides the native blue clear button; Escape clears */
@@ -4640,14 +4723,15 @@ html.is-arriving:not(.is-passed-on) {
 
 /* a dice while there's nothing to clear, an × once there is: the face undraws, the arms grow
    out of the middle pip, and each corner pip is gone as an arm reaches it; back, the other way */
+/* the color's mirror at the other end: as big, as far in */
 .wall__clear {
   position: absolute;
-  inset: 50% 0.55rem auto auto;
+  inset: 50% var(--pill-inset) auto auto;
   z-index: 1;
   display: grid;
   place-items: center;
-  inline-size: 1.9rem;
-  block-size: 1.9rem;
+  inline-size: calc(var(--pill-h) - 2 * var(--pill-inset));
+  block-size: calc(var(--pill-h) - 2 * var(--pill-inset));
   padding: 0;
   border: 0;
   color: var(--ink);
@@ -4759,10 +4843,11 @@ html.is-arriving:not(.is-passed-on) {
   inset: 0;
   display: grid;
   place-items: center;
-  padding-inline: 2.95rem;
+  padding-inline: calc(var(--pill-h) - var(--pill-inset) + 0.5rem);
   overflow: hidden;
   color: var(--ink);
-  font-size: var(--text-base);
+  font-family: var(--font-mono, inherit);
+  font-size: var(--text-xs);
   white-space: nowrap;
   pointer-events: none;
   transition: opacity 0.15s ease;
@@ -4916,7 +5001,7 @@ html.is-arriving:not(.is-passed-on) {
 .wall__intro {
   --intro-from: 0 -0.8rem;
   position: absolute;
-  inset: var(--space-xs) var(--space-s) auto auto;
+  inset: var(--pill-top) var(--space-s) auto auto;
   z-index: 4;
   display: flex;
   flex-direction: column;
@@ -5133,7 +5218,7 @@ html.is-arriving:not(.is-passed-on) {
 .wall__intro-links > * {
   display: inline-flex;
   align-items: center;
-  block-size: 2.6rem;
+  block-size: var(--pill-h);
   animation: wall-intro-up 0.5s cubic-bezier(0.3, 0.7, 0, 1) 0.55s both;
 }
 
@@ -5326,8 +5411,8 @@ html.is-arriving:not(.is-passed-on) {
   inset: auto auto var(--space-s) 50%;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem;
+  gap: var(--dock-gap);
+  padding: 0;
   background: var(--glass);
   backdrop-filter: blur(16px) saturate(1.4);
   transform: translateX(-50%);
@@ -5350,7 +5435,7 @@ html.is-arriving:not(.is-passed-on) {
   position: relative;
   display: flex;
   gap: 0.2rem;
-  padding: 0.25rem;
+  padding: var(--pill-inset);
   background: var(--paper);
 }
 
@@ -5367,8 +5452,8 @@ html.is-arriving:not(.is-passed-on) {
 }
 
 .wall__pick-list > button {
-  inline-size: 2.6rem;
-  block-size: 2.6rem;
+  inline-size: var(--pill-h);
+  block-size: var(--pill-h);
   border: 0;
   color: var(--ink);
   background: var(--paper);
@@ -5378,7 +5463,7 @@ html.is-arriving:not(.is-passed-on) {
 .wall__models button {
   position: relative;
   z-index: 1;
-  padding: 0.45rem 0.9rem;
+  padding: var(--tab-pad) var(--tab-pad-x);
   border: 0;
   color: var(--ink);
   background: none;
@@ -5395,7 +5480,7 @@ html.is-arriving:not(.is-passed-on) {
 
 .wall__models-thumb {
   position: absolute;
-  inset-block: 0.25rem;
+  inset-block: var(--pill-inset);
   left: 0;
   inline-size: var(--w, 0);
   background: var(--ink);
@@ -5422,7 +5507,7 @@ html.is-arriving:not(.is-passed-on) {
   inset: auto calc(var(--space-s) - 0.3rem) calc(var(--space-s) - 0.3rem) auto;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--dock-gap);
   padding: 0.3rem;
   backdrop-filter: blur(16px) saturate(1.4);
 }
@@ -5436,7 +5521,7 @@ html.is-arriving:not(.is-passed-on) {
 }
 
 .wall:not(.is-away) .wall__zoom [data-home] {
-  margin-block-start: calc(-2.6rem - 0.4rem);
+  margin-block-start: calc(-1 * (var(--pill-h) + var(--dock-gap)));
   opacity: 0;
   translate: calc(100% + var(--space-s)) 0;
   visibility: hidden;
@@ -5454,8 +5539,8 @@ html.is-arriving:not(.is-passed-on) {
 }
 
 .wall__zoom button {
-  inline-size: 2.6rem;
-  block-size: 2.6rem;
+  inline-size: var(--pill-h);
+  block-size: var(--pill-h);
   color: var(--ink);
   background: var(--paper);
   font-size: 1.3rem;
@@ -5464,7 +5549,7 @@ html.is-arriving:not(.is-passed-on) {
 
 .wall__lists {
   position: absolute;
-  inset: auto 0 calc(100% + 0.6rem) auto;
+  inset: auto 0 calc(100% + var(--dock-gap)) auto;
   display: grid;
   gap: 0.2rem;
   min-inline-size: 13rem;
@@ -5572,7 +5657,7 @@ html.is-arriving:not(.is-passed-on) {
   .wall__bar {
     inset: 0;
     grid-template-columns: 1fr auto;
-    grid-template-rows: 2.5rem 1fr auto;
+    grid-template-rows: var(--pill-h) 1fr auto;
     gap: var(--space-2xs) var(--space-s);
     padding: var(--space-2xs) 1rem calc(1rem + env(safe-area-inset-bottom));
   }
@@ -5586,8 +5671,8 @@ html.is-arriving:not(.is-passed-on) {
     display: block;
     grid-row: 1;
     grid-column: 2;
-    inline-size: 2.5rem;
-    block-size: 2.5rem;
+    inline-size: var(--pill-h);
+    block-size: var(--pill-h);
     padding: 0;
     border: 0;
     color: var(--ink);
@@ -5678,11 +5763,11 @@ html.is-arriving:not(.is-passed-on) {
     position: absolute;
     z-index: 2;
     top: var(--space-2xs);
-    right: calc(1rem + 2.5rem + 0.4rem);
+    right: calc(1rem + var(--pill-h) + var(--dock-gap));
     display: flex;
-    max-inline-size: calc(100% - 2 * (1rem + 2.5rem + 0.4rem));
-    block-size: 2.5rem;
-    padding: 0.2rem;
+    max-inline-size: calc(100% - 2 * (1rem + var(--pill-h) + var(--dock-gap)));
+    block-size: var(--pill-h);
+    padding: 0;
     box-sizing: border-box;
     background: var(--glass);
     backdrop-filter: blur(16px) saturate(1.4);
@@ -5692,20 +5777,20 @@ html.is-arriving:not(.is-passed-on) {
   .wall__tabs::before {
     content: "";
     position: absolute;
-    inset: 0.2rem;
+    inset: 0;
     background: var(--paper);
   }
 
   .wall__models {
     min-inline-size: 0;
-    padding: 0.15rem calc(0.35rem - 1px);
+    padding: var(--pill-inset);
     overflow-x: auto;
     scrollbar-width: none;
     background: none;
   }
 
   .wall__models button {
-    padding-block: 0.3rem;
+    padding-block: var(--tab-pad);
   }
 
   .wall__models::-webkit-scrollbar {
@@ -5747,18 +5832,18 @@ html.is-arriving:not(.is-passed-on) {
     right: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: var(--dock-gap);
   }
 
   .wall__pick-list {
     z-index: 4;
-    top: calc(var(--space-2xs) + 2.5rem + 0.4rem);
+    top: calc(var(--space-2xs) + var(--pill-h) + var(--dock-gap));
     bottom: auto;
     left: auto;
   }
 
   .wall__zoom {
-    top: calc(var(--space-2xs) + 2 * (2.5rem + 0.4rem));
+    top: calc(var(--space-2xs) + 2 * (var(--pill-h) + var(--dock-gap)));
     bottom: auto;
     padding: 0;
     backdrop-filter: none;
@@ -5766,16 +5851,16 @@ html.is-arriving:not(.is-passed-on) {
 
   .wall__pick-list > button,
   .wall__zoom button {
-    inline-size: 2.5rem;
-    block-size: 2.5rem;
+    inline-size: var(--pill-h);
+    block-size: var(--pill-h);
   }
 
   .wall:not(.is-away) .wall__zoom [data-home] {
-    margin-block-start: calc(-2.5rem - 0.4rem);
+    margin-block-start: calc(-1 * (var(--pill-h) + var(--dock-gap)));
   }
 
   .wall__lists {
-    inset: 0 calc(100% + 0.4rem) auto auto;
+    inset: 0 calc(100% + var(--dock-gap)) auto auto;
   }
 
   .wall__corner {
@@ -5784,7 +5869,7 @@ html.is-arriving:not(.is-passed-on) {
   }
 
   .wall__tabs {
-    clip-path: inset(0 round 999px);
+    clip-path: inset(0);
     transition:
       clip-path 0.45s cubic-bezier(0.3, 0.7, 0, 1),
       opacity 0.2s ease,
@@ -5833,7 +5918,7 @@ html.is-arriving:not(.is-passed-on) {
   }
 
   .wall:not(:has([data-menu][aria-expanded="true"])) .wall__tabs {
-    clip-path: inset(0 0 0 calc(100% - 2.5rem) round 999px);
+    clip-path: inset(0 0 0 calc(100% - var(--pill-h)));
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -5873,7 +5958,7 @@ html.is-arriving:not(.is-passed-on) {
 
   .wall:has([data-menu][aria-expanded="true"]) .wall__brand {
     gap: 0;
-    padding-inline: calc((2.5rem - 1.45rem * 130 / 158) / 2);
+    padding-inline: calc((var(--pill-h) - var(--brand-logo-w)) / 2);
   }
 
   .wall:has([data-menu][aria-expanded="true"]) .wall__brand span {
@@ -6395,8 +6480,8 @@ html.is-arriving:not(.is-passed-on) {
    left and it's a row of tabs, as the models are; picked, it's one button again */
 .wall__modes {
   position: relative;
-  inline-size: 2.6rem;
-  block-size: 2.6rem;
+  inline-size: var(--pill-h);
+  block-size: var(--pill-h);
 }
 
 .wall__mode-list {
@@ -6477,8 +6562,8 @@ html.is-arriving:not(.is-passed-on) {
 .wall__zoom .wall__mode-list button {
   flex: none;
   padding: 0;
-  inline-size: 2.6rem;
-  block-size: 2.6rem;
+  inline-size: var(--pill-h);
+  block-size: var(--pill-h);
   overflow: hidden;
   transition:
     inline-size 0.35s cubic-bezier(0.3, 0.7, 0, 1),

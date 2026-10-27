@@ -2016,6 +2016,12 @@ export async function initWall(root) {
     picker.classList.toggle("has-after", rest > 1);
   }
   picker.addEventListener("scroll", showModelEdges, { passive: true });
+  // the search as wide as the tabs and the list button under it, from one's left edge to the
+  // other's right (CSS, on a wide screen)
+  new ResizeObserver(() => {
+    const wide = listButton.getBoundingClientRect().right - picker.getBoundingClientRect().left;
+    if (wide > 0) document.documentElement.style.setProperty("--dock-w", `${wide}px`);
+  }).observe(picker.closest(".wall__dock"));
 
   function nearest(hex) {
     const [L, a, b] = rgbToOklab(hexToRgb(hex));
@@ -2046,6 +2052,28 @@ export async function initWall(root) {
   const choose = searchBox.choose;
 
   keys.listen();
+
+  // the brand is under the space, the cards going over it: an unseen clone over the space takes
+  // its click and its pointer (CSS); the brand itself stays the one link to tab to and to read
+  const brand = q(".wall__brand");
+  if (brand) {
+    const hit = brand.cloneNode(true);
+    hit.classList.replace("wall__brand", "wall__brand-hit");
+    hit.setAttribute("aria-hidden", "true");
+    hit.tabIndex = -1;
+    brand.after(hit);
+  }
+  // the GitHub link the other way round: it stays in the bar, unseen till pointed at; a copy of
+  // the bar's links under the space, where the bar has them (CSS), the version filled in with it
+  const links = q(".wall__nav");
+  if (links) {
+    const under = links.cloneNode(true);
+    under.classList.add("wall__nav--under");
+    under.setAttribute("aria-hidden", "true");
+    under.inert = true;
+    root.append(under);
+    root.classList.add("has-under");
+  }
 
   if (import.meta.env.DEV) {
     window.__wall = {
