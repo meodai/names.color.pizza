@@ -270814,11 +270814,11 @@
   },
   {
     "name": "Des Lauriers Pink",
-    "hex": "#ebafc3",
+    "hex": "#e695c3",
     "ai": true,
     "kind": "reference",
-    "reference": "Matt DesLauriers, an artist",
-    "description": "Soft rosy pink, a nod to the artist Matt DesLauriers.",
+    "reference": "Matt DesLauriers, an artist; lauriers are laurel trees",
+    "description": "Laurel blossom pink, a nod to Matt DesLauriers and the pink he sometimes uses in his palettes.",
     "model": "claude"
   },
   {
