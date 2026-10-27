@@ -75,6 +75,9 @@ export function createPage(root, wall) {
     for (const img of layer.querySelectorAll("img[src]")) img.src = new URL(img.getAttribute("src"), pageURL).href;
     document.documentElement.dataset.root = new URL("../", pageURL).href;
     root.append(layer);
+    // its scrollbar (kept, scrollbar-gutter) narrows it: what's fixed in it moves in by as much,
+    // as on a page of its own, whose window's scrollbar a fixed element already stops short of
+    layer.style.setProperty("--scrollbar", `${layer.offsetWidth - layer.clientWidth}px`);
     // focus in the page, where reading it starts
     layer.tabIndex = -1;
     layer.focus({ preventScroll: true });

@@ -28,7 +28,7 @@
     ></script>
   </head>
   <body>
-    <main class="color-page">
+    <main class="color-page color-page--detail">
       <section class="slide slide--invert hero supporters" data-slide>
         <a class="brand color-hero__home" href="../"
           ><svg class="brand__logo" viewBox="20 12 130 158" aria-hidden="true">
@@ -94,11 +94,14 @@
             </p>
           </div>
           <p class="label hero__stats supporters__stats" data-counts hidden></p>
-          <ol class="supporters__list" data-supporters></ol>
           <p class="adopt__act">
             <a class="adopt__cta" href="../adopt/" data-cta>Adopt a color</a>
           </p>
         </div>
+      </section>
+      <section class="slide slide--dense supporters-board" id="patrons" aria-label="The patrons">
+        <div class="supporters-board__now" data-now aria-live="polite"></div>
+        <ol class="supporters-board__rows" data-supporters></ol>
       </section>
       <section class="slide costs" id="costs" aria-labelledby="costs-title">
         <h2 class="title title--sub" id="costs-title">What it costs.</h2>
@@ -109,27 +112,27 @@
         <dl class="costs__list">
           <div>
             <dt>API server</dt>
-            <dd>$360 a year</dd>
+            <dd class="small"><span>$360</span><span>per year</span></dd>
           </div>
           <div>
             <dt>Cloudflare: speed and storage</dt>
-            <dd>about $330 a year</dd>
+            <dd class="small"><span>$330</span><span>per year</span></dd>
           </div>
           <div>
             <dt>The domain, color.pizza</dt>
-            <dd>about $50 a year</dd>
+            <dd class="small"><span>$50</span><span>per year</span></dd>
           </div>
           <div>
             <dt>GitHub runners for the art and the data</dt>
-            <dd>about $240 a year</dd>
+            <dd class="small"><span>$240</span><span>per year</span></dd>
           </div>
           <div class="costs__sum">
             <dt>A year</dt>
-            <dd>about $980</dd>
+            <dd class="small"><span>$980</span><span></span></dd>
           </div>
           <div>
             <dt>Various one-off costs</dt>
-            <dd>about $950</dd>
+            <dd class="small"><span>$950</span><span></span></dd>
           </div>
         </dl>
         <div class="costs__bar" data-costs-bar hidden>

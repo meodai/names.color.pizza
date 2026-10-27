@@ -38,7 +38,7 @@
     ></script>
   </head>
   <body>
-    <main class="color-page">
+    <main class="color-page color-page--detail">
       <section class="slide slide--invert hero color-hero adopt" data-slide>
         <a class="brand color-hero__home" href="../"
           ><svg class="brand__logo" viewBox="20 12 130 158" aria-hidden="true">
@@ -155,7 +155,7 @@
               <li></li>
             </ol>
             <div class="costs__track"><i class="costs__fill"></i></div>
-            <p class="costs__note"><span data-costs-note></span> <a href="../supporters/#costs">What it costs</a></p>
+            <p class="costs__note"><span data-costs-note></span> <a href="#costs">What it costs</a></p>
           </div>
           <div class="lead adopt__pick" data-pick hidden>
             <label class="label adopt__pick-label" for="adopt-picker">Pick a color</label>
@@ -284,6 +284,40 @@
       </section>
 
       <section class="slide adopt-cert" id="certificate" data-cert hidden></section>
+
+      <section class="slide costs" id="costs" aria-labelledby="costs-title">
+        <h2 class="title title--sub" id="costs-title">What it costs.</h2>
+        <p class="lead inset costs__lead">
+          What it takes to keep the list, its API and this site running. Color Names turns ten this year, paid out of
+          pocket all along.
+        </p>
+        <dl class="costs__list">
+          <div>
+            <dt>API server</dt>
+            <dd class="small"><span>$360</span><span>per year</span></dd>
+          </div>
+          <div>
+            <dt>Cloudflare: speed and storage</dt>
+            <dd class="small"><span>$330</span><span>per year</span></dd>
+          </div>
+          <div>
+            <dt>The domain, color.pizza</dt>
+            <dd class="small"><span>$50</span><span>per year</span></dd>
+          </div>
+          <div>
+            <dt>GitHub runners for the art and the data</dt>
+            <dd class="small"><span>$240</span><span>per year</span></dd>
+          </div>
+          <div class="costs__sum">
+            <dt>A year</dt>
+            <dd class="small"><span>$980</span><span></span></dd>
+          </div>
+          <div>
+            <dt>Various one-off costs</dt>
+            <dd class="small"><span>$950</span><span></span></dd>
+          </div>
+        </dl>
+      </section>
 
       <footer class="slide adopt-more" data-more>
         <h2 class="title title--sub">Also kept going.</h2>

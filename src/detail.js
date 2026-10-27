@@ -573,6 +573,8 @@ async function render(hex) {
   });
 
   const ink = lore.bestContrast === "white" ? "#fff" : "#000";
+  // over the page's color, as its adopt button is when pointed at
+  (page.embedded ? page.root : document.documentElement).style.setProperty("--page-ink", ink);
   page.fill.style.setProperty("--fill-ink", ink);
   page.colophon.style.setProperty("--fill-ink", ink);
   page.ink.replaceChildren(

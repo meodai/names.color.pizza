@@ -44,11 +44,6 @@ export function chapterRail(root, { scroller = window, signal } = {}) {
     const tick = parseFloat(getComputedStyle(nav).getPropertyValue("--tick")) || 12;
     const ticks = Math.floor(nav.clientHeight / tick);
     nav.style.setProperty("--ticks", ticks);
-    // the rail is fixed to the window, whose own scrollbar it already stops short of; a scroller
-    // of the page's own (the wall's panel) ends sooner, by its scrollbar: the rail moves in with it
-    const end =
-      scroller === window ? box.clientWidth : box.getBoundingClientRect().left + box.clientLeft + box.clientWidth;
-    nav.style.setProperty("--bar", `${document.documentElement.clientWidth - end}px`);
     nav.style.setProperty("--span", `${ticks * tick}px`);
     parts.forEach((part, i) => {
       const li = marks.get(part);

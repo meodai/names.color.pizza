@@ -4,7 +4,7 @@ import { tiltCard } from "./tilt.js";
 import { certificateHTML } from "./certificate.js";
 import { SHINES, ADOPT_FROM, HOLO_FROM, PAYMENT, counts, fillCostsBar, loadAdoptions } from "./shines.js";
 import { HEART, UNAVATAR, adopterBadge, cleanHandle, handle, isHost, longDate, swellHearts } from "./adopter.js";
-import { drawShareCard } from "./share-card.js";
+import { drawShareCard, inkOn } from "./share-card.js";
 import { PROJECTS } from "./projects.js";
 
 // the button's words, then the heart in the color it adopts
@@ -13,6 +13,7 @@ const heartCTA = (cta, text, hex) => {
   cta.textContent = text;
   cta.insertAdjacentHTML("beforeend", HEART);
   cta.style.setProperty("--page-color", hex);
+  cta.style.setProperty("--page-ink", inkOn(hex));
 };
 
 const toLab = converter("lab");
