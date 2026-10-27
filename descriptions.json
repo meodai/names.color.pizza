@@ -270792,5 +270792,24 @@
     "reference": "lazulite, a phosphate mineral",
     "description": "Deep azure of lazulite, the blue phosphate so often mistaken for lapis lazuli's lazurite.",
     "model": "claude"
+  },
+  {
+    "name": "Yorktown Red",
+    "hex": "#d7302d",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Bruce of Studio Yorktown, an artist",
+    "description": "Loud signal red named in honor of Bruce and his Studio Yorktown.",
+    "model": "claude"
+  },
+  {
+    "name": "Lenny Jadepeg",
+    "hex": "#397c79",
+    "ai": true,
+    "kind": "pun",
+    "hidden": "Lenny Jadepeg sounds like lenny.jpg",
+    "reference": "lenny.jpg, an artist",
+    "description": "Deep jade teal, an ode to the artist lenny.jpg, with the file extension polished into a gemstone.",
+    "model": "claude"
   }
 ]
