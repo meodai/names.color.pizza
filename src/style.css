@@ -455,7 +455,6 @@ a:hover {
 .adopt__holo {
   display: inline-block;
   padding: 0.05em 0.6em 0.1em;
-  border-radius: 999px;
   color: var(--ink);
   font-style: normal;
   font-weight: 600;
@@ -501,7 +500,6 @@ a:hover {
   align-items: center;
   gap: 0.6em;
   padding: 0.85rem 1.6rem;
-  border-radius: 999px;
   color: var(--ink);
   background: var(--paper);
   font-weight: var(--weight-label);
@@ -555,7 +553,6 @@ a:hover {
   inline-size: 0.7em;
   block-size: 0.7em;
   margin-inline-end: 0.3em;
-  border-radius: 50%;
   vertical-align: -0.05em;
   background: var(--c);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35);
@@ -566,7 +563,6 @@ a:hover {
   align-items: center;
   gap: var(--space-xs);
   padding: 0.35rem 1.2rem 0.35rem 0.35rem;
-  border-radius: 999px;
   color: var(--ink);
   background: var(--paper);
   font-size: var(--text-base);
@@ -598,7 +594,6 @@ a:hover {
   block-size: 3.1rem;
   padding: 0;
   border: 0;
-  border-radius: 50%;
   color: var(--ink);
   background: var(--paper);
   cursor: pointer;
@@ -667,7 +662,6 @@ a:hover {
   min-inline-size: 0;
   padding: 0.7rem 1rem;
   border: 1px solid currentColor;
-  border-radius: 999px;
   color: inherit;
   background: transparent;
   font: inherit;
@@ -737,14 +731,12 @@ a:hover {
     margin-block: var(--space-2xs);
     padding: 0.4rem;
     border: 1px solid currentColor;
-    border-radius: 1.2rem;
     color: var(--fg);
     background: var(--bg);
   }
 
   .adopt__who select option {
     padding: 0.55rem 0.8rem;
-    border-radius: 0.8rem;
     color: inherit;
   }
 
@@ -835,7 +827,6 @@ a:hover {
   display: block;
   inline-size: min(100%, 26rem);
   block-size: auto;
-  border-radius: 0.4rem;
   box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 0.5);
 }
 
@@ -859,7 +850,6 @@ a:hover {
 .adopt__share button {
   padding: 0.55rem 1.1rem;
   border: 1px solid currentColor;
-  border-radius: 999px;
   color: inherit;
   font-size: var(--text-xs);
   font-weight: var(--weight-label);
@@ -1022,7 +1012,6 @@ a:hover {
   place-items: center;
   block-size: 0.2rem;
   overflow: hidden;
-  border-radius: 999px;
   background: color-mix(in srgb, var(--fg) 15%, transparent);
   color: transparent;
   font-size: var(--text-xs);
@@ -1077,7 +1066,6 @@ a:hover {
 
 .costs__track {
   block-size: 0.6rem;
-  border-radius: 999px;
   background: color-mix(in srgb, currentColor 15%, transparent);
   overflow: hidden;
 }
@@ -1086,7 +1074,6 @@ a:hover {
   display: block;
   block-size: 100%;
   inline-size: calc(var(--k, 0) * 100%);
-  border-radius: inherit;
   background: linear-gradient(90deg, #fff1b0, #f2c230 55%, #c8901a);
 }
 
@@ -1209,7 +1196,6 @@ a:hover {
   display: inline-block;
   margin-inline-start: 0.6em;
   padding: 0.15em 0.6em;
-  border-radius: 999px;
   color: #3a2a00;
   background: linear-gradient(160deg, #fff1b0, #f2c230 55%, #c8901a);
   font-size: var(--text-xs);
@@ -1345,7 +1331,6 @@ a:hover {
   inline-size: 3.4rem;
   block-size: 3.4rem;
   overflow: hidden;
-  border-radius: 50%;
   color: var(--ink);
   background: var(--paper);
   box-shadow:
@@ -1365,17 +1350,11 @@ a:hover {
     0 0.6rem 1.4rem rgb(0 0 0 / 0.35);
 }
 
-.card-badge--founding img,
-.card-badge--founding > span {
-  border-radius: 50%;
-}
-
 /* now and then a glint runs round the gold ring: one turning layer, masked to the ring */
 .card-badge--founding::after {
   content: "";
   position: absolute;
   inset: -4px;
-  border-radius: 50%;
   background: conic-gradient(
     from 0deg,
     transparent 0 66%,
@@ -1460,7 +1439,6 @@ a:hover {
   width: 6px;
   height: 6px;
   border: 1.5px solid var(--fg);
-  border-radius: 50%;
 }
 
 .code {
@@ -1543,7 +1521,6 @@ a:hover {
   block-size: 2rem;
   padding: 0;
   border: 0;
-  border-radius: 50%;
   color: var(--fg);
   background: none;
   cursor: pointer;
@@ -1584,7 +1561,6 @@ a:hover {
   font-size: var(--text-xs);
   font-weight: var(--weight-label);
   text-transform: uppercase;
-  border-radius: 999px;
   color: var(--bg);
   background: var(--fg);
   text-decoration: none;
@@ -1750,7 +1726,6 @@ h2:hover > .anchor,
   z-index: 1;
   display: block;
   padding: 0.25em 0.75em;
-  border-radius: 999px;
   line-height: 1.5;
   white-space: nowrap;
   opacity: 0;
@@ -1895,7 +1870,6 @@ h2:hover > .anchor,
   block-size: 2.6rem;
   padding: 0;
   border: 0;
-  border-radius: 50%;
   color: var(--bg);
   background: var(--fg);
   cursor: pointer;
@@ -1913,7 +1887,6 @@ h2:hover > .anchor,
   gap: 0.2rem;
   min-inline-size: 15rem;
   padding: 0.3rem;
-  border-radius: 1rem;
   color: var(--bg);
   background: var(--fg);
 }
@@ -1937,7 +1910,6 @@ h2:hover > .anchor,
   gap: var(--space-s);
   padding: 0.5rem 0.75rem 0.5rem 2rem;
   border: 0;
-  border-radius: 0.7rem;
   color: inherit;
   background: none;
   font: inherit;
@@ -2307,7 +2279,6 @@ h2:hover > .anchor,
   block-size: 1.8rem;
   padding: 0 0.85em;
   border: 0;
-  border-radius: 999px;
   color: var(--paper);
   background: var(--ink);
   font-family: inherit;
@@ -2392,7 +2363,6 @@ h2:hover > .anchor,
   block-size: 2.5rem;
   color: var(--paper);
   background: var(--ink);
-  border-radius: 50%;
   box-shadow: inset 0 0 0 2px var(--paper);
 }
 
@@ -3067,7 +3037,6 @@ h2:hover > .anchor,
   color: var(--fg);
   background: transparent;
   border: var(--line) solid currentColor;
-  border-radius: 50%;
   cursor: pointer;
 }
 
@@ -4319,7 +4288,6 @@ html.is-arriving:not(.is-passed-on) {
   flex: none;
   inline-size: 0.8rem;
   block-size: 0.8rem;
-  border-radius: 50%;
   box-shadow: inset 0 0 0 1px var(--ink);
 }
 
@@ -4340,7 +4308,6 @@ html.is-arriving:not(.is-passed-on) {
   gap: 0.4rem;
   margin: 1.1rem 0 0 0.9rem;
   padding: 0.3rem 0.6rem;
-  border-radius: 0.3rem;
   color: var(--ink);
   background: var(--paper);
   font-size: var(--text-xs);
@@ -4379,7 +4346,6 @@ html.is-arriving:not(.is-passed-on) {
   display: inline-block;
   padding: 0 1.1rem;
   line-height: 2.5rem;
-  border-radius: 999px;
   color: var(--paper);
   background: var(--ink);
   font-size: var(--text-xs);
@@ -4410,7 +4376,6 @@ html.is-arriving:not(.is-passed-on) {
   block-size: 2.5rem;
   padding: 0 0.2rem 0 0;
   border: 0;
-  border-radius: 0 999px 999px 0;
   color: var(--paper);
   background: var(--ink);
   font: inherit;
@@ -4466,7 +4431,6 @@ html.is-arriving:not(.is-passed-on) {
   gap: var(--brand-gap);
   block-size: var(--brand-h);
   padding: 0 0.85rem 0 var(--brand-pad);
-  border-radius: 999px;
   color: var(--paper);
   background: var(--ink);
   font-family: var(--font);
@@ -4601,7 +4565,6 @@ html.is-arriving:not(.is-passed-on) {
   z-index: 1;
   inline-size: 1.7rem;
   block-size: 1.7rem;
-  border-radius: 50%;
   overflow: hidden;
   translate: 0 -50%;
   cursor: pointer;
@@ -4662,7 +4625,6 @@ html.is-arriving:not(.is-passed-on) {
   inline-size: 100%;
   padding: 0.7rem 2.9rem 0.7rem 2.95rem;
   border: 0;
-  border-radius: 999px;
   color: var(--ink);
   background: var(--paper);
   font: inherit;
@@ -4688,7 +4650,6 @@ html.is-arriving:not(.is-passed-on) {
   block-size: 1.9rem;
   padding: 0;
   border: 0;
-  border-radius: 50%;
   color: var(--ink);
   background: none;
   translate: 0 -50%;
@@ -4855,7 +4816,6 @@ html.is-arriving:not(.is-passed-on) {
   position: absolute;
   z-index: -1;
   inset: -0.3rem;
-  border-radius: 999px;
   backdrop-filter: blur(16px) saturate(1.4);
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -4876,7 +4836,6 @@ html.is-arriving:not(.is-passed-on) {
   margin: 0;
   padding: 0.4rem;
   list-style: none;
-  border-radius: 1rem;
   color: var(--ink);
   background: var(--paper);
 }
@@ -4889,7 +4848,6 @@ html.is-arriving:not(.is-passed-on) {
   inline-size: 100%;
   padding: 0.45rem 0.6rem;
   border: 0;
-  border-radius: 0.6rem;
   color: inherit;
   background: none;
   font: inherit;
@@ -4906,7 +4864,6 @@ html.is-arriving:not(.is-passed-on) {
 
 .wall__result-swatch {
   aspect-ratio: 1;
-  border-radius: 0.3rem;
 }
 
 .wall__result-name {
@@ -4936,7 +4893,6 @@ html.is-arriving:not(.is-passed-on) {
 .wall__status {
   margin: 0;
   padding: 0.45rem 0.9rem;
-  border-radius: 999px;
   color: var(--ink);
   background: var(--paper);
   font-size: var(--text-xs);
@@ -4989,7 +4945,6 @@ html.is-arriving:not(.is-passed-on) {
   animation: wall-intro-in 0.55s cubic-bezier(0.3, 0.7, 0, 1) 0.35s both;
   overflow: hidden;
   padding: 0 var(--space-s) calc(var(--space-s) + 1.6rem);
-  border-radius: 1rem;
   color: var(--ink);
   background: color-mix(in srgb, var(--paper) 60%, transparent);
   backdrop-filter: blur(16px) saturate(1.4);
@@ -5092,7 +5047,6 @@ html.is-arriving:not(.is-passed-on) {
 /* the way there, in the adoption's own foil */
 .wall__intro-links .wall__intro-cta {
   padding: 0 0.9rem;
-  border-radius: 999px;
   color: var(--ink);
   text-decoration: none;
   background:
@@ -5142,7 +5096,6 @@ html.is-arriving:not(.is-passed-on) {
   block-size: 1.6rem;
   padding: 0;
   border: 0;
-  border-radius: 50%;
   color: var(--ink);
   background: none;
   cursor: pointer;
@@ -5207,7 +5160,6 @@ html.is-arriving:not(.is-passed-on) {
 
 .wall__intro-links button {
   padding: 0 0.9rem;
-  border-radius: 999px;
   color: var(--ink);
   background: var(--paper);
 }
@@ -5376,7 +5328,6 @@ html.is-arriving:not(.is-passed-on) {
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem;
-  border-radius: 999px;
   background: var(--glass);
   backdrop-filter: blur(16px) saturate(1.4);
   transform: translateX(-50%);
@@ -5400,7 +5351,6 @@ html.is-arriving:not(.is-passed-on) {
   display: flex;
   gap: 0.2rem;
   padding: 0.25rem;
-  border-radius: 999px;
   background: var(--paper);
 }
 
@@ -5420,7 +5370,6 @@ html.is-arriving:not(.is-passed-on) {
   inline-size: 2.6rem;
   block-size: 2.6rem;
   border: 0;
-  border-radius: 50%;
   color: var(--ink);
   background: var(--paper);
   cursor: pointer;
@@ -5431,7 +5380,6 @@ html.is-arriving:not(.is-passed-on) {
   z-index: 1;
   padding: 0.45rem 0.9rem;
   border: 0;
-  border-radius: 999px;
   color: var(--ink);
   background: none;
   transition: color 0.3s ease;
@@ -5450,7 +5398,6 @@ html.is-arriving:not(.is-passed-on) {
   inset-block: 0.25rem;
   left: 0;
   inline-size: var(--w, 0);
-  border-radius: 999px;
   background: var(--ink);
   translate: var(--x, 0) 0;
   transition:
@@ -5477,7 +5424,6 @@ html.is-arriving:not(.is-passed-on) {
   flex-direction: column;
   gap: 0.4rem;
   padding: 0.3rem;
-  border-radius: 999px;
   backdrop-filter: blur(16px) saturate(1.4);
 }
 
@@ -5510,7 +5456,6 @@ html.is-arriving:not(.is-passed-on) {
 .wall__zoom button {
   inline-size: 2.6rem;
   block-size: 2.6rem;
-  border-radius: 50%;
   color: var(--ink);
   background: var(--paper);
   font-size: 1.3rem;
@@ -5524,7 +5469,6 @@ html.is-arriving:not(.is-passed-on) {
   gap: 0.2rem;
   min-inline-size: 13rem;
   padding: 0.3rem;
-  border-radius: 1rem;
   color: var(--ink);
   background: var(--paper);
 }
@@ -5547,7 +5491,6 @@ html.is-arriving:not(.is-passed-on) {
   block-size: auto;
   padding: 0.5rem 0.75rem;
   border: 0;
-  border-radius: 0.7rem;
   color: var(--ink);
   background: none;
   font: inherit;
@@ -5584,7 +5527,6 @@ html.is-arriving:not(.is-passed-on) {
   display: grid;
   place-items: center;
   inline-size: 2rem;
-  border-radius: 0.7rem;
   color: var(--ink);
   transition:
     color 0.2s ease,
@@ -5648,7 +5590,6 @@ html.is-arriving:not(.is-passed-on) {
     block-size: 2.5rem;
     padding: 0;
     border: 0;
-    border-radius: 50%;
     color: var(--ink);
     background: var(--paper);
     cursor: pointer;
@@ -5661,7 +5602,6 @@ html.is-arriving:not(.is-passed-on) {
     inline-size: 1.1rem;
     block-size: 2px;
     margin: -1px 0 0 -0.55rem;
-    border-radius: 2px;
     background: currentColor;
     transition:
       translate 0.2s ease 0.18s,
@@ -5744,7 +5684,6 @@ html.is-arriving:not(.is-passed-on) {
     block-size: 2.5rem;
     padding: 0.2rem;
     box-sizing: border-box;
-    border-radius: 999px;
     background: var(--glass);
     backdrop-filter: blur(16px) saturate(1.4);
   }
@@ -5754,7 +5693,6 @@ html.is-arriving:not(.is-passed-on) {
     content: "";
     position: absolute;
     inset: 0.2rem;
-    border-radius: 999px;
     background: var(--paper);
   }
 
@@ -6468,7 +6406,6 @@ html.is-arriving:not(.is-passed-on) {
   display: flex;
   justify-content: flex-end;
   padding: 0;
-  border-radius: 999px;
   background: var(--paper);
   transition: box-shadow 0.35s ease;
 }
@@ -6584,7 +6521,6 @@ html.is-arriving:not(.is-passed-on) {
 .wall__mode-thumb {
   position: absolute;
   inset: 0 auto auto 0;
-  border-radius: 999px;
   background: var(--ink);
   opacity: 0;
   pointer-events: none;
