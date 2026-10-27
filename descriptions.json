@@ -270811,5 +270811,23 @@
     "reference": "lenny.jpg, an artist",
     "description": "Deep jade teal, an ode to the artist lenny.jpg, with the file extension polished into a gemstone.",
     "model": "claude"
+  },
+  {
+    "name": "Des Lauriers Pink",
+    "hex": "#ebafc3",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Matt DesLauriers, an artist",
+    "description": "Soft rosy pink, a nod to the artist Matt DesLauriers.",
+    "model": "claude"
+  },
+  {
+    "name": "Gysin Phosphor",
+    "hex": "#94fbbc",
+    "ai": true,
+    "kind": "reference",
+    "reference": "Andreas Gysin (ertdfgcvb), an artist",
+    "description": "Glowing phosphor mint from a little vector display montage by Andreas Gysin, known as ertdfgcvb.",
+    "model": "claude"
   }
 ]
