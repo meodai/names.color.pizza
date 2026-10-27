@@ -912,37 +912,48 @@ a:hover {
   color: inherit;
 }
 
+/* David's other projects: tiles on the columns, a line over each, the whole of one a link */
 .adopt-projects {
   display: grid;
-  gap: var(--space-s);
-  max-width: 40rem;
+  grid-template-columns: subgrid;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.adopt-projects li {
+  grid-column: span 4;
+  border-block-start: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
 .adopt-projects a {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-2xs) var(--space-s);
+  align-content: start;
+  block-size: 100%;
+  padding-block: var(--space-xs) var(--space-s);
   color: inherit;
-  font-weight: var(--weight-label);
   text-decoration: none;
 }
 
-.adopt-projects a:hover,
-.adopt-projects a:focus-visible {
+.adopt-projects a:is(:hover, :focus-visible) .adopt-projects__name {
   text-decoration: underline;
 }
 
 .adopt-projects small {
-  margin-inline-start: 0.3em;
-  font-size: var(--text-xs);
-  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
 }
 
-.adopt-projects p {
-  margin: 0.15em 0 0;
-  font-size: var(--text-xs);
-  line-height: 1.4;
+.adopt-projects__about {
+  grid-column: 1 / -1;
   opacity: 0.75;
+}
+
+@media (min-width: 75.01rem) {
+  .adopt-projects li {
+    grid-column: span 3;
+  }
 }
 
 .adopt .color-hero__card {
@@ -952,6 +963,13 @@ a:hover {
 .adopt .color-hero__card.is-away {
   opacity: 0;
   pointer-events: none;
+}
+
+/* the sections after the adopt page's hero go over its card, which stays put (fixed): it goes
+   under the first of them as the page scrolls */
+.color-hero.adopt ~ .slide {
+  position: relative;
+  z-index: 3;
 }
 
 .adopt__legal {
@@ -973,6 +991,14 @@ a:hover {
 .costs__list,
 .costs__bar {
   max-inline-size: 36rem;
+}
+
+.costs__lead p {
+  margin: 0;
+}
+
+.costs__lead p + p {
+  margin-block-start: 0.75em;
 }
 
 /* as the patrons' table: a row each, a line under it, the amount in the small type */
@@ -2881,6 +2907,25 @@ h2:hover > .anchor,
 
   .color-page--detail .footer__about {
     grid-column: 2 / 8;
+  }
+
+  /* the adopt tiers on the hero's columns: the amount on the first, what it gets inset like the
+     intro, as wide */
+  .color-page--detail :is(.adopt__tiers, .adopt__tiers li) {
+    grid-template-columns: subgrid;
+    column-gap: normal;
+  }
+
+  .color-page--detail .adopt__tiers li {
+    grid-column: 1 / -1;
+  }
+
+  .color-page--detail .adopt__tiers li > b {
+    grid-column: 1 / -1;
+  }
+
+  .color-page--detail .adopt__tiers li > span {
+    grid-column: 2 / span 3;
   }
 
   /* the adopt button and the links after it on one line, the links on a column's line; without

@@ -251,7 +251,7 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 function moreProjects(q) {
   q("[data-projects]").innerHTML = PROJECTS.map(
     (p) =>
-      `<li><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a> <small>${p.year}</small><p>${esc(p.about)}</p></li>`,
+      `<li><a href="${esc(p.url)}" target="_blank" rel="noopener"><span class="adopt-projects__name">${esc(p.name)}</span><small class="small">${p.year}</small><span class="small adopt-projects__about">${esc(p.about)}</span></a></li>`,
   ).join("");
   // the card steps aside for the certificate and the footer
   const place = q("[data-place]");
