@@ -270747,5 +270747,50 @@
     "reference": "car paint: a 1970s factory color",
     "description": "Olive-tinged walnut brown, a seventies paint that mixes island holiday with wood-panelled dashboard.",
     "model": "claude"
+  },
+  {
+    "name": "Acacia Wood",
+    "hex": "#d85b45",
+    "ai": true,
+    "kind": "thing",
+    "reference": "acacia, a hardwood",
+    "description": "Ruddy acacia heartwood fresh off the saw, the warm red-orange of a newly oiled cutting board.",
+    "model": "claude"
+  },
+  {
+    "name": "Anglesite",
+    "hex": "#d9d4cd",
+    "ai": true,
+    "kind": "thing",
+    "reference": "anglesite, a lead mineral",
+    "description": "Pale warm grey of anglesite, a lead mineral first found on Anglesey, with a shine bright as diamond.",
+    "model": "claude"
+  },
+  {
+    "name": "Arsenopyrite",
+    "hex": "#68414e",
+    "ai": true,
+    "kind": "thing",
+    "reference": "arsenopyrite, an arsenic ore",
+    "description": "Dusky plum-brown named for arsenopyrite, the arsenic ore that gives off a whiff of garlic when struck.",
+    "model": "claude"
+  },
+  {
+    "name": "Kornerupine",
+    "hex": "#324632",
+    "ai": true,
+    "kind": "thing",
+    "reference": "kornerupine, a rare gemstone",
+    "description": "Deep bottle green of kornerupine, a rare gem from Greenland named for a Danish geologist.",
+    "model": "claude"
+  },
+  {
+    "name": "Lazulite",
+    "hex": "#003e65",
+    "ai": true,
+    "kind": "thing",
+    "reference": "lazulite, a phosphate mineral",
+    "description": "Deep azure of lazulite, the blue phosphate so often mistaken for lapis lazuli's lazurite.",
+    "model": "claude"
   }
 ]
