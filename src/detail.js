@@ -805,7 +805,7 @@ const sprinkled = (list) => {
     artNeighbors.forEach((n, i) => out.splice(Math.round(((i + 1) * out.length) / (artNeighbors.length + 1)), 0, n));
   return out;
 };
-const galleryRows = () => 6;
+const galleryRows = () => 4;
 
 // how the pictures show, chosen in the art section's menu and kept for every page
 const ART_SETTINGS = "art-settings";
@@ -888,35 +888,21 @@ function layoutGallery({ again = false, recentre = false } = {}) {
   const list = sprinkled(shownGallery());
   const n = galleryRows();
   const rows = Array.from({ length: n }, () => ({ width: 0, items: [] }));
-  // every work in the rows that show in full; the cut-off rows at the top and bottom have the
-  // weakest of them again, or with too few, the inner rows again, out of step
-  const inner = rows.slice(1, -1);
-  const outer = [rows[0], rows.at(-1)];
-  const own = list.length >= n * 8;
-  const split = own ? Math.round((list.length * inner.length) / n) : list.length;
-  const place = (items, into) => {
-    for (const it of items) {
-      const row = into.reduce((a, b) => (b.width < a.width ? b : a));
-      row.width += it.ratio || 1;
-      row.items.push(it);
-    }
-  };
-  place(list, inner);
-  place(list.slice(split), outer);
-  inner.forEach((r, k) => {
+  // every work, in rows that all show in full; each the shortest so far
+  for (const it of list) {
+    const row = rows.reduce((a, b) => (b.width < a.width ? b : a));
+    row.width += it.ratio || 1;
+    row.items.push(it);
+  }
+  rows.forEach((r, k) => {
     if (!r.items.length && list.length) r.items.push(list[k % list.length]);
   });
   // the strongest at each row's start and end, so on both sides of the title
-  for (const r of inner) {
+  for (const r of rows) {
     const head = [];
     const tail = [];
     r.items.forEach((it, i) => (i % 2 ? tail : head).push(it));
     r.items = [...head, ...tail.reverse()];
-  }
-  const rotate = (items, by) => [...items.slice(by % items.length), ...items.slice(0, by % items.length)];
-  if (!own) {
-    rows[0].items = rotate(inner.at(-1).items, 2);
-    rows.at(-1).items = rotate(inner[0].items, 3);
   }
   page.art.replaceChildren();
   if (!again) page.art.classList.remove("is-settled");

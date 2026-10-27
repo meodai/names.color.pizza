@@ -94,7 +94,9 @@ function compile(gl, type, src) {
   return s;
 }
 
-// as .wall__label: padding 0.3em, hex 0.55em bold, name 0.27em light, in em of 0.205 × the card's width
+// as .wall__label: padding 0.3em, hex 0.55em bold, name 0.27em light, in em of 0.205 × the card's width;
+// each a hundred lighter, as a canvas draws Inter heavier (its text cut, no optical size, and no
+// antialiased smoothing on an opaque canvas)
 function paint(ctx, font, hex, name) {
   const f = SLOT_W * 0.205;
   const pad = f * 0.3;
@@ -111,11 +113,11 @@ function paint(ctx, font, hex, name) {
   ctx.textBaseline = "middle";
   const hexSize = f * 0.55;
   const hexTop = f * 0.2475;
-  ctx.font = `700 ${hexSize}px ${font}`;
+  ctx.font = `600 ${hexSize}px ${font}`;
   ctx.fillText(fit(hex), pad, hexTop + hexSize * 0.6);
   const nameSize = f * 0.27;
   const nameTop = hexTop + hexSize * 1.2 - nameSize * 0.05;
-  ctx.font = `300 ${nameSize}px ${font}`;
+  ctx.font = `200 ${nameSize}px ${font}`;
   ctx.fillText(fit(name), pad, nameTop + nameSize * 0.6);
 }
 

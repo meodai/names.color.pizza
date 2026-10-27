@@ -22,6 +22,29 @@
     U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+/* Geist Mono, for small text: the one weight */
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/geist-mono-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+    U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/geist-mono-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 @property --fade-start {
   syntax: "<length>";
   inherits: false;
@@ -67,7 +90,14 @@
   /* where the brand's pill sits, and its parrot's width: the C of its name lines up with the
      color page's text */
   --brand-x: var(--space-s);
+  /* the parrot's width: 1.45rem tall, at its drawing's proportions */
   --brand-logo-w: calc(1.45rem * 130 / 158);
+  /* the pill's room before the parrot, and between the parrot and the name */
+  --brand-pad: 0.6rem;
+  --brand-gap: 0.6rem;
+  /* the C of its name, this far in; to a whole pixel, so the grid's lines and the rail's ticks
+     on them fall on the same one */
+  --brand-c: round(calc(var(--brand-x) + var(--brand-pad) + var(--brand-logo-w) + var(--brand-gap)), 1px);
   --bar-h: 3.2rem;
   --measure: 38ch;
 
@@ -89,10 +119,28 @@ body {
   font-family: var(--font);
   font-weight: var(--weight-body);
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--leading, 1.5);
+  letter-spacing: var(--tracking, normal);
   color: var(--fg);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+}
+
+/* one weight, three sizes and a title's, small text in mono and as written */
+:root {
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-small: var(--font-mono);
+  --label-case: none;
+  --text-xs: clamp(0.72rem, 0.7rem + 0.1vw, 0.75rem);
+  --text-base: clamp(1rem, 0.9rem + 0.4vw, 1.125rem);
+  --text-lg: var(--text-base);
+  --text-xl: clamp(3.5rem, 1.6rem + 6.4vw, 6.75rem);
+  --text-2xl: clamp(4rem, 1rem + 11vw, 10rem);
+  --weight-body: 500;
+  --weight-label: 500;
+  --weight-display: 500;
+  --leading: 1.42;
+  --tracking: -0.005em;
 }
 
 ::selection {
@@ -148,35 +196,38 @@ a:hover {
   margin: 0;
   font-size: var(--text-2xl);
   font-weight: var(--weight-display);
-  line-height: 0.92;
-  letter-spacing: -0.015em;
+  line-height: 0.8;
+  letter-spacing: -0.05em;
   text-wrap: balance;
 }
 
 .title--sub {
   font-size: var(--text-xl);
-  line-height: 0.98;
-  letter-spacing: -0.02em;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
 }
 
 .lead {
   margin: 0;
   font-size: var(--text-lg);
-  font-weight: 100;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  font-weight: var(--weight-body);
+  line-height: var(--leading, 1.25);
+  letter-spacing: var(--tracking, -0.01em);
   text-wrap: balance;
 }
 
 .small,
 .label {
   margin: 0;
+  font-family: var(--font-small, inherit);
   font-size: var(--text-xs);
+  line-height: 1.5;
+  letter-spacing: 0;
 }
 
 .label {
   font-weight: var(--weight-label);
-  text-transform: uppercase;
+  text-transform: var(--label-case, uppercase);
 }
 
 .inset {
@@ -329,7 +380,7 @@ a:hover {
 }
 
 .hero__stats a.adopt-cta {
-  margin-block-start: var(--space-s);
+  margin-block-start: var(--space-m);
 }
 
 .hero__adopted:empty {
@@ -1586,15 +1637,15 @@ h2:hover > .anchor,
   overflow: clip;
 }
 
-/* six rows in a window of about four and a half: cut at every edge */
+/* four rows, each in full; cut only at the sides */
 .gallery {
   --row: 22svh;
-  --gap: 1rem;
+  --gap: var(--col-gap, 1rem);
   position: absolute;
   inset-inline: 0;
   top: 50%;
   translate: 0 -50%;
-  block-size: calc(6 * var(--row) + 5 * var(--gap));
+  block-size: calc(4 * var(--row) + 3 * var(--gap));
   row-gap: var(--gap);
   overflow: hidden;
   touch-action: pan-y;
@@ -2405,8 +2456,7 @@ h2:hover > .anchor,
 
 /* a color's page and the pages like it: the brand's C sets the margin, running text 40 characters wide */
 .color-page {
-  --weight-display: 900;
-  --gutter: calc(var(--brand-x) + 0.6rem + var(--brand-logo-w) + 0.6rem);
+  --gutter: var(--brand-c);
   --inset: var(--gutter);
 }
 
@@ -2546,6 +2596,16 @@ h2:hover > .anchor,
   overflow: visible;
 }
 
+/* on the grid, the title and text on the column's line, the drawing just before the gutter: in
+   the column before, against its line */
+.color-page--detail .color-specs__pair {
+  padding-inline-start: 0;
+}
+
+.color-page--detail .mix-viz {
+  inset-inline: auto calc(100% + var(--col-gap));
+}
+
 .color-specs--formats {
   display: flex;
   flex-wrap: wrap;
@@ -2614,22 +2674,92 @@ h2:hover > .anchor,
   max-width: 72rem;
 }
 
+/* a color's page on a grid of twelve columns (four on a phone) inside each section's margins, the
+   art's aside: every part across all of them unless placed, the columns drawn as hairlines that
+   build down as a section comes in */
+.color-page--detail {
+  --cols: 4;
+  --col-gap: var(--space-s);
+}
+
+@media (min-width: 40.01rem) {
+  .color-page--detail {
+    --cols: 12;
+  }
+}
+
+.color-page--detail .slide:not(.color-art) {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  align-content: center;
+  column-gap: var(--col-gap);
+}
+
+/* the card, placed over the hero as it is, stays out of the grid */
+:where(.color-page--detail .slide:not(.color-art)) > :where(:not(.color-hero__card)) {
+  grid-column: 1 / -1;
+}
+
+.color-page--detail .slide:not(.color-art)::before {
+  --hair: color-mix(in srgb, currentColor 14%, transparent);
+  --step: calc((100% + var(--col-gap)) / var(--cols));
+  --col: calc(var(--step) - var(--col-gap));
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset-block: 0;
+  inset-inline: var(--gutter);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--hair) 0 1px,
+    transparent 1px calc(var(--col) - 1px),
+    var(--hair) calc(var(--col) - 1px) var(--col),
+    transparent var(--col) var(--step)
+  );
+  transform-origin: top;
+  pointer-events: none;
+  animation: grid-in linear both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 80%;
+}
+
+/* not the hero: the brand and the close button are in it, and would stay under the sections
+   after it */
+.color-page--detail .slide.color-hero {
+  isolation: auto;
+}
+
+/* the lines only where the parts sit on them: not on the intro, nor on the last word */
+.color-page--detail .slide:is(.color-hero, .footer)::before {
+  display: none;
+}
+
+@keyframes grid-in {
+  from {
+    scale: 1 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .color-page--detail .slide::before {
+    animation: none;
+  }
+}
+
 /* wide, a section's facts in a column of their own on the right, under its title */
 @media (min-width: 56.01rem) {
   .color-page :is(.color-words, .color-fill) {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     grid-template-rows: auto auto 1fr;
-    align-content: center;
-    column-gap: var(--space-l);
   }
 
-  :is(.color-words, .color-fill) > h2 {
-    grid-column: 1 / -1;
+  .color-page :is(.color-words .color-about, .color-fill__ink, .color-specs--formats) {
+    grid-column: 1 / 8;
   }
 
   .color-page :is(.color-specs--words, .color-specs--mix) {
-    grid-column: 2;
+    grid-column: 9 / 12;
     grid-row: 2 / span 2;
     grid-template-columns: minmax(0, 1fr);
     align-self: start;
@@ -2637,6 +2767,219 @@ h2:hover > .anchor,
 
   .color-words .color-about {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* everything on the grid's lines: every section the same margins, the same at either side, the
+   rail in the right one, so the lines run on from one to the next; what holds parts a subgrid, the gap the page's, so its
+   parts are on the lines too; an inset is a column */
+.color-page--detail {
+  --inset: 0;
+}
+
+:where(
+    .color-page--detail
+      :is(
+        .hero__content,
+        .color-hero__intro,
+        .color-fill__ink,
+        .color-about,
+        .color-wiki,
+        .wiki-index,
+        .wiki-index__row
+      )
+  )
+  > * {
+  grid-column: 1 / -1;
+}
+
+.color-page--detail :is(.color-hero__intro, .color-fill__ink, .color-about, .neighbors:not(.neighbors--ramp)) {
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: normal;
+}
+
+.color-page--detail :is(.color-hero__intro, .color-fill__ink) {
+  row-gap: 0.4em;
+}
+
+/* text as wide as the columns it's on, not a measure of its own */
+.color-page--detail
+  :is(
+    p,
+    li,
+    dd,
+    .color-about,
+    .color-specs--words,
+    .dictionary,
+    .wiki-index__text,
+    .wiki-index__words,
+    .color-words__title
+  ) {
+  max-width: none;
+}
+
+.color-page--detail .dictionary,
+.color-page--detail .dictionary--whole {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.color-page--detail .neighbors:not(.neighbors--ramp) > * {
+  grid-column: span 2;
+}
+
+@media (min-width: 40.01rem) {
+  .color-page--detail :is(.slide, .hero__content, .color-hero__intro, .color-fill__ink) > .inset {
+    grid-column-start: 2;
+  }
+
+  .color-page--detail .footer__about {
+    grid-column: 2 / 8;
+  }
+
+  /* the adopt button and the links after it on one line, the links on a column's line; without
+     the button, the links where it would start */
+  .color-page--detail .footer__adopt {
+    grid-column: 2 / span 3;
+    align-self: center;
+  }
+
+  .color-page--detail .footer__nav {
+    grid-column: 2 / -1;
+    align-self: center;
+  }
+
+  .color-page--detail .footer__adopt:not([hidden]) + .footer__nav {
+    grid-column: 5 / -1;
+  }
+
+  /* the color's intro in the hero: three columns at most */
+  .color-page--detail .color-hero__intro > * {
+    grid-column: 2 / span 3;
+  }
+
+  /* the line under it (when it was added, by whom) starting with it */
+  .color-page--detail .color-hero .hero__stats {
+    grid-column-start: 2;
+  }
+
+  .color-page--detail .color-dictionary {
+    grid-column: 1 / 8;
+  }
+
+  .color-page--detail .color-words__title {
+    grid-column: 1 / 9;
+  }
+
+  .color-page--detail .color-hero .hero__content {
+    display: grid;
+    grid-template-columns: subgrid;
+    column-gap: normal;
+    grid-column: 1 / 8;
+    max-width: none;
+  }
+
+  /* the formats two to a row, each a span of three */
+  .color-page--detail .color-specs--formats {
+    display: grid;
+    grid-template-columns: subgrid;
+    column-gap: normal;
+  }
+
+  .color-page--detail .color-specs--formats > * {
+    grid-column: span 3;
+  }
+
+  .color-page--detail .neighbors:not(.neighbors--ramp) > * {
+    grid-column: span 4;
+  }
+
+  /* the wiki's rows seven columns wide, set off by whole columns; a picture two of them; the wiki
+     in the section's columns, through what holds it */
+  .color-page--detail :is(.color-wiki, .wiki-index, .wiki-index__row, .wiki-index__body) {
+    display: grid;
+    grid-template-columns: subgrid;
+    column-gap: normal;
+  }
+
+  .color-page--detail .wiki-index__row {
+    grid-column: 1 / span 7;
+    inline-size: auto;
+    margin: 0;
+  }
+
+  .color-page--detail .wiki-index__row:nth-child(4n + 2) {
+    grid-column: 4 / span 7;
+  }
+
+  .color-page--detail .wiki-index__row:nth-child(4n + 3) {
+    grid-column: 2 / span 7;
+  }
+
+  .color-page--detail .wiki-index__row:nth-child(4n + 4) {
+    grid-column: 6 / span 7;
+  }
+
+  .color-page--detail .wiki-index__body,
+  .color-page--detail .wiki-index__row:nth-child(n) .wiki-index__body:has(.wiki-index__picture) {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    margin: 0;
+  }
+
+  .color-page--detail .wiki-index__words + .wiki-index__body {
+    grid-column: 2 / -1;
+  }
+
+  /* the picture itself on the lines: as wide as its two columns, as tall as it is */
+  .color-page--detail .wiki-index__picture {
+    grid-row: 1;
+    grid-column: 1 / span 2;
+    inline-size: 100%;
+    max-block-size: none;
+    padding: 0;
+    background: none;
+  }
+
+  .color-page--detail .wiki-index__picture + .wiki-index__text {
+    grid-row: 1;
+    grid-column: 3 / -1;
+  }
+
+  .color-page--detail .wiki-index__row:nth-child(even) .wiki-index__picture {
+    grid-column: -3 / -1;
+  }
+
+  .color-page--detail .wiki-index__row:nth-child(even) .wiki-index__picture + .wiki-index__text {
+    grid-column: 1 / -3;
+  }
+
+  .color-page--detail .wiki-index__text {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 761px) {
+  .color-page--detail .neighbors:not(.neighbors--ramp) > * {
+    grid-column: span 3;
+  }
+}
+
+@media (min-width: 1101px) {
+  .color-page--detail .neighbors:not(.neighbors--ramp) > * {
+    grid-column: span 2;
+  }
+}
+
+/* the ramp, eleven steps, one to a column, where it isn't a row to scroll */
+@media (min-width: 761px) and (orientation: landscape) {
+  .color-page--detail .neighbors--ramp {
+    grid-template-columns: subgrid;
+    column-gap: normal;
+  }
+
+  .color-page--detail .neighbors--ramp > * {
+    grid-column: span 1;
   }
 }
 
@@ -2890,19 +3233,12 @@ h2:hover > .anchor,
   position: relative;
 }
 
-/* the rail: its middle under the close button's, a section's tick this long across it; on the root,
+/* the rail: its middle on the grid's last line, a section's tick this long across it; on the root,
    as the rail is the body's */
 :root {
-  --rail-x: calc(var(--brand-x) + 1.25rem);
+  --rail-x: var(--brand-c);
   --rail-w: 1.1rem;
   --rail-tick: 0.4rem;
-}
-
-/* the sections the rail is over keep their text clear of it */
-@media (min-width: 40.01rem) {
-  .color-art ~ .slide {
-    padding-inline-end: calc(var(--rail-x) + var(--rail-w) / 2 + var(--space-xl));
-  }
 }
 
 /* the art and the colophon go over the rail, the brand and the close button over the art */
@@ -2930,7 +3266,8 @@ h2:hover > .anchor,
   z-index: 7;
   top: calc(var(--space-xs) + var(--bar-h) + var(--space-s));
   bottom: var(--space-m);
-  right: calc(var(--rail-x) - var(--rail-tick) / 2);
+  /* its left edge on the grid's last line, the ticks out from it into the margin */
+  right: calc(var(--rail-x) + var(--bar, 0px) + 1px - var(--rail-tick));
   inline-size: var(--rail-tick);
   color: #fff;
   /* the tick where the page is, bolder, over the ticks */
@@ -2992,17 +3329,17 @@ h2:hover > .anchor,
   list-style: none;
 }
 
-/* a section's tick, a small one till the rail is pointed at, then wider, its name to the left,
-   clear of it; centered on the rail's middle, so it widens to either side */
+/* a section's tick, a small one till the rail is pointed at, then wider, out from the line;
+   its name to the left of the line */
 .chapters__list li {
   --wide: var(--rail-w);
   position: absolute;
   top: calc(var(--y, 0px) + 0.5px);
-  right: 50%;
+  right: 100%;
   display: flex;
   align-items: center;
   block-size: 1.5rem;
-  padding-inline-end: calc(var(--rail-w) / 2 + 0.5rem);
+  padding-inline-end: 0.5rem;
   translate: 0 -50%;
 }
 
@@ -3014,11 +3351,11 @@ h2:hover > .anchor,
   content: "";
   position: absolute;
   top: 50%;
-  right: 0;
+  left: 100%;
   inline-size: var(--rail-tick);
   block-size: 1px;
   background: currentColor;
-  translate: 50% -50%;
+  translate: 0 -50%;
   transition: inline-size 0.25s ease;
   animation: chapters-here linear;
   animation-timeline: scroll(nearest);
@@ -4126,9 +4463,9 @@ html.is-arriving:not(.is-passed-on) {
   left: var(--brand-x);
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--brand-gap);
   block-size: var(--brand-h);
-  padding: 0 0.85rem 0 0.6rem;
+  padding: 0 0.85rem 0 var(--brand-pad);
   border-radius: 999px;
   color: var(--paper);
   background: var(--ink);
@@ -4143,8 +4480,8 @@ html.is-arriving:not(.is-passed-on) {
 
 /* lifted a hair: the heavy head makes true center read low */
 .brand__logo {
-  block-size: 1.45rem;
-  inline-size: auto;
+  inline-size: var(--brand-logo-w);
+  block-size: auto;
   aspect-ratio: 130 / 158;
   overflow: visible;
   translate: 0 -0.08rem;
@@ -4152,6 +4489,7 @@ html.is-arriving:not(.is-passed-on) {
 
 /* in pixel art, the parrot drawn in pixels: 64 tall, at half size each drawn pixel is one of
    a sharp screen's */
+/* the pixel parrot: 28px tall, at its drawing's proportions */
 .is-pixel {
   --brand-logo-w: calc(28px * 54 / 64);
 }
@@ -4162,7 +4500,7 @@ html.is-arriving:not(.is-passed-on) {
 
 .is-pixel .brand::before {
   content: "";
-  block-size: 28px;
+  inline-size: var(--brand-logo-w);
   aspect-ratio: 54 / 64;
   background: url("/logo/cockatoo-pixel.png") center / contain no-repeat;
   image-rendering: pixelated;
@@ -4328,6 +4666,7 @@ html.is-arriving:not(.is-passed-on) {
   color: var(--ink);
   background: var(--paper);
   font: inherit;
+  font-family: var(--font-mono, inherit);
   font-size: var(--text-base);
 }
 
