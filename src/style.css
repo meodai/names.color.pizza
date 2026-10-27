@@ -33,24 +33,24 @@
   unicode-range: U+0030-0039;
 }
 
-/* Geist Mono, for small text: the one weight */
+/* Iosevka, for small text (--font-mono): the one weight */
 @font-face {
-  font-family: "Geist Mono";
+  font-family: "Iosevka";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("./fonts/geist-mono-latin.woff2") format("woff2");
+  src: url("./fonts/iosevka-latin.woff2") format("woff2");
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
     U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: "Geist Mono";
+  font-family: "Iosevka";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("./fonts/geist-mono-latin-ext.woff2") format("woff2");
+  src: url("./fonts/iosevka-latin-ext.woff2") format("woff2");
   unicode-range:
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
     U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
@@ -150,7 +150,7 @@ body {
 
 /* one weight, three sizes and a title's, small text in mono and as written */
 :root {
-  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-mono: "Iosevka", ui-monospace, monospace;
   --font-small: var(--font-mono);
   --label-case: none;
   --text-xs: clamp(0.72rem, 0.7rem + 0.1vw, 0.75rem);
@@ -888,10 +888,6 @@ a:hover {
   background: var(--paper);
 }
 
-.adopt__founding {
-  font-size: var(--text-xs);
-}
-
 .adopt__founding b {
   background: linear-gradient(160deg, #fff1b0, #f2c230 55%, #c8901a);
   background-clip: text;
@@ -973,13 +969,21 @@ a:hover {
 }
 
 .adopt__legal {
-  font-size: var(--text-xs);
   opacity: 0.75;
 }
 
 .adopt__note {
-  font-size: var(--text-xs);
   opacity: 0.75;
+}
+
+/* the supporters' intro and their costs as tall as what's in them, not a screen */
+.slide:is(.supporters, .costs) {
+  min-height: auto;
+}
+
+/* the supporters' title alone, a step of room under it */
+.color-page--detail .slide.supporters {
+  padding-block-end: var(--space-l);
 }
 
 .supporters__content {
@@ -1015,6 +1019,11 @@ a:hover {
   gap: var(--space-s);
   padding-block: var(--space-xs);
   border-block-end: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
+/* an empty "per year" (a sum, a one-off) takes no room: every value ends on the same edge */
+.costs__list dd :empty {
+  display: none;
 }
 
 .costs__list dd {
@@ -1135,7 +1144,6 @@ a:hover {
 
 .costs__note {
   margin: var(--space-2xs) 0 0;
-  font-size: var(--text-xs);
   opacity: 0.75;
 }
 
@@ -1166,6 +1174,11 @@ a:hover {
   grid-column: 1 / span 3;
 }
 
+/* their number only from the fourth on: the first three have theirs on their card */
+.supporters-board__now.is-top .supporters-board__rank {
+  opacity: 0;
+}
+
 /* their number: one line of it shown, each digit a strip of 0 to 9 slid to its own */
 .supporters-board__rank {
   display: flex;
@@ -1175,6 +1188,7 @@ a:hover {
   line-height: 1;
   font-family: var(--font-tnum);
   font-variant-numeric: tabular-nums;
+  transition: opacity 0.3s ease;
 }
 
 .supporters-board__digit {
@@ -1239,6 +1253,96 @@ a:hover {
   text-decoration: underline;
 }
 
+/* over it all, who they are, and what they came to: the counts as big figures in the first
+   three's columns, what each counts under it */
+.supporters-board__counts {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  row-gap: var(--space-s);
+  margin: 0;
+}
+
+.supporters-board__counts > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: start;
+  gap: var(--space-2xs);
+  grid-column: 1 / -1;
+}
+
+.supporters-board__counts dd {
+  margin: 0;
+}
+
+/* as big as the first three's numbers, so the dollars fit their columns too */
+.supporters-board__figure {
+  font-family: var(--font-tnum);
+  font-size: calc(var(--text-2xl) / 2);
+  font-variant-numeric: tabular-nums;
+}
+
+.supporters-board__intro,
+.supporters-board__counts {
+  margin-block-end: var(--space-xl);
+}
+
+/* who they are, and the way to join them under it: the button black on the white */
+.supporters-board__intro {
+  display: grid;
+  gap: var(--space-m);
+  align-content: start;
+}
+
+.supporters-board .adopt__cta {
+  color: var(--bg);
+  background: var(--fg);
+}
+
+/* the first three, side by side over the table: their number, name, colors, founding and
+   since, one under the other */
+.supporters-top {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.supporter.supporter--top {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: var(--space-xs);
+  grid-column: 1 / -1;
+  padding-block: var(--space-xs) var(--space-s);
+  border-block: 0;
+  border-block-start: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.supporter--top .supporter__rank {
+  text-align: start;
+}
+
+.supporter.supporter--top .supporter__meta {
+  display: flex;
+  justify-content: space-between;
+  align-self: stretch;
+}
+
+/* in between (no panel yet): the first three and the counts three across, the whole width */
+@media (min-width: 40.01rem) {
+  .supporter.supporter--top,
+  .supporters-board__counts > div {
+    grid-column: span 4;
+  }
+
+  .supporters-board__intro {
+    grid-column: 1 / span 6;
+  }
+}
+
 .supporters-board__rows {
   display: grid;
   grid-template-columns: subgrid;
@@ -1246,6 +1350,75 @@ a:hover {
   padding: 0;
   list-style: none;
   border-block-start: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
+/* a patron's face in their row, on a phone: under the number, the column's width; on a card, small */
+.supporter__face {
+  display: grid;
+  place-items: center;
+  grid-column: 1;
+  grid-row: 2 / span 2;
+  align-self: start;
+  aspect-ratio: 1;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.supporter__face img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.supporter--top .supporter__face {
+  inline-size: 6rem;
+}
+
+@media (max-width: 75rem) {
+  .supporters-board__now {
+    display: none;
+  }
+
+  /* no panel to show anyone in: no row shown either */
+  .supporter::before {
+    display: none;
+  }
+
+  .supporters-board .supporter.is-on {
+    color: inherit;
+  }
+
+  .supporters-board .supporter.is-on .supporter__founding {
+    color: var(--bg);
+    background: var(--fg);
+  }
+
+  /* stacked, the sentence and the counts a step from what follows, not the wide view's gap */
+  .supporters-board__intro,
+  .supporters-board__counts {
+    margin-block-end: var(--space-l);
+  }
+}
+
+@media (min-width: 75.01rem) {
+  .supporter__face {
+    display: none;
+  }
+}
+
+/* what it takes to join the first three: a slim black row of its own between them and the rest */
+.supporters-board__next {
+  grid-column: 1 / -1;
+  padding: var(--space-2xs);
+  color: var(--bg);
+  background: var(--fg);
+  text-align: center;
+}
+
+.supporters-board__next a {
+  color: inherit;
 }
 
 .supporter {
@@ -1258,15 +1431,7 @@ a:hover {
   row-gap: var(--space-2xs);
   padding-block: var(--space-xs);
   border-block-end: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-  opacity: 0.5;
-  transition:
-    opacity 0.25s ease,
-    color 0.25s ease;
-}
-
-.supporter.is-on,
-.supporter.is-asked {
-  opacity: 1;
+  transition: color 0.25s ease;
 }
 
 /* the row shown black, the black coming in from where the last one was and leaving toward the
@@ -1302,10 +1467,10 @@ a:hover {
   text-align: center;
 }
 
-/* the first three: a quarter of a title, every digit in its column at any width */
+/* the first three: their number as big as the one on the left */
 .supporter__rank--top {
   font-family: var(--font-tnum);
-  font-size: calc(var(--text-xl) / 4);
+  font-size: calc(var(--text-2xl) / 2);
 }
 
 .supporter__name {
@@ -1344,8 +1509,26 @@ a:hover {
   white-space: nowrap;
 }
 
+/* founding: its cell filled, the word in the middle; the other way round on the row shown */
+.supporter__founding {
+  padding: 0.2em 0.5em;
+  color: var(--bg);
+  background: var(--fg);
+  text-align: center;
+}
+
+.supporter.is-on .supporter__founding {
+  color: var(--fg);
+  background: var(--bg);
+}
+
 .supporter__since {
   font-variant-numeric: tabular-nums;
+}
+
+/* adopted for a holo card: a full line round it, in the ink (white on the row shown) */
+.supporter__color--shiny {
+  box-shadow: inset 0 0 0 2px currentColor;
 }
 
 .supporter--ghost .supporter__color {
@@ -1353,16 +1536,44 @@ a:hover {
   box-shadow: inset 0 0 0 1px currentColor;
 }
 
-@media (min-width: 40.01rem) {
+@media (min-width: 75.01rem) {
   .supporters-board__now {
     position: sticky;
     top: calc(var(--pill-top) + var(--pill-h) + var(--space-m));
-    grid-column: 1 / 5;
+    grid-column: 1 / 4;
+    grid-row: 2 / span 2;
     align-self: start;
   }
 
+  /* the first three right over the table, in its columns, three each; who they are and the
+     counts over them, in the same columns */
+  .color-page--detail .slide.supporters-board {
+    row-gap: 0;
+  }
+
+  .supporters-board__intro {
+    grid-column: 1 / 4;
+    grid-row: 1;
+  }
+
+  .supporters-board__counts {
+    grid-column: 4 / -1;
+    grid-row: 1;
+  }
+
+  .supporter.supporter--top,
+  .supporters-board__counts > div {
+    grid-column: span 3;
+  }
+
+  .supporters-top {
+    grid-column: 4 / -1;
+    grid-row: 2;
+  }
+
   .supporters-board__rows {
-    grid-column: 5 / -1;
+    grid-column: 4 / -1;
+    grid-row: 3;
   }
 
   /* rank, name, colors, founding, since: one line, on the columns */
@@ -1371,17 +1582,17 @@ a:hover {
   }
 
   .supporter__name {
-    grid-column: 2 / span 3;
+    grid-column: 2 / span 4;
   }
 
   .supporter__colors {
-    grid-column: 5 / span 2;
+    grid-column: 6 / span 2;
   }
 
   .supporter__meta {
     display: grid;
     grid-template-columns: subgrid;
-    grid-column: 7 / -1;
+    grid-column: 8 / -1;
     column-gap: normal;
   }
 }
@@ -2513,6 +2724,11 @@ h2:hover > .anchor,
   hyphens: manual;
 }
 
+.color-hero .hero__title.is-breaking {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
 .color-hero__intro {
   display: flex;
   flex-direction: column;
@@ -2764,6 +2980,12 @@ h2:hover > .anchor,
   column-gap: var(--col-gap);
 }
 
+/* a wiki picture as it is, no frame round it, at any width */
+.color-page--detail .wiki-index__picture {
+  padding: 0;
+  background: none;
+}
+
 /* hidden stays hidden (the adopt page's certificate till there is one), the grid above notwithstanding */
 .color-page--detail .slide[hidden] {
   display: none;
@@ -2799,7 +3021,7 @@ h2:hover > .anchor,
 
 /* not the hero: the brand and the close button are in it, and would stay under the sections
    after it */
-.color-page--detail .slide.color-hero {
+.color-page--detail .slide.hero {
   isolation: auto;
 }
 
@@ -2821,7 +3043,7 @@ h2:hover > .anchor,
 }
 
 /* wide, a section's facts in a column of their own on the right, under its title */
-@media (min-width: 56.01rem) {
+@media (min-width: 64.01rem) {
   .color-page :is(.color-words, .color-fill) {
     grid-template-rows: auto auto 1fr;
   }
@@ -2925,7 +3147,7 @@ h2:hover > .anchor,
   }
 
   .color-page--detail .adopt__tiers li > span {
-    grid-column: 2 / span 3;
+    grid-column: 2 / span 6;
   }
 
   /* the adopt button and the links after it on one line, the links on a column's line; without
@@ -2946,7 +3168,7 @@ h2:hover > .anchor,
 
   /* the color's intro in the hero: three columns at most */
   .color-page--detail .color-hero__intro > * {
-    grid-column: 2 / span 3;
+    grid-column: 2 / span 6;
   }
 
   /* the line under it (when it was added, by whom) starting with it */
@@ -3029,8 +3251,6 @@ h2:hover > .anchor,
     grid-column: 1 / span 2;
     inline-size: 100%;
     max-block-size: none;
-    padding: 0;
-    background: none;
   }
 
   .color-page--detail .wiki-index__picture + .wiki-index__text {
@@ -3051,7 +3271,7 @@ h2:hover > .anchor,
   }
 }
 
-@media (min-width: 40.01rem) {
+@media (min-width: 64.01rem) {
   .color-page--detail .costs .costs__lead {
     grid-column: 2 / 5;
     grid-row: 2;
@@ -3082,12 +3302,19 @@ h2:hover > .anchor,
     grid-column: 1 / -3;
   }
 
-  /* the value and, if it is, "per year", each in a column of its own */
+  /* the value and, if it is, "per year", each in a column of its own; the value to the right of
+     its, so the digits line up */
   .color-page--detail .costs__list dd {
     display: grid;
     grid-template-columns: subgrid;
     grid-column: -3 / -1;
     column-gap: normal;
+  }
+
+  .color-page--detail .costs__list dd > :first-child {
+    grid-column: 1;
+    text-align: end;
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -3103,8 +3330,15 @@ h2:hover > .anchor,
   }
 }
 
+/* with room, the hero's intro and what a tier gets three columns, not six */
+@media (min-width: 75.01rem) {
+  .color-page--detail :is(.color-hero__intro > *, .adopt__tiers li > span) {
+    grid-column: 2 / span 3;
+  }
+}
+
 /* the ramp, eleven steps, one to a column, where it isn't a row to scroll */
-@media (min-width: 761px) and (orientation: landscape) {
+@media (min-width: 1101px) {
   .color-page--detail .neighbors--ramp {
     grid-template-columns: subgrid;
     column-gap: normal;
@@ -3382,6 +3616,13 @@ h2:hover > .anchor,
   z-index: 9;
 }
 
+/* what the rail follows: the page's own scroll, or the wall's panel a color's page opens in (a
+   fixed rail's nearest scroller would always be the document) */
+:root,
+.wall__page {
+  scroll-timeline: --page block;
+}
+
 /* the ticks' step, a length chapters.js reads in pixels to put a section's tick on one */
 @property --tick {
   syntax: "<length>";
@@ -3411,7 +3652,7 @@ h2:hover > .anchor,
   animation:
     chapters-in 1.4s cubic-bezier(0.2, 0.75, 0, 1) 0.5s forwards,
     chapters-now steps(var(--ticks, 100), jump-end) both;
-  animation-timeline: auto, scroll(nearest);
+  animation-timeline: auto, --page;
 }
 
 /* from tick to tick with the scroll, as chapters.js puts the sections on them */
@@ -3489,7 +3730,7 @@ h2:hover > .anchor,
   translate: 0 -50%;
   transition: inline-size 0.25s ease;
   animation: chapters-here linear;
-  animation-timeline: scroll(nearest);
+  animation-timeline: --page;
   animation-range: var(--from, 0%) var(--to, 0%);
 }
 
@@ -3615,6 +3856,14 @@ h2:hover > .anchor,
 
   .neighbors--ramp > .neighbor {
     scroll-snap-align: start;
+  }
+
+  /* on the grid, a row to scroll still on its lines: each card two columns wide, the grid's gap
+     between them, the first on the first line, each snapping to one */
+  .color-page--detail .neighbors--ramp {
+    --column: calc((100% - (var(--cols) - 1) * var(--col-gap)) / var(--cols));
+    grid-auto-columns: calc(2 * var(--column) + var(--col-gap));
+    gap: var(--col-gap);
   }
 }
 

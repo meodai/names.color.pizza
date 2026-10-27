@@ -335,15 +335,21 @@ function alternate() {
     .forEach((el, i) => el.classList.toggle("slide--invert", i % 2 === 0));
 }
 
+// a long name smaller till it fits, but not below a title's size or so: a word longer than that
+// (Supercalifragilisticexpialidocious) breaks over lines instead (CSS)
 function fitTitle() {
   const el = page.name;
   el.style.fontSize = "";
+  el.classList.remove("is-breaking");
   const fit = () => {
+    el.classList.remove("is-breaking");
     let size = parseFloat(getComputedStyle(el).fontSize);
-    for (let k = 0; k < 30 && el.scrollWidth > el.clientWidth + 1; k++) {
+    const least = size * 0.45;
+    for (let k = 0; k < 30 && el.scrollWidth > el.clientWidth + 1 && size * 0.94 >= least; k++) {
       size *= 0.94;
       el.style.fontSize = `${size}px`;
     }
+    el.classList.toggle("is-breaking", el.scrollWidth > el.clientWidth + 1);
   };
   fit();
   document.fonts?.ready.then(() => {
