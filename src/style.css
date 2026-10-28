@@ -1320,7 +1320,6 @@ a:hover {
   grid-column: 1 / -1;
   padding-block: var(--space-xs) var(--space-s);
   border-block: 0;
-  border-block-start: 1px solid color-mix(in srgb, currentColor 25%, transparent);
 }
 
 .supporter.supporter--top > *,
@@ -1407,7 +1406,8 @@ a:hover {
   object-fit: cover;
 }
 
-.supporter--top .supporter__face {
+.supporter.supporter--top .supporter__face {
+  grid-row: auto;
   inline-size: 6rem;
 }
 
