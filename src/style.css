@@ -5132,6 +5132,13 @@ html.is-arriving:not(.is-passed-on) {
   font-size: var(--text-xs);
 }
 
+/* a field under 16px makes a phone zoom in on it */
+@media (pointer: coarse) {
+  .wall__search {
+    font-size: max(var(--text-xs), 16px);
+  }
+}
+
 /* hides the native blue clear button; Escape clears */
 .wall__search::-webkit-search-cancel-button {
   -webkit-appearance: none;
