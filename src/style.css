@@ -1580,19 +1580,19 @@ a:hover {
     align-self: start;
   }
 
-  /* the table on the left, the one shown on its right; the first three right over the table, in
-     its columns, three each, the counts over them, who they are over the one shown */
+  /* who they are, the counts on their right; under them the table on the left, the first three
+     right over it, in its columns, three each, and the one shown on its right */
   .color-page--detail .slide.supporters-board {
     row-gap: 0;
   }
 
   .supporters-board__intro {
-    grid-column: -4 / -1;
+    grid-column: 1 / 4;
     grid-row: 1;
   }
 
   .supporters-board__counts {
-    grid-column: 1 / -4;
+    grid-column: 4 / -1;
     grid-row: 1;
   }
 
