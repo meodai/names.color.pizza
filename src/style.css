@@ -1310,25 +1310,60 @@ a:hover {
   list-style: none;
 }
 
+/* a card on the board's columns: the number and, in its last column, founding (if so) and the date
+   on top, the rest under them, founding a column wide */
 .supporter.supporter--top {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: subgrid;
   align-items: start;
-  gap: var(--space-xs);
+  gap: var(--space-xs) normal;
   grid-column: 1 / -1;
   padding-block: var(--space-xs) var(--space-s);
   border-block: 0;
   border-block-start: 1px solid color-mix(in srgb, currentColor 25%, transparent);
 }
 
+.supporter.supporter--top > *,
+.supporter.supporter--top .supporter__meta > * {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
 .supporter--top .supporter__rank {
+  grid-column: 1 / -2;
+  grid-row: 1 / span 2;
   text-align: start;
 }
 
 .supporter.supporter--top .supporter__meta {
-  display: flex;
-  justify-content: space-between;
-  align-self: stretch;
+  display: contents;
+}
+
+.supporter.supporter--top .supporter__since {
+  grid-column: -2 / -1;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.supporter.supporter--top .supporter__founding {
+  grid-column: -2 / -1;
+  grid-row: 1;
+  justify-self: stretch;
+}
+
+.supporter.supporter--top:has(.supporter__founding) .supporter__since {
+  grid-row: 2;
+}
+
+/* in between, a column too narrow for the word: two */
+@media (min-width: 40.01rem) and (max-width: 75rem) {
+  .supporter.supporter--top .supporter__founding {
+    grid-column: -3 / -1;
+  }
+}
+
+.supporter.supporter--top .supporter__meta > :empty {
+  display: none;
 }
 
 /* in between (no panel yet): the first three and the counts three across, the whole width */
@@ -3681,8 +3716,8 @@ h2:hover > .anchor,
   z-index: 7;
   top: calc(var(--space-xs) + var(--bar-h) + var(--space-s));
   bottom: var(--space-m);
-  /* its left edge on the grid's last line, the ticks out from it into the margin */
-  right: calc(var(--rail-x) + var(--scrollbar, 0px) + 1px - var(--rail-tick));
+  /* its left edge against the grid's last line, the ticks out from it into the margin */
+  right: calc(var(--rail-x) + var(--scrollbar, 0px) - var(--rail-tick));
   inline-size: var(--rail-tick);
   color: #fff;
   /* the tick where the page is, bolder, over the ticks */
