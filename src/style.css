@@ -3131,6 +3131,11 @@ h2:hover > .anchor,
   column-gap: normal;
 }
 
+/* the neighbors' rows as far apart as their columns */
+.color-page--detail .neighbors:not(.neighbors--ramp) {
+  row-gap: var(--col-gap);
+}
+
 .color-page--detail :is(.color-hero__intro, .color-fill__ink) {
   row-gap: 0.4em;
 }
