@@ -819,7 +819,8 @@ a:hover {
   }
 
   .adopt__by .card-badge--founding {
-    box-shadow: 0 0 0 2px #e9b52b;
+    --ring: 2px;
+    box-shadow: 0 0 0 var(--ring) #000;
   }
 }
 
@@ -1620,27 +1621,40 @@ a:hover {
 }
 
 .card-badge--founding {
+  --ring: 4px;
   overflow: visible;
   box-shadow:
-    0 0 0 4px #e9b52b,
+    0 0 0 var(--ring) #000,
     0 0.6rem 1.4rem rgb(0 0 0 / 0.35);
 }
 
-/* now and then a glint runs round the gold ring: one turning layer, masked to the ring */
+/* now and then a glint runs round the ring: the light's angle turning, masked to the ring */
+@property --glint {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 .card-badge--founding::after {
   content: "";
   position: absolute;
-  inset: -4px;
+  inset: calc(var(--ring) * -1);
+  padding: var(--ring);
   background: conic-gradient(
-    from 0deg,
+    from var(--glint),
     transparent 0 66%,
     rgb(255 255 255 / 0.55) 76%,
     #fff 83%,
     rgb(255 255 255 / 0.55) 89%,
     transparent 97%
   );
-  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 4.5px), #000 calc(100% - 4px));
-  mask: radial-gradient(closest-side, transparent calc(100% - 4.5px), #000 calc(100% - 4px));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
   pointer-events: none;
   animation: ring-glint 7s cubic-bezier(0.45, 0, 0.25, 1) infinite;
 }
@@ -1648,7 +1662,7 @@ a:hover {
 @keyframes ring-glint {
   0%,
   72% {
-    rotate: 0deg;
+    --glint: 0deg;
     opacity: 0;
   }
   74% {
@@ -1658,7 +1672,7 @@ a:hover {
     opacity: 1;
   }
   100% {
-    rotate: 1turn;
+    --glint: 1turn;
     opacity: 0;
   }
 }
