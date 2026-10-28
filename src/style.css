@@ -84,7 +84,6 @@
   --inset: 0;
   --text-xl: clamp(2.2rem, 1.4rem + 3.6vw, 4rem);
   --text-2xl: clamp(3rem, 1.4rem + 7.2vw, 7rem);
-  --text-mega: clamp(4.5rem, 1rem + 15vw, 13rem);
 
   --weight-body: 400;
   --weight-label: 600;
@@ -4791,6 +4790,8 @@ html.is-arriving:not(.is-passed-on) {
   padding: var(--tab-pad) var(--tab-pad-x);
   color: var(--ink);
   background: var(--paper);
+  /* the name as the cards set it */
+  font-family: var(--font);
   font-size: var(--text-xs);
   font-weight: var(--weight-label);
   font-variant-numeric: normal;

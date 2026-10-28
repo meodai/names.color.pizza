@@ -111,7 +111,7 @@ test.describe("the search in the space", () => {
   test("the logo lets a found card go", async ({ page }) => {
     await openWall(page, "/?c=8f7d6b");
     expect((await state(page)).spot).toBe(true);
-    await page.locator(".brand").click();
+    await page.locator(".wall__brand-hit").click();
     await settled(page);
     expect((await state(page)).spot).toBe(false);
   });

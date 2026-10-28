@@ -38,9 +38,6 @@ export function unpackWork(w, museum) {
   };
 }
 
-const escapeHTML = (s) =>
-  String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
-
 export const paletteHTML = (palette = [], match) =>
   palette.length
     ? `<span class="art__palette">${palette
@@ -207,17 +204,3 @@ const COVERS = {
 const coverKind = (folder) => (COVERS[folder] ? folder : folder.replace(/-.*/, ""));
 // art, or the kind of cover (each set of VHS covers its own)
 const artKind = (folder) => (COVERS[coverKind(folder)] ? coverKind(folder) : "art");
-
-export function creditHTML(works) {
-  const used = Object.entries(MUSEUMS).filter(([folder]) => works.some((w) => w.museum === folder));
-  const museums = used.filter(([folder]) => !COVERS[coverKind(folder)]);
-  const covers = [...new Map(used.filter(([f]) => COVERS[coverKind(f)]).map(([f, m]) => [coverKind(f), m]))]
-    .map(([kind, m]) => ` ${COVERS[kind](m)}`)
-    .join("");
-  if (!museums.length) return covers.trim();
-  const links = museums.map(
-    ([, m]) => `the <a href="${m.url}" target="_blank" rel="noopener">${escapeHTML(m.name)}</a>`,
-  );
-  const list = links.length > 1 ? `${links.slice(0, -1).join(", ")} and ${links.at(-1)}` : links[0];
-  return `From the open-access collection${museums.length > 1 ? "s" : ""} of ${list}.${covers}`;
-}

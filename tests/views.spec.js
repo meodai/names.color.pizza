@@ -59,7 +59,7 @@ test.describe("the address and the views", () => {
     await openList(page);
     expect(param(page, "view")).toBe("az");
     expect(Math.round((await cam(page)).dist)).toBe(860);
-    await page.locator(".brand").click();
+    await page.locator(".wall__brand-hit").click();
     await expect(page.locator(".az")).toBeHidden();
     await settled(page);
     const c = await cam(page);
@@ -72,11 +72,11 @@ test.describe("the address and the views", () => {
 
   test("the logo from a list opened by link goes back to the model in the address, else RGB", async ({ page }) => {
     await openWall(page, "/?view=az");
-    await page.locator(".brand").click();
+    await page.locator(".wall__brand-hit").click();
     await expect(page.locator(".az")).toBeHidden();
     expect((await state(page)).model).toBe("rgb");
     await openWall(page, "/?model=oklab&view=az");
-    await page.locator(".brand").click();
+    await page.locator(".wall__brand-hit").click();
     await expect(page.locator(".az")).toBeHidden();
     expect((await state(page)).model).toBe("oklab");
   });
@@ -85,7 +85,7 @@ test.describe("the address and the views", () => {
     await openWall(page, "/?view=pixel");
     await openList(page);
     expect(param(page, "view")).toBe("az");
-    await page.locator(".brand").click();
+    await page.locator(".wall__brand-hit").click();
     await expect(page.locator(".az")).toBeHidden();
     expect((await state(page)).view).toBe("pixel");
     expect(param(page, "view")).toBe("pixel");
@@ -95,7 +95,7 @@ test.describe("the address and the views", () => {
     await openWall(page, "/?view=cells");
     await page.waitForFunction(() => window.__wall.state().cellsMix === 1, null, { timeout: 60_000 });
     await openList(page);
-    await page.locator(".brand").click();
+    await page.locator(".wall__brand-hit").click();
     await expect(page.locator(".az")).toBeHidden();
     expect((await state(page)).view).toBe("cells");
     expect(param(page, "view")).toBe("cells");

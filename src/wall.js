@@ -1,14 +1,4 @@
-import {
-  getList,
-  LISTS,
-  normalizeHex,
-  slugsOf,
-  hexToRgb,
-  rgbToOklab,
-  cardPlace,
-  showVersion,
-  siteURL,
-} from "./names.js";
+import { getList, LISTS, normalizeHex, slugsOf, hexToRgb, rgbToOklab, cardPlace, showVersion } from "./names.js";
 import { buildOwners, createCellsRenderer, pick as pickCell, MODEL_IDS } from "./cells.js";
 import { createLabelRenderer } from "./labels-gl.js";
 import { counts, loadAdoptions } from "./shines.js";
@@ -2061,6 +2051,11 @@ export async function initWall(root) {
     hit.classList.replace("wall__brand", "wall__brand-hit");
     hit.setAttribute("aria-hidden", "true");
     hit.tabIndex = -1;
+    // a clone has none of the brand's listeners: its click is the brand's
+    hit.addEventListener("click", (e) => {
+      e.preventDefault();
+      brand.click();
+    });
     brand.after(hit);
   }
   // the GitHub link the other way round: it stays in the bar, unseen till pointed at; a copy of
@@ -2071,6 +2066,7 @@ export async function initWall(root) {
     under.classList.add("wall__nav--under");
     under.setAttribute("aria-hidden", "true");
     under.inert = true;
+    under.querySelector("[data-intro-open]")?.removeAttribute("data-intro-open");
     root.append(under);
     root.classList.add("has-under");
   }

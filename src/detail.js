@@ -1025,7 +1025,7 @@ function drawStrip() {
     }
   });
   for (const [key, el] of strip.tiles) {
-    if (seen.has(key) || opened?.tile === el) continue;
+    if (seen.has(key) || opened?.tile === el || landing === el) continue;
     el.remove();
     strip.tiles.delete(key);
   }
@@ -1046,7 +1046,7 @@ function startDrift() {
     }
     const dt = drift.last ? Math.min(0.1, (time - drift.last) / 1000) : 0;
     drift.last = time;
-    if (drift.seen && strip.rows.length && !opened) {
+    if (drift.seen && strip.rows.length && !opened && !landing) {
       strip.rows.forEach((r, k) => {
         if (k === drift.held || (k === strip.middle && !artSettings.plain)) return;
         r.phase += (k % 2 ? DRIFT : -DRIFT) * dt;
@@ -1119,6 +1119,8 @@ const pictureHTML = (it) => `<button type="button" class="lightbox__backdrop" ar
 
 const EASE = "cubic-bezier(0.3, 0.7, 0, 1)";
 let opened = null;
+// the tile a closing picture flies back into: the rows wait for it to land
+let landing = null;
 const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // grows from the tile it was clicked in, a frame settling round it just
@@ -1220,8 +1222,10 @@ function closePicture(now = false) {
   if (!opened) return;
   const { box, tile, frame, mat, info, copyColors, fly, focusBefore } = opened;
   opened = null;
+  landing = tile;
   page.art.classList.remove("is-behind");
   const done = () => {
+    if (landing === tile) landing = null;
     tile.style.opacity = "";
     tile.offsetWidth;
     tile.style.transition = "";
@@ -1761,7 +1765,7 @@ export function initDetailPage(root = document, { embedded = false, signal, onCl
       if (gallery.length && strip.title) {
         measureStrip();
         for (const [key, el] of strip.tiles) {
-          if (opened?.tile === el) continue;
+          if (opened?.tile === el || landing === el) continue;
           el.remove();
           strip.tiles.delete(key);
         }
