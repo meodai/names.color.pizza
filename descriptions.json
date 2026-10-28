@@ -270842,10 +270842,10 @@
   {
     "name": "Welsh Wanderer’s Path",
     "hex": "#00b140",
-    "ai": true,
+    "ai": false,
     "kind": "place",
     "reference": "the green of the Welsh flag and the pastures of Wales",
     "description": "The dew-touched green of the lush land of Wales, which has heard the footfalls of druids and dragons alike.",
-    "model": "claude"
+    "model": "human"
   }
 ]
