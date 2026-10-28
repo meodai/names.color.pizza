@@ -4708,6 +4708,74 @@ html.is-arriving:not(.is-passed-on) {
   background: var(--ink);
 }
 
+/* on a page with the close, the brand folds to the parrot alone, a square the close's size, its
+   inner edge on the grid's first line as the close's is on the last: folding, the name fades and
+   then the mask closes (unseen as a page arrives, black on its black intro); pointed at, the mask
+   opens and the name fades in. Over the wall as the page opens, on a page of its own as it loads */
+@media (min-width: 40.01rem) {
+  .brand.color-hero__home,
+  .wall:has(> .wall__page:not(.is-leaving)) :is(.wall__brand, .wall__brand-hit) {
+    left: calc(var(--brand-c) - var(--pill-h));
+  }
+
+  .color-hero__close {
+    right: calc(var(--brand-c) - var(--pill-h) + var(--scrollbar, 0px));
+  }
+
+  /* open, a mask still, a little wider than the brand (its focus ring), for the fold to run from */
+  .brand.color-hero__home,
+  .wall :is(.wall__brand, .wall__brand-hit) {
+    clip-path: inset(-0.5rem);
+    transition:
+      clip-path 0.3s cubic-bezier(0.7, 0.3, 0, 1),
+      padding 0.3s cubic-bezier(0.7, 0.3, 0, 1),
+      color 0.25s ease,
+      background 0.25s ease;
+  }
+
+  .brand.color-hero__home > span,
+  .wall .wall__brand > span {
+    transition: opacity 0.3s ease 0.2s;
+  }
+
+  .brand.color-hero__home:not(:hover, :focus-visible),
+  .wall:has(> .wall__page:not(.is-leaving)) :is(.wall__brand, .wall__brand-hit):not(:hover, :focus-visible) {
+    padding-inline-start: calc((var(--pill-h) - var(--brand-logo-w)) / 2);
+    clip-path: inset(0 calc(100% - var(--pill-h)) 0 0);
+    transition:
+      clip-path 0.3s cubic-bezier(0.7, 0.3, 0, 1) 0.2s,
+      padding 0.3s cubic-bezier(0.7, 0.3, 0, 1) 0.2s,
+      color 0.25s ease,
+      background 0.25s ease;
+  }
+
+  .brand.color-hero__home:not(:hover, :focus-visible) > span,
+  .wall:has(> .wall__page:not(.is-leaving)) .wall__brand:not(:hover, :focus-visible) > span {
+    opacity: 0;
+    transition-delay: 0s;
+  }
+
+  @starting-style {
+    .brand.color-hero__home:not(:hover, :focus-visible) {
+      padding-inline-start: var(--brand-pad);
+      clip-path: inset(-0.5rem);
+    }
+
+    .brand.color-hero__home:not(:hover, :focus-visible) > span {
+      opacity: 1;
+    }
+  }
+}
+
+@media (min-width: 40.01rem) and (prefers-reduced-motion: reduce) {
+  .brand.color-hero__home,
+  .wall :is(.wall__brand, .wall__brand-hit),
+  .brand.color-hero__home > span,
+  .wall .wall__brand > span {
+    transition: none;
+  }
+}
+
 /* the GitHub link the other way round: the link in the bar unseen till pointed at, a copy of it
    under the space where it is (wall.js) */
 .wall.has-under .wall__bar .wall__nav > a {
@@ -6198,7 +6266,7 @@ html.is-arriving:not(.is-passed-on) {
     translate: 0 -200%;
   }
 
-  .wall__brand {
+  :is(.wall__brand, .wall__brand-hit) {
     top: var(--space-2xs);
     left: 1rem;
   }
@@ -6389,7 +6457,7 @@ html.is-arriving:not(.is-passed-on) {
       visibility 0s linear calc(0.3s + var(--menu-out));
   }
 
-  .wall__brand span {
+  :is(.wall__brand, .wall__brand-hit) span {
     display: inline-block;
     max-inline-size: 8rem;
     overflow: hidden;
@@ -6399,7 +6467,7 @@ html.is-arriving:not(.is-passed-on) {
       opacity 0.25s ease;
   }
 
-  .wall__brand {
+  :is(.wall__brand, .wall__brand-hit) {
     transition:
       padding 0.4s cubic-bezier(0.3, 0.7, 0, 1),
       gap 0.4s cubic-bezier(0.3, 0.7, 0, 1);
