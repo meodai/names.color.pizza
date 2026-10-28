@@ -4,9 +4,12 @@
 
 // all three the same width
 const WIDTH = 75;
-// drawn lying down, shown standing up: left becomes the bottom, so fills rise
-const svg = (w, body) =>
-  `<svg class="mix-viz" viewBox="0 0 12 ${w}" width="12" height="${w}" aria-hidden="true" shape-rendering="crispEdges"><g transform="rotate(-90) translate(${-w} 0)">${body}</g></svg>`;
+// drawn lying down, shown standing up: left becomes the bottom, so fills rise, the first ink on
+// top. A phone has no room beside the text for it: a copy lying down, the first ink at the left,
+// under the text (the CSS shows the one or the other)
+const svg = (w, draw) =>
+  `<svg class="mix-viz" viewBox="0 0 12 ${w}" width="12" height="${w}" aria-hidden="true" shape-rendering="crispEdges"><g transform="rotate(-90) translate(${-w} 0)">${draw(true)}</g></svg>` +
+  `<svg class="mix-viz mix-viz--lying" viewBox="0 0 ${w} 12" width="${w}" height="12" aria-hidden="true" shape-rendering="crispEdges">${draw(false)}</svg>`;
 
 // red, green and blue, 0–1 each: three cells side by side in one box, a line between them,
 // each filled from its left edge, a pixel clear of its lines so they stay visible. Each fill
@@ -15,11 +18,11 @@ export function screenViz(rgb) {
   const edges = cellEdges(3);
   return svg(
     WIDTH,
-    box(edges) +
+    (standing) =>
+      box(edges) +
       rgb
         .map((v, i) => {
-          // standing up, the first ink on top
-          const at = 2 - i;
+          const at = standing ? 2 - i : i;
           const x = edges[at] + 2;
           const w = Math.round(v * (edges[at + 1] - 1 - x));
           return w ? `<rect class="mix-${"rgb"[i]}" x="${x}" y="2" width="${w}" height="8" fill="currentColor"/>` : "";
@@ -44,18 +47,19 @@ const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 // a pixel clear of its lines
 export function printViz(cmyk) {
   const edges = cellEdges(4);
-  const inked = cmyk
-    .map((v, i) => {
-      const level = Math.round(v * 16);
-      const at = 3 - i;
-      let d = "";
-      for (let y = 2; y < 10; y++)
-        for (let x = edges[at] + 2; x < edges[at + 1] - 1; x++)
-          if (BAYER[(y % 4) * 4 + (x % 4)] < level) d += `M${x} ${y}h1v1h-1z`;
-      return d ? `<path class="mix-${"cmyk"[i]}" d="${d}" fill="currentColor"/>` : "";
-    })
-    .join("");
-  return svg(WIDTH, box(edges) + inked);
+  const inked = (standing) =>
+    cmyk
+      .map((v, i) => {
+        const level = Math.round(v * 16);
+        const at = standing ? 3 - i : i;
+        let d = "";
+        for (let y = 2; y < 10; y++)
+          for (let x = edges[at] + 2; x < edges[at + 1] - 1; x++)
+            if (BAYER[(y % 4) * 4 + (x % 4)] < level) d += `M${x} ${y}h1v1h-1z`;
+        return d ? `<path class="mix-${"cmyk"[i]}" d="${d}" fill="currentColor"/>` : "";
+      })
+      .join("");
+  return svg(WIDTH, (standing) => box(edges) + inked(standing));
 }
 
 // a color temperature in kelvin: warmer (fewer kelvin) fills more of the tube
@@ -73,10 +77,12 @@ export function lightViz(kelvin) {
   const glass = `M${join.toFixed(2)} 2.5H${end - 3.5}A3.5 3.5 0 0 1 ${end - 3.5} 9.5H${join.toFixed(2)}A5.5 5.5 0 1 1 ${join.toFixed(2)} 2.5Z`;
   const reach = Math.round(10 + warm * (end - 2.5 - 10));
   // shown in its colors: cold blue where the scale starts, warm orange at its far end
-  const heat = `<defs><linearGradient id="mix-heat" gradientUnits="userSpaceOnUse" x1="2" x2="${end - 2}" y1="0" y2="0"><stop offset="0" stop-color="#9ec5ff"/><stop offset="0.5" stop-color="#fff4e0"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient></defs>`;
+  const heat = (id) =>
+    `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="2" x2="${end - 2}" y1="0" y2="0"><stop offset="0" stop-color="#9ec5ff"/><stop offset="0.5" stop-color="#fff4e0"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient></defs>`;
   return svg(
     WIDTH,
-    heat +
+    (standing) =>
+      heat(standing ? "mix-heat" : "mix-heat-lying") +
       `<path d="${glass}" fill="none" stroke="currentColor" shape-rendering="geometricPrecision"/>` +
       `<circle class="mix-heat" cx="6" cy="6" r="4" fill="currentColor" shape-rendering="geometricPrecision"/>` +
       `<rect class="mix-heat" x="6" y="4" width="${reach - 6}" height="4" fill="currentColor"/>`,

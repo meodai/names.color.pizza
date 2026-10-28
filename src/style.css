@@ -2754,8 +2754,10 @@ h2:hover > .anchor,
   --inset: var(--gutter);
 }
 
+/* on a phone the margin a gap of the grid, not the C */
 @media (max-width: 40rem) {
   .color-page {
+    --gutter: var(--space-s);
     --inset: 0;
   }
 }
@@ -2899,6 +2901,29 @@ h2:hover > .anchor,
 
 .color-page--detail .mix-viz {
   inset-inline: auto calc(100% + var(--col-gap));
+}
+
+/* on a phone the margin has no room for it: its copy lying down, under its text (mix-viz.js) */
+.mix-viz--lying {
+  display: none;
+}
+
+.color-specs__pair:is(:hover, .is-lit) .mix-viz--lying .mix-heat {
+  fill: url(#mix-heat-lying);
+}
+
+@media (max-width: 40rem) {
+  .color-page--detail .mix-viz:not(.mix-viz--lying) {
+    display: none;
+  }
+
+  .color-page--detail .mix-viz--lying {
+    position: static;
+    display: block;
+    margin-block-start: var(--space-2xs);
+    inline-size: 6.6em;
+    block-size: auto;
+  }
 }
 
 .color-specs--formats {
@@ -6380,14 +6405,19 @@ html.is-arriving:not(.is-passed-on) {
       gap 0.4s cubic-bezier(0.3, 0.7, 0, 1);
   }
 
-  .wall:has([data-menu][aria-expanded="true"]) .wall__brand {
+  .wall:has([data-menu][aria-expanded="true"]) :is(.wall__brand, .wall__brand-hit) {
     gap: 0;
     padding-inline: calc((var(--pill-h) - var(--brand-logo-w)) / 2);
   }
 
-  .wall:has([data-menu][aria-expanded="true"]) .wall__brand span {
+  .wall:has([data-menu][aria-expanded="true"]) :is(.wall__brand, .wall__brand-hit) span {
     max-inline-size: 0;
     opacity: 0;
+  }
+
+  /* its name, squeezed, still spills over the models: taps go through it */
+  .wall:has([data-menu][aria-expanded="true"]) .wall__brand-hit span {
+    pointer-events: none;
   }
 }
 
