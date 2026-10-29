@@ -136986,14 +136986,6 @@
     "model": "describer"
   },
   {
-    "name": "Lizard Legs",
-    "hex": "#7f6944",
-    "ai": true,
-    "kind": "thing",
-    "description": "Scaly, earthy brown, like the underside of a reptile that's lost its grip.",
-    "model": "describer"
-  },
-  {
     "name": "Lián Hóng Lotus Pink",
     "hex": "#f075e6",
     "ai": true,
