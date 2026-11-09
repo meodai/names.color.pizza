@@ -173,6 +173,7 @@ export const MUSEUMS = {
   "cleveland-art": { name: "Cleveland Museum of Art", url: "https://www.clevelandart.org/open-access" },
   "met-art": { name: "Metropolitan Museum of Art", url: "https://www.metmuseum.org/hubs/open-access" },
   "pdia-art": { name: "Public Domain Image Archive", url: "https://pdimagearchive.org" },
+  "bhl-art": { name: "Biodiversity Heritage Library", url: "https://www.biodiversitylibrary.org" },
   albums: { name: "Cover Art Archive", url: "https://coverartarchive.org" },
   games: { name: "libretro thumbnails", url: "https://github.com/libretro-thumbnails" },
   "games-sfc": { name: "libretro thumbnails", url: "https://github.com/libretro-thumbnails" },
