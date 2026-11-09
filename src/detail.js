@@ -15,7 +15,7 @@ import {
 import { FORMATS, cmykOf } from "./formats.js";
 import { screenViz, printViz, lightViz } from "./mix-viz.js";
 import { lookupName, lookupPictures, isWhole, baseTitle } from "./lookup.js";
-import { paletteHTML, ART_COUNT, MEDIA, MUSEUMS } from "./art.js";
+import { paletteHTML, ART_COUNT, MEDIA, MUSEUMS, isNature } from "./art.js";
 import { rampOf, complementHex } from "./ramp.js";
 import parrot from "./favicon.svg?raw";
 import { HOLO_FROM, ADOPT_FROM, loadAdoptions } from "./shines.js";
@@ -824,6 +824,7 @@ const artSettings = {
   even: false,
   animate: !matchMedia("(prefers-reduced-motion: reduce)").matches,
   art: true,
+  nature: true,
   pop: true,
   games: true,
   albums: true,
@@ -841,30 +842,32 @@ const saveArtSettings = () => {
     localStorage.setItem(ART_SETTINGS, JSON.stringify(artSettings));
   } catch {}
 };
-const CATEGORIES = ["art", "pop", "wiki"];
+const CATEGORIES = ["art", "nature", "pop", "wiki"];
 // pop culture's kinds, by the collection's folder
 const POP = { games: "games", albums: "albums", movies: "films", vhs: "vhs", "vhs-anime": "animeVhs" };
 const popOf = (museum) => POP[museum] || POP[museum.replace(/-.*/, "")];
+const kindOf = (museum) => popOf(museum) || (isNature(museum) ? "nature" : "art");
 const shows = (it) => {
   if (it.kind !== "art") return artSettings.wiki;
   const pop = popOf(it.work.museum);
-  return pop ? artSettings.pop && artSettings[pop] : artSettings.art;
+  return pop ? artSettings.pop && artSettings[pop] : artSettings[kindOf(it.work.museum)];
 };
 // each kind comes with a list of its own: shown alone, all of it; mixed, as many as one,
-// the closest first, box art and VHS covers at most their share (they match bright colors closely)
-const CAPS = { games: 0.25, vhs: 0.15 };
+// the closest first, box art and VHS covers at most their share (they match bright colors closely),
+// and natural history's plates (their paper left out, nearly all of each is color)
+const CAPS = { games: 0.25, vhs: 0.15, nature: 0.25 };
 const capOf = (pop) => (pop === "animeVhs" ? "vhs" : pop);
 // as palettes, only what has one
 function shownGallery() {
   const list = gallery.filter((it) => shows(it) && (!artSettings.palettes || it.palette?.length));
   const works = list.filter((it) => it.kind === "art");
-  const kinds = new Set(works.map((it) => popOf(it.work.museum) || "art"));
+  const kinds = new Set(works.map((it) => kindOf(it.work.museum)));
   if (kinds.size < 2) return list;
   const taken = {};
   let room = ART_COUNT;
   const keep = new Set(
     works.filter((it) => {
-      const cap = capOf(popOf(it.work.museum));
+      const cap = capOf(kindOf(it.work.museum));
       if (!room || (cap in CAPS && (taken[cap] || 0) >= Math.ceil(ART_COUNT * CAPS[cap]))) return false;
       taken[cap] = (taken[cap] || 0) + 1;
       room--;
